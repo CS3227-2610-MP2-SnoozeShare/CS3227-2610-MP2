@@ -8,7 +8,7 @@ every boundary, not at the end of the session.
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** main (at `d53c621`)
 - **Method:** Not yet established — see § Needs a Human (Q1)
-- **Last updated:** 2026-09-22 by Claude Sonnet 5 — switched DB from H2 to SQLite, resolved Q2
+- **Last updated:** 2026-09-22 by Claude Sonnet 5 — built and populated the shared mock DB (`db/snoozeshare-mock.db`)
 - **Last verified against repo:** 2026-09-22
 - **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
 
@@ -44,6 +44,7 @@ three iterations).
 | `logs/LLM_interactions.md` | LLM interaction log (course requirement) |
 | `src/main/java/com/snoozeshare/` | Application source — package skeleton only, see § Architecture |
 | `config/checkstyle/` | Checkstyle rules enforced on build |
+| `db/schema.sql`, `db/seed-mock-data.sql`, `db/snoozeshare-mock.db` | Shared team-reference SQLite DB — draft SQL + the built `.db` file, committed so everyone queries the same data. Dev/reference artifact, not wired into app startup (see § 4.5) |
 
 ---
 
@@ -59,7 +60,7 @@ three iterations).
 
 | Session | Started | Agent(s) | Branch | Workstream | Status | Doing | Last touched |
 |---|---|---|---|---|---|---|---|
-| S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Active | Bootstrapped this file, then switched embedded DB from H2 to SQLite per operator decision (resolved Q2); no feature work started yet | 2026-09-22 |
+| S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Active | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -170,6 +171,10 @@ exact contracts, including which backlog item (F-number) each method backs.
 |---|---|---|---|---|
 | C3 | unknown | Two separate financial interfaces: `WalletService` (dumb primitive — balance, top-up, withdraw) vs. `TransactionService` (business rules — escrow, 3% fee, refund policy, dispute remedies). UI may call `WalletService` directly only for top-up/withdrawal; `BookingService`/`TicketService` are the only callers of `TransactionService` | Keeps "how do bookings pay out" and "how do I add money to my account" independently testable; centralizes every balance change behind one choke point so wallets can't drift from booking/ticket state | [architecture proposal §3](docs/SnoozeShare-Architecture-Proposal.md) |
 | C4 | unknown | Use Java 25 records directly as the domain model passed to JavaFX view models; no separate DTO layer | Over-engineering for MVP scale | [architecture proposal §3](docs/SnoozeShare-Architecture-Proposal.md) |
+| C7 | 2026-09-22 | **No guest-side service fee.** `bookings.totalAmount = nightlyRateSnapshot × nights`, full stop. The only platform fee anywhere is the 3% deducted from a host's `BOOKING_PAYOUT` (already specified). Corrects an earlier mock-data draft that had invented a 5% guest fee to fill the doc's undefined `serviceFeeAmount` column — that column is now removed | Operator confirmed while reviewing generated mock data | Operator conversation, 2026-09-22 |
+| C8 | 2026-09-22 | `REJECTED` and `CANCELLED_BY_HOST` bookings both trigger a 100% `ESCROW_REFUND`, same as a guest cancelling >48h out. (Note: `BookingService` in the proposal has no explicit host-initiated-cancel method distinct from `decide(...,approve=false)` — flagged as a spec gap for whoever builds F6.1.2/host cancellation, not resolved by this decision.) | Operator confirmed "good assumption" while reviewing generated mock data | Operator conversation, 2026-09-22 |
+| C9 | 2026-09-22 | `TICKET_REMEDY` and `AGENT_OVERRIDE` wallet rows are single-sided — only the wallet actually credited/debited gets a row, no matching entry on the other side. There is no double-entry anywhere in `wallet_transactions`, extending the doc's existing "fees aren't a real platform-wallet transfer" note to these two types as well | Operator confirmed while reviewing generated mock data | Operator conversation, 2026-09-22 |
+| C10 | 2026-09-22 | `wallets.currency` is `"SGD"` for real, not just the doc's illustrative example | Operator confirmed while reviewing generated mock data | Operator conversation, 2026-09-22 |
 
 ### 4.4 Domain *(planned)*
 
@@ -181,7 +186,7 @@ through (guest cancel, host approve/reject, agent force-override all call the sa
 
 | Path | Role |
 |---|---|
-| `domain.model` *(planned)* | `User`, `Property`, `Booking`, `Wallet`, `WalletTransaction`, `Ticket`, `TicketCategory`, `Review`, `AuditLogEntry`, `AvailabilityBlock` |
+| `domain.model` *(planned)* | `User`, `Property` (fields: `propertyId`, `hostId`, `status`, `title`, `description`, `propertyType`, `streetAddress`, `city`, `region`, `postalCode`, `maxGuests`, `bedrooms`, `bathrooms`, `baseNightlyRate`, `checkInTime`, `checkOutTime`, `amenities` — operator-specified, see C6), `Booking`, `Wallet`, `WalletTransaction`, `Ticket`, `TicketCategory`, `Review`, `AuditLogEntry`, `AvailabilityBlock` |
 | `domain.enums` *(planned)* | `Role`, `ListingStatus`, `PropertyType`, `AmenityType`, `BookingStatus`, `TicketStatus`, `RemedyType`, `WalletTransactionType`, `AccountStatus` |
 | `domain.statemachine` *(planned)* | `BookingStateMachine`, `TicketStateMachine` |
 
@@ -196,10 +201,15 @@ each returning/consuming domain records — only `repository.jdbc.*` may import 
 Schema is specified table-by-table in
 [architecture proposal §4](docs/SnoozeShare-Architecture-Proposal.md) (users, properties,
 availability_blocks, bookings, wallets, wallet_transactions — an append-only ledger, tickets,
-ticket_categories, reviews, audit_log). No migrations exist yet.
+ticket_categories, reviews, audit_log). No migrations exist yet (`infra.db.migration` is still
+unbuilt). A hand-written (non-Flyway) copy of this schema plus a full mock dataset has been built
+into a **shared, committed reference DB** — `db/schema.sql` / `db/seed-mock-data.sql` /
+`db/snoozeshare-mock.db` — for the team to query together; it is a dev/reference artifact only,
+not loaded by the application at startup. See § Record.
 
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
+| C6 | 2026-09-22 | `properties` columns are exactly: `propertyId`, `hostId`, `status` (`ListingStatus`: ACTIVE/INACTIVE), `title`, `description`, `propertyType` (`APARTMENT`/`HOUSE`/`CONDO`/`PRIVATE_ROOM`), `streetAddress`, `city`, `region`, `postalCode`, `maxGuests`, `bedrooms`, `bathrooms`, `baseNightlyRate`, `checkInTime`, `checkOutTime`, `amenities` (`Set<WIFI,PARKING,AIR_CONDITIONING,KITCHEN,WASHER,WORK_DESK>`) | Operator supplied the authoritative field list (the architecture proposal had left it as "exactly your House fields" with no listing) — corrects an earlier draft `db/schema.sql` that had guessed different, non-matching field names/enum values | Operator conversation, 2026-09-22 |
 | C5 | 2026-09-22 | **Embedded DB is SQLite** (`org.xerial:sqlite-jdbc`), accessed via hand-rolled `PreparedStatement` + `RowMapper` DAOs — no JPA/Hibernate | Operator confirmed SQLite over H2 (resolves Q2 — the architecture proposal's heading was the correct signal, its H2-flavored rationale paragraph was not). `build.gradle` and `.gitignore` updated accordingly. Rationale per the proposal otherwise stands: relational for FK-heavy data, transactional guarantees for overlap-prevention and escrow correctness, zero external services. | Operator conversation, 2026-09-22; `build.gradle`, `.gitignore`, [architecture proposal §4](docs/SnoozeShare-Architecture-Proposal.md) |
 
 ### 4.6 Events (in-process bus) *(planned)*
@@ -324,6 +334,6 @@ The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-st
 — every change, big or small, newest first.
 
 - **Latest entry:** 2026-09-22
-- **Entries:** 6 (4 backfilled coarsely from git history, 2 for this session)
+- **Entries:** 10 (4 backfilled coarsely from git history, 6 for this session)
 
 Deviations stay in § Deviations above: those are read every session.

@@ -32,6 +32,8 @@ replay_pid*
 *.db
 *.sqlite3
 *.db-journal
+# ...except the shared mock reference DB the team commits and diffs together
+!db/snoozeshare-mock.db
 
 # Agents
 .codex

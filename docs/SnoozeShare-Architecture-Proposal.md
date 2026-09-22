@@ -176,7 +176,7 @@ public interface BookingService {
     Booking submitRequest(UUID guestId, UUID propertyId, LocalDate start, LocalDate end); // F2.1.1 — internally calls TransactionService.holdEscrow (F2.1.2)
     List<Booking> tripsFor(UUID guestId, TripFilter filter);       // F2.2.1
     List<Booking> pendingRequestsFor(UUID hostId);                 // F6.1.1
-    Booking decide(UUID bookingId, boolean approve, UUID hostId);  // F6.1.2 — no money moves here, funds already escrowed
+    Booking decide(UUID bookingId, boolean approve, UUID hostId);  // F6.1.2 — on reject, calls TransactionService.refundEscrow at 100% (confirmed 2026-09-22); on approve, funds stay escrowed, no wallet write
     Booking cancel(UUID bookingId, UUID actingGuestId);            // F2.3.1 — computes policy % (F2.3.2), calls TransactionService.refundEscrow
     Booking complete(UUID bookingId);                              // marks COMPLETED, calls TransactionService.settleBookingCompletion
     Booking forceTransition(UUID bookingId, BookingStatus target, UUID agentId, String reason); // F7.2.1
@@ -319,7 +319,26 @@ registrationCode (String, nullable — required for HOST/AGENT signup per Auth s
 createdAt (Instant)
 ```
 
-**properties** — exactly your House fields, `hostId` FK → users.
+**properties** — the operator-specified House fields, plus `hostId` FK → users:
+```
+propertyId (UUID, PK)
+hostId (UUID, FK → users)
+status (Enum: ACTIVE, INACTIVE)
+title (String)
+description (String)
+propertyType (Enum: APARTMENT, HOUSE, CONDO, PRIVATE_ROOM)
+streetAddress (String)
+city (String)
+region (String)
+postalCode (String)
+maxGuests (int)
+bedrooms (int)
+bathrooms (double)
+baseNightlyRate (BigDecimal)
+checkInTime (LocalTime)
+checkOutTime (LocalTime)
+amenities (Set<Enum: WIFI, PARKING, AIR_CONDITIONING, KITCHEN, WASHER, WORK_DESK>)
+```
 
 **availability_blocks**
 ```
@@ -337,8 +356,11 @@ bookingId (UUID, PK)
 listingId (FK), guestId (FK)
 startDate, endDate (LocalDate)
 status (Enum: PENDING, CONFIRMED, REJECTED, CANCELLED_BY_GUEST, CANCELLED_BY_HOST, COMPLETED, FORCE_CANCELLED, FORCE_COMPLETED)
+-- REJECTED and CANCELLED_BY_HOST both trigger a 100% TransactionService.refundEscrow, same as a guest cancelling >48h out (confirmed 2026-09-22).
+-- Note: BookingService below has no explicit host-initiated cancel method distinct from decide(...,approve=false) — a host cancelling an
+-- already-CONFIRMED booking (CANCELLED_BY_HOST) isn't yet covered by a named method; flagged as a gap for whoever specs F6.1.2/host cancellation.
 nightlyRateSnapshot (BigDecimal)      -- price at time of booking, since host may change baseNightlyRate later
-serviceFeeAmount, totalAmount (BigDecimal)
+totalAmount (BigDecimal)              -- nightlyRateSnapshot × nights; no separate guest-side fee (confirmed 2026-09-22 — the only platform fee is the 3% deducted from host BOOKING_PAYOUT)
 createdAt, decidedAt, completedAt (Instant, nullable)
 ```
 
@@ -347,7 +369,7 @@ createdAt, decidedAt, completedAt (Instant, nullable)
 walletId (UUID, PK)
 userId (FK, unique)
 balance (BigDecimal)
-currency (String, e.g. "SGD")
+currency (String, "SGD" — confirmed 2026-09-22, not just an example)
 updatedAt (Instant)
 ```
 
@@ -367,6 +389,8 @@ createdAt (Instant)
 This is the single **append-only ledger** for all money movement — top-up and withdrawal are just transaction types alongside escrow/payout/refund, so the wallet balance is always fully reconstructable from this table, and agent overrides (F7.2.2) are just another row instead of a special case. `wallets.balance` is a denormalized cache of "sum of this wallet's transactions," updated in the same DB transaction as the row insert (see §3.2) — never written independently.
 
 Note: platform fees aren't modeled as money moving to a separate "platform wallet" — for MVP scope, `feeAmount` on the `BOOKING_PAYOUT` row is informational (gross earnings minus what was actually credited), since there's no admin-facing platform-balance feature in this backlog. If that's ever needed, add a system-owned `Wallet` row and make fee deduction a real double-entry transfer.
+
+Confirmed 2026-09-22: this single-sided convention extends to `TICKET_REMEDY` and `AGENT_OVERRIDE` rows too — a guest-favorable remedy/override writes only the guest's wallet row (no matching host debit), and vice versa. There is no double-entry anywhere in `wallet_transactions`; each row stands alone against its own wallet.
 
 **tickets**
 ```
