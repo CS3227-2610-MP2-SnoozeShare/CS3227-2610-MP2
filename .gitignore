@@ -28,9 +28,10 @@ build/
 hs_err_pid*
 replay_pid*
 
-# Local database file (H2)
-*.mv.db
-*.trace.db
+# Local database file (SQLite)
+*.db
+*.sqlite3
+*.db-journal
 
 # Agents
 .codex
