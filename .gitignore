@@ -33,5 +33,4 @@ replay_pid*
 *.trace.db
 
 # Agents
-.claude
 .codex
