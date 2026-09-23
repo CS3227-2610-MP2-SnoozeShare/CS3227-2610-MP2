@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.sql.Connection;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import com.snoozeshare.config.RegistrationCodes;
 import com.snoozeshare.domain.enums.Role;
@@ -75,6 +76,26 @@ class UserServiceTest {
             service.register("Guest", "same@example.com", Role.GUEST, null);
             assertThrows(IllegalArgumentException.class, () ->
                     service.register("Other", "same@example.com", Role.GUEST, null));
+        }
+    }
+
+    @Test
+    void authenticationAndRegistrationErrorsStartWithCapitalLetters() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            JdbcUserRepository users = new JdbcUserRepository(connection);
+            JdbcWalletRepository wallets = new JdbcWalletRepository(connection);
+            UserService service = new UserServiceImpl(connection, users, wallets);
+
+            Executable loginAction = () -> service.authenticate("missing@example.com");
+            Executable registerAction = () ->
+                    service.register("Host", "host@example.com", Role.HOST, "wrong");
+            IllegalArgumentException loginError = assertThrows(IllegalArgumentException.class,
+                    loginAction);
+            IllegalArgumentException registerError = assertThrows(IllegalArgumentException.class,
+                    registerAction);
+
+            assertEquals("Invalid email", loginError.getMessage());
+            assertEquals("Invalid registration code", registerError.getMessage());
         }
     }
 

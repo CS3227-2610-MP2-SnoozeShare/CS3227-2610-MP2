@@ -22,7 +22,7 @@ public final class MockSessionContext implements SessionContext {
     @Override
     public void loginAs(User user) {
         if (user == null) {
-            throw new IllegalArgumentException("user must not be null");
+            throw new IllegalArgumentException("User must not be null");
         }
         currentUser = user;
     }

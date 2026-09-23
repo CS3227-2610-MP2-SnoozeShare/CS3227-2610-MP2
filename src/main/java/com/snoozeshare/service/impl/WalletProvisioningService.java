@@ -22,7 +22,7 @@ public final class WalletProvisioningService {
             return null;
         }
         if (wallets.findByUserId(user.userId()).isPresent()) {
-            throw new IllegalStateException("user already has a wallet");
+            throw new IllegalStateException("User already has a wallet");
         }
         return wallets.save(new Wallet(
                 UUID.randomUUID(),

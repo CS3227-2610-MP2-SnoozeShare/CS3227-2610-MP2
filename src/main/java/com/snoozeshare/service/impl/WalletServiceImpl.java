@@ -35,7 +35,7 @@ public final class WalletServiceImpl implements WalletService {
     @Override
     public Wallet getWallet(UUID userId) {
         return wallets.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("wallet does not exist"));
+                .orElseThrow(() -> new IllegalArgumentException("Wallet does not exist"));
     }
 
     @Override

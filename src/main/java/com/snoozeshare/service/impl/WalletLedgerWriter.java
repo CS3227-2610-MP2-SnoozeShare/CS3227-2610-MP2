@@ -43,20 +43,20 @@ public final class WalletLedgerWriter {
                                     BigDecimal feeAmount, UUID relatedBookingId,
                                     UUID relatedTicketId, UUID initiatedBy) {
         if (walletId == null || type == null) {
-            throw new IllegalArgumentException("walletId and type are required");
+            throw new IllegalArgumentException("WalletId and type are required");
         }
         if (amount == null || amount.signum() == 0) {
-            throw new IllegalArgumentException("amount must not be zero");
+            throw new IllegalArgumentException("Amount must not be zero");
         }
         DomainValidation.requireNonNegative(feeAmount, "feeAmount");
         try {
             WalletTransaction transaction = new TransactionManager(connection).inTransaction(current -> {
                 Wallet wallet = wallets.findById(walletId)
-                        .orElseThrow(() -> new IllegalArgumentException("wallet does not exist"));
+                        .orElseThrow(() -> new IllegalArgumentException("Wallet does not exist"));
                 DomainValidation.requireSgd(wallet.currency());
                 BigDecimal balanceAfter = wallet.balance().add(amount).subtract(feeAmount);
                 if (balanceAfter.signum() < 0) {
-                    throw new IllegalArgumentException("insufficient wallet funds");
+                    throw new IllegalArgumentException("Insufficient wallet funds");
                 }
                 Instant now = Instant.now();
                 wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter,
@@ -72,7 +72,7 @@ public final class WalletLedgerWriter {
             }
             return transaction;
         } catch (SQLException exception) {
-            throw new IllegalStateException("unable to write wallet ledger", exception);
+            throw new IllegalStateException("Unable to write wallet ledger", exception);
         }
     }
 }

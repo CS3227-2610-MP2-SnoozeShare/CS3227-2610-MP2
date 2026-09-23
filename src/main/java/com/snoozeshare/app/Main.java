@@ -28,7 +28,7 @@ public class Main extends Application {
             primaryStage.setScene(scene);
             primaryStage.show();
         } catch (Exception exception) {
-            throw new IllegalStateException("unable to start SnoozeShare", exception);
+            throw new IllegalStateException("Unable to start SnoozeShare", exception);
         }
     }
 

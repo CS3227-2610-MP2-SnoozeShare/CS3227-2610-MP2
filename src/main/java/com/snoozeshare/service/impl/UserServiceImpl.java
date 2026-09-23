@@ -33,9 +33,9 @@ public final class UserServiceImpl implements UserService {
     public User authenticate(String email) {
         DomainValidation.requireText(email, "email");
         User user = users.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("invalid email"));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid email"));
         if (user.accountStatus() != AccountStatus.ACTIVE) {
-            throw new IllegalStateException("account is not active");
+            throw new IllegalStateException("Account is not active");
         }
         return user;
     }
@@ -45,10 +45,10 @@ public final class UserServiceImpl implements UserService {
         DomainValidation.requireText(displayName, "displayName");
         DomainValidation.requireText(email, "email");
         if (role == null) {
-            throw new IllegalArgumentException("role must not be null");
+            throw new IllegalArgumentException("Role must not be null");
         }
         if (users.findByEmail(email).isPresent()) {
-            throw new IllegalArgumentException("email is already registered");
+            throw new IllegalArgumentException("Email is already registered");
         }
         validateRegistrationCode(role, registrationCode);
         User user = new User(UUID.randomUUID(), role, displayName, email,
@@ -61,7 +61,7 @@ public final class UserServiceImpl implements UserService {
                 return user;
             });
         } catch (SQLException exception) {
-            throw new IllegalStateException("unable to register user", exception);
+            throw new IllegalStateException("Unable to register user", exception);
         }
     }
 
@@ -73,7 +73,7 @@ public final class UserServiceImpl implements UserService {
     @Override
     public User suspend(UUID userId, UUID agentId) {
         User user = users.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("user does not exist"));
+                .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
         User suspended = new User(user.userId(), user.role(), user.displayName(), user.email(),
                 AccountStatus.SUSPENDED, user.registrationCode(), user.createdAt());
         return users.save(suspended);
@@ -86,7 +86,7 @@ public final class UserServiceImpl implements UserService {
         String expected = role == Role.HOST
                 ? RegistrationCodes.HOST_CODE : RegistrationCodes.AGENT_CODE;
         if (!expected.equals(registrationCode)) {
-            throw new IllegalArgumentException("invalid registration code");
+            throw new IllegalArgumentException("Invalid registration code");
         }
     }
 }
