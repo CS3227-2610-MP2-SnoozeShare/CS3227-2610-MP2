@@ -32,14 +32,14 @@ empty log file.
 
 ## Session file
 
-Use one file for the whole agent session. Create it directly under `logs/` with the session-start
-time in Singapore time (`Asia/Singapore`, UTC+08:00):
+Use one file for the whole agent session. Create it directly under `logs/` using the established
+timestamped filename convention:
 
 ```text
 logs/YYYY-MM-DD_HH-mm-ss_<branch>.md
 ```
 
-The timestamp format is exactly `YYYY-MM-DD_HH-mm-ss`. Replace `/`, spaces, and other unsafe
+The filename timestamp format is exactly `YYYY-MM-DD_HH-mm-ss`. Replace `/`, spaces, and other unsafe
 branch characters with `-`; preserve the branch name in a recognizable slug. The filename stem is
 the canonical session key, so do not use a copied numeric `S2`-style label as the log identity.
 Numeric `S` labels in `PROJECT_STATE.md` are human-readable handoff labels only. If two sessions
@@ -54,19 +54,17 @@ must make the targets distinct.
 ## Session-file and entry format
 
 Start the file with this session-level header, then append exactly one entry for each material user
-input. Never overwrite existing entries.
+input. Entries must be kept in chronological order and must not contain timestamp metadata. Never
+overwrite existing entries.
 
 ```markdown
 # Agent Session Interaction Log
 
 - Session key: `2026-09-23_14-44-51_w1`
-- Session started (SGT): 2026-09-23 14:44:51
 - Branch: `w1`
 - Workstream: W1
 
 ## 2026-09-23_14-44-51_w1__01 — request
-
-- Timestamp (SGT): 2026-09-23 14:44:51
 
 ### User input
 
@@ -101,11 +99,12 @@ summary. Do not guess that ordinary project names, requirements, or source code 
 
 When explicitly invoked at session end:
 
-1. Identify the session-start timestamp, branch, session key, and workstream.
+1. Identify the branch, session key, and workstream.
 2. Review the complete session transcript and select material user inputs.
 3. Redact only high-confidence confidential values.
 4. Create the single session file, if at least one material input exists.
-5. Append exactly one entry for each selected material input in chronological order.
+5. Append exactly one entry for each selected material input in chronological order, without
+   timestamp metadata.
 6. Summarize each response factually; do not claim work that did not happen.
 7. Verify that every entry exists in the session file.
 
@@ -138,6 +137,6 @@ Recorded: Test with API key [REDACTED: API key].
 Session target:
 
 ```text
-Session started 2026-09-23 14:44:51 SGT on branch w1
+Session on branch w1, with entries ordered chronologically
 → logs/2026-09-23_14-44-51_w1.md
 ```

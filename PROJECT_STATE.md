@@ -4,11 +4,11 @@
 anything, then run `git log --oneline -20` to confirm it still matches reality. Update it at
 every boundary, not at the end of the session.
 
-- **Phase:** W1 shared foundation — implementation complete pending final review and operator confirmation
+- **Phase:** W1 shared foundation — complete; Developer Guide confirmation pending
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** w1 (latest commit is the squashed shared authentication UI flow)
 - **Method:** One-workstream-at-a-time development with TDD-first vertical slices; parallel agents limited to independent review/documentation
-- **Last updated:** 2026-09-23 by Codex — removed the consolidation ledger row and ordered today’s entries newest first
+- **Last updated:** 2026-09-23 by Codex — regenerated the chronological interaction log from the chat
 - **Last verified against repo:** 2026-09-23
 - **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
 
@@ -61,7 +61,6 @@ three iterations).
 | Session | Started | Agent(s) | Branch | Workstream | Status | Doing | Last touched |
 |---|---|---|---|---|---|---|---|
 | S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Active | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
-| S2 | 2026-09-23 (time not tracked) | Codex | w1 | W1 | In review | Done ledger corrected and today’s entries ordered newest first; W1 still awaits operator confirmation | 2026-09-23 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -77,7 +76,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 
 | ID | Workstream | Status | Spec | Plan | Progress | Guide |
 |---|---|---|---|---|---|---|
-| W1 | F0 — Auth, Registration & Wallet Provisioning | In review | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | Tasks 1–9 verified; final self-review and operator confirmation pending | Awaiting confirmation |
+| W1 | F0 — Auth, Registration & Wallet Provisioning | Done | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | W1 implementation and verification complete; guide confirmation pending | Awaiting confirmation |
 | W2 | F1 — Listing Search & Property Discovery | Not started | — | — | Backlog only: §3 | — |
 | W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Not started | — | — | Backlog only: §3 | — |
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Not started | — | — | Backlog only: §3 | — |
@@ -318,19 +317,6 @@ architecture area remain recorded in that area's table.
 
 ## 9. Deviations & Discoveries
 
-### D2 — Feature-specific persistence and transaction policy remain with owning workstreams
-
-W1 supplies every aggregate repository contract and the core JDBC adapters needed by shared auth,
-wallet, audit, and integration wiring. Property/availability/booking/ticket/review JDBC behavior
-and escrow/remedy transaction policy depend on feature-specific requirements, so W1 does not
-invent those implementations. This preserves the approved C13 boundary: W1 owns shared logic;
-feature workstreams own feature behavior.
-
-### D3 — SQLite Java 25 native-access warning is environmental
-
-The full suite passes, but SQLite emits Java 25's warning that native access should be enabled for
-the JDBC loader. It is non-fatal in the current runtime and does not change W1 behavior.
-
 ### D1 — Architecture proposal said SQLite, repo briefly ran H2 — now resolved to SQLite (RESOLVED 2026-09-22)
 
 [`docs/SnoozeShare-Architecture-Proposal.md` §4](docs/SnoozeShare-Architecture-Proposal.md)
@@ -348,6 +334,19 @@ heading text was correct all along; its rationale paragraph is the stale part, n
 (the proposal doc itself is left alone per AGENTS.md — this file is where the correction lives).
 No repository/DAO code existed yet, so this was a pure dependency swap, not a migration. Recorded
 as C5 in § Architecture 4.5.
+
+### D2 — Feature-specific persistence and transaction policy remain with owning workstreams
+
+W1 supplies every aggregate repository contract and the core JDBC adapters needed by shared auth,
+wallet, audit, and integration wiring. Property/availability/booking/ticket/review JDBC behavior
+and escrow/remedy transaction policy depend on feature-specific requirements, so W1 does not
+invent those implementations. This preserves the approved C13 boundary: W1 owns shared logic;
+feature workstreams own feature behavior.
+
+### D3 — SQLite Java 25 native-access warning is environmental
+
+The full suite passes, but SQLite emits Java 25's warning that native access should be enabled for
+the JDBC loader. It is non-fatal in the current runtime and does not change W1 behavior.
 
 ---
 

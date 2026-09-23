@@ -5,6 +5,7 @@ why, with a commit, plan or artifact as the reference. Not a copy of `git log`.
 
 | Date | What changed | Workstream | Ref |
 |---|---|---|---|
+| 2026-09-23 | Marked W1 shared foundation complete after implementation, integration verification, clean build, and UI handoff; Developer Guide remains awaiting operator confirmation | W1 | `PROJECT_STATE.md`, `docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md`, `docs/superpowers/plans/2026-09-23-w1-shared-foundation.md` |
 | 2026-09-23 | Updated Guest and Host wallet sidebars with center-title-sized bold headings and live SGD balances formatted to dollars and cents | W1 | `src/main/java/com/snoozeshare/ui/common/NavShellController.java`, Guest/Host shell FXML files, `src/main/resources/com/snoozeshare/ui/common/theme.css` |
 | 2026-09-23 | Changed functional sidebar navigation from button controls to styled clickable text labels; Logout remains an outlined button | W1 | role shell FXML files, `src/main/resources/com/snoozeshare/ui/common/theme.css`, `src/test/java/com/snoozeshare/ui/ShellNavigationTest.java` |
 | 2026-09-23 | Made Guest, Host, and Support Agent sidebar entries functional: each button updates the shared center pane, with Explore/Dashboard/Operations selected by default | W1 | `src/main/java/com/snoozeshare/ui/common/NavShellController.java`, `src/main/java/com/snoozeshare/ui/{guest,host,admin}/*ShellController.java`, role shell FXML files |
