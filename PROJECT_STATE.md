@@ -78,7 +78,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | ID | Workstream | Status | Spec | Plan | Progress | Guide |
 |---|---|---|---|---|---|---|
 | W1 | F0 — Auth, Registration & Wallet Provisioning | Done | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | W1 implementation and verification complete; guide confirmation pending | Awaiting confirmation |
-| W2 | F1 — Listing Search & Property Discovery | Not started | — | — | Backlog only: §3 | — |
+| W2 | F1 — Listing Search & Property Discovery | Spec'd | [listing-search design](docs/superpowers/specs/2026-09-24-w2-listing-search-design.md) | — | Spec approved; implementation plan next | — |
 | W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Not started | — | — | Backlog only: §3 | — |
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Not started | — | — | Backlog only: §3 | — |
 | W5 | F4 — Guest Wallet Management (top-up/withdraw) | Not started | — | — | Backlog only: §3 | — |
