@@ -4,12 +4,12 @@
 anything, then run `git log --oneline -20` to confirm it still matches reality. Update it at
 every boundary, not at the end of the session.
 
-- **Phase:** W1 shared foundation — complete; Developer Guide confirmation pending
+- **Phase:** W2 Listing Search — complete; W3 next for Guest features
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `ui-mockup` (at `7977390`, identical to `main` — created to design the UI/design system before any epic work starts)
-- **Method:** Not yet established for feature epics — see § Needs a Human (Q1). UI design system work (this session) proceeds independently via the brainstorming → spec → plan flow.
-- **Last updated:** 2026-09-23 by Claude Sonnet 5 — wrote the deferred UI design spec now that the 31-artboard canvas is validated: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md` (§ Architecture 4.2 / C11)
-- **Last verified against repo:** 2026-09-23
+- **Branch:** `w2` (Guest features — Listing Search & Property Discovery)
+- **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
+- **Last updated:** 2026-09-24 by Claude Opus 4.6 — completed W2 implementation: search/filter, JDBC adapters, service layer, search UI, detail modal
+- **Last verified against repo:** 2026-09-24
 - **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
 
 Sections are ordered by how often they are needed: **1–3 say where we are, 4–5 say what the
@@ -62,6 +62,7 @@ three iterations).
 |---|---|---|---|---|---|---|---|
 | S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Paused | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
+| S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -129,8 +130,11 @@ convention-level until feature adapters are added.
 ### 4.1 App shell & bootstrap
 
 **Now:** `AppContext` bootstraps a fresh SQLite database, shared services, session, event bus,
-audit service, and role-aware `SceneRouter`. `Main` loads the combined auth screen or role shell
-with shared CSS and a 1280×800 minimum window. `Launcher` remains the shaded-jar entry point.
+audit service, and role-aware `SceneRouter`. W2 added wiring for `ListingService`,
+`AvailabilityService`, and their backing JDBC repositories (`JdbcPropertyRepository`,
+`JdbcAvailabilityBlockRepository`, `JdbcBookingRepository`). `Main` loads the combined auth
+screen or role shell with shared CSS and a 1280×800 minimum window. `Launcher` remains the
+shaded-jar entry point.
 
 | Path | Role |
 |---|---|
@@ -146,7 +150,12 @@ with shared CSS and a 1280×800 minimum window. `Launcher` remains the shaded-ja
 ### 4.2 UI (role-isolated)
 
 **Now:** W1 provides the combined auth/register screen, shared CSS, header/sidebar/content shells,
-role routing, validation helper, and shared wallet panel boundary. Per the proposal,
+role routing, validation helper, and shared wallet panel boundary. W2 adds the Guest search
+screen (`ui.guest.search.GuestSearchController` + `guest-search.fxml`) with city/date/capacity
+filters and property cards, plus a property detail modal (`ui.guest.listing.ListingDetailController`
++ `listing-detail.fxml`) shown as a StackPane overlay with price breakdown, amenity chips, and
+host info. `NavShellController` gained a `getContext()` accessor. `theme.css` has styles for
+property cards, detail modal, amenity chips, and the modal overlay. Per the proposal,
 each role gets its own FXML+Controller tree under `ui.<role>`, and `ui.common` holds shared
 pieces (`WalletPanelController`, `NavShell`, formatting/validation helpers, shared components)
 constructed once per session and embedded into whichever role shell is active. Controllers are
@@ -170,7 +179,11 @@ of this becomes code — not yet started. Two schema gaps found while grounding 
 ### 4.3 Service (application/business logic)
 
 **Now:** Shared service interfaces plus user registration/authentication, wallet provisioning,
-atomic wallet ledger, and audit implementation exist. The proposal specifies nine service interfaces
+atomic wallet ledger, and audit implementation exist. W2 adds `AvailabilityServiceImpl` (checks
+host blocks + confirmed bookings for range availability) and `ListingServiceImpl` (search with
+SQL-level city/capacity filtering, date-based availability partitioning with available-first
+sorting, detail lookup, and `estimateCost` computing `rate × nights`). `UserService` gained a
+`findById(UUID)` method. The proposal specifies nine service interfaces
 (`ListingService`, `AvailabilityService`, `BookingService`, `TicketService`, `WalletService`,
 `TransactionService`, `UserService`, `ReviewService`, `AuditService`) with full method
 signatures — see [architecture proposal §3.1](docs/SnoozeShare-Architecture-Proposal.md) for the
@@ -202,8 +215,12 @@ through (guest cancel, host approve/reject, agent force-override all call the sa
 ### 4.5 Repository & persistence
 
 **Now:** Repository interfaces exist for all aggregates. W1 implements SQLite migrations and core
-`User`, `Wallet`, `WalletTransaction`, and `AuditLog` JDBC adapters; feature-specific aggregate
-adapters are owned by the workstreams that implement those features. The proposal specifies one
+`User`, `Wallet`, `WalletTransaction`, and `AuditLog` JDBC adapters. W2 adds
+`JdbcPropertyRepository` (dynamic WHERE clause building for search, UPSERT for save),
+`JdbcAvailabilityBlockRepository` (overlap detection: `startDate < ? AND endDate > ?`), and
+`JdbcBookingRepository` (overlap detection filtering PENDING+CONFIRMED only). Shared `RowMappers`
+centralizes result-set-to-record mapping with graceful unknown-amenity handling. Remaining
+feature-specific aggregate adapters are owned by the workstreams that implement those features. The proposal specifies one
 repository interface per aggregate (`UserRepository`,
 `PropertyRepository`, `BookingRepository`, `AvailabilityBlockRepository`, `TicketRepository`,
 `WalletRepository`, `WalletTransactionRepository`, `ReviewRepository`, `AuditLogRepository`),
@@ -379,6 +396,16 @@ and escrow/remedy transaction policy depend on feature-specific requirements, so
 invent those implementations. This preserves the approved C13 boundary: W1 owns shared logic;
 feature workstreams own feature behavior.
 
+### D4 — SQLite REAL columns lose BigDecimal scale (W2, RESOLVED 2026-09-24)
+
+SQLite stores `baseNightlyRate` as a `REAL` column. When a `BigDecimal("150.00")` round-trips
+through `getString()` on an SQLite `REAL`, it comes back as `"150.0"` — same numeric value but
+different scale. `BigDecimal.equals` checks scale, so `new BigDecimal("150.00").equals(new
+BigDecimal("150.0"))` is false. All monetary assertions in W2 tests use `compareTo` instead of
+`equals`. UI display calls `setScale(2, HALF_UP)` before rendering. This is a permanent SQLite
+trait, not a one-off fix — any future test that asserts on a monetary BigDecimal read from SQLite
+must use `compareTo`, not `equals`.
+
 ### D3 — SQLite Java 25 native-access warning is environmental
 
 The full suite passes, but SQLite emits Java 25's warning that native access should be enabled for
@@ -391,7 +418,7 @@ the JDBC loader. It is non-fatal in the current runtime and does not change W1 b
 The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-state/done-ledger.md)**
 — every change, big or small, newest first.
 
-- **Latest entry:** 2026-09-23
-- **Entries:** 15 (4 backfilled coarsely from git history, 11 current/history entries)
+- **Latest entry:** 2026-09-24
+- **Entries:** 16 (4 backfilled coarsely from git history, 12 current/history entries)
 
 Deviations stay in § Deviations above: those are read every session.
