@@ -7,8 +7,8 @@ every boundary, not at the end of the session.
 - **Phase:** Pre-implementation — project scaffolding only, no feature code written yet
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** w1 (at `7977390`)
-- **Method:** Not yet established — see § Needs a Human (Q1)
-- **Last updated:** 2026-09-23 by Codex — aligned the interaction-log template with the existing session file
+- **Method:** One-workstream-at-a-time development with TDD-first vertical slices; parallel agents limited to independent review/documentation
+- **Last updated:** 2026-09-23 by Codex — began native W1 execution in the existing `w1` checkout
 - **Last verified against repo:** 2026-09-23
 - **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
 
@@ -61,6 +61,7 @@ three iterations).
 | Session | Started | Agent(s) | Branch | Workstream | Status | Doing | Last touched |
 |---|---|---|---|---|---|---|---|
 | S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Active | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
+| S2 | 2026-09-23 (time not tracked) | Codex | w1 | W1 | Active | Task 1 domain kernel complete; starting Task 2 state machines and service contracts | 2026-09-23 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -76,7 +77,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 
 | ID | Workstream | Status | Spec | Plan | Progress | Guide |
 |---|---|---|---|---|---|---|
-| W1 | F0 — Auth, Registration & Wallet Provisioning | Building | [interaction-logging design](docs/superpowers/specs/2026-09-23-interaction-logging-skill-design.md) | [interaction-logging plan](docs/superpowers/plans/2026-09-23-interaction-logging-skill.md) | Support tooling done; F0 implementation not started | — |
+| W1 | F0 — Auth, Registration & Wallet Provisioning | Building | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | Task 1 complete; Task 2 state machines and service contracts in flight | — |
 | W2 | F1 — Listing Search & Property Discovery | Not started | — | — | Backlog only: §3 | — |
 | W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Not started | — | — | Backlog only: §3 | — |
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Not started | — | — | Backlog only: §3 | — |
@@ -294,18 +295,22 @@ boundaries, JPA/Hibernate, a separate DTO layer distinct from domain records.
 
 | ID | What is needed | What it blocks | Raised |
 |---|---|---|---|
-| Q1 | Confirm the development **method** for § header (e.g. subagent-driven development, TDD-first per epic, one workstream at a time) and which epic to spec first — the backlog sequences by sprint (F0 → F1/F2/F4 → F5/F6/F7/F8 in Sprint 1) but no workstream has been started | Nothing is blocked yet since no workstream is `Building`, but the first real session should get an answer before picking W1's spec | 2026-09-22 |
+| — | No outstanding questions | — | — |
 
 ---
 
 ## 8. Decisions & Context
 
-No process/priority/tooling decisions have been made by the operator yet in this session or
-recorded elsewhere. All decisions found so far shaped specific architecture areas and are
-recorded with those areas in § Architecture (C1–C5).
+Process and priority decisions are recorded here; technical decisions that shape a specific
+architecture area remain recorded in that area's table.
 
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
+| C11 | 2026-09-23 | Use one-workstream-at-a-time development with TDD-first vertical slices; parallel agents are limited to independent review and documentation | Operator approved the Q1 recommendation to keep implementation ownership and integration boundaries clear | Operator conversation, 2026-09-23 |
+| C12 | 2026-09-23 | Host and Agent registration codes are mock constants | Operator approved this F0 simplification; real credential or configuration management is out of scope | Operator conversation, 2026-09-23 |
+| C13 | 2026-09-23 | W1 owns the complete shared foundation and all cross-cutting logic required by later workstreams; feature workstreams own feature-specific business rules and UI behavior | Operator clarified that W1 must provide the full common base before parallel development begins | Operator conversation, 2026-09-23 |
+| C14 | 2026-09-23 | Use a combined Login/Register entry screen; display Support Agent as the user-facing Agent role; use a shared header/left-navigation/content shell, shared CSS, Guest/Host wallet panels, and a minimum window size around 1280×800 | Operator approved all W1 UI recommendations before execution | Operator conversation, 2026-09-23 |
+| C15 | 2026-09-23 | Execute W1 natively in the existing `w1` checkout rather than creating a separate worktree | Operator explicitly selected the current checkout for execution | Operator conversation, 2026-09-23 |
 
 ---
 
