@@ -8,7 +8,7 @@ every boundary, not at the end of the session.
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** w1 (at `7977390`)
 - **Method:** One-workstream-at-a-time development with TDD-first vertical slices; parallel agents limited to independent review/documentation
-- **Last updated:** 2026-09-23 by Codex — began native W1 execution in the existing `w1` checkout
+- **Last updated:** 2026-09-23 by Codex — completed W1 Task 5 auth/session and registration provisioning slice
 - **Last verified against repo:** 2026-09-23
 - **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
 
@@ -61,7 +61,7 @@ three iterations).
 | Session | Started | Agent(s) | Branch | Workstream | Status | Doing | Last touched |
 |---|---|---|---|---|---|---|---|
 | S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Active | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
-| S2 | 2026-09-23 (time not tracked) | Codex | w1 | W1 | Active | Task 4 repositories complete; starting Task 5 session, authorization, and registration | 2026-09-23 |
+| S2 | 2026-09-23 (time not tracked) | Codex | w1 | W1 | Active | Task 5 auth/session and registration provisioning complete; next Task 6 wallet ledger | 2026-09-23 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -77,7 +77,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 
 | ID | Workstream | Status | Spec | Plan | Progress | Guide |
 |---|---|---|---|---|---|---|
-| W1 | F0 — Auth, Registration & Wallet Provisioning | Building | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | Tasks 1–4 complete; Task 5 auth and provisioning in flight | — |
+| W1 | F0 — Auth, Registration & Wallet Provisioning | Building | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | Tasks 1–5 complete; Task 6 wallet ledger next | — |
 | W2 | F1 — Listing Search & Property Discovery | Not started | — | — | Backlog only: §3 | — |
 | W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Not started | — | — | Backlog only: §3 | — |
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Not started | — | — | Backlog only: §3 | — |
