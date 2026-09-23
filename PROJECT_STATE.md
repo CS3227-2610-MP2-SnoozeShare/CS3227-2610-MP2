@@ -61,7 +61,7 @@ three iterations).
 | Session | Started | Agent(s) | Branch | Workstream | Status | Doing | Last touched |
 |---|---|---|---|---|---|---|---|
 | S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Active | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
-| S2 | 2026-09-23 (time not tracked) | Codex | w1 | W1 | Active | Task 2 state machines and service contracts complete; starting Task 3 SQLite infrastructure | 2026-09-23 |
+| S2 | 2026-09-23 (time not tracked) | Codex | w1 | W1 | Active | Task 3 SQLite infrastructure complete; starting Task 4 repository contracts and JDBC adapters | 2026-09-23 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -77,7 +77,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 
 | ID | Workstream | Status | Spec | Plan | Progress | Guide |
 |---|---|---|---|---|---|---|
-| W1 | F0 — Auth, Registration & Wallet Provisioning | Building | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | Tasks 1–2 complete; Task 3 SQLite infrastructure in flight | — |
+| W1 | F0 — Auth, Registration & Wallet Provisioning | Building | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | Tasks 1–3 complete; Task 4 repositories in flight | — |
 | W2 | F1 — Listing Search & Property Discovery | Not started | — | — | Backlog only: §3 | — |
 | W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Not started | — | — | Backlog only: §3 | — |
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Not started | — | — | Backlog only: §3 | — |
