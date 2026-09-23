@@ -2,8 +2,6 @@ package com.snoozeshare.app;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 /**
@@ -14,12 +12,32 @@ import javafx.stage.Stage;
  */
 public class Main extends Application {
 
+    private AppContext context;
+
     @Override
     public void start(Stage primaryStage) {
-        StackPane root = new StackPane(new Label("SnoozeShare"));
-        primaryStage.setTitle("SnoozeShare");
-        primaryStage.setScene(new Scene(root, 900, 650));
-        primaryStage.show();
+        try {
+            context = AppContext.create();
+            SceneRouter router = context.sceneRouter();
+            Scene scene = new Scene(router.load(context), 1280, 800);
+            scene.getStylesheets().add(getClass().getResource(
+                    "/com/snoozeshare/ui/common/theme.css").toExternalForm());
+            primaryStage.setTitle("SnoozeShare");
+            primaryStage.setMinWidth(1280);
+            primaryStage.setMinHeight(800);
+            primaryStage.setScene(scene);
+            primaryStage.show();
+        } catch (Exception exception) {
+            throw new IllegalStateException("unable to start SnoozeShare", exception);
+        }
+    }
+
+    @Override
+    public void stop() throws Exception {
+        if (context != null) {
+            context.close();
+        }
+        super.stop();
     }
 
     public static void main(String[] args) {

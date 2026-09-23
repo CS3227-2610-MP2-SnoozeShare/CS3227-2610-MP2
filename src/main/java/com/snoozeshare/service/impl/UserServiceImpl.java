@@ -30,6 +30,17 @@ public final class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User authenticate(String email) {
+        DomainValidation.requireText(email, "email");
+        User user = users.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("invalid email"));
+        if (user.accountStatus() != AccountStatus.ACTIVE) {
+            throw new IllegalStateException("account is not active");
+        }
+        return user;
+    }
+
+    @Override
     public User register(String displayName, String email, Role role, String registrationCode) {
         DomainValidation.requireText(displayName, "displayName");
         DomainValidation.requireText(email, "email");

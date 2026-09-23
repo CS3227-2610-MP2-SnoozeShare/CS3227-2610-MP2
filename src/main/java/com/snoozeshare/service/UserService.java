@@ -7,6 +7,8 @@ import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.model.User;
 
 public interface UserService {
+    User authenticate(String email);
+
     User register(String displayName, String email, Role role, String registrationCode);
 
     List<User> listByRole(Role role);

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<BorderPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.snoozeshare.ui.host.HostShellController" minWidth="1280" minHeight="800">
+    <top><HBox styleClass="header" spacing="24"><Label text="SnoozeShare"/><Label fx:id="roleLabel" text="Host"/></HBox></top>
+    <left><VBox styleClass="sidebar" spacing="12"><Label text="Dashboard"/><Label text="Listings"/><Label text="Bookings"/><Button text="Log out" onAction="#logout"/></VBox></left>
+    <center><VBox styleClass="content" spacing="16"><Label fx:id="pageTitle" text="Host home" styleClass="page-title"/><Label text="Feature screens will be added by the host workstream."/></VBox></center>
+    <right><VBox styleClass="wallet-panel" spacing="10"><Label text="Wallet"/><Label text="Wallet details available after login."/></VBox></right>
+</BorderPane>
