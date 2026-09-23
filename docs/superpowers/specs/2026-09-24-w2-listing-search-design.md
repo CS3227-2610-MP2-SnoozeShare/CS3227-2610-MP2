@@ -28,7 +28,7 @@ Give guests the ability to search and filter available property listings by loca
 | Inherits C7 | No guest-side service fee — `totalAmount = nightlyRate × nights` | Operator-confirmed, recorded in PROJECT_STATE.md |
 | Inherits C4 | `Property` record used directly as view model, no DTO layer | Operator-confirmed |
 | W2-D1 | Availability filtering done in Java (service layer), not a single SQL JOIN | Simpler to test; acceptable for MVP scale (single-process, small dataset) |
-| W2-D2 | Unavailable properties are excluded from search results entirely | Operator-confirmed during brainstorming |
+| W2-D2 | Unavailable properties are shown in search results but sorted after all available properties | Operator revised during spec review — guests should still see unavailable listings for awareness, but available ones take priority |
 | W2-D3 | No pagination — all matching results returned at once | MVP scale; can be added later if needed |
 | W2-D4 | `estimateCost()` kept as a service method despite trivial logic | Already on `ListingService` interface from W1; centralizes pricing if rules change |
 | W2-D5 | "Book Now" button on detail modal is present but disabled/placeholder | Owned by W3 (F2), not this workstream |
@@ -86,8 +86,8 @@ Implement the existing `ListingService` interface. W2 implements `search()`, `ge
 
 **`search(criteria)`:**
 1. Call `PropertyRepository.findBySearchCriteria(criteria)` — SQL-level filtering by city, guests, ACTIVE status
-2. If `criteria.startDate()` and `criteria.endDate()` are both non-null, filter the results by calling `AvailabilityService.isRangeAvailable()` for each property, removing unavailable ones
-3. Return the filtered `List<Property>`
+2. If `criteria.startDate()` and `criteria.endDate()` are both non-null, partition the results by calling `AvailabilityService.isRangeAvailable()` for each property — available properties first, then unavailable ones
+3. Return the sorted `List<Property>` (available before unavailable)
 
 **`getDetail(propertyId)`:**
 - Call `PropertyRepository.findById(propertyId)`
@@ -120,6 +120,7 @@ Follows the validated [UI design system spec](2026-09-23-ui-design-system-design
 **Results area:**
 - Scrollable list/grid of `Card` components (design tokens: `shadow-card`, `radius-md`)
 - Each card shows: title, city, property type, nightly rate, max guests, amenity chips
+- When dates are selected, unavailable property cards are visually muted (e.g. reduced opacity or a subtle "Unavailable for selected dates" label) and sorted after available ones
 - Empty state message when no results match
 - All active listings shown when no filters are applied
 
@@ -188,7 +189,7 @@ Follows the validated [UI design system spec](2026-09-23-ui-design-system-design
 
 ## 6. Acceptance Criteria
 
-1. **F1.1.1** — Searching with start/end dates excludes properties that have overlapping availability blocks or confirmed bookings for any date in that range
+1. **F1.1.1** — Searching with start/end dates sorts available properties before unavailable ones; unavailable properties (those with overlapping availability blocks or confirmed bookings) are visually distinguished but still shown
 2. **F1.1.2** — Searching by city filters via case-insensitive substring match; searching by guests filters properties where `maxGuests >= input`
 3. **F1.2.1** — Clicking a search result opens a modal showing all property fields (title, description, type, address, capacity, bedrooms, bathrooms, check-in/out times, amenities) and the host's display name
 4. **F1.2.2** — When dates are selected, the detail modal shows nightly rate, number of nights, and computed total amount
