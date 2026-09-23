@@ -1,25 +1,33 @@
 package com.snoozeshare.app;
 
 import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 /**
  * JavaFX entry point. Bootstraps dependency wiring and shows the first scene.
  *
- * <p>This is a placeholder shell until {@code AppContext} and {@code SceneRouter}
- * are implemented (see the architecture proposal, section 3).
+ * <p>The router replaces the authentication scene with the role shell after login.
  */
 public class Main extends Application {
 
+    private AppContext context;
+
     @Override
     public void start(Stage primaryStage) {
-        StackPane root = new StackPane(new Label("SnoozeShare"));
-        primaryStage.setTitle("SnoozeShare");
-        primaryStage.setScene(new Scene(root, 900, 650));
-        primaryStage.show();
+        try {
+            context = AppContext.create();
+            context.sceneRouter().show(primaryStage, context);
+        } catch (Exception exception) {
+            throw new IllegalStateException("Unable to start SnoozeShare", exception);
+        }
+    }
+
+    @Override
+    public void stop() throws Exception {
+        if (context != null) {
+            context.close();
+        }
+        super.stop();
     }
 
     public static void main(String[] args) {

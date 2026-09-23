@@ -7,7 +7,7 @@ A production-level app with multiple user roles for a formal setting as part of 
 - [`src/main/java`](src/main/java/com/snoozeshare) — application source (`com.snoozeshare`)
 - [`src/test/java`](src/test/java/com/snoozeshare) — tests
 - [`docs/`](docs) — [User Guide](docs/UserGuide.md), [Developer Guide](docs/DeveloperGuide.md), [Product Backlog](docs/ProductBacklog.md), [Reflections](docs/Reflections.md)
-- [`logs/`](logs) — LLM interaction logs
+- [`logs/`](logs) — per-agent-session interaction logs, named with SGT timestamp and branch
 
 ## Building & Running
 
