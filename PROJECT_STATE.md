@@ -6,10 +6,10 @@ every boundary, not at the end of the session.
 
 - **Phase:** Pre-implementation — project scaffolding only, no feature code written yet
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** main (at `d53c621`)
-- **Method:** Not yet established — see § Needs a Human (Q1)
-- **Last updated:** 2026-09-22 by Claude Sonnet 5 — built and populated the shared mock DB (`db/snoozeshare-mock.db`)
-- **Last verified against repo:** 2026-09-22
+- **Branch:** `ui-mockup` (at `7977390`, identical to `main` — created to design the UI/design system before any epic work starts)
+- **Method:** Not yet established for feature epics — see § Needs a Human (Q1). UI design system work (this session) proceeds independently via the brainstorming → spec → plan flow.
+- **Last updated:** 2026-09-23 by Claude Sonnet 5 — wrote the deferred UI design spec now that the 31-artboard canvas is validated: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md` (§ Architecture 4.2 / C11)
+- **Last verified against repo:** 2026-09-23
 - **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
 
 Sections are ordered by how often they are needed: **1–3 say where we are, 4–5 say what the
@@ -34,7 +34,7 @@ three iterations).
 
 | Path | What lives there |
 |---|---|
-| `docs/superpowers/specs/` | Design specs — one per feature-level workstream (does not exist yet — no workstream has started) |
+| `docs/superpowers/specs/` | Design specs — one per feature-level workstream. First one written 2026-09-23: `2026-09-23-ui-design-system-design.md` (UI design system, not tied to a single W1–W12 workstream) |
 | `docs/superpowers/plans/` | Implementation plans (does not exist yet) |
 | `docs/project-state/done-ledger.md` | The Done ledger — every change, newest first |
 | `docs/SnoozeShare-Architecture-Proposal.md` | The pre-existing architecture proposal — module boundaries, package layout, interface contracts, DB schema. Treated as the seed for § Architecture below, not a per-feature spec. |
@@ -60,7 +60,8 @@ three iterations).
 
 | Session | Started | Agent(s) | Branch | Workstream | Status | Doing | Last touched |
 |---|---|---|---|---|---|---|---|
-| S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Active | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
+| S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Paused | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
+| S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -154,9 +155,20 @@ pieces (`WalletPanelController`, `NavShell`, formatting/validation helpers, shar
 constructed once per session and embedded into whichever role shell is active. Controllers are
 meant to depend only on `service.*` interfaces, never `repository.*` or `infra.db.*` directly.
 
+**Visual design (S2, branch `ui-mockup`):** fully spec'd. The design spec is
+[`docs/superpowers/specs/2026-09-23-ui-design-system-design.md`](docs/superpowers/specs/2026-09-23-ui-design-system-design.md)
+— design tokens, the AtlantaFX theming mechanism, the component library mapping, app shell/nav,
+and a full 31-artboard screen inventory traced to `docs/ProductBacklog.md` line items. The visual
+source of truth is the Claude Design canvas it documents —
+https://claude.ai/artifact/PWBCxbfv9e9FGVvY6RKUwd (shared: anyone with the link). No FXML/CSS
+exists yet. Next per AGENTS.md §3: an implementation plan (`docs/superpowers/plans/`) before any
+of this becomes code — not yet started. Two schema gaps found while grounding the spec against
+`db/schema.sql` are recorded in § Deviations D2.
+
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
 | C2 | unknown | `WalletPanelController` lives in `ui.common`, not duplicated per role | Top-up/withdraw/balance display is identical for guests and hosts | [architecture proposal §2](docs/SnoozeShare-Architecture-Proposal.md) |
+| C11 | 2026-09-23 | UI design proceeded mockup-first: a Claude Design canvas built and iterated (3 review rounds) before the written spec, instead of spec-then-mockup. The spec was written once the canvas was validated — resolved, not still deferred. Key choices, all now in the spec: AtlantaFX `PrimerLight` base + runtime CSS-variable override (not a Sass rebuild) for the operator's Fall Light palette, plus explicit per-component radius/padding overrides (AtlantaFX's radius/spacing are compile-time Sass values, not runtime-overridable); "Spacious/Soft" density; a 4-tab `TabLine` shell per role (Guest: Search/Trips/Messages/Wallet, Host: Listings/Requests/Messages/Wallet, Agent: Disputes/Accounts/Audit Log/Categories); platform-default sans-serif (AtlantaFX bundles no font); light-only for now | Operator explicitly asked to skip the spec/plan and go straight to visual mockups via brainstorming + Claude's Design artifact type, after a full clarifying-questions pass validated each choice first; operator then asked for the spec once the canvas was fully reviewed | Operator conversation, 2026-09-23; verified against AtlantaFX's actual source (`mkpaz/atlantafx` `styles/src/`) rather than assumed, since an initial claim about bundled Inter was wrong; spec: [`docs/superpowers/specs/2026-09-23-ui-design-system-design.md`](docs/superpowers/specs/2026-09-23-ui-design-system-design.md) |
 
 ### 4.3 Service (application/business logic) *(planned)*
 
@@ -307,6 +319,30 @@ recorded with those areas in § Architecture (C1–C5).
 ---
 
 ## 9. Deviations & Discoveries
+
+### D2 — Two schema gaps found while grounding the UI mockups against `db/schema.sql` (OPEN 2026-09-23)
+
+While extending the Design canvas (C11) to show every field the operator asked for, checking
+each field against `db/schema.sql` / the architecture proposal §4 turned up two things the
+mockups need that the current schema doesn't have a column for:
+
+1. **Suspended-account reason** — the Agent Accounts screen shows a reason under a suspended
+   user's status pill (operator-requested), but `users` has only `accountStatus`
+   (`ACTIVE`/`SUSPENDED`), no `suspensionReason` column. The mockup shows it anyway as a design
+   requirement; whoever builds W11 needs to either add a `users.suspensionReason` column or
+   source it from an `audit_log` snapshot (see #2).
+2. **Audit log status/reason/amount aren't literal columns** — `audit_log` is generic
+   (`actorUserId`, `actionType`, `entityType`, `entityId`, `beforeState`, `afterState`,
+   `timestamp`); it has no `status`/`reason`/`amount` fields. The operator asked the Audit Log
+   screen to show those, so the mockup treats them as **derived from the entity's
+   `beforeState`/`afterState` JSON snapshot** (e.g. a `wallet_transactions` snapshot has
+   `amount`; a `tickets` snapshot has `status`+`resolutionReason`) rather than raw columns.
+   Whoever builds W9/W12 needs a small projection layer over those snapshots, not a schema
+   change.
+
+Not resolved — flagging so W9/W11/W12 don't get built against the mockup's flat columns without
+knowing they're derived, and so the missing `users` column is a deliberate open question, not a
+missed field.
 
 ### D1 — Architecture proposal said SQLite, repo briefly ran H2 — now resolved to SQLite (RESOLVED 2026-09-22)
 
