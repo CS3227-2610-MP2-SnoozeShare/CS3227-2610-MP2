@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import com.snoozeshare.domain.enums.AccountStatus;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.WalletTransactionType;
+import com.snoozeshare.domain.model.AuditLogEntry;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.domain.model.WalletTransaction;
@@ -47,5 +48,17 @@ public final class RowMappers {
                 JdbcCodecs.uuid(result.getString("relatedTicketId")),
                 JdbcCodecs.uuid(result.getString("initiatedBy")),
                 JdbcCodecs.instant(result.getString("createdAt")));
+    }
+
+    public static AuditLogEntry auditLogEntry(ResultSet result) throws SQLException {
+        return new AuditLogEntry(
+                JdbcCodecs.uuid(result.getString("logId")),
+                JdbcCodecs.uuid(result.getString("actorUserId")),
+                result.getString("actionType"),
+                result.getString("entityType"),
+                JdbcCodecs.uuid(result.getString("entityId")),
+                result.getString("beforeState"),
+                result.getString("afterState"),
+                JdbcCodecs.instant(result.getString("timestamp")));
     }
 }
