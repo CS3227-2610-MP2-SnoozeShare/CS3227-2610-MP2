@@ -11,6 +11,8 @@ import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.domain.model.WalletTransaction;
 import com.snoozeshare.domain.validation.DomainValidation;
 import com.snoozeshare.infra.db.TransactionManager;
+import com.snoozeshare.infra.events.EventBus;
+import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.repository.WalletRepository;
 import com.snoozeshare.repository.WalletTransactionRepository;
 
@@ -19,12 +21,22 @@ public final class WalletLedgerWriter {
     private final Connection connection;
     private final WalletRepository wallets;
     private final WalletTransactionRepository transactions;
+    private final EventBus eventBus;
 
     public WalletLedgerWriter(Connection connection, WalletRepository wallets,
                                WalletTransactionRepository transactions) {
         this.connection = connection;
         this.wallets = wallets;
         this.transactions = transactions;
+        this.eventBus = null;
+    }
+
+    public WalletLedgerWriter(Connection connection, WalletRepository wallets,
+                              WalletTransactionRepository transactions, EventBus eventBus) {
+        this.connection = connection;
+        this.wallets = wallets;
+        this.transactions = transactions;
+        this.eventBus = eventBus;
     }
 
     public WalletTransaction record(UUID walletId, WalletTransactionType type, BigDecimal amount,
@@ -38,7 +50,7 @@ public final class WalletLedgerWriter {
         }
         DomainValidation.requireNonNegative(feeAmount, "feeAmount");
         try {
-            return new TransactionManager(connection).inTransaction(current -> {
+            WalletTransaction transaction = new TransactionManager(connection).inTransaction(current -> {
                 Wallet wallet = wallets.findById(walletId)
                         .orElseThrow(() -> new IllegalArgumentException("wallet does not exist"));
                 DomainValidation.requireSgd(wallet.currency());
@@ -49,11 +61,16 @@ public final class WalletLedgerWriter {
                 Instant now = Instant.now();
                 wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter,
                         wallet.currency(), now));
-                WalletTransaction transaction = new WalletTransaction(UUID.randomUUID(), walletId,
+                WalletTransaction entry = new WalletTransaction(UUID.randomUUID(), walletId,
                         type, amount, feeAmount, balanceAfter, relatedBookingId, relatedTicketId,
                         initiatedBy, now);
-                return transactions.save(transaction);
+                return transactions.save(entry);
             });
+            if (eventBus != null) {
+                eventBus.publish(new WalletTransactionRecordedEvent(transaction.transactionId(),
+                        transaction.walletId(), transaction.createdAt()));
+            }
+            return transaction;
         } catch (SQLException exception) {
             throw new IllegalStateException("unable to write wallet ledger", exception);
         }

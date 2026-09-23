@@ -9,6 +9,7 @@ import com.snoozeshare.domain.enums.WalletTransactionType;
 import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.domain.model.WalletTransaction;
 import com.snoozeshare.domain.validation.DomainValidation;
+import com.snoozeshare.infra.events.EventBus;
 import com.snoozeshare.repository.WalletRepository;
 import com.snoozeshare.repository.WalletTransactionRepository;
 import com.snoozeshare.service.WalletService;
@@ -21,9 +22,14 @@ public final class WalletServiceImpl implements WalletService {
 
     public WalletServiceImpl(Connection connection, WalletRepository wallets,
                              WalletTransactionRepository transactions) {
+        this(connection, wallets, transactions, null);
+    }
+
+    public WalletServiceImpl(Connection connection, WalletRepository wallets,
+                             WalletTransactionRepository transactions, EventBus eventBus) {
         this.wallets = wallets;
         this.transactions = transactions;
-        this.ledger = new WalletLedgerWriter(connection, wallets, transactions);
+        this.ledger = new WalletLedgerWriter(connection, wallets, transactions, eventBus);
     }
 
     @Override

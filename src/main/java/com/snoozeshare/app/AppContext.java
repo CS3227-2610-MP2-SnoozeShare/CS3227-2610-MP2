@@ -35,12 +35,12 @@ public final class AppContext implements AutoCloseable {
         MigrationRunner.migrate(connection);
         JdbcUserRepository users = new JdbcUserRepository(connection);
         JdbcWalletRepository wallets = new JdbcWalletRepository(connection);
+        this.eventBus = new InProcessEventBus();
         this.session = new MockSessionContext();
         this.userService = new UserServiceImpl(connection, users, wallets);
         this.walletService = new WalletServiceImpl(connection, wallets,
-                new JdbcWalletTransactionRepository(connection));
+                new JdbcWalletTransactionRepository(connection), eventBus);
         this.auditService = new AuditServiceImpl(new JdbcAuditLogRepository(connection));
-        this.eventBus = new InProcessEventBus();
         this.sceneRouter = new SceneRouter();
     }
 

@@ -4,11 +4,11 @@
 anything, then run `git log --oneline -20` to confirm it still matches reality. Update it at
 every boundary, not at the end of the session.
 
-- **Phase:** Pre-implementation — project scaffolding only, no feature code written yet
+- **Phase:** W1 shared foundation — implementation complete pending final review and operator confirmation
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** w1 (at `7977390`)
+- **Branch:** w1 (at `92b99fa` plus uncommitted Task 9 wiring)
 - **Method:** One-workstream-at-a-time development with TDD-first vertical slices; parallel agents limited to independent review/documentation
-- **Last updated:** 2026-09-23 by Codex — completed W1 Task 8 native JavaFX shell and role routing
+- **Last updated:** 2026-09-23 by Codex — final self-review completed; W1 awaits operator confirmation
 - **Last verified against repo:** 2026-09-23
 - **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
 
@@ -61,7 +61,7 @@ three iterations).
 | Session | Started | Agent(s) | Branch | Workstream | Status | Doing | Last touched |
 |---|---|---|---|---|---|---|---|
 | S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Active | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
-| S2 | 2026-09-23 (time not tracked) | Codex | w1 | W1 | Active | Task 8 native shell and routing complete; next Task 9 integration and architecture verification | 2026-09-23 |
+| S2 | 2026-09-23 (time not tracked) | Codex | w1 | W1 | In review | Final self-review completed; W1 awaits operator confirmation | 2026-09-23 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -70,14 +70,14 @@ question ID, same as a workstream row).
 
 ## 3. Workstreams
 
-W1 has started with a support-tooling subtask. The rows below are the backlog's epics (§2 of the architecture proposal is
+W1 has completed its shared-foundation implementation and is awaiting operator confirmation. The rows below are the backlog's epics (§2 of the architecture proposal is
 their shared design; `docs/ProductBacklog.md` is their shared spec source) reframed as
 workstreams so future sessions have somewhere to record status. Each started workstream must link
 its spec and plan before feature implementation, per AGENTS.md § 3.
 
 | ID | Workstream | Status | Spec | Plan | Progress | Guide |
 |---|---|---|---|---|---|---|
-| W1 | F0 — Auth, Registration & Wallet Provisioning | Building | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | Tasks 1–8 complete; Task 9 integration and architecture verification next | — |
+| W1 | F0 — Auth, Registration & Wallet Provisioning | In review | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | Tasks 1–9 verified; final self-review and operator confirmation pending | Awaiting confirmation |
 | W2 | F1 — Listing Search & Property Discovery | Not started | — | — | Backlog only: §3 | — |
 | W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Not started | — | — | Backlog only: §3 | — |
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Not started | — | — | Backlog only: §3 | — |
@@ -100,11 +100,10 @@ Guide vocabulary — developer-guide coverage, owned by the `update-documentatio
 
 ## 4. Architecture
 
-**How the system is put together, area by area.** Nothing beyond the package skeleton and a
-placeholder JavaFX scene exists yet (confirmed by reading `src/main/java/com/snoozeshare/app/
-Main.java` and `Launcher.java`, and the fact that every other package under `src/main/java/com/
-snoozeshare/` contains only a `package-info.java`). Every area below is therefore marked
-*(planned)* and is sourced entirely from
+**How the system is put together, area by area.** W1 implements the shared domain, SQLite
+migration/transaction boundary, core auth/wallet/audit JDBC adapters, service contracts,
+session, events, and native JavaFX shell. Feature-specific repositories and transaction policies
+remain owned by later workstreams. The area descriptions below are reconciled from
 [`docs/SnoozeShare-Architecture-Proposal.md`](docs/SnoozeShare-Architecture-Proposal.md)
 (inferred/harvested, not yet built or verified in code), except where the repo already diverges
 — noted inline and in § Deviations.
@@ -123,32 +122,31 @@ ui.guest / ui.host / ui.admin  (JavaFX/FXML, role-isolated, each built on ui.com
 ```
 
 Dependency direction is strictly top-to-bottom: `ui.* → service → domain`,
-`service → repository → infra.db`, `service → infra.events`, everyone → `session`. An ArchUnit
-test enforcing this is proposed but not yet added *(planned)*.
+`service → repository → infra.db`, `service → infra.events`, everyone → `session`. The
+`LayerDependencyTest` enforces the critical domain/UI boundaries; broader package checks remain
+convention-level until feature adapters are added.
 
-### 4.1 App shell & bootstrap *(planned)*
+### 4.1 App shell & bootstrap
 
-**Now:** Does not exist yet. `Main.java` (`src/main/java/com/snoozeshare/app/Main.java`) is a
-placeholder JavaFX `Application` that shows a single `Label("SnoozeShare")` — a smoke-test shell,
-not real bootstrap. `Launcher.java` exists only so the shaded jar can launch without a
-`module-info.java`. `AppContext` (DI wiring) and `SceneRouter` (role-aware navigation) are
-specified but not implemented.
+**Now:** `AppContext` bootstraps a fresh SQLite database, shared services, session, event bus,
+audit service, and role-aware `SceneRouter`. `Main` loads the combined auth screen or role shell
+with shared CSS and a 1280×800 minimum window. `Launcher` remains the shaded-jar entry point.
 
 | Path | Role |
 |---|---|
-| `src/main/java/com/snoozeshare/app/Main.java` | JavaFX entry point (placeholder scene only) |
+| `src/main/java/com/snoozeshare/app/Main.java` | JavaFX entry point and shared shell bootstrap |
 | `src/main/java/com/snoozeshare/app/Launcher.java` | Non-Application main() for the shaded jar |
-| `com.snoozeshare.app.AppContext` *(planned)* | Wires services↔repositories, holds singletons |
-| `com.snoozeshare.app.SceneRouter` *(planned)* | Role-aware screen navigation off `SessionContext.currentRole()` |
+| `com.snoozeshare.app.AppContext` | Wires shared services, repositories, events, and session |
+| `com.snoozeshare.app.SceneRouter` | Role-aware screen navigation off `SessionContext.currentRole()` |
 
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
 | C1 | unknown (pre-dates this file) | Package-based modularity (`com.snoozeshare.{domain,service,repository,infra,ui.*,events}`) in one Gradle module, not JPMS `module-info.java` | JavaFX + JPMS reflection/`opens`/`exports` fights are painful for a course-scoped MVP; an ArchUnit test can give the same guarantee | [architecture proposal §1](docs/SnoozeShare-Architecture-Proposal.md) |
 
-### 4.2 UI (role-isolated) *(planned)*
+### 4.2 UI (role-isolated)
 
-**Now:** No FXML or controllers exist yet — only empty `ui.guest.*`, `ui.host.*`, `ui.admin.*`,
-`ui.common.*` package directories (each holding just a `package-info.java`). Per the proposal,
+**Now:** W1 provides the combined auth/register screen, shared CSS, header/sidebar/content shells,
+role routing, validation helper, and shared wallet panel boundary. Per the proposal,
 each role gets its own FXML+Controller tree under `ui.<role>`, and `ui.common` holds shared
 pieces (`WalletPanelController`, `NavShell`, formatting/validation helpers, shared components)
 constructed once per session and embedded into whichever role shell is active. Controllers are
@@ -158,10 +156,10 @@ meant to depend only on `service.*` interfaces, never `repository.*` or `infra.d
 |---|---|---|---|---|
 | C2 | unknown | `WalletPanelController` lives in `ui.common`, not duplicated per role | Top-up/withdraw/balance display is identical for guests and hosts | [architecture proposal §2](docs/SnoozeShare-Architecture-Proposal.md) |
 
-### 4.3 Service (application/business logic) *(planned)*
+### 4.3 Service (application/business logic)
 
-**Now:** No service interfaces or implementations exist yet — only empty `service` and
-`service.impl` package directories. The proposal specifies nine service interfaces
+**Now:** Shared service interfaces plus user registration/authentication, wallet provisioning,
+atomic wallet ledger, and audit implementation exist. The proposal specifies nine service interfaces
 (`ListingService`, `AvailabilityService`, `BookingService`, `TicketService`, `WalletService`,
 `TransactionService`, `UserService`, `ReviewService`, `AuditService`) with full method
 signatures — see [architecture proposal §3.1](docs/SnoozeShare-Architecture-Proposal.md) for the
@@ -176,10 +174,10 @@ exact contracts, including which backlog item (F-number) each method backs.
 | C9 | 2026-09-22 | `TICKET_REMEDY` and `AGENT_OVERRIDE` wallet rows are single-sided — only the wallet actually credited/debited gets a row, no matching entry on the other side. There is no double-entry anywhere in `wallet_transactions`, extending the doc's existing "fees aren't a real platform-wallet transfer" note to these two types as well | Operator confirmed while reviewing generated mock data | Operator conversation, 2026-09-22 |
 | C10 | 2026-09-22 | `wallets.currency` is `"SGD"` for real, not just the doc's illustrative example | Operator confirmed while reviewing generated mock data | Operator conversation, 2026-09-22 |
 
-### 4.4 Domain *(planned)*
+### 4.4 Domain
 
-**Now:** No records, enums, or state machines exist yet — only empty `domain.model`,
-`domain.enums`, `domain.statemachine` package directories. Specified as pure Java, zero
+**Now:** Records, enums, validation, and booking/ticket state machines are implemented as pure
+Java with zero
 JavaFX/JDBC dependencies. `BookingStateMachine.canTransition(from, to, actingRole)` and
 `TicketStateMachine` are meant to be the single legality check every role's service call goes
 through (guest cancel, host approve/reject, agent force-override all call the same function).
@@ -190,11 +188,12 @@ through (guest cancel, host approve/reject, agent force-override all call the sa
 | `domain.enums` *(planned)* | `Role`, `ListingStatus`, `PropertyType`, `AmenityType`, `BookingStatus`, `TicketStatus`, `RemedyType`, `WalletTransactionType`, `AccountStatus` |
 | `domain.statemachine` *(planned)* | `BookingStateMachine`, `TicketStateMachine` |
 
-### 4.5 Repository & persistence *(planned)*
+### 4.5 Repository & persistence
 
-**Now:** No repository interfaces or JDBC implementations exist yet — only empty `repository`,
-`repository.jdbc`, `repository.jdbc.support`, `infra.db`, `infra.db.migration` package
-directories. The proposal specifies one repository interface per aggregate (`UserRepository`,
+**Now:** Repository interfaces exist for all aggregates. W1 implements SQLite migrations and core
+`User`, `Wallet`, `WalletTransaction`, and `AuditLog` JDBC adapters; feature-specific aggregate
+adapters are owned by the workstreams that implement those features. The proposal specifies one
+repository interface per aggregate (`UserRepository`,
 `PropertyRepository`, `BookingRepository`, `AvailabilityBlockRepository`, `TicketRepository`,
 `WalletRepository`, `WalletTransactionRepository`, `ReviewRepository`, `AuditLogRepository`),
 each returning/consuming domain records — only `repository.jdbc.*` may import `java.sql.*`.
@@ -212,19 +211,22 @@ not loaded by the application at startup. See § Record.
 | C6 | 2026-09-22 | `properties` columns are exactly: `propertyId`, `hostId`, `status` (`ListingStatus`: ACTIVE/INACTIVE), `title`, `description`, `propertyType` (`APARTMENT`/`HOUSE`/`CONDO`/`PRIVATE_ROOM`), `streetAddress`, `city`, `region`, `postalCode`, `maxGuests`, `bedrooms`, `bathrooms`, `baseNightlyRate`, `checkInTime`, `checkOutTime`, `amenities` (`Set<WIFI,PARKING,AIR_CONDITIONING,KITCHEN,WASHER,WORK_DESK>`) | Operator supplied the authoritative field list (the architecture proposal had left it as "exactly your House fields" with no listing) — corrects an earlier draft `db/schema.sql` that had guessed different, non-matching field names/enum values | Operator conversation, 2026-09-22 |
 | C5 | 2026-09-22 | **Embedded DB is SQLite** (`org.xerial:sqlite-jdbc`), accessed via hand-rolled `PreparedStatement` + `RowMapper` DAOs — no JPA/Hibernate | Operator confirmed SQLite over H2 (resolves Q2 — the architecture proposal's heading was the correct signal, its H2-flavored rationale paragraph was not). `build.gradle` and `.gitignore` updated accordingly. Rationale per the proposal otherwise stands: relational for FK-heavy data, transactional guarantees for overlap-prevention and escrow correctness, zero external services. | Operator conversation, 2026-09-22; `build.gradle`, `.gitignore`, [architecture proposal §4](docs/SnoozeShare-Architecture-Proposal.md) |
 
-### 4.6 Events (in-process bus) *(planned)*
+### 4.6 Events (in-process bus)
 
-**Now:** No `EventBus` implementation exists yet — only empty `infra.events` and
-`infra.events.events` package directories. Specified as a simple `Consumer<Event>` pub/sub
+**Now:** `InProcessEventBus` provides typed synchronous subscriptions, unsubscribe handles, and
+subscriber-failure isolation. Concrete shared event records include booking, ticket, wallet, and
+availability events. It is used by the wallet ledger to publish only after commit.
+Specified as a simple `Consumer<Event>` pub/sub
 (`EventBus.publish` / `subscribe`) over a sealed `DomainEvent` hierarchy
 (`BookingConfirmedEvent`, `BookingCancelledEvent`, `TicketOpenedEvent`, `TicketResolvedEvent`,
 `WalletTransactionRecordedEvent`, `ListingAvailabilityChangedEvent`), used so cross-role UI
 refresh (e.g. Guest Trip Hub reflecting a Host decision) doesn't require the publisher to know
 the subscriber exists.
 
-### 4.7 Session *(planned)*
+### 4.7 Session
 
-**Now:** No `SessionContext` exists yet — only an empty `session` package directory. Specified
+**Now:** `SessionContext` and `MockSessionContext` provide optional current user, null-safe
+unauthenticated role, login, and logout. Specified
 as `Optional<User> currentUser()`, `Role currentRole()`, `loginAs(User)` (mocked — sets state, no
 credential check), `logout()`. Every service method that needs an actor takes the acting user's
 id explicitly rather than reaching into a global, so services stay unit-testable without a live
@@ -316,6 +318,19 @@ architecture area remain recorded in that area's table.
 
 ## 9. Deviations & Discoveries
 
+### D2 — Feature-specific persistence and transaction policy remain with owning workstreams
+
+W1 supplies every aggregate repository contract and the core JDBC adapters needed by shared auth,
+wallet, audit, and integration wiring. Property/availability/booking/ticket/review JDBC behavior
+and escrow/remedy transaction policy depend on feature-specific requirements, so W1 does not
+invent those implementations. This preserves the approved C13 boundary: W1 owns shared logic;
+feature workstreams own feature behavior.
+
+### D3 — SQLite Java 25 native-access warning is environmental
+
+The full suite passes, but SQLite emits Java 25's warning that native access should be enabled for
+the JDBC loader. It is non-fatal in the current runtime and does not change W1 behavior.
+
 ### D1 — Architecture proposal said SQLite, repo briefly ran H2 — now resolved to SQLite (RESOLVED 2026-09-22)
 
 [`docs/SnoozeShare-Architecture-Proposal.md` §4](docs/SnoozeShare-Architecture-Proposal.md)
@@ -342,6 +357,6 @@ The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-st
 — every change, big or small, newest first.
 
 - **Latest entry:** 2026-09-23
-- **Entries:** 14 (4 backfilled coarsely from git history, 10 for prior sessions)
+- **Entries:** 15 (4 backfilled coarsely from git history, 11 current/history entries)
 
 Deviations stay in § Deviations above: those are read every session.
