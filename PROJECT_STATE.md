@@ -6,10 +6,10 @@ every boundary, not at the end of the session.
 
 - **Phase:** Pre-implementation — project scaffolding only, no feature code written yet
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** main (at `d53c621`)
+- **Branch:** w1 (at `7977390`)
 - **Method:** Not yet established — see § Needs a Human (Q1)
-- **Last updated:** 2026-09-22 by Claude Sonnet 5 — built and populated the shared mock DB (`db/snoozeshare-mock.db`)
-- **Last verified against repo:** 2026-09-22
+- **Last updated:** 2026-09-23 by Codex — aligned the interaction-log template with the existing session file
+- **Last verified against repo:** 2026-09-23
 - **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
 
 Sections are ordered by how often they are needed: **1–3 say where we are, 4–5 say what the
@@ -34,14 +34,14 @@ three iterations).
 
 | Path | What lives there |
 |---|---|
-| `docs/superpowers/specs/` | Design specs — one per feature-level workstream (does not exist yet — no workstream has started) |
-| `docs/superpowers/plans/` | Implementation plans (does not exist yet) |
+| `docs/superpowers/specs/` | Design specs — one per feature-level workstream, including W1 support tooling |
+| `docs/superpowers/plans/` | Implementation plans, including the W1 support-tooling plan |
 | `docs/project-state/done-ledger.md` | The Done ledger — every change, newest first |
 | `docs/SnoozeShare-Architecture-Proposal.md` | The pre-existing architecture proposal — module boundaries, package layout, interface contracts, DB schema. Treated as the seed for § Architecture below, not a per-feature spec. |
 | `docs/ProductBacklog.md` | The formal product backlog / engineering spec — epics F0–F11, prioritized and sprint-mapped |
 | `docs/DeveloperGuide.md` | Handover brief for developers — currently an empty placeholder |
 | `docs/UserGuide.md`, `docs/Reflections.md` | End-user guide; reflections on the agentic workflow (not read in full for this bootstrap — out of scope per bootstrapping bounds) |
-| `logs/LLM_interactions.md` | LLM interaction log (course requirement) |
+| `logs/` | Per-agent-session interaction logs named `YYYY-MM-DD_HH-mm-ss_<branch>.md` in SGT |
 | `src/main/java/com/snoozeshare/` | Application source — package skeleton only, see § Architecture |
 | `config/checkstyle/` | Checkstyle rules enforced on build |
 | `db/schema.sql`, `db/seed-mock-data.sql`, `db/snoozeshare-mock.db` | Shared team-reference SQLite DB — draft SQL + the built `.db` file, committed so everyone queries the same data. Dev/reference artifact, not wired into app startup (see § 4.5) |
@@ -69,15 +69,14 @@ question ID, same as a workstream row).
 
 ## 3. Workstreams
 
-None have started. The rows below are the backlog's epics (§2 of the architecture proposal is
+W1 has started with a support-tooling subtask. The rows below are the backlog's epics (§2 of the architecture proposal is
 their shared design; `docs/ProductBacklog.md` is their shared spec source) reframed as
-workstreams so future sessions have somewhere to record status. No workstream has a
-`docs/superpowers/specs/` or `docs/superpowers/plans/` document yet — per AGENTS.md § 3, one
-should be written before coding starts on any of these (all are feature-level or larger).
+workstreams so future sessions have somewhere to record status. Each started workstream must link
+its spec and plan before feature implementation, per AGENTS.md § 3.
 
 | ID | Workstream | Status | Spec | Plan | Progress | Guide |
 |---|---|---|---|---|---|---|
-| W1 | F0 — Auth, Registration & Wallet Provisioning | Not started | — | — | Backlog only: `docs/ProductBacklog.md` §2 | — |
+| W1 | F0 — Auth, Registration & Wallet Provisioning | Building | [interaction-logging design](docs/superpowers/specs/2026-09-23-interaction-logging-skill-design.md) | [interaction-logging plan](docs/superpowers/plans/2026-09-23-interaction-logging-skill.md) | Support tooling done; F0 implementation not started | — |
 | W2 | F1 — Listing Search & Property Discovery | Not started | — | — | Backlog only: §3 | — |
 | W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Not started | — | — | Backlog only: §3 | — |
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Not started | — | — | Backlog only: §3 | — |
@@ -256,6 +255,10 @@ Durable rules, harvested from the architecture proposal. None are enforced by to
 - **ID namespaces:** `W` = workstream, `C` = decision, `D` = deviation, `Q` = needs a human,
   `S` = session. Numbers are unique across the whole file and never reused, wherever the entry
   sits.
+- Agent interaction logs are append-only, one file per session under `logs/`, named with the SGT
+  session-start timestamp and branch slug; that filename stem is the canonical session key. The
+  logging skill is manually invoked at session end. Numeric `S` labels in the session table are not
+  log identities; there is no consolidated log currently.
 
 ---
 
@@ -333,7 +336,7 @@ as C5 in § Architecture 4.5.
 The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-state/done-ledger.md)**
 — every change, big or small, newest first.
 
-- **Latest entry:** 2026-09-22
-- **Entries:** 10 (4 backfilled coarsely from git history, 6 for this session)
+- **Latest entry:** 2026-09-23
+- **Entries:** 14 (4 backfilled coarsely from git history, 10 for prior sessions)
 
 Deviations stay in § Deviations above: those are read every session.
