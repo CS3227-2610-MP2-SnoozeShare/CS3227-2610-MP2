@@ -7,7 +7,6 @@ import java.time.format.DateTimeFormatter;
 
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.enums.AmenityType;
-import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.service.PriceBreakdown;
@@ -98,10 +97,7 @@ public final class ListingDetailController {
 
     private User findHost(Property property) {
         try {
-            return context.userService().listByRole(Role.HOST).stream()
-                    .filter(u -> u.userId().equals(property.hostId()))
-                    .findFirst()
-                    .orElse(null);
+            return context.userService().findById(property.hostId());
         } catch (Exception exception) {
             return null;
         }

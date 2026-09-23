@@ -115,7 +115,13 @@ public final class RowMappers {
         return Arrays.stream(value.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
-                .map(AmenityType::valueOf)
+                .flatMap(s -> {
+                    try {
+                        return java.util.stream.Stream.of(AmenityType.valueOf(s));
+                    } catch (IllegalArgumentException ignored) {
+                        return java.util.stream.Stream.empty();
+                    }
+                })
                 .collect(Collectors.toUnmodifiableSet());
     }
 

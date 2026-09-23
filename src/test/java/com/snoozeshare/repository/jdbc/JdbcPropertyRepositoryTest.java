@@ -119,6 +119,30 @@ class JdbcPropertyRepositoryTest {
         }
     }
 
+    @Test
+    void unknownAmenityInDatabaseIsIgnoredGracefully() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var users = new JdbcUserRepository(connection);
+            var repo = new JdbcPropertyRepository(connection);
+            User host = saveHost(users);
+            Property property = makeProperty(host.userId(), "Test", "Singapore",
+                    ListingStatus.ACTIVE, 2);
+            repo.save(property);
+
+            // Manually insert an unknown amenity value into the DB
+            try (var stmt = connection.prepareStatement(
+                    "UPDATE properties SET amenities = 'WIFI,UNKNOWN_AMENITY,KITCHEN' WHERE propertyId = ?")) {
+                stmt.setString(1, property.propertyId().toString());
+                stmt.executeUpdate();
+            }
+
+            var found = repo.findById(property.propertyId());
+
+            assertTrue(found.isPresent());
+            assertEquals(Set.of(AmenityType.WIFI, AmenityType.KITCHEN), found.get().amenities());
+        }
+    }
+
     private static User saveHost(JdbcUserRepository users) {
         User host = new User(UUID.randomUUID(), Role.HOST, "Host",
                 "host-" + UUID.randomUUID() + "@test.com",
