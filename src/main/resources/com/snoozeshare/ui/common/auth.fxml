@@ -12,17 +12,19 @@
       fx:controller="com.snoozeshare.ui.common.AuthController" alignment="CENTER"
       spacing="12" styleClass="auth-page">
     <padding><Insets top="48" right="48" bottom="48" left="48"/></padding>
-    <Label text="SnoozeShare" styleClass="brand-title"/>
+    <Label text="SnoozeShare" styleClass="app-title"/>
     <Label fx:id="modeLabel" text="Welcome back" styleClass="page-title"/>
     <Label fx:id="errorMessage" visible="false" managed="false" styleClass="error-message"/>
+    <Label fx:id="successMessage" visible="false" managed="false" styleClass="success-message"/>
     <Label fx:id="displayNameLabel" text="Display name"/>
     <TextField fx:id="displayNameField" promptText="Your name" maxWidth="360"/>
     <Label text="Email"/>
     <TextField fx:id="emailField" promptText="you@example.com" maxWidth="360"/>
-    <Label text="Role"/>
+    <Label fx:id="roleLabel" text="Role"/>
     <ComboBox fx:id="roleSelector" maxWidth="360"/>
     <Label fx:id="registrationCodeLabel" text="Registration code"/>
     <PasswordField fx:id="registrationCodeField" promptText="Provided code" maxWidth="360"/>
-    <Button text="Continue" onAction="#submit" defaultButton="true" maxWidth="360"/>
-    <Button text="Switch Login / Register" onAction="#toggleMode" maxWidth="360"/>
+    <Button fx:id="submitButton" text="Login" onAction="#submit" defaultButton="true" maxWidth="360"/>
+    <Button fx:id="toggleButton" text="Create an account" styleClass="outline-button"
+            onAction="#toggleMode" maxWidth="360"/>
 </VBox>

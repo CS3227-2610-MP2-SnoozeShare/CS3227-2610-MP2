@@ -6,9 +6,9 @@ every boundary, not at the end of the session.
 
 - **Phase:** W1 shared foundation — implementation complete pending final review and operator confirmation
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** w1 (at `92b99fa` plus uncommitted Task 9 wiring)
+- **Branch:** w1 (latest commit is the squashed shared authentication UI flow)
 - **Method:** One-workstream-at-a-time development with TDD-first vertical slices; parallel agents limited to independent review/documentation
-- **Last updated:** 2026-09-23 by Codex — standardized exception messages to begin with capital letters
+- **Last updated:** 2026-09-23 by Codex — removed the consolidation ledger row and ordered today’s entries newest first
 - **Last verified against repo:** 2026-09-23
 - **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
 
@@ -61,7 +61,7 @@ three iterations).
 | Session | Started | Agent(s) | Branch | Workstream | Status | Doing | Last touched |
 |---|---|---|---|---|---|---|---|
 | S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Active | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
-| S2 | 2026-09-23 (time not tracked) | Codex | w1 | W1 | In review | Exception-message capitalization fix verified; W1 still awaits operator confirmation | 2026-09-23 |
+| S2 | 2026-09-23 (time not tracked) | Codex | w1 | W1 | In review | Done ledger corrected and today’s entries ordered newest first; W1 still awaits operator confirmation | 2026-09-23 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
