@@ -52,7 +52,7 @@ class DatabaseBootstrapTest {
                             + "VALUES ('u1', 'GUEST', 'Guest', 'guest@example.com', "
                             + "'ACTIVE', '2026-09-23T00:00:00Z')");
                 }
-                throw new IllegalStateException("force rollback");
+                throw new IllegalStateException("Force rollback");
             }));
 
             try (Statement statement = connection.createStatement();

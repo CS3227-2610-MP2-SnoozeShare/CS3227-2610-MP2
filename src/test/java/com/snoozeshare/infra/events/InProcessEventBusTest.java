@@ -33,7 +33,7 @@ class InProcessEventBusTest {
         EventBus bus = new InProcessEventBus();
         AtomicInteger delivered = new AtomicInteger();
         bus.subscribe(BookingConfirmedEvent.class, event -> {
-            throw new IllegalStateException("subscriber failed");
+            throw new IllegalStateException("Subscriber failed");
         });
         bus.subscribe(BookingConfirmedEvent.class, event -> delivered.incrementAndGet());
 
