@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="16" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.snoozeshare.ui.guest.search.GuestSearchController">
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+
+    <Label text="Search Properties" styleClass="page-title"/>
+
+    <HBox spacing="12" alignment="CENTER_LEFT">
+        <TextField fx:id="cityField" promptText="City or location" prefWidth="200"/>
+        <DatePicker fx:id="checkInPicker" promptText="Check-in" prefWidth="140"/>
+        <DatePicker fx:id="checkOutPicker" promptText="Check-out" prefWidth="140"/>
+        <ComboBox fx:id="guestsCombo" promptText="Guests" prefWidth="100"/>
+        <Button text="Search" onAction="#handleSearch" styleClass="button"/>
+    </HBox>
+
+    <Label fx:id="statusLabel" text="" styleClass="small"/>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+        <FlowPane fx:id="resultsPane" hgap="16" vgap="16">
+            <padding><Insets top="8" right="8" bottom="8" left="8"/></padding>
+        </FlowPane>
+    </ScrollPane>
+</VBox>

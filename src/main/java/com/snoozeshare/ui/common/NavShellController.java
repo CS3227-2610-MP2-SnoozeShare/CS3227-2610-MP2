@@ -41,6 +41,10 @@ public class NavShellController {
         onLoggedOut.run();
     }
 
+    protected AppContext getContext() {
+        return context;
+    }
+
     protected void displayPage(String title, String message) {
         pageTitle.setText(title);
         pageMessage.setText(message);

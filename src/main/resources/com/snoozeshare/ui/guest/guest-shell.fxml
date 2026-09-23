@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
-<BorderPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+<BorderPane fx:id="shellRoot" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.snoozeshare.ui.guest.GuestShellController" minWidth="1280" minHeight="800">
     <top><HBox styleClass="header" spacing="24" alignment="CENTER_LEFT"><Label text="SnoozeShare" styleClass="app-title"/><Region HBox.hgrow="ALWAYS"/><Label fx:id="roleLabel" text="Guest"/></HBox></top>
     <left><VBox styleClass="sidebar" spacing="12"><Label text="Explore" styleClass="nav-item" onMouseClicked="#showExplore"/><Label text="My Trips" styleClass="nav-item" onMouseClicked="#showMyTrips"/><Label text="Support" styleClass="nav-item" onMouseClicked="#showSupport"/><Button text="Log out" styleClass="outline-button" onAction="#logout"/></VBox></left>
