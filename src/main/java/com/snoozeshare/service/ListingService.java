@@ -8,7 +8,7 @@ import com.snoozeshare.domain.enums.ListingStatus;
 import com.snoozeshare.domain.model.Property;
 
 public interface ListingService {
-    List<Property> search(SearchCriteria criteria);
+    List<SearchResult> search(SearchCriteria criteria);
 
     Property getDetail(UUID propertyId);
 
