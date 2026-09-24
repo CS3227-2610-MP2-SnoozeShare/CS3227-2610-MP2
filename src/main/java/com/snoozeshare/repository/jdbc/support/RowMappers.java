@@ -3,10 +3,21 @@ package com.snoozeshare.repository.jdbc.support;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.snoozeshare.domain.enums.AccountStatus;
+import com.snoozeshare.domain.enums.AmenityType;
+import com.snoozeshare.domain.enums.BookingStatus;
+import com.snoozeshare.domain.enums.ListingStatus;
+import com.snoozeshare.domain.enums.PropertyType;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.WalletTransactionType;
 import com.snoozeshare.domain.model.AuditLogEntry;
+import com.snoozeshare.domain.model.AvailabilityBlock;
+import com.snoozeshare.domain.model.Booking;
+import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.domain.model.WalletTransaction;
@@ -48,6 +59,70 @@ public final class RowMappers {
                 JdbcCodecs.uuid(result.getString("relatedTicketId")),
                 JdbcCodecs.uuid(result.getString("initiatedBy")),
                 JdbcCodecs.instant(result.getString("createdAt")));
+    }
+
+    public static Property property(ResultSet result) throws SQLException {
+        return new Property(
+                JdbcCodecs.uuid(result.getString("propertyId")),
+                JdbcCodecs.uuid(result.getString("hostId")),
+                ListingStatus.valueOf(result.getString("status")),
+                result.getString("title"),
+                result.getString("description"),
+                PropertyType.valueOf(result.getString("propertyType")),
+                result.getString("streetAddress"),
+                result.getString("city"),
+                result.getString("region"),
+                result.getString("postalCode"),
+                result.getInt("maxGuests"),
+                result.getInt("bedrooms"),
+                result.getDouble("bathrooms"),
+                JdbcCodecs.decimal(result.getString("baseNightlyRate")),
+                JdbcCodecs.localTime(result.getString("checkInTime")),
+                JdbcCodecs.localTime(result.getString("checkOutTime")),
+                parseAmenities(result.getString("amenities")),
+                JdbcCodecs.instant(result.getString("createdAt")));
+    }
+
+    public static AvailabilityBlock availabilityBlock(ResultSet result) throws SQLException {
+        return new AvailabilityBlock(
+                JdbcCodecs.uuid(result.getString("blockId")),
+                JdbcCodecs.uuid(result.getString("propertyId")),
+                JdbcCodecs.localDate(result.getString("startDate")),
+                JdbcCodecs.localDate(result.getString("endDate")),
+                result.getString("source"),
+                JdbcCodecs.uuid(result.getString("bookingId")));
+    }
+
+    public static Booking booking(ResultSet result) throws SQLException {
+        return new Booking(
+                JdbcCodecs.uuid(result.getString("bookingId")),
+                JdbcCodecs.uuid(result.getString("listingId")),
+                JdbcCodecs.uuid(result.getString("guestId")),
+                JdbcCodecs.localDate(result.getString("startDate")),
+                JdbcCodecs.localDate(result.getString("endDate")),
+                BookingStatus.valueOf(result.getString("status")),
+                JdbcCodecs.decimal(result.getString("nightlyRateSnapshot")),
+                JdbcCodecs.decimal(result.getString("totalAmount")),
+                JdbcCodecs.instant(result.getString("createdAt")),
+                JdbcCodecs.instant(result.getString("decidedAt")),
+                JdbcCodecs.instant(result.getString("completedAt")));
+    }
+
+    private static Set<AmenityType> parseAmenities(String value) {
+        if (value == null || value.isBlank()) {
+            return Set.of();
+        }
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .flatMap(s -> {
+                    try {
+                        return java.util.stream.Stream.of(AmenityType.valueOf(s));
+                    } catch (IllegalArgumentException ignored) {
+                        return java.util.stream.Stream.empty();
+                    }
+                })
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     public static AuditLogEntry auditLogEntry(ResultSet result) throws SQLException {

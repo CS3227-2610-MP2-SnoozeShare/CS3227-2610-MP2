@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane fitToWidth="true" maxWidth="700" maxHeight="600"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.snoozeshare.ui.guest.listing.ListingDetailController">
+    <VBox spacing="16" styleClass="detail-modal">
+        <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+        <HBox alignment="CENTER_LEFT">
+            <Label fx:id="titleLabel" styleClass="page-title"/>
+        </HBox>
+
+        <Label fx:id="typeLabel" styleClass="small"/>
+        <Label fx:id="addressLabel"/>
+        <Label fx:id="descriptionLabel" wrapText="true"/>
+
+        <HBox spacing="24">
+            <Label fx:id="capacityLabel"/>
+            <Label fx:id="bedroomsLabel"/>
+            <Label fx:id="bathroomsLabel"/>
+        </HBox>
+
+        <HBox spacing="24">
+            <Label fx:id="checkInLabel"/>
+            <Label fx:id="checkOutLabel"/>
+        </HBox>
+
+        <Label text="Amenities" styleClass="card-title"/>
+        <FlowPane fx:id="amenitiesPane" hgap="8" vgap="8"/>
+
+        <Label text="Host" styleClass="card-title"/>
+        <Label fx:id="hostLabel"/>
+
+        <VBox fx:id="priceBox" spacing="8" styleClass="price-panel">
+            <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+            <Label fx:id="nightlyRateLabel"/>
+            <Label fx:id="nightsLabel"/>
+            <Label fx:id="totalLabel" styleClass="card-price"/>
+        </VBox>
+
+        <Label text="Reviews" styleClass="card-title"/>
+        <Label text="Reviews coming soon." styleClass="small"/>
+
+        <HBox spacing="12" alignment="CENTER_RIGHT">
+            <Button fx:id="bookButton" text="Book Now" disable="true" styleClass="button"/>
+            <Button text="Close" onAction="#handleClose" styleClass="outline-button"/>
+        </HBox>
+    </VBox>
+</ScrollPane>

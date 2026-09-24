@@ -11,6 +11,8 @@ public interface UserService {
 
     User register(String displayName, String email, Role role, String registrationCode);
 
+    User findById(UUID userId);
+
     List<User> listByRole(Role role);
 
     User suspend(UUID userId, UUID agentId);

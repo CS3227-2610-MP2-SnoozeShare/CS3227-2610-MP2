@@ -66,6 +66,12 @@ public final class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User findById(UUID userId) {
+        return users.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
+    }
+
+    @Override
     public List<User> listByRole(Role role) {
         return users.findByRole(role);
     }
