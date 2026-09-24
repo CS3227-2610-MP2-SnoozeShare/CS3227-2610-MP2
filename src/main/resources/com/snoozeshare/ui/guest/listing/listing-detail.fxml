@@ -49,8 +49,11 @@
         <Label text="Reviews" styleClass="card-title"/>
         <Label text="Reviews coming soon." styleClass="small"/>
 
+        <Label fx:id="bookingStatusLabel" styleClass="small" visible="false" managed="false"/>
+
         <HBox spacing="12" alignment="CENTER_RIGHT">
-            <Button fx:id="bookButton" text="Book Now" disable="true" styleClass="button"/>
+            <Button fx:id="bookButton" text="Book Now" onAction="#handleBook"
+                    disable="true" styleClass="button"/>
             <Button text="Close" onAction="#handleClose" styleClass="outline-button"/>
         </HBox>
     </VBox>
