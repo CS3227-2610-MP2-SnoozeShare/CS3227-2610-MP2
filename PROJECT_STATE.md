@@ -4,11 +4,11 @@
 anything, then run `git log --oneline -20` to confirm it still matches reality. Update it at
 every boundary, not at the end of the session.
 
-- **Phase:** W2 Listing Search — complete; W3 next for Guest features
+- **Phase:** W3 Booking Execution — implementation complete, ready for review
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `w2` (Guest features — Listing Search & Property Discovery)
+- **Branch:** `w3` (Guest features — Booking Execution & Trip Hub)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-24 by Claude Opus 4.6 — completed W2 implementation: search/filter, JDBC adapters, service layer, search UI, detail modal
+- **Last updated:** 2026-09-24 by Claude Opus 4.6 — starting W3 implementation
 - **Last verified against repo:** 2026-09-24
 - **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
 
@@ -80,7 +80,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 |---|---|---|---|---|---|---|
 | W1 | F0 — Auth, Registration & Wallet Provisioning | Done | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | W1 implementation and verification complete; guide confirmation pending | Awaiting confirmation |
 | W2 | F1 — Listing Search & Property Discovery | Done | [listing-search design](docs/superpowers/specs/2026-09-24-w2-listing-search-design.md) | [listing-search plan](docs/superpowers/plans/2026-09-24-w2-listing-search.md) | Implementation complete: search/filter, detail modal, price breakdown | Awaiting confirmation |
-| W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Not started | — | — | Backlog only: §3 | — |
+| W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Building | [booking-execution design](docs/superpowers/specs/2026-09-24-w3-booking-execution-design.md) | [booking-execution plan](docs/superpowers/plans/2026-09-24-w3-booking-execution.md) | All 9 tasks complete: TransactionServiceImpl, BookingServiceImpl (submit/cancel/decide), AppContext wiring, Trip Hub UI, Book Now button | — |
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Not started | — | — | Backlog only: §3 | — |
 | W5 | F4 — Guest Wallet Management (top-up/withdraw) | Not started | — | — | Backlog only: §3 | — |
 | W6 | F5 — Host Listing Management & Publishing | Not started | — | — | Backlog only: §4 | — |
@@ -131,10 +131,9 @@ convention-level until feature adapters are added.
 
 **Now:** `AppContext` bootstraps a fresh SQLite database, shared services, session, event bus,
 audit service, and role-aware `SceneRouter`. W2 added wiring for `ListingService`,
-`AvailabilityService`, and their backing JDBC repositories (`JdbcPropertyRepository`,
-`JdbcAvailabilityBlockRepository`, `JdbcBookingRepository`). `Main` loads the combined auth
-screen or role shell with shared CSS and a 1280×800 minimum window. `Launcher` remains the
-shaded-jar entry point.
+`AvailabilityService`, and their backing JDBC repositories. W3 added `BookingService` and
+`TransactionService` wiring. `Main` loads the combined auth screen or role shell with shared CSS
+and a 1280×800 minimum window. `Launcher` remains the shaded-jar entry point.
 
 | Path | Role |
 |---|---|
@@ -151,11 +150,12 @@ shaded-jar entry point.
 
 **Now:** W1 provides the combined auth/register screen, shared CSS, header/sidebar/content shells,
 role routing, validation helper, and shared wallet panel boundary. W2 adds the Guest search
-screen (`ui.guest.search.GuestSearchController` + `guest-search.fxml`) with city/date/capacity
-filters and property cards, plus a property detail modal (`ui.guest.listing.ListingDetailController`
-+ `listing-detail.fxml`) shown as a StackPane overlay with price breakdown, amenity chips, and
-host info. `NavShellController` gained a `getContext()` accessor. `theme.css` has styles for
-property cards, detail modal, amenity chips, and the modal overlay. Per the proposal,
+screen and property detail modal. W3 adds the Trip Hub dashboard
+(`ui.guest.trips.TripDashboardController` + `trip-dashboard.fxml`) with Pending/Upcoming/Active/
+Completed/Cancelled tabs, trip cards with cancel buttons, event bus subscriptions for real-time
+refresh, and the "Book Now" button on `ListingDetailController` wired to
+`BookingService.submitRequest()`. `theme.css` gains trip card, tab bar, and status pill styles.
+Per the proposal,
 each role gets its own FXML+Controller tree under `ui.<role>`, and `ui.common` holds shared
 pieces (`WalletPanelController`, `NavShell`, formatting/validation helpers, shared components)
 constructed once per session and embedded into whichever role shell is active. Controllers are
@@ -179,11 +179,12 @@ of this becomes code — not yet started. Two schema gaps found while grounding 
 ### 4.3 Service (application/business logic)
 
 **Now:** Shared service interfaces plus user registration/authentication, wallet provisioning,
-atomic wallet ledger, and audit implementation exist. W2 adds `AvailabilityServiceImpl` (checks
-host blocks + confirmed bookings for range availability) and `ListingServiceImpl` (search with
-SQL-level city/capacity filtering, date-based availability partitioning with available-first
-sorting, detail lookup, and `estimateCost` computing `rate × nights`). `UserService` gained a
-`findById(UUID)` method. The proposal specifies nine service interfaces
+atomic wallet ledger, and audit implementation exist. W2 adds `AvailabilityServiceImpl` and
+`ListingServiceImpl`. W3 adds `BookingServiceImpl` (submitRequest with atomic escrow+block,
+cancel with 48h refund policy, decide for host approve/reject, tripsFor/pendingRequestsFor
+queries) and `TransactionServiceImpl` (holdEscrow, refundEscrow, historyFor — with
+settleBookingCompletion/applyTicketRemedy/manualOverride stubbed for W8/W10). `UserService`
+gained a `findById(UUID)` method. The proposal specifies nine service interfaces
 (`ListingService`, `AvailabilityService`, `BookingService`, `TicketService`, `WalletService`,
 `TransactionService`, `UserService`, `ReviewService`, `AuditService`) with full method
 signatures — see [architecture proposal §3.1](docs/SnoozeShare-Architecture-Proposal.md) for the
