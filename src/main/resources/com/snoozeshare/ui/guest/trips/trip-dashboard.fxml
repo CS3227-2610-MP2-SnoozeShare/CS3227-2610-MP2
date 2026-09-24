@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="16" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.snoozeshare.ui.guest.trips.TripDashboardController">
+    <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+    <Label text="My Trips" styleClass="page-title"/>
+
+    <HBox fx:id="tabBar" spacing="16" styleClass="trip-tab-bar">
+        <Label text="Pending" styleClass="nav-item,trip-tab,trip-tab-active"
+               onMouseClicked="#showPending"/>
+        <Label text="Upcoming" styleClass="nav-item,trip-tab"
+               onMouseClicked="#showUpcoming"/>
+        <Label text="Active" styleClass="nav-item,trip-tab"
+               onMouseClicked="#showActive"/>
+        <Label text="Completed" styleClass="nav-item,trip-tab"
+               onMouseClicked="#showCompleted"/>
+        <Label text="Cancelled" styleClass="nav-item,trip-tab"
+               onMouseClicked="#showCancelled"/>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+        <VBox fx:id="tripsContainer" spacing="12">
+            <padding><Insets top="8" right="8" bottom="8" left="8"/></padding>
+        </VBox>
+    </ScrollPane>
+
+    <Label fx:id="emptyLabel" text="No trips to show." styleClass="small" visible="false"
+           managed="false"/>
+</VBox>
