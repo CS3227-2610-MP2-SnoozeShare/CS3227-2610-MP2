@@ -57,8 +57,9 @@ public final class CategoryAdminController {
         dialog.setTitle("Rename category");
         dialog.setHeaderText("Rename \"" + category.label() + "\"");
         dialog.setContentText("Label:");
-        dialog.showAndWait().ifPresent(text -> apply(
-                () -> context.ticketService().renameCategory(category.categoryId(), text, me())));
+        dialog.showAndWait().ifPresent(text -> {
+            apply(() -> context.ticketService().renameCategory(category.categoryId(), text, me()));
+        });
     }
 
     private void toggle(TicketCategory category) {
