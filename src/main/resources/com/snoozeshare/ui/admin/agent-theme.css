@@ -231,13 +231,62 @@
 .agent-root .text-field:focused, .agent-root .text-area:focused, .agent-root .combo-box-base:focused {
     -fx-border-color: accent;
 }
-.agent-root .agent-combo { -fx-font-size: 12px; }
-.agent-root .combo-box-base .list-cell { -fx-text-fill: fg; -fx-font-size: 12px; -fx-background-color: transparent; }
-.agent-root .combo-box-base .arrow-button { -fx-background-color: transparent; -fx-padding: 0 8px 0 4px; }
-.agent-root .combo-box-base .arrow { -fx-background-color: fg-subtle; }
-.agent-root .combo-box-popup .list-view { -fx-background-color: bg-overlay; -fx-border-color: border; }
+/* Status dropdown: one 8px rounded border around the whole control (arrow included). */
+.agent-root .agent-combo, .agent-root .combo-box {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 0;
+    -fx-font-size: 12px;
+}
+.agent-root .combo-box:focused, .agent-root .combo-box:showing { -fx-border-color: accent; -fx-background-color: bg-overlay; }
+.agent-root .combo-box-base > .list-cell {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-text-fill: fg;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 5px 4px 5px 10px;
+}
+.agent-root .combo-box-base > .arrow-button {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 10px 0 4px;
+}
+.agent-root .combo-box-base > .arrow-button:hover { -fx-background-color: transparent; }
+.agent-root .combo-box-base > .arrow-button > .arrow { -fx-background-color: fg-subtle; -fx-padding: 2.5px 4px 2.5px 4px; }
+.agent-root .combo-box-popup > .list-view {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 4px;
+    -fx-effect: null;
+}
+.agent-root .combo-box-popup .list-cell {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6px;
+    -fx-background-insets: 0;
+    -fx-text-fill: fg;
+    -fx-font-size: 12px;
+    -fx-font-weight: normal;
+    -fx-padding: 7px 12px 7px 12px;
+}
 .agent-root .combo-box-popup .list-cell:filled:hover,
-.agent-root .combo-box-popup .list-cell:filled:selected { -fx-background-color: accent-subtle; -fx-text-fill: accent; }
+.agent-root .combo-box-popup .list-cell:filled:selected,
+.agent-root .combo-box-popup .list-cell:filled:focused {
+    -fx-background-color: accent-subtle;
+    -fx-text-fill: accent;
+    -fx-font-weight: bold;
+}
 
 /* ---- Toggle switch (40x22 pill, 18px knob) ---- */
 .agent-root .agent-switch {

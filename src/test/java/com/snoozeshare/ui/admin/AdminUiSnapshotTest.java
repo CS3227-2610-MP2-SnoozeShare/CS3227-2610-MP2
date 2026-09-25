@@ -25,8 +25,14 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.control.ComboBox;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
+import javafx.stage.PopupWindow;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 
 /**
  * Test-only snapshot harness: renders agent screens at 1280x800 to build/ui-snapshots/ so they can be compared
@@ -132,5 +138,72 @@ class AdminUiSnapshotTest {
             assertTrue(Files.size(queue) > 0);
             assertTrue(Files.size(categories) > 0);
         }
+    }
+
+    /** Shows the real queue in a stage, opens the status dropdown and snapshots both the header and the popup. */
+    @Test
+    void writesStatusDropdownSnapshots(@TempDir Path directory) throws Exception {
+        assumeTrue(toolkitAvailable, "JavaFX toolkit unavailable");
+        try (MockDbFixture db = MockDbFixture.open(directory);
+             AppContext context = AppContext.create(db.jdbcUrl())) {
+            context.session().loginAs(context.userService().authenticate("amy.tanaka@snoozeshare.test"));
+            Stage[] stage = new Stage[1];
+            onFx(() -> {
+                Parent root = loadShell(context).root();
+                stage[0] = new Stage();
+                stage[0].setScene(new Scene(root, 1280, 400));
+                stage[0].setX(20);
+                stage[0].setY(20);
+                stage[0].show();
+                root.applyCss();
+                root.layout();
+                stage[0].toFront();
+                stage[0].requestFocus();
+                return null;
+            });
+            Thread.sleep(500);
+            Path[] files = null;
+            for (int attempt = 0; attempt < 4 && files == null; attempt++) {
+                onFx(() -> {
+                    ComboBox<?> combo = (ComboBox<?>) stage[0].getScene().getRoot().lookup(".combo-box");
+                    combo.getSelectionModel().select(2);
+                    combo.hide();
+                    combo.show();
+                    return null;
+                });
+                Thread.sleep(700);
+                files = onFx(this::snapshotOpenDropdown);
+            }
+            onFx(() -> {
+                stage[0].close();
+                return null;
+            });
+
+            assumeTrue(files != null, "dropdown popup did not open (window not focused)");
+            assertTrue(Files.size(files[0]) > 0);
+            assertTrue(Files.size(files[1]) > 0);
+        }
+    }
+
+    private Path[] snapshotOpenDropdown() throws IOException {
+        Window popup = Window.getWindows().stream().filter(w -> w instanceof PopupWindow && w.getWidth() > 10
+                && w.getScene().getRoot().lookup(".list-view") != null).findFirst().orElse(null);
+        if (popup == null) {
+            return null;
+        }
+        Window page = Window.getWindows().stream().filter(w -> w instanceof Stage).findFirst().orElseThrow();
+        Path closed = writePng(page.getScene().snapshot(null), "agent-status-dropdown-open-page");
+        popup.getScene().getRoot().applyCss();
+        SnapshotParameters params = new SnapshotParameters();
+        params.setFill(Color.web("#b0c0ff"));
+        Path list = writePng(popup.getScene().getRoot().snapshot(params, null), "agent-status-dropdown-popup");
+        return new Path[] {closed, list};
+    }
+
+    static Path writePng(WritableImage image, String name) throws IOException {
+        Files.createDirectories(OUTPUT);
+        Path file = OUTPUT.resolve(name + ".png");
+        ImageIO.write(toBuffered(image), "png", file.toFile());
+        return file;
     }
 }
