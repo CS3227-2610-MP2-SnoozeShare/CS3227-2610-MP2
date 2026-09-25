@@ -91,10 +91,12 @@ It is explicitly temporary; W13 replaces it with a persistent implementation, no
 **`DisputeSettlementService`** (new interface + `DisputeSettlementServiceImpl`) — the only class that moves money for W10.
 
 ```java
-Settlement settle(UUID ticketId, UUID bookingId, BigDecimal guestRefund,
-                  SettlementKind kind, UUID agentId, String reason);
-// SettlementKind = TICKET_REMEDY (Accept) | AGENT_OVERRIDE (Manual adjustment) | REJECTION (Reject, refund = 0)
+Settlement settle(UUID ticketId, ResolutionMode mode, BigDecimal guestRefund, UUID agentId, String reason);
 ```
+
+The ledger row type and ticket end status are derived from `ResolutionMode` (Accept / Reject / Manual) and the refund amount; there is no separate `SettlementKind`.
+
+**`DisputeQueryService`** (new interface + `DisputeQueryServiceImpl`) - read models for the Agent UI so controllers never touch repositories: `queue(...)` returns queue rows (ticket, booking and party summaries, oldest first, with the assignee filter applied) and `detail(ticketId)` returns the booking summary, derived phase label, escrow state and notes for the detail screen.
 
 ### 4.3 Resolution semantics
 
@@ -124,12 +126,13 @@ No schema change. `tickets` and `ticket_categories` already exist in `V001__foun
 
 - `JdbcTicketRepository` — `findById`, `findByStatus`, `findQueue(status, assigneeFilter, agentId)`, `save` (upsert). Row mapping via shared `RowMappers`.
 - `JdbcTicketCategoryRepository` — `findActive`, `findAll`, `findById`, `existsByLabel(label)`, `save`.
+- `MigrationRunner` adopts a pre-provisioned database (D10): the mock DB has tables but no `schema_history`, so the runner records the baseline instead of re-running `V001` against existing tables. The mock seed timestamps now end in `Z`, matching the app's own `Instant.toString()` writes, so `JdbcCodecs.instant` can parse them.
 - A read query `WalletTransactionRepository.findByBooking(bookingId)` (additive if not already present) supports the escrow-held check.
 - `tickets.category` stores the label text, not an id. Renaming a category does **not** rewrite existing tickets; deactivating hides it only from new filings.
 
 ### 4.5 UI (`ui.admin`)
 
-Follows the design spec's tokens and `theme.css`. `AdminShellController` already has the four-tab shell; the *Disputes* and *Categories* tab bodies are replaced.
+The admin shell is sidebar-based (Operations / Disputes / Accounts / Categories) and uses the current navy `theme.css`, not the canvas's tabs and Fall Light palette (D11). The *Disputes* and *Categories* bodies are replaced.
 
 | Class / FXML | Artboard | Notes |
 |---|---|---|
@@ -182,7 +185,7 @@ Plus 6 categories (all active), and the guest/host/agent users and wallets. Scen
 | 7 | **Concurrency / idempotency** | double resolve; resolve after another agent assigned; resolve an already-settled booking | mock DB copy | Second attempt fails cleanly; escrow never paid twice |
 | 8 | **Schema parity** | `V001__foundation.sql` vs `db/schema.sql` for `tickets`, `ticket_categories`, `wallet_transactions`, `bookings` | both | Same columns/constraints — guards against the hand-written mock DB drifting (D6) |
 | 9 | **Architecture** | existing `LayerDependencyTest` + new rule | source | `ui.admin.*` imports no `repository.*`/`infra.db.*`; `java.sql` only in `repository.jdbc` |
-| 10 | **UI (TestFX)** | queue, detail, resolution dialog, categories controllers with fake services | in-memory + one mock-DB-backed smoke | Queue renders oldest-first; filter chips; Assign→enabled actions; dialog validation (reason required, amount ≤ escrow, live preview numbers); action label by raiser; no force controls present; category toggle/add/edit; chat panes render `MessageService` output |
+| 10 | **UI** | queue, detail, resolution dialog, categories controllers with fake services | in-memory + one mock-DB-backed smoke. Implemented as an FX toolkit smoke test (skips when the toolkit cannot start) + file-content layout tests + pure `ResolutionPreview` tests | Queue renders oldest-first; filter chips; Assign→enabled actions; dialog validation (reason required, amount ≤ escrow, live preview numbers); action label by raiser; no force controls present; category toggle/add/edit; chat panes render `MessageService` output |
 | 11 | **End-to-end smoke** | `AppContext` bootstrapped on mock DB copy, agent logged in | mock DB copy | Queue → assign → accept → ticket shows resolved, wallet history updated, refresh event received |
 | 12 | **Visual acceptance (manual)** | run app vs canvas artboards | mock DB | Checklist in the plan: layout, tokens, labels, statuses match the six artboards except the documented deviations |
 
@@ -197,6 +200,8 @@ Plus 6 categories (all active), and the guest/host/agent users and wallets. Scen
 | D7 | Design artifact shows Force actions, a queue sorted newest-first, an "Adjust wallet" dropdown, and no Accept amount field. | Superseded by C22, F9.1.1, C20, and § 4.3 respectively. |
 | D8 | `tickets.category` is label text, not a foreign key. | Renames do not propagate to existing tickets; accepted. |
 | D9 | `BookingStateMachine` allowed only HOST on `CONFIRMED → COMPLETED`. | Additive AGENT permission (C23); W3 must be told when merging. |
+| D10 | `MigrationRunner` refused a database that has tables but no `schema_history` (the mock DB). | It now adopts a pre-provisioned DB by recording the baseline; needed to open the mock DB in the app. |
+| D11 | The mockups show a tabbed shell with the Fall Light palette; the built admin shell is sidebar-based and uses the current navy `theme.css`. | Accepted; aligning with the canvas is a separate UI-design workstream. |
 
 ## 7. Acceptance criteria
 
