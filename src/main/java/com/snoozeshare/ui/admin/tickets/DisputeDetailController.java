@@ -176,7 +176,11 @@ public final class DisputeDetailController {
         } catch (RuntimeException exception) {
             errorLabel.setText(exception.getMessage());
         }
-        render();
+        try {
+            render();
+        } catch (RuntimeException exception) {
+            errorLabel.setText(exception.getMessage());
+        }
     }
 
     private static String statusText(TicketStatus status) {
