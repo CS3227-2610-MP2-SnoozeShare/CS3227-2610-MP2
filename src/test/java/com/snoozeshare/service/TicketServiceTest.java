@@ -208,10 +208,10 @@ class TicketServiceTest {
 
     @Test
     void fileTicketAndHostResponseAreNotOwnedByW10() {
-        assertThrows(UnsupportedOperationException.class,
-                () -> service.fileTicket(null, host, Role.HOST));
-        assertThrows(UnsupportedOperationException.class,
-                () -> service.addHostResponse(UUID.randomUUID(), "x", host));
+        assertThrows(UnsupportedOperationException.class, () ->
+                service.fileTicket(null, host, Role.HOST));
+        assertThrows(UnsupportedOperationException.class, () ->
+                service.addHostResponse(UUID.randomUUID(), "x", host));
     }
 
     private static List<UUID> ids(List<Ticket> list) {
