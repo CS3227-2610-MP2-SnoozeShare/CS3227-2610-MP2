@@ -36,6 +36,7 @@ class ShellNavigationTest {
         assertTrue(hostPage.contains("text=\"Listings\""));
         assertTrue(!hostPage.contains("text=\"Dashboard\""));
         assertTrue(hostPage.contains("text=\"Messages\""));
+        assertTrue(hostPage.contains("</center>"));
     }
 
     @Test

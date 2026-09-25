@@ -9,5 +9,5 @@
             fx:controller="com.snoozeshare.ui.host.HostShellController" minWidth="1280" minHeight="800">
     <top><HBox styleClass="header" spacing="24" alignment="CENTER_LEFT"><Label text="SnoozeShare" styleClass="app-title"/><Region HBox.hgrow="ALWAYS"/><Label fx:id="walletAmount" text="SGD 0.00" styleClass="wallet-amount"/><Label fx:id="roleLabel" text="Host"/></HBox></top>
     <left><VBox styleClass="sidebar" spacing="12"><Label text="Listings" styleClass="nav-item" onMouseClicked="#showListings"/><Label text="Bookings" styleClass="nav-item" onMouseClicked="#showBookings"/><Label text="Messages" styleClass="nav-item"/><Label text="Wallet" styleClass="nav-item" onMouseClicked="#showWallet"/><Button text="Log out" styleClass="outline-button" onAction="#logout"/></VBox></left>
-    <center><VBox styleClass="content" spacing="16"/>
+    <center><VBox styleClass="content" spacing="16"/></center>
 </BorderPane>
