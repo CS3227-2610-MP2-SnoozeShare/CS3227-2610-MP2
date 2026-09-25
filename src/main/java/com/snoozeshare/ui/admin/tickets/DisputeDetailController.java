@@ -100,15 +100,15 @@ public final class DisputeDetailController {
         detail = context.disputeQueryService().detail(ticketId);
         Ticket ticket = detail.ticket();
         boolean mine = me().equals(ticket.assignedAgentId());
-        boolean underReview = ticket.status() == TicketStatus.UNDER_REVIEW;
-        boolean canResolve = underReview && mine && detail.escrowHeld();
+        boolean inReview = ticket.status() == TicketStatus.IN_REVIEW;
+        boolean canResolve = inReview && mine && detail.escrowHeld();
 
         crumbLabel.setText(detail.ticketLabel() + " " + ticket.title());
         boolean open = ticket.status() == TicketStatus.OPEN;
         statusBadge.setText((open ? "Unassigned" : statusText(ticket.status())).toUpperCase(Locale.ROOT));
-        statusBadge.getStyleClass().setAll(open ? "agent-pill-danger" : underReview ? "agent-pill-warning"
+        statusBadge.getStyleClass().setAll(open ? "agent-pill-danger" : inReview ? "agent-pill-warning"
                 : "agent-pill-success", "agent-pill");
-        boolean unassignable = underReview && mine;
+        boolean unassignable = inReview && mine;
         assignButton.setText(unassignable ? "Unassign" : "Assign to me");
         assignButton.setDisable(!(open || unassignable));
         listingLabel.setText(detail.listingTitle());
@@ -123,7 +123,7 @@ public final class DisputeDetailController {
         guestInput.setPromptText("Reply to " + firstName(detail.guestName()) + "\u2026");
         hostInput.setPromptText("Reply to " + firstName(detail.hostName()) + "\u2026");
         notesArea.setText(ticket.agentNotes() == null ? "" : ticket.agentNotes());
-        saveNotesButton.setDisable(!(underReview && mine));
+        saveNotesButton.setDisable(!(inReview && mine));
         acceptButton.setText("Accept \u2014 remedy " + (ticket.raisedByRole() == Role.HOST ? "host" : "guest"));
         acceptButton.setDisable(!canResolve);
         rejectButton.setDisable(!canResolve);
@@ -167,7 +167,7 @@ public final class DisputeDetailController {
 
     @FXML
     private void handleAssign() {
-        if (detail.ticket().status() == TicketStatus.UNDER_REVIEW) {
+        if (detail.ticket().status() == TicketStatus.IN_REVIEW) {
             run(() -> context.ticketService().unassign(ticketId, me()));
         } else {
             run(() -> context.ticketService().assignToMe(ticketId, me()));

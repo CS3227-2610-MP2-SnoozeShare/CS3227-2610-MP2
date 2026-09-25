@@ -34,10 +34,10 @@ public final class DisputeQueueController {
     private static final double TOTAL_SHARE = 5.8;
     private static final double WIDTH_FACTOR = 0.995;
     private static final String[] STATUS_LABELS = {
-        "All statuses", "Open", "Under review", "Approved", "Rejected"
+        "All statuses", "Open", "In review", "Approved", "Rejected"
     };
     private static final TicketStatus[] STATUS_VALUES = {
-        null, TicketStatus.OPEN, TicketStatus.UNDER_REVIEW, TicketStatus.RESOLVED_APPROVED,
+        null, TicketStatus.OPEN, TicketStatus.IN_REVIEW, TicketStatus.RESOLVED_APPROVED,
         TicketStatus.RESOLVED_REJECTED
     };
 
@@ -186,7 +186,7 @@ public final class DisputeQueueController {
     static String pillText(DisputeSummary summary) {
         return switch (summary.status()) {
             case OPEN -> summary.assignedAgentName() == null ? "Unassigned" : "In review";
-            case UNDER_REVIEW -> "In review";
+            case IN_REVIEW -> "In review";
             case RESOLVED_APPROVED -> "Resolved";
             case RESOLVED_REJECTED -> "Rejected";
         };
@@ -195,7 +195,7 @@ public final class DisputeQueueController {
     static String pillClass(DisputeSummary summary) {
         return switch (summary.status()) {
             case OPEN -> summary.assignedAgentName() == null ? "agent-pill-danger" : "agent-pill-warning";
-            case UNDER_REVIEW -> "agent-pill-warning";
+            case IN_REVIEW -> "agent-pill-warning";
             case RESOLVED_APPROVED -> "agent-pill-success";
             case RESOLVED_REJECTED -> "agent-pill-danger";
         };
@@ -204,7 +204,7 @@ public final class DisputeQueueController {
     static String statusText(TicketStatus status) {
         return switch (status) {
             case OPEN -> "Open";
-            case UNDER_REVIEW -> "Under review";
+            case IN_REVIEW -> "In review";
             case RESOLVED_APPROVED -> "Resolved (approved)";
             case RESOLVED_REJECTED -> "Resolved (rejected)";
         };

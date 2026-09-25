@@ -119,13 +119,13 @@ public final class TicketServiceImpl implements TicketService {
         requireAgent(agentId);
         Ticket ticket = loadTicket(ticketId);
         if (ticket.status() != TicketStatus.OPEN || !TicketStateMachine.canTransition(
-                ticket.status(), TicketStatus.UNDER_REVIEW, Role.AGENT)) {
+                ticket.status(), TicketStatus.IN_REVIEW, Role.AGENT)) {
             throw new IllegalStateException("Ticket is not open");
         }
         if (ticket.assignedAgentId() != null && !agentId.equals(ticket.assignedAgentId())) {
             throw new IllegalStateException("Ticket is already assigned to another agent");
         }
-        Ticket updated = tickets.save(with(ticket, TicketStatus.UNDER_REVIEW, agentId,
+        Ticket updated = tickets.save(with(ticket, TicketStatus.IN_REVIEW, agentId,
                 ticket.agentNotes()));
         audit.record(agentId, "TICKET_ASSIGNED", "Ticket", ticketId, ticket.status(), updated.status());
         return updated;
@@ -135,7 +135,7 @@ public final class TicketServiceImpl implements TicketService {
     public Ticket saveNotes(UUID ticketId, String notes, UUID agentId) {
         requireAgent(agentId);
         Ticket ticket = loadTicket(ticketId);
-        if (ticket.status() != TicketStatus.UNDER_REVIEW) {
+        if (ticket.status() != TicketStatus.IN_REVIEW) {
             throw new IllegalStateException("Notes can only be saved while the ticket is in review");
         }
         if (!agentId.equals(ticket.assignedAgentId())) {
@@ -151,9 +151,9 @@ public final class TicketServiceImpl implements TicketService {
     public Ticket unassign(UUID ticketId, UUID agentId) {
         requireAgent(agentId);
         Ticket ticket = loadTicket(ticketId);
-        if (ticket.status() != TicketStatus.UNDER_REVIEW || !TicketStateMachine.canTransition(
+        if (ticket.status() != TicketStatus.IN_REVIEW || !TicketStateMachine.canTransition(
                 ticket.status(), TicketStatus.OPEN, Role.AGENT)) {
-            throw new IllegalStateException("Ticket is not under review");
+            throw new IllegalStateException("Ticket is not in review");
         }
         if (!agentId.equals(ticket.assignedAgentId())) {
             throw new IllegalStateException("Ticket is not assigned to this agent");

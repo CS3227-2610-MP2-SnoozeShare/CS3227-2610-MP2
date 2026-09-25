@@ -98,8 +98,8 @@ public final class DisputeSettlementServiceImpl implements DisputeSettlementServ
                              String reason, Instant now) {
         Ticket ticket = tickets.findById(ticketId)
                 .orElseThrow(() -> new IllegalArgumentException("Ticket does not exist"));
-        if (ticket.status() != TicketStatus.UNDER_REVIEW) {
-            throw new IllegalStateException("Ticket is not under review");
+        if (ticket.status() != TicketStatus.IN_REVIEW) {
+            throw new IllegalStateException("Ticket is not in review");
         }
         if (!agentId.equals(ticket.assignedAgentId())) {
             throw new IllegalStateException("Ticket is not assigned to this agent");
