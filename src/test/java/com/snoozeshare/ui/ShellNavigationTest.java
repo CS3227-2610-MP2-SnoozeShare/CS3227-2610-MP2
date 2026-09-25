@@ -33,6 +33,24 @@ class ShellNavigationTest {
                 "showDisputes", "showAccounts");
     }
 
+    @Test
+    void hostListingsPageProvidesManagementSurface() throws Exception {
+        String shell = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/host-shell.fxml"));
+        String page = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listings.fxml"));
+        String controller = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java"));
+
+        assertTrue(shell.contains("fx:id=\"shellRoot\""));
+        assertTrue(page.contains("HostListingsController"));
+        assertTrue(page.contains("Create Listing"));
+        assertTrue(page.contains("listingCards"));
+        assertTrue(page.contains("statusLabel"));
+        assertTrue(controller.contains("setContext"));
+        assertTrue(controller.contains("reload"));
+    }
+
     private static void assertControllerMethods(String file, String... methods) throws Exception {
         String source = Files.readString(Path.of("src/main/java/com/snoozeshare/ui/" + file));
         for (String method : methods) {
