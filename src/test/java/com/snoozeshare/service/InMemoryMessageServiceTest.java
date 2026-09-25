@@ -47,17 +47,17 @@ class InMemoryMessageServiceTest {
 
     @Test
     void rejectsBlankBodiesAndWrongChannelForTheRole() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.post(ticket, ThreadChannel.GUEST, agent, Role.AGENT, "  "));
-        assertThrows(IllegalArgumentException.class,
-                () -> service.post(ticket, ThreadChannel.HOST, guest, Role.GUEST, "wrong thread"));
+        assertThrows(IllegalArgumentException.class, () ->
+                service.post(ticket, ThreadChannel.GUEST, agent, Role.AGENT, "  "));
+        assertThrows(IllegalArgumentException.class, () ->
+                service.post(ticket, ThreadChannel.HOST, guest, Role.GUEST, "wrong thread"));
     }
 
     @Test
     void returnedThreadCannotBeUsedToMutateTheStore() {
         service.post(ticket, ThreadChannel.GUEST, guest, Role.GUEST, "one");
 
-        assertThrows(UnsupportedOperationException.class,
-                () -> service.thread(ticket, ThreadChannel.GUEST).clear());
+        assertThrows(UnsupportedOperationException.class, () ->
+                service.thread(ticket, ThreadChannel.GUEST).clear());
     }
 }
