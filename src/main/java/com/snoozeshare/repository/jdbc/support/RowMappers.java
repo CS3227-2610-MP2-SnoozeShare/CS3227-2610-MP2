@@ -11,12 +11,16 @@ import com.snoozeshare.domain.enums.AmenityType;
 import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.domain.enums.ListingStatus;
 import com.snoozeshare.domain.enums.PropertyType;
+import com.snoozeshare.domain.enums.RemedyType;
 import com.snoozeshare.domain.enums.Role;
+import com.snoozeshare.domain.enums.TicketStatus;
 import com.snoozeshare.domain.enums.WalletTransactionType;
 import com.snoozeshare.domain.model.AuditLogEntry;
 import com.snoozeshare.domain.model.AvailabilityBlock;
 import com.snoozeshare.domain.model.Booking;
 import com.snoozeshare.domain.model.Property;
+import com.snoozeshare.domain.model.Ticket;
+import com.snoozeshare.domain.model.TicketCategory;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.domain.model.WalletTransaction;
@@ -134,5 +138,31 @@ public final class RowMappers {
                 result.getString("beforeState"),
                 result.getString("afterState"),
                 JdbcCodecs.instant(result.getString("timestamp")));
+    }
+
+    public static Ticket ticket(ResultSet result) throws SQLException {
+        return new Ticket(
+                JdbcCodecs.uuid(result.getString("ticketId")),
+                JdbcCodecs.uuid(result.getString("bookingId")),
+                JdbcCodecs.uuid(result.getString("raisedByUserId")),
+                Role.valueOf(result.getString("raisedByRole")),
+                result.getString("category"),
+                result.getString("title"),
+                result.getString("description"),
+                RemedyType.valueOf(result.getString("requestedRemedy")),
+                result.getString("supportingText"),
+                TicketStatus.valueOf(result.getString("status")),
+                JdbcCodecs.uuid(result.getString("assignedAgentId")),
+                result.getString("agentNotes"),
+                result.getString("resolutionReason"),
+                JdbcCodecs.instant(result.getString("createdAt")),
+                JdbcCodecs.instant(result.getString("resolvedAt")));
+    }
+
+    public static TicketCategory ticketCategory(ResultSet result) throws SQLException {
+        return new TicketCategory(
+                JdbcCodecs.uuid(result.getString("categoryId")),
+                result.getString("label"),
+                result.getInt("active") != 0);
     }
 }
