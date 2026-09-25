@@ -144,6 +144,10 @@ public final class ResolutionDialogController {
             errorLabel.setText(result.message());
             return false;
         }
+        if (mode == ResolutionMode.ACCEPT && amountIsEntered() && result.refund().signum() <= 0) {
+            errorLabel.setText("Accept needs a refund above zero; use Reject or Manual adjustment for zero");
+            return false;
+        }
         if (reasonArea.getText() == null || reasonArea.getText().isBlank()) {
             errorLabel.setText("A reason is required");
             return false;

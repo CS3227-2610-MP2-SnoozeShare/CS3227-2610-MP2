@@ -157,7 +157,7 @@ public final class TicketServiceImpl implements TicketService {
             case ACCEPT -> switch (ticket.requestedRemedy()) {
                 case FULL_REFUND -> booking.totalAmount();
                 case HOST_PAYOUT -> BigDecimal.ZERO;
-                case PARTIAL_REFUND, OTHER -> requireAmount(request.guestRefund());
+                case PARTIAL_REFUND, OTHER -> requirePositive(request.guestRefund());
             };
         };
         return settlement.settle(ticketId, request.mode(), refund, agentId, request.reason()).ticket();
@@ -166,6 +166,14 @@ public final class TicketServiceImpl implements TicketService {
     private static BigDecimal requireAmount(BigDecimal amount) {
         if (amount == null) {
             throw new IllegalArgumentException("Guest refund is required");
+        }
+        return amount;
+    }
+
+    private static BigDecimal requirePositive(BigDecimal amount) {
+        if (requireAmount(amount).signum() <= 0) {
+            throw new IllegalArgumentException(
+                    "Accept needs a refund above zero; use Reject or Manual adjustment for a zero refund");
         }
         return amount;
     }
