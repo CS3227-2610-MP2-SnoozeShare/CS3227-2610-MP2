@@ -148,6 +148,43 @@ class DisputeSettlementServiceTest {
     }
 
     @Test
+    void rejectWithARefundIsRejectedAndNothingChanges(@TempDir Path directory) throws Exception {
+        try (MockDbFixture db = MockDbFixture.open(directory)) {
+            DisputeSettlementServiceImpl service = service(db, new InProcessEventBus());
+            long before = db.scalarLong("SELECT COUNT(*) FROM wallet_transactions");
+
+            assertThrows(IllegalArgumentException.class, () ->
+                    service.settle(MockIds.TICKET_3, ResolutionMode.REJECT, new BigDecimal("50.00"),
+                            BEN, "reject but refund"));
+
+            assertUnchanged(db, before, "CONFIRMED");
+        }
+    }
+
+    @Test
+    void acceptWithNoRefundIsOnlyAllowedForAHostPayoutRemedy(@TempDir Path directory) throws Exception {
+        try (MockDbFixture db = MockDbFixture.open(directory)) {
+            db.execute("UPDATE tickets SET requestedRemedy = 'FULL_REFUND' WHERE ticketId = ?",
+                    MockIds.TICKET_3);
+            DisputeSettlementServiceImpl service = service(db, new InProcessEventBus());
+            long before = db.scalarLong("SELECT COUNT(*) FROM wallet_transactions");
+
+            assertThrows(IllegalArgumentException.class, () ->
+                    service.settle(MockIds.TICKET_3, ResolutionMode.ACCEPT, BigDecimal.ZERO, BEN,
+                            "accept but no refund"));
+
+            assertUnchanged(db, before, "CONFIRMED");
+
+            db.execute("UPDATE tickets SET requestedRemedy = 'HOST_PAYOUT' WHERE ticketId = ?",
+                    MockIds.TICKET_3);
+            Settlement result = service.settle(MockIds.TICKET_3, ResolutionMode.ACCEPT, BigDecimal.ZERO,
+                    BEN, "host is owed");
+
+            assertEquals(TicketStatus.RESOLVED_APPROVED, result.ticket().status());
+        }
+    }
+
+    @Test
     void aBlankReasonIsRejected(@TempDir Path directory) throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
             DisputeSettlementServiceImpl service = service(db, new InProcessEventBus());
