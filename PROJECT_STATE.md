@@ -63,7 +63,7 @@ three iterations).
 | S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Paused | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete and merged to main (PR #2). Row kept until W2 guide confirmation resolves | 2026-09-24 |
-| S4 | 2026-09-25 | Claude Sonnet 5 | agent-dispute-resolution-and-state-overrides | W10 | Active | Branch created from main. W10 design spec written and committed (`docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md`); awaiting operator review, then `writing-plans`. No code yet. Note: `origin/w3` exists (W3 in progress elsewhere) — W10 must not touch W3-owned files | 2026-09-25 |
+| S4 | 2026-09-25 | Claude Sonnet 5 | agent-dispute-resolution-and-state-overrides | W10 | Active | Branch created from main. W10 spec approved and implementation plan written (`docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md`, 18 tasks). Next: operator chooses execution mode (subagent-driven or inline); no code yet. Note: `origin/w3` exists (W3 in progress elsewhere) — W10 must not touch W3-owned files | 2026-09-25 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -88,7 +88,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W7 | F6 — Host Calendar & Date Overrides | Not started | — | — | Backlog only: §4 | — |
 | W8 | F7 — Host Request Queue, Earnings & Disputes | Not started | — | — | Backlog only: §4 | — |
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
-| W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Spec'd | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | — | Spec revised for corrected mock DB (D6); awaiting operator review; plan next | — |
+| W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Planned | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | Plan written (18 tasks); execution not started | — |
 | W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
 | W12 | F11 — Platform Audit Trail & Analytics | Not started | — | — | Backlog only: §5 | — |
 | W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
@@ -104,7 +104,14 @@ session; these must be honoured or reconciled when that branch merges with
 2. **Reconcile the settlement service** (D5). W10 adds `DisputeSettlementService` for two-sided,
    full-escrow agent settlement (C20). `TransactionService.applyTicketRemedy` / `manualOverride`
    (single-sided) are not implemented or called by W10; decide at merge whether to fold `settle`
-   into `TransactionServiceImpl` or keep both.
+   into `TransactionServiceImpl` or keep both. On `origin/w3` those two methods are stubbed
+   `throw new UnsupportedOperationException("Owned by W10")` and `settleBookingCompletion` as
+   `"Owned by W8"` — W10 never edits `TransactionServiceImpl`, so at merge either delegate the two
+   W10 stubs to `DisputeSettlementService` or leave them unsupported.
+   Also note: `WalletLedgerWriter` opens its own transaction and subtracts `feeAmount` from the
+   balance, whereas the architecture doc and mock DB treat `feeAmount` on `BOOKING_PAYOUT` rows as
+   informational (`amount` already net). W10 therefore writes wallet + ledger rows itself; whoever
+   builds W8's payout settlement must not pass a fee through `WalletLedgerWriter` unchanged.
 3. **Reconcile the state machine** (D9, C23). W10 allows `Role.AGENT` on `CONFIRMED → COMPLETED` in
    `BookingStateMachine`. If W3 touches that file, keep the AGENT permission.
 4. **Shared wiring:** both branches edit `AppContext` (additive service/repository wiring) —
@@ -459,6 +466,6 @@ The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-st
 — every change, big or small, newest first.
 
 - **Latest entry:** 2026-09-25
-- **Entries:** 20 (4 backfilled coarsely from git history, 13 current/history entries)
+- **Entries:** 21 (4 backfilled coarsely from git history, 13 current/history entries)
 
 Deviations stay in § Deviations above: those are read every session.
