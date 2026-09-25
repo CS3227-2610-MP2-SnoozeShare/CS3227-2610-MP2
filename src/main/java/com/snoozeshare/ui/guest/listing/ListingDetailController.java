@@ -18,6 +18,9 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 
 public final class ListingDetailController {
+    private static final DateTimeFormatter TIME_FORMAT =
+            DateTimeFormatter.ofPattern("h:mm a");
+
 
     @FXML private Label titleLabel;
     @FXML private Label typeLabel;
@@ -46,9 +49,6 @@ public final class ListingDetailController {
     public void setOnClose(Runnable onClose) {
         this.onClose = onClose;
     }
-
-    private static final DateTimeFormatter TIME_FORMAT =
-            DateTimeFormatter.ofPattern("h:mm a");
 
     public void populate(Property property, LocalDate checkIn, LocalDate checkOut) {
         titleLabel.setText(property.title());
