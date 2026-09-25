@@ -12,6 +12,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -26,6 +27,7 @@ public final class HostListingsController {
     private AppContext context;
     private Runnable onCreateListing = () -> { };
     private Consumer<Property> onEditListing = property -> { };
+    private Consumer<Property> onViewListing = property -> { };
 
     public void setContext(AppContext appContext) {
         context = appContext;
@@ -38,6 +40,10 @@ public final class HostListingsController {
 
     public void setOnEditListing(Consumer<Property> callback) {
         onEditListing = callback == null ? property -> { } : callback;
+    }
+
+    public void setOnViewListing(Consumer<Property> callback) {
+        onViewListing = callback == null ? property -> { } : callback;
     }
 
     @FXML
@@ -65,6 +71,7 @@ public final class HostListingsController {
         VBox card = new VBox(8);
         card.setMaxWidth(Double.MAX_VALUE);
         card.getStyleClass().add("listing-card");
+        card.setOnMouseClicked(event -> onViewListing.accept(property));
         Label title = new Label(property.title());
         title.getStyleClass().add("card-title");
         Label details = new Label(property.city() + " · " + property.propertyType().name()
@@ -81,6 +88,7 @@ public final class HostListingsController {
         statusToggle.setOnAction(event -> handleToggle(property, statusToggle));
         Button editButton = new Button("Edit");
         editButton.setAccessibleText("Edit listing " + property.title());
+        editButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> event.consume());
         editButton.setOnAction(event -> onEditListing.accept(property));
         HBox actions = new HBox(8, statusToggle, editButton);
         card.getChildren().addAll(title, details, rate, actions);

@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.ui.common.NavShellController;
+import com.snoozeshare.ui.host.listings.HostListingDetailController;
 import com.snoozeshare.ui.host.listings.HostListingFormController;
 import com.snoozeshare.ui.host.listings.HostListingsController;
 
@@ -37,6 +38,7 @@ public final class HostShellController extends NavShellController {
             controller.setContext(getContext());
             controller.setOnCreateListing(this::showCreateListing);
             controller.setOnEditListing(this::showEditListing);
+            controller.setOnViewListing(this::showListingDetail);
             displayPage("Listings", "Manage your properties and listing status.");
             contentPane.getChildren().setAll(listingsView);
         } catch (IOException exception) {
@@ -50,6 +52,21 @@ public final class HostShellController extends NavShellController {
 
     private void showEditListing(Property property) {
         showListingForm(property);
+    }
+
+    private void showListingDetail(Property property) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
+            Node detailView = loader.load();
+            HostListingDetailController controller = loader.getController();
+            controller.setProperty(property);
+            controller.setOnBack(this::showListings);
+            displayPage("Listing Details", "Review the complete details for your property.");
+            contentPane.getChildren().setAll(detailView);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load host listing detail view", exception);
+        }
     }
 
     private void showListingForm(Property property) {

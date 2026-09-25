@@ -55,6 +55,8 @@ class ShellNavigationTest {
                 "src/main/java/com/snoozeshare/ui/host/HostShellController.java"));
         assertTrue(hostController.contains("showCreateListing"));
         assertTrue(hostController.contains("showEditListing"));
+        assertTrue(hostController.contains("showListingDetail"));
+        assertTrue(hostController.contains("host-listing-detail.fxml"));
         assertTrue(hostController.contains("host-listing-form.fxml"));
     }
 

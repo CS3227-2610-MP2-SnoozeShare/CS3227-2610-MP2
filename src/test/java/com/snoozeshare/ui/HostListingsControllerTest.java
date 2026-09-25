@@ -44,6 +44,34 @@ class HostListingsControllerTest {
     }
 
     @Test
+    void listingCardsOpenDetailsWithoutHijackingEdit() throws Exception {
+        String source = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java"));
+
+        assertTrue(source.contains("setOnMouseClicked"));
+        assertTrue(source.contains("onEditListing.accept"));
+        assertTrue(source.contains("event.consume()"));
+        assertTrue(source.contains("setOnViewListing"));
+    }
+
+    @Test
+    void hostListingDetailPageDisplaysFullListingAndBackNavigation() throws Exception {
+        String source = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/listings/HostListingDetailController.java"));
+        String fxml = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
+
+        assertTrue(source.contains("setProperty"));
+        assertTrue(source.contains("setOnBack"));
+        assertTrue(source.contains("property.description()"));
+        assertTrue(source.contains("property.amenities()"));
+        assertTrue(fxml.contains("onAction=\"#handleBack\""));
+        assertTrue(fxml.contains("fx:id=\"descriptionLabel\""));
+        assertTrue(fxml.contains("fx:id=\"amenitiesPane\""));
+        assertTrue(fxml.contains("fx:id=\"statusLabel\""));
+    }
+
+    @Test
     void listingsStylesDefineCardsStatusesErrorsAndEmptyState() throws Exception {
         String theme = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/common/theme.css"));
