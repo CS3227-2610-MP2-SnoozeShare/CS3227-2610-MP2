@@ -1,3 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
-<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.snoozeshare.ui.admin.tickets.DisputeDetailController"/>
+
+<ScrollPane fitToWidth="true" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.snoozeshare.ui.admin.tickets.DisputeDetailController">
+    <VBox spacing="16">
+        <padding><Insets top="20" right="32" bottom="28" left="32"/></padding>
+
+        <HBox spacing="8" alignment="CENTER_LEFT">
+            <Hyperlink fx:id="backLink" text="Disputes" onAction="#handleBack"/>
+            <Label text="&gt;"/>
+            <Label fx:id="crumbLabel" styleClass="card-title"/>
+            <Label fx:id="statusBadge"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="assignButton" text="Assign to me" onAction="#handleAssign" styleClass="button"/>
+        </HBox>
+
+        <HBox styleClass="summary-card" spacing="28" alignment="CENTER_LEFT">
+            <VBox spacing="2"><Label text="Booking" styleClass="summary-caption"/><Label fx:id="listingLabel" styleClass="card-title"/><Label fx:id="datesLabel" styleClass="small"/></VBox>
+            <VBox spacing="2"><Label text="Guest" styleClass="summary-caption"/><Label fx:id="guestLabel" styleClass="card-title"/></VBox>
+            <VBox spacing="2"><Label text="Host" styleClass="summary-caption"/><Label fx:id="hostLabel" styleClass="card-title"/></VBox>
+            <VBox spacing="2"><Label text="Escrow" styleClass="summary-caption"/><Label fx:id="escrowLabel" styleClass="card-title"/></VBox>
+            <VBox spacing="2"><Label text="Booking phase" styleClass="summary-caption"/><Label fx:id="phaseLabel" styleClass="badge-warning"/></VBox>
+        </HBox>
+
+        <HBox spacing="16">
+            <VBox styleClass="chat-pane" spacing="8" HBox.hgrow="ALWAYS" minHeight="300">
+                <Label fx:id="guestThreadTitle" text="Guest messages" styleClass="card-title"/>
+                <VBox fx:id="guestThread" spacing="8" VBox.vgrow="ALWAYS"/>
+                <HBox spacing="8">
+                    <TextField fx:id="guestInput" promptText="Reply to guest..." HBox.hgrow="ALWAYS"/>
+                    <Button text="Send" onAction="#handleSendGuest" styleClass="button"/>
+                </HBox>
+            </VBox>
+            <VBox styleClass="chat-pane" spacing="8" HBox.hgrow="ALWAYS" minHeight="300">
+                <Label fx:id="hostThreadTitle" text="Host messages" styleClass="card-title"/>
+                <VBox fx:id="hostThread" spacing="8" VBox.vgrow="ALWAYS"/>
+                <HBox spacing="8">
+                    <TextField fx:id="hostInput" promptText="Reply to host..." HBox.hgrow="ALWAYS"/>
+                    <Button text="Send" onAction="#handleSendHost" styleClass="button"/>
+                </HBox>
+            </VBox>
+        </HBox>
+
+        <Label text="Internal notes (invisible to guest or host)" styleClass="card-title"/>
+        <Label fx:id="notesHistory" wrapText="true" styleClass="small"/>
+        <TextArea fx:id="notesArea" promptText="Add investigation notes..." prefRowCount="3"/>
+        <HBox><Button fx:id="addNoteButton" text="Add note" onAction="#handleAddNote" styleClass="outline-button"/></HBox>
+
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Button fx:id="acceptButton" text="Accept" onAction="#handleAccept" styleClass="button"/>
+            <Button fx:id="rejectButton" text="Reject dispute" onAction="#handleReject" styleClass="outline-button"/>
+            <Button fx:id="manualButton" text="Manual adjustment..." onAction="#handleManual" styleClass="outline-button"/>
+        </HBox>
+        <Label fx:id="errorLabel" styleClass="error-message"/>
+    </VBox>
+</ScrollPane>
