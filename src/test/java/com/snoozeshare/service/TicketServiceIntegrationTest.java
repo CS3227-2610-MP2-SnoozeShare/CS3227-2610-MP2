@@ -85,8 +85,8 @@ class TicketServiceIntegrationTest {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
             TicketServiceImpl service = service(db);
 
-            assertThrows(IllegalStateException.class,
-                    () -> service.assignToMe(MockIds.TICKET_3, MockIds.AGENT_AMY));
+            assertThrows(IllegalStateException.class, () ->
+                    service.assignToMe(MockIds.TICKET_3, MockIds.AGENT_AMY));
             assertThrows(IllegalStateException.class, () -> service.resolve(MockIds.TICKET_3,
                     new ResolutionRequest(ResolutionMode.REJECT, null, "not mine"), MockIds.AGENT_AMY));
         }
