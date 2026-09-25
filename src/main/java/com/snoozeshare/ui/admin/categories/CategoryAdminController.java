@@ -9,7 +9,6 @@ import javafx.fxml.FXML;
 import javafx.geometry.VPos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -30,21 +29,17 @@ public final class CategoryAdminController {
 
     @FXML
     private void handleAdd() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Add category");
-        dialog.setHeaderText("New ticket category");
-        dialog.setContentText("Label:");
-        dialog.showAndWait().ifPresent(text -> apply(() -> context.ticketService().createCategory(text, me())));
+        CategoryDialogController.showAdd(label -> context.ticketService().createCategory(label, me()));
+        afterDialog();
     }
 
-    private void rename(TicketCategory category) {
-        TextInputDialog dialog = new TextInputDialog(category.label());
-        dialog.setTitle("Rename category");
-        dialog.setHeaderText("Rename \"" + category.label() + "\"");
-        dialog.setContentText("Label:");
-        dialog.showAndWait().ifPresent(text -> {
-            apply(() -> context.ticketService().renameCategory(category.categoryId(), text, me()));
-        });
+    private void edit(TicketCategory category) {
+        UUID id = category.categoryId();
+        CategoryDialogController.showEdit(category.label(),
+                label -> context.ticketService().renameCategory(id, label, me()), () -> {
+                    context.ticketService().deleteCategory(id, me());
+                });
+        afterDialog();
     }
 
     private void toggle(TicketCategory category) {
@@ -53,6 +48,11 @@ public final class CategoryAdminController {
 
     private UUID me() {
         return context.session().currentUser().orElseThrow().userId();
+    }
+
+    private void afterDialog() {
+        errorLabel.setText("");
+        refresh();
     }
 
     private void apply(Runnable action) {
@@ -82,7 +82,7 @@ public final class CategoryAdminController {
         row.add(switchFor(category), 1, 0);
         Button edit = new Button("Edit");
         edit.getStyleClass().add("outline-button");
-        edit.setOnAction(event -> rename(category));
+        edit.setOnAction(event -> edit(category));
         row.add(edit, 2, 0);
         GridPane.setValignment(label, VPos.CENTER);
         return row;
