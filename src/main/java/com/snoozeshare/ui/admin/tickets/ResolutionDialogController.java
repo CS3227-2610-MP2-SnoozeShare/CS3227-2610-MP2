@@ -10,24 +10,27 @@ import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.service.DisputeDetail;
 import com.snoozeshare.service.requests.ResolutionRequest;
 
-import javafx.event.ActionEvent;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.Window;
 
 public final class ResolutionDialogController {
 
@@ -54,6 +57,8 @@ public final class ResolutionDialogController {
     private ResolutionMode mode;
     private Runnable cancelAction = () -> { };
     private Runnable confirmAction = () -> { };
+    private Runnable resizeAction = () -> { };
+    private ResolutionRequest result;
 
     private record Loaded(Node card, ResolutionDialogController controller) {
     }
@@ -75,45 +80,63 @@ public final class ResolutionDialogController {
         }
     }
 
+    /**
+     * Builds the modal window (not yet shown): a transparent, undecorated stage whose only content is the
+     * dialog card, so the card's own border and rounded corners are the whole modal.
+     */
+    public static Stage createDialog(DisputeDetail detail, ResolutionMode mode) {
+        return build(load(detail, mode));
+    }
+
     /** Shows the dialog modally; empty when the agent cancels. */
     public static Optional<ResolutionRequest> show(DisputeDetail detail, ResolutionMode mode) {
         Loaded loaded = load(detail, mode);
-        ResolutionDialogController controller = loaded.controller();
+        Stage stage = build(loaded);
+        stage.showAndWait();
+        return Optional.ofNullable(loaded.controller().result);
+    }
 
-        ButtonType confirm = new ButtonType(controller.confirmLabel(), ButtonBar.ButtonData.OK_DONE);
-        Dialog<ResolutionRequest> dialog = new Dialog<>();
-        dialog.initStyle(StageStyle.TRANSPARENT);
-        dialog.setTitle(controller.title());
-        DialogPane pane = new DialogPane() {
-            @Override
-            protected Node createButtonBar() {
-                Node bar = super.createButtonBar();
-                bar.setVisible(false);
-                bar.setManaged(false);
-                return bar;
+    private static Stage build(Loaded loaded) {
+        ResolutionDialogController controller = loaded.controller();
+        Window owner = Window.getWindows().stream().filter(Window::isFocused).findFirst()
+                .orElseGet(() -> Window.getWindows().stream().filter(Window::isShowing).findFirst().orElse(null));
+        Stage stage = new Stage(StageStyle.TRANSPARENT);
+        stage.initModality(Modality.APPLICATION_MODAL);
+        if (owner != null) {
+            stage.initOwner(owner);
+        }
+        stage.setTitle(controller.title());
+        Scene scene = new Scene((Parent) loaded.card());
+        scene.setFill(Color.TRANSPARENT);
+        scene.getStylesheets().add(ResolutionDialogController.class.getResource(THEME).toExternalForm());
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.ESCAPE) {
+                event.consume();
+                stage.close();
+            }
+        });
+        stage.setScene(scene);
+        stage.sizeToScene();
+        Runnable center = () -> {
+            if (owner != null) {
+                stage.setX(owner.getX() + (owner.getWidth() - stage.getWidth()) / 2);
+                stage.setY(owner.getY() + (owner.getHeight() - stage.getHeight()) / 2);
             }
         };
-        dialog.setDialogPane(pane);
-        pane.setContent(loaded.card());
-        pane.getButtonTypes().addAll(ButtonType.CANCEL, confirm);
-        pane.getStylesheets().add(ResolutionDialogController.class.getResource(THEME).toExternalForm());
-        pane.getStyleClass().addAll("agent-root", "agent-dialog-pane");
-        pane.sceneProperty().addListener((observable, previous, scene) -> {
-            if (scene != null) {
-                scene.setFill(Color.TRANSPARENT);
-            }
+        stage.setOnShown(event -> center.run());
+        // The card grows or shrinks (amount field, error text): keep the window exactly the card's size.
+        controller.resizeAction = () -> Platform.runLater(() -> {
+            stage.sizeToScene();
+            center.run();
         });
-        Button confirmNative = (Button) pane.lookupButton(confirm);
-        Button cancelNative = (Button) pane.lookupButton(ButtonType.CANCEL);
-        confirmNative.addEventFilter(ActionEvent.ACTION, event -> {
-            if (!controller.validate()) {
-                event.consume();
+        controller.cancelAction = stage::close;
+        controller.confirmAction = () -> {
+            if (controller.validate()) {
+                controller.result = controller.buildRequest();
+                stage.close();
             }
-        });
-        controller.cancelAction = cancelNative::fire;
-        controller.confirmAction = confirmNative::fire;
-        dialog.setResultConverter(button -> button == confirm ? controller.buildRequest() : null);
-        return dialog.showAndWait();
+        };
+        return stage;
     }
 
     @FXML
@@ -131,6 +154,7 @@ public final class ResolutionDialogController {
         mode = resolutionMode;
         errorLabel.visibleProperty().bind(errorLabel.textProperty().isNotEmpty());
         errorLabel.managedProperty().bind(errorLabel.textProperty().isNotEmpty());
+        errorLabel.textProperty().addListener((observable, previous, text) -> resizeAction.run());
         titleLabel.setText(title());
         subtitleLabel.setText("Ticket " + detail.ticketLabel() + " \u00b7 " + detail.listingTitle() + " \u00b7 "
                 + shortName(detail.guestName()) + " vs " + shortName(detail.hostName()));
@@ -188,6 +212,7 @@ public final class ResolutionDialogController {
         boolean entered = amountIsEntered();
         amountBox.setVisible(entered);
         amountBox.setManaged(entered);
+        resizeAction.run();
     }
 
     private String refundText() {
