@@ -279,7 +279,7 @@ class DisputeSettlementServiceTest {
     private static void assertUnchanged(MockDbFixture db, long transactionCount, String bookingStatus)
             throws Exception {
         assertEquals(transactionCount, db.scalarLong("SELECT COUNT(*) FROM wallet_transactions"));
-        assertEquals("UNDER_REVIEW", db.scalarString(
+        assertEquals("IN_REVIEW", db.scalarString(
                 "SELECT status FROM tickets WHERE ticketId = ?", MockIds.TICKET_3));
         assertEquals(bookingStatus, db.scalarString(
                 "SELECT status FROM bookings WHERE bookingId = ?", MockIds.BOOKING_11));

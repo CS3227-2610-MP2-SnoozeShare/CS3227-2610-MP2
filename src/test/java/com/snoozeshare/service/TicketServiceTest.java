@@ -99,7 +99,7 @@ class TicketServiceTest {
     void queueIsOldestFirstAndFiltersByAssignee() {
         Ticket newer = ticket(TicketStatus.OPEN, null, RemedyType.OTHER, "2026-09-10T00:00:00Z");
         Ticket older = ticket(TicketStatus.OPEN, null, RemedyType.OTHER, "2026-09-01T00:00:00Z");
-        Ticket mine = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-05T00:00:00Z");
+        Ticket mine = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.OTHER, "2026-09-05T00:00:00Z");
 
         assertEquals(List.of(older.ticketId(), mine.ticketId(), newer.ticketId()), ids(
                 service.queueForAgent(null, AssigneeFilter.ALL, amy)));
@@ -108,16 +108,16 @@ class TicketServiceTest {
         assertEquals(List.of(mine.ticketId()), ids(
                 service.queueForAgent(null, AssigneeFilter.MINE, amy)));
         assertEquals(List.of(mine.ticketId()), ids(
-                service.queueForAgent(TicketStatus.UNDER_REVIEW, AssigneeFilter.ALL, amy)));
+                service.queueForAgent(TicketStatus.IN_REVIEW, AssigneeFilter.ALL, amy)));
     }
 
     @Test
-    void assignToMeMovesAnOpenTicketUnderReviewAndAuditsIt() {
+    void assignToMeMovesAnOpenTicketInReviewAndAuditsIt() {
         Ticket open = ticket(TicketStatus.OPEN, null, RemedyType.OTHER, "2026-09-01T00:00:00Z");
 
         Ticket assigned = service.assignToMe(open.ticketId(), amy);
 
-        assertEquals(TicketStatus.UNDER_REVIEW, assigned.status());
+        assertEquals(TicketStatus.IN_REVIEW, assigned.status());
         assertEquals(amy, assigned.assignedAgentId());
         assertEquals(List.of("TICKET_ASSIGNED"), audit.actions());
     }
@@ -126,7 +126,7 @@ class TicketServiceTest {
     void assignRejectsNonAgentsNonOpenTicketsAndTicketsTakenByAnotherAgent() {
         Ticket open = ticket(TicketStatus.OPEN, null, RemedyType.OTHER, "2026-09-01T00:00:00Z");
         Ticket taken = ticket(TicketStatus.OPEN, ben, RemedyType.OTHER, "2026-09-02T00:00:00Z");
-        Ticket reviewing = ticket(TicketStatus.UNDER_REVIEW, ben, RemedyType.OTHER, "2026-09-03T00:00:00Z");
+        Ticket reviewing = ticket(TicketStatus.IN_REVIEW, ben, RemedyType.OTHER, "2026-09-03T00:00:00Z");
 
         assertThrows(IllegalStateException.class, () -> service.assignToMe(open.ticketId(), host));
         assertThrows(IllegalStateException.class, () -> service.assignToMe(taken.ticketId(), amy));
@@ -137,7 +137,7 @@ class TicketServiceTest {
 
     @Test
     void saveNotesReplacesTheStoredTextOnlyForTheAssignedAgent() {
-        Ticket mine = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
+        Ticket mine = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
 
         service.saveNotes(mine.ticketId(), "Requested photos", amy);
         Ticket updated = service.saveNotes(mine.ticketId(), "Photos received", amy);
@@ -151,7 +151,7 @@ class TicketServiceTest {
 
     @Test
     void saveNotesMayClearTheText() {
-        Ticket mine = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
+        Ticket mine = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
         service.saveNotes(mine.ticketId(), "something", amy);
 
         Ticket cleared = service.saveNotes(mine.ticketId(), "", amy);
@@ -161,7 +161,7 @@ class TicketServiceTest {
     }
 
     @Test
-    void notesRequireAnUnderReviewTicket() {
+    void notesRequireAnInReviewTicket() {
         Ticket open = ticket(TicketStatus.OPEN, null, RemedyType.OTHER, "2026-09-01T00:00:00Z");
         Ticket done = ticket(TicketStatus.RESOLVED_APPROVED, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
 
@@ -170,8 +170,8 @@ class TicketServiceTest {
     }
 
     @Test
-    void unassignReturnsMyUnderReviewTicketToOpenWithNoAssigneeAndAuditsIt() {
-        Ticket mine = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
+    void unassignReturnsMyInReviewTicketToOpenWithNoAssigneeAndAuditsIt() {
+        Ticket mine = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
 
         Ticket released = service.unassign(mine.ticketId(), amy);
 
@@ -182,8 +182,8 @@ class TicketServiceTest {
     }
 
     @Test
-    void unassignRejectsOtherAgentsNonAgentsAndTicketsNotUnderReview() {
-        Ticket mine = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
+    void unassignRejectsOtherAgentsNonAgentsAndTicketsNotInReview() {
+        Ticket mine = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
         Ticket open = ticket(TicketStatus.OPEN, null, RemedyType.OTHER, "2026-09-02T00:00:00Z");
         Ticket done = ticket(TicketStatus.RESOLVED_REJECTED, amy, RemedyType.OTHER, "2026-09-03T00:00:00Z");
 
@@ -197,8 +197,8 @@ class TicketServiceTest {
 
     @Test
     void acceptDerivesTheRefundFromTheRequestedRemedy() {
-        Ticket full = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.FULL_REFUND, "2026-09-01T00:00:00Z");
-        Ticket payout = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.HOST_PAYOUT, "2026-09-01T00:00:00Z");
+        Ticket full = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.FULL_REFUND, "2026-09-01T00:00:00Z");
+        Ticket payout = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.HOST_PAYOUT, "2026-09-01T00:00:00Z");
 
         service.resolve(full.ticketId(), new ResolutionRequest(ResolutionMode.ACCEPT, null, "ok"), amy);
         assertEquals(0, new BigDecimal("210.00").compareTo(settlement.refund()));
@@ -210,8 +210,8 @@ class TicketServiceTest {
 
     @Test
     void acceptOfAPartialOrOtherRequestNeedsAnAmount() {
-        Ticket partial = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.PARTIAL_REFUND, "2026-09-01T00:00:00Z");
-        Ticket other = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
+        Ticket partial = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.PARTIAL_REFUND, "2026-09-01T00:00:00Z");
+        Ticket other = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
 
         assertThrows(IllegalArgumentException.class, () -> service.resolve(partial.ticketId(),
                 new ResolutionRequest(ResolutionMode.ACCEPT, null, "ok"), amy));
@@ -224,8 +224,8 @@ class TicketServiceTest {
 
     @Test
     void acceptOfAPartialOrOtherRequestNeedsAPositiveAmount() {
-        Ticket partial = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.PARTIAL_REFUND, "2026-09-01T00:00:00Z");
-        Ticket other = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
+        Ticket partial = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.PARTIAL_REFUND, "2026-09-01T00:00:00Z");
+        Ticket other = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
 
         assertThrows(IllegalArgumentException.class, () -> service.resolve(partial.ticketId(),
                 new ResolutionRequest(ResolutionMode.ACCEPT, BigDecimal.ZERO, "ok"), amy));
@@ -240,7 +240,7 @@ class TicketServiceTest {
 
     @Test
     void rejectAlwaysRefundsNothingAndManualNeedsAnAmount() {
-        Ticket t = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.FULL_REFUND, "2026-09-01T00:00:00Z");
+        Ticket t = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.FULL_REFUND, "2026-09-01T00:00:00Z");
 
         service.resolve(t.ticketId(),
                 new ResolutionRequest(ResolutionMode.REJECT, new BigDecimal("99"), "no"), amy);
@@ -256,7 +256,7 @@ class TicketServiceTest {
 
     @Test
     void resolveRejectsNonAgents() {
-        Ticket t = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.FULL_REFUND, "2026-09-01T00:00:00Z");
+        Ticket t = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.FULL_REFUND, "2026-09-01T00:00:00Z");
 
         assertThrows(IllegalStateException.class, () -> service.resolve(t.ticketId(),
                 new ResolutionRequest(ResolutionMode.REJECT, null, "x"), host));

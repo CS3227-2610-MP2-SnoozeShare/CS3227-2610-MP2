@@ -76,7 +76,7 @@ class DisputeSettlementAtomicityTest {
             assertEquals(before, db.scalarLong("SELECT COUNT(*) FROM wallet_transactions"));
             assertEquals(0, new BigDecimal("790").compareTo(db.walletBalance(MockIds.WALLET_SOPHIA)));
             assertEquals(0, new BigDecimal("150").compareTo(db.walletBalance(MockIds.WALLET_DIEGO)));
-            assertEquals("UNDER_REVIEW", db.scalarString(
+            assertEquals("IN_REVIEW", db.scalarString(
                     "SELECT status FROM tickets WHERE ticketId = ?", MockIds.TICKET_3));
             assertEquals("CONFIRMED", db.scalarString(
                     "SELECT status FROM bookings WHERE bookingId = ?", MockIds.BOOKING_11));

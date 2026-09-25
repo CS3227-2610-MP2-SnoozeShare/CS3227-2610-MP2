@@ -45,7 +45,7 @@ class TicketServiceIntegrationTest {
             TicketServiceImpl service = service(db);
 
             Ticket assigned = service.assignToMe(MockIds.TICKET_2, MockIds.AGENT_AMY);
-            assertEquals(TicketStatus.UNDER_REVIEW, assigned.status());
+            assertEquals(TicketStatus.IN_REVIEW, assigned.status());
             service.saveNotes(MockIds.TICKET_2, "Requested gate photos", MockIds.AGENT_AMY);
 
             Ticket resolved = service.resolve(MockIds.TICKET_2,
@@ -99,7 +99,7 @@ class TicketServiceIntegrationTest {
                     "SELECT COUNT(*) FROM audit_log WHERE actionType = 'TICKET_UNASSIGNED'"));
             assertEquals("keep me", db.scalarString(
                     "SELECT agentNotes FROM tickets WHERE ticketId = ?", MockIds.TICKET_2));
-            assertEquals(TicketStatus.UNDER_REVIEW,
+            assertEquals(TicketStatus.IN_REVIEW,
                     service.assignToMe(MockIds.TICKET_2, MockIds.AGENT_BEN).status());
         }
     }
@@ -116,13 +116,13 @@ class TicketServiceIntegrationTest {
                     MockIds.AGENT_AMY));
 
             assertEquals(before, db.scalarLong("SELECT COUNT(*) FROM wallet_transactions"));
-            assertEquals("UNDER_REVIEW", db.scalarString(
+            assertEquals("IN_REVIEW", db.scalarString(
                     "SELECT status FROM tickets WHERE ticketId = ?", MockIds.TICKET_2));
         }
     }
 
     @Test
-    void anotherAgentCannotTakeOrResolveATicketAlreadyUnderReview(@TempDir Path directory)
+    void anotherAgentCannotTakeOrResolveATicketAlreadyInReview(@TempDir Path directory)
             throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
             TicketServiceImpl service = service(db);

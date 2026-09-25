@@ -69,7 +69,7 @@ class JdbcTicketRepositoryTest {
             assertEquals(List.of(MockIds.TICKET_2), ids(repository.findQueue(
                     TicketStatus.OPEN, AssigneeFilter.ALL, null)));
             assertEquals(List.of(MockIds.TICKET_3), ids(repository.findQueue(
-                    TicketStatus.UNDER_REVIEW, AssigneeFilter.ALL, null)));
+                    TicketStatus.IN_REVIEW, AssigneeFilter.ALL, null)));
         }
     }
 
