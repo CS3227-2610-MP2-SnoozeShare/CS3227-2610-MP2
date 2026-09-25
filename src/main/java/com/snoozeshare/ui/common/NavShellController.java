@@ -5,7 +5,9 @@ import java.math.RoundingMode;
 
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.app.SceneRouter;
+import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
@@ -25,9 +27,11 @@ public class NavShellController {
             roleLabel.setText(SceneRouter.displayName(context.session().currentRole()) + " Portal");
         }
         if (walletAmount != null) {
-            BigDecimal balance = context.walletService().balanceOf(
-                    context.session().currentUser().orElseThrow().userId());
-            walletAmount.setText(formatWalletAmount(balance));
+            refreshWalletDisplay();
+            if (context.eventBus() != null) {
+                context.eventBus().subscribe(WalletTransactionRecordedEvent.class,
+                        event -> Platform.runLater(this::refreshWalletDisplay));
+            }
         }
     }
 
@@ -48,6 +52,12 @@ public class NavShellController {
     protected void displayPage(String title, String message) {
         pageTitle.setText(title);
         pageMessage.setText(message);
+    }
+
+    private void refreshWalletDisplay() {
+        BigDecimal balance = context.walletService().balanceOf(
+                context.session().currentUser().orElseThrow().userId());
+        walletAmount.setText(formatWalletAmount(balance));
     }
 
     private static String formatWalletAmount(BigDecimal balance) {

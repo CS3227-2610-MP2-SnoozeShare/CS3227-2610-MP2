@@ -8,6 +8,7 @@ import com.snoozeshare.ui.common.NavShellController;
 import com.snoozeshare.ui.guest.listing.ListingDetailController;
 import com.snoozeshare.ui.guest.search.GuestSearchController;
 import com.snoozeshare.ui.guest.trips.TripDashboardController;
+import com.snoozeshare.ui.guest.wallet.WalletDashboardController;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -23,9 +24,12 @@ public final class GuestShellController extends NavShellController {
 
     private GuestSearchController searchController;
     private TripDashboardController tripController;
+    private WalletDashboardController walletController;
 
     @FXML
     private void showExplore() {
+        cleanupTripController();
+        cleanupWalletController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/guest/search/guest-search.fxml"));
@@ -71,6 +75,7 @@ public final class GuestShellController extends NavShellController {
 
     @FXML
     private void showMyTrips() {
+        cleanupWalletController();
         cleanupTripController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -88,6 +93,29 @@ public final class GuestShellController extends NavShellController {
         if (tripController != null) {
             tripController.cleanup();
             tripController = null;
+        }
+    }
+
+    @FXML
+    private void showWallet() {
+        cleanupWalletController();
+        cleanupTripController();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/snoozeshare/ui/guest/wallet/wallet-dashboard.fxml"));
+            Node walletView = loader.load();
+            walletController = loader.getController();
+            walletController.setContext(getContext());
+            shellRoot.setCenter(walletView);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load wallet dashboard", exception);
+        }
+    }
+
+    private void cleanupWalletController() {
+        if (walletController != null) {
+            walletController.cleanup();
+            walletController = null;
         }
     }
 
