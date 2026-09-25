@@ -200,6 +200,21 @@ class AdminUiSnapshotTest {
         return new Path[] {closed, list};
     }
 
+    /** Like writePng, but composites over an opaque background so a transparent window's extent is visible. */
+    static Path writePngOver(WritableImage image, String name, java.awt.Color background) throws IOException {
+        BufferedImage source = toBuffered(image);
+        BufferedImage flat = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D graphics = flat.createGraphics();
+        graphics.setColor(background);
+        graphics.fillRect(0, 0, flat.getWidth(), flat.getHeight());
+        graphics.drawImage(source, 0, 0, null);
+        graphics.dispose();
+        Files.createDirectories(OUTPUT);
+        Path file = OUTPUT.resolve(name + ".png");
+        ImageIO.write(flat, "png", file.toFile());
+        return file;
+    }
+
     static Path writePng(WritableImage image, String name) throws IOException {
         Files.createDirectories(OUTPUT);
         Path file = OUTPUT.resolve(name + ".png");

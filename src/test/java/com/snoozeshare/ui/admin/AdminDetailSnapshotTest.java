@@ -22,18 +22,14 @@ import com.snoozeshare.testsupport.MockIds;
 import com.snoozeshare.ui.admin.tickets.ResolutionDialogController;
 
 import javafx.application.Platform;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
 
 /**
  * Test-only snapshots of the dispute detail screen and the three resolution dialogs, written to
  * build/ui-snapshots/ so they can be compared with the design canvas by eye. It never asserts on pixels.
  */
 class AdminDetailSnapshotTest {
-
-    private static final String AGENT_THEME = "/com/snoozeshare/ui/admin/agent-theme.css";
 
     private static boolean toolkitAvailable;
 
@@ -68,20 +64,35 @@ class AdminDetailSnapshotTest {
         });
     }
 
+    /**
+     * Shows the REAL modal window, waits for layout and snapshots its scene over a blue background (so any
+     * extent beyond the card would be visible). Writes the stage size next to the PNG name for the report.
+     */
     private static Path dialogSnapshot(DisputeDetail detail, ResolutionMode mode, String name, boolean custom)
             throws Exception {
-        return AdminUiSnapshotTest.onFx(() -> {
-            Node card = ResolutionDialogController.createCard(detail, mode);
+        Stage[] holder = new Stage[1];
+        AdminUiSnapshotTest.onFx(() -> {
+            holder[0] = ResolutionDialogController.createDialog(detail, mode);
+            holder[0].show();
             if (custom) {
-                ToggleButton chip = (ToggleButton) card.lookup("#customChip");
+                ToggleButton chip = (ToggleButton) holder[0].getScene().getRoot().lookup("#customChip");
                 chip.setSelected(true);
             }
-            StackPane pane = new StackPane(card);
-            pane.setAlignment(Pos.TOP_CENTER);
-            pane.getStyleClass().addAll("agent-root", "agent-dialog-pane");
-            pane.getStylesheets().add(AdminDetailSnapshotTest.class.getResource(AGENT_THEME).toExternalForm());
-            return AdminUiSnapshotTest.snapshot(pane, name, 560, 700);
+            return null;
         });
+        Thread.sleep(600);
+        Path file = AdminUiSnapshotTest.onFx(() -> {
+            Stage stage = holder[0];
+            stage.getScene().getRoot().applyCss();
+            stage.getScene().getRoot().layout();
+            Path written = AdminUiSnapshotTest.writePngOver(stage.getScene().snapshot(null), name,
+                    new java.awt.Color(0xb0, 0xc0, 0xff));
+            System.out.println("DIALOG " + name + " stage=" + stage.getWidth() + "x" + stage.getHeight()
+                    + " scene=" + stage.getScene().getWidth() + "x" + stage.getScene().getHeight());
+            stage.close();
+            return written;
+        });
+        return file;
     }
 
     @Test
@@ -113,7 +124,8 @@ class AdminDetailSnapshotTest {
              AppContext ben = login(db, "ben.alvarez@snoozeshare.test")) {
             DisputeDetail detail = ben.disputeQueryService().detail(MockIds.TICKET_3);
 
-            Path accept = dialogSnapshot(detail, ResolutionMode.ACCEPT, "agent-dialog-accept", false);
+            DisputeDetail otherRemedy = ben.disputeQueryService().detail(MockIds.TICKET_2);
+            Path accept = dialogSnapshot(otherRemedy, ResolutionMode.ACCEPT, "agent-dialog-accept", false);
             Path reject = dialogSnapshot(detail, ResolutionMode.REJECT, "agent-dialog-reject", false);
             Path manual = dialogSnapshot(detail, ResolutionMode.MANUAL, "agent-dialog-manual", false);
             Path custom = dialogSnapshot(detail, ResolutionMode.MANUAL, "agent-dialog-manual-custom", true);
