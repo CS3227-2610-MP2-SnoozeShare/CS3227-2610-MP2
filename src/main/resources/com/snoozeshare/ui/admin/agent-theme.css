@@ -415,6 +415,8 @@
     -fx-background-color: bg;
 }
 .agent-root .agent-input .content { -fx-padding: 8px 12px 8px 12px; -fx-background-radius: 8px; }
+.agent-root .agent-notes, .agent-root .agent-notes .content { -fx-background-color: bg-overlay; }
+.agent-root .agent-notes .content { -fx-padding: 8px 12px 8px 12px; -fx-background-radius: 8px; }
 .agent-root .agent-action { -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10px 20px 10px 20px; }
 .agent-root .agent-action-success { -fx-background-color: success; }
 .agent-root .agent-action-success:hover { -fx-background-color: #33540a; }

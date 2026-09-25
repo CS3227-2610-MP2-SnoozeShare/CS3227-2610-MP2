@@ -27,7 +27,7 @@
             <Button fx:id="assignButton" text="Assign to me" onAction="#handleAssign" styleClass="button, agent-button-sm"/>
         </HBox>
 
-        <HBox styleClass="agent-card, summary-card" spacing="28" alignment="CENTER_LEFT">
+        <HBox styleClass="agent-card, summary-card" spacing="28" alignment="CENTER_LEFT" fillHeight="false">
             <Region styleClass="agent-thumb"/>
             <VBox spacing="2">
                 <Label fx:id="listingLabel" styleClass="agent-summary-title"/>
@@ -36,7 +36,7 @@
             <VBox spacing="2"><Label text="GUEST" styleClass="summary-caption"/><Label fx:id="guestLabel" styleClass="card-title"/></VBox>
             <VBox spacing="2"><Label text="HOST" styleClass="summary-caption"/><Label fx:id="hostLabel" styleClass="card-title"/></VBox>
             <VBox spacing="2"><Label text="AMOUNT HELD IN ESCROW" styleClass="summary-caption"/><Label fx:id="escrowLabel" styleClass="agent-escrow"/></VBox>
-            <VBox spacing="2" alignment="TOP_LEFT"><Label text="BOOKING STATUS" styleClass="summary-caption"/><Label fx:id="phaseLabel" styleClass="badge-warning"/></VBox>
+            <VBox spacing="2"><Label text="BOOKING STATUS" styleClass="summary-caption"/><Label fx:id="phaseLabel" styleClass="badge-warning"/></VBox>
         </HBox>
 
         <HBox spacing="16">
@@ -69,12 +69,9 @@
 
         <VBox spacing="6">
             <Label text="Internal notes (invisible to guest or host)" styleClass="agent-field-label"/>
-            <TextArea fx:id="notesArea" promptText="Add investigation notes…" styleClass="agent-input"
-                      minHeight="56" prefHeight="56" maxHeight="56" wrapText="true"/>
-            <HBox spacing="10" alignment="TOP_LEFT">
-                <Button fx:id="addNoteButton" text="Add note" onAction="#handleAddNote" styleClass="outline-button"/>
-                <Label fx:id="notesHistory" wrapText="true" styleClass="small" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-            </HBox>
+            <TextArea fx:id="notesArea" promptText="Add investigation notes…" styleClass="agent-notes"
+                      minHeight="60" prefHeight="60" wrapText="true"/>
+            <Button fx:id="saveNotesButton" text="Save" onAction="#handleSaveNotes" styleClass="button, agent-button-sm"/>
         </VBox>
 
         <HBox spacing="10" alignment="CENTER_LEFT">

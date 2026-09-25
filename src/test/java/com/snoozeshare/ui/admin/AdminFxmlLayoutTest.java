@@ -56,13 +56,14 @@ class AdminFxmlLayoutTest {
         String detail = read("tickets/dispute-detail.fxml");
         String[] ids = {"crumbLabel", "statusBadge", "assignButton", "listingLabel",
             "datesLabel", "guestLabel", "hostLabel", "escrowLabel", "phaseLabel", "guestThread",
-            "hostThread", "guestInput", "hostInput", "notesHistory", "notesArea", "addNoteButton",
+            "hostThread", "guestInput", "hostInput", "notesArea", "saveNotesButton",
             "acceptButton", "rejectButton", "manualButton", "errorLabel"};
 
         for (String id : ids) {
             assertTrue(detail.contains("fx:id=\"" + id + "\""), id);
         }
         assertTrue(detail.contains("Internal notes"));
+        assertFalse(detail.contains("notesHistory"), "notes are one persisted field, no history list");
         assertFalse(detail.toLowerCase().contains("force"));
     }
 

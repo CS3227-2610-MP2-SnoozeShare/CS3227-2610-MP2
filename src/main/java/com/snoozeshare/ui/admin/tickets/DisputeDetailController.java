@@ -48,9 +48,8 @@ public final class DisputeDetailController {
     @FXML private VBox hostThread;
     @FXML private TextField guestInput;
     @FXML private TextField hostInput;
-    @FXML private Label notesHistory;
     @FXML private TextArea notesArea;
-    @FXML private Button addNoteButton;
+    @FXML private Button saveNotesButton;
     @FXML private Button acceptButton;
     @FXML private Button rejectButton;
     @FXML private Button manualButton;
@@ -90,7 +89,9 @@ public final class DisputeDetailController {
         statusBadge.setText((open ? "Unassigned" : statusText(ticket.status())).toUpperCase(Locale.ROOT));
         statusBadge.getStyleClass().setAll(open ? "agent-pill-danger" : underReview ? "agent-pill-warning"
                 : "agent-pill-success", "agent-pill");
-        assignButton.setDisable(!open);
+        boolean unassignable = underReview && mine;
+        assignButton.setText(unassignable ? "Unassign" : "Assign to me");
+        assignButton.setDisable(!(open || unassignable));
         listingLabel.setText(detail.listingTitle());
         datesLabel.setText("Booking #" + ticket.bookingId().toString().substring(0, 8).toUpperCase(Locale.ROOT)
                 + " \u00b7 " + dayText(detail.startDate()) + " \u2013 " + dayText(detail.endDate()));
@@ -102,8 +103,8 @@ public final class DisputeDetailController {
         hostThreadTitle.setText(("Host messages \u00b7 " + detail.hostName()).toUpperCase(Locale.ROOT));
         guestInput.setPromptText("Reply to " + firstName(detail.guestName()) + "\u2026");
         hostInput.setPromptText("Reply to " + firstName(detail.hostName()) + "\u2026");
-        notesHistory.setText(ticket.agentNotes() == null ? "No notes yet." : ticket.agentNotes());
-        addNoteButton.setDisable(!(underReview && mine));
+        notesArea.setText(ticket.agentNotes() == null ? "" : ticket.agentNotes());
+        saveNotesButton.setDisable(!(underReview && mine));
         acceptButton.setText("Accept \u2014 remedy " + (ticket.raisedByRole() == Role.HOST ? "host" : "guest"));
         acceptButton.setDisable(!canResolve);
         rejectButton.setDisable(!canResolve);
@@ -147,15 +148,16 @@ public final class DisputeDetailController {
 
     @FXML
     private void handleAssign() {
-        run(() -> context.ticketService().assignToMe(ticketId, me()));
+        if (detail.ticket().status() == TicketStatus.UNDER_REVIEW) {
+            run(() -> context.ticketService().unassign(ticketId, me()));
+        } else {
+            run(() -> context.ticketService().assignToMe(ticketId, me()));
+        }
     }
 
     @FXML
-    private void handleAddNote() {
-        run(() -> {
-            context.ticketService().addAgentNote(ticketId, notesArea.getText(), me());
-            notesArea.clear();
-        });
+    private void handleSaveNotes() {
+        run(() -> context.ticketService().saveNotes(ticketId, notesArea.getText(), me()));
     }
 
     @FXML
