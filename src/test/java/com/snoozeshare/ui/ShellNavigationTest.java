@@ -26,7 +26,7 @@ class ShellNavigationTest {
     @Test
     void roleControllersDeclareTheirNavigationDestinations() throws Exception {
         assertControllerMethods("guest/GuestShellController.java", "showExplore",
-                "showMyTrips", "showSupport");
+                "showMyTrips", "showWallet", "showSupport");
         assertControllerMethods("host/HostShellController.java", "showDashboard",
                 "showListings", "showBookings");
         assertControllerMethods("admin/AdminShellController.java", "showOperations",
