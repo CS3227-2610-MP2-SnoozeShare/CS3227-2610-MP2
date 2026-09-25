@@ -4,11 +4,11 @@
 anything, then run `git log --oneline -20` to confirm it still matches reality. Update it at
 every boundary, not at the end of the session.
 
-- **Phase:** Host shell login-load fix — implementation complete, awaiting review
+- **Phase:** W6 Host Listing Management & Publishing — complete, awaiting guide confirmation
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `w6` (Host features — Listing Management & Publishing)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-25 by Codex — fixed malformed Host shell FXML
+- **Last updated:** 2026-09-25 by Codex — marked W6 complete after final verification
 - **Last verified against repo:** 2026-09-25
 - **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
 
@@ -63,8 +63,6 @@ three iterations).
 | S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Paused | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
-| S4 | 2026-09-25 | Codex | w6 | W6 | In review | W6 implementation and clean build complete; handoff record written, awaiting review. | 2026-09-25 |
-| S5 | 2026-09-25 | Codex | w6 | W6 | In review | Fixed missing Host shell center closing tag that blocked authenticated Host login; regression test and clean build pass. | 2026-09-25 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
@@ -86,7 +84,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Building | [booking-execution design](docs/superpowers/specs/2026-09-24-w3-booking-execution-design.md) | [booking-execution plan](docs/superpowers/plans/2026-09-24-w3-booking-execution.md) | All 9 tasks complete: TransactionServiceImpl, BookingServiceImpl (submit/cancel/decide), AppContext wiring, Trip Hub UI, Book Now button | — |
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Not started | — | — | Backlog only: §3 | — |
 | W5 | F4 — Guest Wallet Management (top-up/withdraw) | Done | [wallet-management design](docs/superpowers/specs/2026-09-25-w5-wallet-management-design.md) | [wallet-management plan](docs/superpowers/plans/2026-09-25-w5-wallet-management.md) | All 6 tasks complete: dashboard, modal, navigation, CSS, sidebar refresh | Awaiting confirmation |
-| W6 | F5 — Host Listing Management & Publishing | In review | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md) | [listing-management plan](docs/superpowers/plans/2026-09-25-w6-listing-management.md) | Host listing detail flow complete: clickable cards, full details, Back navigation, and Edit isolation; clean build passed | Awaiting confirmation |
+| W6 | F5 — Host Listing Management & Publishing | Done | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md) | [listing-management plan](docs/superpowers/plans/2026-09-25-w6-listing-management.md) | Implementation complete: listing CRUD/status/detail flows, host wallet/navigation refinements, wallet refresh fix, and clean build verification | Awaiting confirmation |
 | W7 | F6 — Host Calendar & Date Overrides | Not started | — | — | Backlog only: §4 | — |
 | W8 | F7 — Host Request Queue, Earnings & Disputes | Not started | — | — | Backlog only: §4 | — |
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
