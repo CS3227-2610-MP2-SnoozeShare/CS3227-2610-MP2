@@ -1,5 +1,6 @@
 package com.snoozeshare.ui.admin;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -29,6 +30,7 @@ import javafx.scene.SnapshotParameters;
 import javafx.scene.control.ComboBox;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.stage.PopupWindow;
 import javafx.stage.Stage;
@@ -163,6 +165,8 @@ class AdminUiSnapshotTest {
             });
             Thread.sleep(500);
             Path[] files = null;
+            double[] comboWidth = new double[1];
+            double[] listWidth = new double[1];
             for (int attempt = 0; attempt < 4 && files == null; attempt++) {
                 onFx(() -> {
                     ComboBox<?> combo = (ComboBox<?>) stage[0].getScene().getRoot().lookup(".combo-box");
@@ -173,6 +177,13 @@ class AdminUiSnapshotTest {
                 });
                 Thread.sleep(700);
                 files = onFx(this::snapshotOpenDropdown);
+                if (files != null) {
+                    comboWidth[0] = onFx(() -> ((ComboBox<?>) stage[0].getScene().getRoot()
+                            .lookup(".combo-box")).getWidth());
+                    listWidth[0] = onFx(() -> Window.getWindows().stream().filter(w -> w instanceof PopupWindow)
+                            .map(w -> w.getScene().getRoot().lookup(".list-view")).filter(n -> n != null)
+                            .mapToDouble(n -> ((Region) n).getWidth()).findFirst().orElse(-1));
+                }
             }
             onFx(() -> {
                 stage[0].close();
@@ -182,6 +193,7 @@ class AdminUiSnapshotTest {
             assumeTrue(files != null, "dropdown popup did not open (window not focused)");
             assertTrue(Files.size(files[0]) > 0);
             assertTrue(Files.size(files[1]) > 0);
+            assertEquals(comboWidth[0], listWidth[0], 1.0, "popup list must be exactly as wide as the selector");
         }
     }
 

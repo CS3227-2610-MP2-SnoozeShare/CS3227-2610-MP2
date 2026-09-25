@@ -250,8 +250,8 @@
     -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 5px 4px 5px 10px;
-    -fx-alignment: center-right;
-    -fx-text-alignment: right;
+    -fx-alignment: center-left;
+    -fx-text-alignment: left;
 }
 .agent-root .combo-box-base > .arrow-button {
     -fx-background-color: transparent;
@@ -280,9 +280,9 @@
     -fx-text-fill: fg;
     -fx-font-size: 12px;
     -fx-font-weight: normal;
-    -fx-padding: 7px 12px 7px 12px;
-    -fx-alignment: center-right;
-    -fx-text-alignment: right;
+    -fx-padding: 7px 10px 7px 10px;
+    -fx-alignment: center-left;
+    -fx-text-alignment: left;
 }
 .agent-root .combo-box-popup .list-cell:filled:hover,
 .agent-root .combo-box-popup .list-cell:filled:selected,

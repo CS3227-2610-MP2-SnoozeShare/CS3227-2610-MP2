@@ -21,7 +21,7 @@
             <ToggleButton fx:id="allChip" text="All" styleClass="filter-chip" selected="true"/>
             <ToggleButton fx:id="unassignedChip" text="Unassigned" styleClass="filter-chip"/>
             <ToggleButton fx:id="mineChip" text="Mine" styleClass="filter-chip"/>
-            <ComboBox fx:id="statusCombo" styleClass="agent-combo" prefWidth="160" prefHeight="28"/>
+            <ComboBox fx:id="statusCombo" styleClass="agent-combo" prefHeight="28"/>
         </HBox>
     </HBox>
 

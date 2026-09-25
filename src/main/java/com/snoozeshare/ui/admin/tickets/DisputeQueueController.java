@@ -18,6 +18,7 @@ import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
@@ -26,6 +27,8 @@ import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 
 public final class DisputeQueueController {
 
@@ -72,6 +75,11 @@ public final class DisputeQueueController {
         statusCombo.getItems().addAll(STATUS_LABELS);
         statusCombo.getSelectionModel().selectFirst();
         statusCombo.valueProperty().addListener((observable, previous, selected) -> refresh());
+        statusCombo.skinProperty().addListener((observable, previous, skin) -> {
+            if (skin != null) {
+                Platform.runLater(this::fitStatusComboWidth);
+            }
+        });
 
         table.getStyleClass().add("agent-table");
         table.setFixedCellSize(ROW_HEIGHT);
@@ -98,6 +106,34 @@ public final class DisputeQueueController {
             });
             return row;
         });
+    }
+
+    /**
+     * Sizes the status dropdown to its widest option: measured text width (in the bold cell font, the widest
+     * state) plus the cell padding, arrow button and border. The popup list follows the combo width, so the
+     * selector and the popup always match.
+     */
+    private void fitStatusComboWidth() {
+        statusCombo.applyCss();
+        statusCombo.layout();
+        Node cellNode = statusCombo.lookup(".list-cell");
+        Node arrow = statusCombo.lookup(".arrow-button");
+        if (!(cellNode instanceof Label cell) || arrow == null) {
+            return;
+        }
+        Font font = cell.getFont();
+        double widest = 0;
+        for (String label : STATUS_LABELS) {
+            Text measure = new Text(label);
+            measure.setFont(font);
+            widest = Math.max(widest, measure.getLayoutBounds().getWidth());
+        }
+        double border = statusCombo.getInsets().getLeft() + statusCombo.getInsets().getRight();
+        double width = Math.ceil(widest + cell.getPadding().getLeft() + cell.getPadding().getRight()
+                + arrow.prefWidth(-1) + border);
+        statusCombo.setMinWidth(width);
+        statusCombo.setPrefWidth(width);
+        statusCombo.setMaxWidth(width);
     }
 
     public void setContext(AppContext appContext) {
