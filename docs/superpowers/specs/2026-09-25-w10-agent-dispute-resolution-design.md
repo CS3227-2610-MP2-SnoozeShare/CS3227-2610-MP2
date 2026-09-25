@@ -148,16 +148,26 @@ Controllers depend only on `service.*` interfaces. Views refresh via `TicketReso
 
 ## 5. Testing strategy
 
-TDD-first, service layer first. The team's shared mock database `db/snoozeshare-mock.db` is the integration fixture; the committed file is **never mutated**.
+TDD-first, service layer first. The team's shared mock database `db/snoozeshare-mock.db` is the integration fixture; the committed file is **never mutated by tests** (they work on a temp copy).
 
 ### 5.1 The mock-DB fixture (`MockDbFixture`)
 
 1. Copies `db/snoozeshare-mock.db` to a temp file per test class (JUnit `@TempDir`), opens it via the real `ConnectionFactory`.
-2. Applies a **fixture-normalisation script** for known mock-data inconsistencies with C17/C20 (recorded in § 6, D6): booking 9 reset to `CONFIRMED` with escrow held (its `BOOKING_PAYOUT` row removed and host wallet balance reduced to keep `balance = Σ transactions`); booking 11 set to `CONFIRMED` (stay over, escrow held); ticket 4 / booking 13 treated as legacy single-sided data and excluded from settlement assertions.
-3. Asserts the **ledger invariant** (`wallets.balance = Σ wallet_transactions` per wallet) both after normalisation and after every mutation test.
+2. **No normalisation step.** The committed mock DB itself was corrected to follow C17/C20/C23 on 2026-09-25 (§ 6, D6): the copy exists only so mutating tests never write to the committed file. Tests read the data exactly as the team sees it.
+3. Asserts the **ledger invariant** (`wallets.balance = Σ wallet_transactions` per wallet, and each row's `balanceAfter` equals the chronological running sum) on the fresh copy and again after every mutation test.
 4. Injects a fixed `Clock` (`2026-09-25`) so "stay ended" logic is deterministic.
 
-Mock rows used: 6 tickets across all four statuses (OPEN #2, UNDER_REVIEW #3, three resolved), 6 categories, guest/host/agent users and wallets.
+**Mock rows used** (all in the committed DB):
+
+| Ticket | Status | Booking (total) | Booking status / ledger | Used for |
+|---|---|---|---|---|
+| #2 | `OPEN`, unassigned | 9 (875.00, stay ended 08-06) | `CONFIRMED`; `ESCROW_HOLD` only | Queue "Unassigned" filter; assign flow; resolve-Accept/Reject/Manual scenarios (mutating tests, on the temp copy) |
+| #3 | `UNDER_REVIEW`, assigned to Ben Alvarez | 11 (210.00, stay ended 09-04) | `CONFIRMED`; `ESCROW_HOLD` only | "Mine" filter (as Ben); resolve scenarios; not-assigned-to-caller rejection when run as another agent |
+| #1 | `RESOLVED_APPROVED` | 10 (480.00) | `COMPLETED`; hold + `TICKET_REMEDY` 100.00 + host payout 368.60 (fee 11.40) | Read-only reference for the Accept-partial ledger shape; already-resolved rejection |
+| #4 | `RESOLVED_APPROVED` | 13 (330.00) | `COMPLETED`; hold + `AGENT_OVERRIDE` 165.00 + host payout 160.05 (fee 4.95) | Read-only reference for the Manual-adjustment ledger shape |
+| #5, #6 | `RESOLVED_REJECTED` | 8, 6 (cancelled bookings) | escrow already refunded | Rejection of settlement on a non-`CONFIRMED` / non-held booking |
+
+Plus 6 categories (all active), and the guest/host/agent users and wallets. Scenarios that need shapes the mock does not have (for example a host-raised ticket on a held booking, or a deactivated category) insert extra rows inside the test on the temp copy.
 
 ### 5.2 Test types
 
@@ -167,7 +177,7 @@ Mock rows used: 6 tickets across all four statuses (OPEN #2, UNDER_REVIEW #3, th
 | 2 | **Unit — settlement math** | pure `SettlementCalculator` | table-driven | `R` boundaries (0, `E`, partial), fee rounding `HALF_UP`, `R + H = E`, host net = `H − fee`, no zero rows, `R > E` / negative rejected |
 | 3 | **Unit — service (fakes)** | `TicketServiceImpl`, `DisputeSettlementServiceImpl` with in-memory repos/fakes | in-memory | Queue order ascending + filters; assign rules (already assigned, not OPEN); notes gate; every precondition in § 4.3 rejects with no writes; category label uniqueness/blank; agent-role authorization; one audit call per mutation; events only after commit |
 | 4 | **Repository integration** | `JdbcTicketRepository`, `JdbcTicketCategoryRepository`, escrow-held query | mock DB copy | Round-trip of all 15 ticket fields; queue SQL ordering/filter; upsert; category CRUD; enum mapping; `Instant` parsing |
-| 5 | **Service integration** | `TicketServiceImpl` + real JDBC + `InProcessEventBus` | mock DB copy (booking 11, booking 9 normalised) | Accept full/partial/host-payout, Reject, Manual full-refund/full-payout/custom: exact ledger rows (type, amount, fee, related ids, `balanceAfter`), wallet balances, ticket + booking end states, `completedAt`, audit row content, ledger invariant |
+| 5 | **Service integration** | `TicketServiceImpl` + real JDBC + `InProcessEventBus` | mock DB copy (tickets #2 and #3 on held bookings 9 and 11) | Accept full/partial/host-payout, Reject, Manual full-refund/full-payout/custom: exact ledger rows (type, amount, fee, related ids, `balanceAfter`), wallet balances, ticket + booking end states, `completedAt`, audit row content, ledger invariant |
 | 6 | **Atomicity / failure** | forced failure mid-settlement (throwing repository decorator) | mock DB copy | Full rollback: no partial rows, balances/status unchanged, no event published |
 | 7 | **Concurrency / idempotency** | double resolve; resolve after another agent assigned; resolve an already-settled booking | mock DB copy | Second attempt fails cleanly; escrow never paid twice |
 | 8 | **Schema parity** | `V001__foundation.sql` vs `db/schema.sql` for `tickets`, `ticket_categories`, `wallet_transactions`, `bookings` | both | Same columns/constraints — guards against the hand-written mock DB drifting (D6) |
@@ -183,7 +193,7 @@ Mock rows used: 6 tickets across all four statuses (OPEN #2, UNDER_REVIEW #3, th
 | ID | Item | Handling |
 |---|---|---|
 | D5 | W10 adds a dedicated `DisputeSettlementService` instead of using `TransactionService.applyTicketRemedy` / `manualOverride`, whose single-sided signatures cannot express C20's two-sided full-escrow settlement. Departs from the convention that `TicketService` calls `TransactionService`. | Reconcile with W3 at merge: either fold `settle` into `TransactionService` or leave both. |
-| D6 | The mock DB is hand-written from `db/schema.sql`, not generated from migrations, and holds rows that predate C17/C20 (booking 9 paid out with an open ticket; ticket 4/booking 13 single-sided). | Tests normalise a temp copy (§ 5.1) and run a schema-parity test; committed DB untouched. |
+| D6 | The mock DB is hand-written from `db/schema.sql` (not generated from migrations) and held rows predating C17/C20: booking 9 paid out with an open ticket, ticket 4/booking 13 single-sided and `FORCE_COMPLETED`, tickets filed outside the 7-day window, a broken `balanceAfter` chain on wallet 5. | **Resolved:** corrected in place per operator direction — `seed-mock-data.sql` edited and `snoozeshare-mock.db` rebuilt from `schema.sql` + seed, ledger invariants and FK check verified. Tests use a temp copy only for isolation; a schema-parity test guards future drift. |
 | D7 | Design artifact shows Force actions, a queue sorted newest-first, an "Adjust wallet" dropdown, and no Accept amount field. | Superseded by C22, F9.1.1, C20, and § 4.3 respectively. |
 | D8 | `tickets.category` is label text, not a foreign key. | Renames do not propagate to existing tickets; accepted. |
 | D9 | `BookingStateMachine` allowed only HOST on `CONFIRMED → COMPLETED`. | Additive AGENT permission (C23); W3 must be told when merging. |
@@ -204,5 +214,6 @@ Mock rows used: 6 tickets across all four statuses (OPEN #2, UNDER_REVIEW #3, th
 
 - Implementation plan: `docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md` (next, via `writing-plans`).
 - W13 Messaging spec (separate workstream; consumes the `MessageService` interface defined here).
-- `docs/ProductBacklog.md`: mark F9.2.1 dropped and add a Messaging epic — proposed, awaiting operator approval (not edited here).
+- `docs/ProductBacklog.md` updated 2026-09-25 (operator approved): F9.2.1 dropped, F9.2.2 / F9.1.1 / F7.3.1 reworded, new epic F12 Messaging.
+- W3 handoffs are recorded in `PROJECT_STATE.md` § Workstreams → *Handoffs into W3*.
 - W3/W8: honour C17 (skip auto-complete on open tickets) and reconcile D5/D9.

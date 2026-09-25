@@ -28,6 +28,10 @@ Everything in this section is a prerequisite for every role-specific feature bel
 |  |  | F0.1.2 | The system shall provide a mocked login that sets the active session's user and role (`SessionContext`) and routes to the corresponding role shell (Guest/Host/Admin), with no real credential verification. | High | 1 |
 |  | **F0.2** | **Wallet Provisioning** |  |  |  |
 |  |  | F0.2.1 | The system shall automatically create a zero-balance Wallet for a user upon successful Guest or Host registration. | High | 1 |
+| **F12** | **Messaging** |  |  | **Medium** | **2** |
+|  | **F12.1** | **Ticket Conversations** |  |  |  |
+|  |  | F12.1.1 | The system shall provide a `MessageService` that lets a dispute ticket's guest or host and the assigned Support Agent exchange chat messages in a per-party thread (guest↔agent, host↔agent) attached to the ticket; the agent chat runs through the same service as any other participant. | Medium | 2 |
+|  |  | F12.1.2 | The system shall persist messages and let each party read only their own thread, with the agent able to read both. | Medium | 2 |
 
 ## 3. Guest (Renter) Feature Backlog
 
@@ -92,7 +96,7 @@ The Host backlog covers property publishing, calendar date blocking, booking req
 |  |  | F7.2.1 | The system shall compute net host earnings (gross minus 3% host platform fee) and credit the host's wallet via a BOOKING_PAYOUT wallet transaction when a booking reaches COMPLETED. | Medium | 2 |
 |  |  | F7.2.2 | The system shall allow hosts to submit formal response notes and evidence text against open guest dispute tickets. | Medium | 2 |
 |  | **F7.3** | **Trip Completion & Settlement Trigger** |  |  |  |
-|  |  | F7.3.1 | The system shall automatically transition a CONFIRMED booking to COMPLETED once its dispute window has passed (checkout date + 7 days), triggering wallet settlement per F6.2.1. | High | 2 |
+|  |  | F7.3.1 | The system shall automatically transition a CONFIRMED booking to COMPLETED once its dispute window has passed (checkout date + 7 days), triggering wallet settlement per F6.2.1. A booking with an open (unresolved) dispute ticket shall not be auto-completed; its escrow stays held until an agent resolves the ticket (F9.2.2). | High | 2 |
 | **F8** | **Host Wallet Management** |  |  | **High** | **1** |
 |  | **F8.1** | **Wallet Balance & Payout History** |  |  |  |
 |  |  | F8.1.1 | The system shall allow a host to view their current wallet balance. | High | 1 |
@@ -109,11 +113,11 @@ The Support Agent backlog manages dispute triage, manual state overrides, accoun
 | ----- | ----- | ----- | :---- | ----- | ----- |
 | **F9** | **Dispute Resolution & State Override Engine** |  |  | **High** | **2** |
 |  | **F9.1** | **Centralized Dispute Triage Queue** |  |  |  |
-|  |  | F9.1.1 | The system shall show an active dispute ticket queue sorted chronologically with guest and host evidence presented. | High | 2 |
+|  |  | F9.1.1 | The system shall show an active dispute ticket queue sorted chronologically (oldest first) with guest and host evidence and their chat threads (F12.1.1) presented. | High | 2 |
 |  |  | F9.1.2 | The system shall allow support agents to accept ticket requests and record internal administrative notes within tickets. | Medium | 2 |
 |  | **F9.2** | **Manual Wallet Settlement & State Overrides** |  |  |  |
-|  |  | F9.2.1 | The system shall permit agents to force-change booking state (e.g., Force Cancel, Force Complete) to resolve deadlocks. | Medium | 2 |
-|  |  | F9.2.2 | The system shall permit agents to manually override wallet transactions for a booking: Full Refund to Guest, Full Payout to Host, or a Customised Partial Refund/Payout. | High | 2 |
+|  |  | F9.2.1 | ~~The system shall permit agents to force-change booking state (e.g., Force Cancel, Force Complete) to resolve deadlocks.~~ **Dropped 2026-09-25 (PROJECT_STATE C22):** redundant — accepting or rejecting the dispute ticket (F9.2.2) already closes it and settles the booking. | ~~Medium~~ | Dropped |
+|  |  | F9.2.2 | The system shall permit agents to resolve a dispute by settling the booking's full held escrow: accept the ticket's requested remedy, reject the ticket (host paid in full), or apply a manual adjustment — Full Refund to Guest, Full Payout to Host, or a Customised Partial Refund/Payout. Any amount reaching the host is net of the 3% platform fee; guest refunds carry no fee. Resolution completes the booking (CONFIRMED → COMPLETED). | High | 2 |
 |  | **F9.3** | **Ticket Category Administration** |  |  |  |
 |  |  | F9.3.1 | The system shall allow agents to create, edit, and deactivate the ticket categories offered to guests when filing a dispute (F3.1.1). | Low | 2 |
 | **F10** | **Account Governance** |  |  | **Medium** | **2** |
@@ -136,6 +140,13 @@ To meet the course requirements for Agentic SE integration in Java 25, team memb
 > 4. **CI/CD Integration:** Use automated agent scripts to construct GitHub Actions pipelines for running headless TestFX UI tests and Maven unit builds on every PR merge.
 
 ## Changelog & Revision Notes
+
+**2026-09-25 (W10 design, see PROJECT_STATE C16–C23)**
+- **F9.2.1** (agent Force Cancel / Force Complete) dropped as redundant with ticket accept/reject.
+- **F9.2.2** reworded: every resolution settles the full held escrow; host share net of 3%, guest refunds fee-free.
+- **F9.1.1** now presents chat threads; queue is oldest-first.
+- **F7.3.1** gains the guard that bookings with an open ticket are not auto-completed.
+- **F12 Messaging** added (F12.1.1, F12.1.2) — the design canvas shows guest/host chat but no epic owned it (workstream W13).
 
 This restructure was driven by a gap review against `SnoozeShare-Architecture-Proposal.md`. Summary of changes from the original backlog:
 
