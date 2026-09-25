@@ -33,16 +33,29 @@ class ShellLayoutTest {
     }
 
     @Test
-    void guestAndHostWalletPanelsUseCenterTitleStyleAndTwoDecimalAmount() throws Exception {
+    void guestAndHostHeadersShowWalletAmountBeforePortalLabel() throws Exception {
         for (String shell : List.of("guest/guest-shell.fxml", "host/host-shell.fxml")) {
             String fxml = Files.readString(Path.of("src/main/resources/com/snoozeshare/ui/" + shell));
-            assertTrue(fxml.contains("fx:id=\"walletTitle\""), shell);
             assertTrue(fxml.contains("fx:id=\"walletAmount\""), shell);
-            assertTrue(fxml.contains("styleClass=\"page-title\""), shell);
+            assertTrue(fxml.indexOf("fx:id=\"walletAmount\"")
+                    < fxml.indexOf("fx:id=\"roleLabel\""), shell);
+            assertTrue(!fxml.contains("wallet-panel"), shell);
+            assertTrue(!fxml.contains("fx:id=\"walletTitle\""), shell);
         }
         String controller = Files.readString(Path.of(
                 "src/main/java/com/snoozeshare/ui/common/NavShellController.java"));
         assertTrue(controller.contains("setScale(2"));
         assertTrue(controller.contains("SGD"));
+    }
+
+    @Test
+    void hostWalletPageUsesSharedWalletDashboardController() throws Exception {
+        String fxml = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/wallet/host-wallet-dashboard.fxml"));
+
+        assertTrue(fxml.contains("com.snoozeshare.ui.guest.wallet.WalletDashboardController"));
+        assertTrue(fxml.contains("handleTopUp"));
+        assertTrue(fxml.contains("handleWithdraw"));
+        assertTrue(fxml.contains("transactionContainer"));
     }
 }

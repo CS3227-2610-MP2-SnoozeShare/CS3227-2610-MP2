@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<VBox xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.snoozeshare.ui.host.listings.HostListingsController"
+      spacing="12" fillWidth="true">
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+    <Label text="Listings" styleClass="page-title"/>
+    <Label text="Manage your properties and listing status." styleClass="small"/>
+    <Button text="Create Listing" onAction="#handleCreateListing"/>
+    <Label fx:id="statusLabel" text="Loading listings..." styleClass="small"/>
+    <VBox fx:id="listingCards" spacing="12" fillWidth="true"/>
+</VBox>

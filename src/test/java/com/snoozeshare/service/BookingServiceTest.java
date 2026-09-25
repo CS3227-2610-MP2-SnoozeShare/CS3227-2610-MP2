@@ -10,10 +10,13 @@ import java.sql.Connection;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import com.snoozeshare.domain.enums.AccountStatus;
 import com.snoozeshare.domain.enums.BookingStatus;
@@ -27,6 +30,8 @@ import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.infra.db.ConnectionFactory;
 import com.snoozeshare.infra.db.migration.MigrationRunner;
+import com.snoozeshare.infra.events.InProcessEventBus;
+import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
@@ -101,6 +106,26 @@ class BookingServiceTest {
     }
 
     @Test
+    void submitRequestPublishesWalletTransactionEventAfterCommit() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            var eventBus = new InProcessEventBus();
+            List<WalletTransactionRecordedEvent> events = new ArrayList<>();
+            eventBus.subscribe(WalletTransactionRecordedEvent.class, events::add);
+            BookingService service = createService(connection, eventBus);
+
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
+
+            assertEquals(1, events.size());
+            var transaction = new JdbcWalletTransactionRepository(connection)
+                    .findByBookingId(booking.bookingId()).get(0);
+            assertEquals(transaction.transactionId(), events.get(0).transactionId());
+            assertEquals(transaction.walletId(), events.get(0).walletId());
+        }
+    }
+
+    @Test
     void submitRequestRollsBackOnInsufficientFunds() throws Exception {
         try (Connection connection = migratedConnection()) {
             var ctx = seedContext(connection, new BigDecimal("100.00"));
@@ -108,8 +133,8 @@ class BookingServiceTest {
             LocalDate start = LocalDate.now().plusDays(10);
             LocalDate end = LocalDate.now().plusDays(13);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.submitRequest(ctx.guestId, ctx.propertyId, start, end));
+            Executable action = () -> service.submitRequest(ctx.guestId, ctx.propertyId, start, end);
+            assertThrows(IllegalArgumentException.class, action);
 
             var bookingRepo = new JdbcBookingRepository(connection);
             assertTrue(bookingRepo.findByGuest(ctx.guestId).isEmpty());
@@ -133,9 +158,8 @@ class BookingServiceTest {
 
             service.submitRequest(ctx.guestId, ctx.propertyId, start, end);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.submitRequest(ctx.guestId, ctx.propertyId,
-                            start.plusDays(1), end.plusDays(1)));
+            assertThrows(IllegalArgumentException.class, () -> service.submitRequest(
+                    ctx.guestId, ctx.propertyId, start.plusDays(1), end.plusDays(1)));
         }
     }
 
@@ -146,8 +170,8 @@ class BookingServiceTest {
             BookingService service = createService(connection);
             LocalDate date = LocalDate.now().plusDays(10);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.submitRequest(ctx.guestId, ctx.propertyId, date, date));
+            Executable action = () -> service.submitRequest(ctx.guestId, ctx.propertyId, date, date);
+            assertThrows(IllegalArgumentException.class, action);
         }
     }
 
@@ -157,9 +181,9 @@ class BookingServiceTest {
             var ctx = seedContext(connection, new BigDecimal("500.00"));
             BookingService service = createService(connection);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.submitRequest(ctx.guestId, UUID.randomUUID(),
-                            LocalDate.now().plusDays(1), LocalDate.now().plusDays(3)));
+            assertThrows(IllegalArgumentException.class, () -> service.submitRequest(
+                    ctx.guestId, UUID.randomUUID(), LocalDate.now().plusDays(1),
+                    LocalDate.now().plusDays(3)));
         }
     }
 
@@ -250,8 +274,8 @@ class BookingServiceTest {
                     booking.nightlyRateSnapshot(), booking.totalAmount(),
                     booking.createdAt(), Instant.now(), Instant.now()));
 
-            assertThrows(IllegalStateException.class,
-                    () -> service.cancel(booking.bookingId(), ctx.guestId));
+            Executable action = () -> service.cancel(booking.bookingId(), ctx.guestId);
+            assertThrows(IllegalStateException.class, action);
         }
     }
 
@@ -265,8 +289,8 @@ class BookingServiceTest {
 
             Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId, start, end);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.cancel(booking.bookingId(), UUID.randomUUID()));
+            Executable action = () -> service.cancel(booking.bookingId(), UUID.randomUUID());
+            assertThrows(IllegalArgumentException.class, action);
         }
     }
 
@@ -332,8 +356,8 @@ class BookingServiceTest {
             Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
                     LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.decide(booking.bookingId(), true, UUID.randomUUID()));
+            Executable action = () -> service.decide(booking.bookingId(), true, UUID.randomUUID());
+            assertThrows(IllegalArgumentException.class, action);
         }
     }
 
@@ -347,8 +371,8 @@ class BookingServiceTest {
 
             service.decide(booking.bookingId(), true, ctx.hostId);
 
-            assertThrows(IllegalStateException.class,
-                    () -> service.decide(booking.bookingId(), true, ctx.hostId));
+            Executable action = () -> service.decide(booking.bookingId(), true, ctx.hostId);
+            assertThrows(IllegalStateException.class, action);
         }
     }
 
@@ -438,13 +462,17 @@ class BookingServiceTest {
     }
 
     static BookingService createService(Connection connection) {
+        return createService(connection, null);
+    }
+
+    static BookingService createService(Connection connection, InProcessEventBus eventBus) {
         return new BookingServiceImpl(connection,
                 new JdbcBookingRepository(connection),
                 new JdbcPropertyRepository(connection),
                 new JdbcAvailabilityBlockRepository(connection),
                 new JdbcWalletRepository(connection),
                 new JdbcWalletTransactionRepository(connection),
-                null);
+                eventBus);
     }
 
     static Connection migratedConnection() throws Exception {
