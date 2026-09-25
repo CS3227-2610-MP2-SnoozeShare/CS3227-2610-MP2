@@ -23,6 +23,7 @@ import com.snoozeshare.infra.db.TransactionManager;
 import com.snoozeshare.infra.events.EventBus;
 import com.snoozeshare.infra.events.events.BookingCancelledEvent;
 import com.snoozeshare.infra.events.events.BookingConfirmedEvent;
+import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.repository.AvailabilityBlockRepository;
 import com.snoozeshare.repository.BookingRepository;
 import com.snoozeshare.repository.PropertyRepository;
@@ -107,10 +108,24 @@ public final class BookingServiceImpl implements BookingService {
 
                 return newBooking;
             });
+            publishWalletTransactionEvent(booking);
             return booking;
         } catch (SQLException exception) {
             throw new IllegalStateException("Unable to submit booking request", exception);
         }
+    }
+
+    private void publishWalletTransactionEvent(Booking booking) {
+        if (eventBus == null) {
+            return;
+        }
+        WalletTransaction transaction = transactions.findByBookingId(booking.bookingId()).stream()
+                .filter(entry -> entry.type() == WalletTransactionType.ESCROW_HOLD)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Escrow transaction was not recorded"));
+        eventBus.publish(new WalletTransactionRecordedEvent(transaction.transactionId(),
+                transaction.walletId(), transaction.createdAt()));
     }
 
     @Override

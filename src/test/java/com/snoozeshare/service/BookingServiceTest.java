@@ -10,6 +10,8 @@ import java.sql.Connection;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -28,6 +30,8 @@ import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.infra.db.ConnectionFactory;
 import com.snoozeshare.infra.db.migration.MigrationRunner;
+import com.snoozeshare.infra.events.InProcessEventBus;
+import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
@@ -98,6 +102,26 @@ class BookingServiceTest {
             assertEquals(1, transactions.size());
             assertEquals(WalletTransactionType.ESCROW_HOLD, transactions.get(0).type());
             assertEquals(0, new BigDecimal("-300.00").compareTo(transactions.get(0).amount()));
+        }
+    }
+
+    @Test
+    void submitRequestPublishesWalletTransactionEventAfterCommit() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            var eventBus = new InProcessEventBus();
+            List<WalletTransactionRecordedEvent> events = new ArrayList<>();
+            eventBus.subscribe(WalletTransactionRecordedEvent.class, events::add);
+            BookingService service = createService(connection, eventBus);
+
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
+
+            assertEquals(1, events.size());
+            var transaction = new JdbcWalletTransactionRepository(connection)
+                    .findByBookingId(booking.bookingId()).get(0);
+            assertEquals(transaction.transactionId(), events.get(0).transactionId());
+            assertEquals(transaction.walletId(), events.get(0).walletId());
         }
     }
 
@@ -438,13 +462,17 @@ class BookingServiceTest {
     }
 
     static BookingService createService(Connection connection) {
+        return createService(connection, null);
+    }
+
+    static BookingService createService(Connection connection, InProcessEventBus eventBus) {
         return new BookingServiceImpl(connection,
                 new JdbcBookingRepository(connection),
                 new JdbcPropertyRepository(connection),
                 new JdbcAvailabilityBlockRepository(connection),
                 new JdbcWalletRepository(connection),
                 new JdbcWalletTransactionRepository(connection),
-                null);
+                eventBus);
     }
 
     static Connection migratedConnection() throws Exception {
