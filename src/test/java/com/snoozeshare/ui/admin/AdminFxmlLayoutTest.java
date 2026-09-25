@@ -80,10 +80,11 @@ class AdminFxmlLayoutTest {
     }
 
     @Test
-    void categoryScreenHasTheTableAndAddButton() throws Exception {
+    void categoryScreenHasTheRowListHeaderAndAddButton() throws Exception {
         String screen = read("categories/category-admin.fxml");
 
-        assertTrue(screen.contains("fx:id=\"table\""));
+        assertTrue(screen.contains("fx:id=\"rows\""));
+        assertTrue(screen.contains("ACTIVE"));
         assertTrue(screen.contains("fx:id=\"errorLabel\""));
         assertTrue(screen.contains("Ticket categories"));
         assertTrue(screen.contains("onAction=\"#handleAdd\""));

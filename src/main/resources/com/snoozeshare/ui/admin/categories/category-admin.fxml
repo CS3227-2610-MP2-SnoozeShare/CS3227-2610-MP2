@@ -3,12 +3,13 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="16" xmlns:fx="http://javafx.com/fxml"
+<VBox spacing="16" styleClass="agent-content" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.snoozeshare.ui.admin.categories.CategoryAdminController">
     <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
 
@@ -21,6 +22,18 @@
         <Button text="+ Add category" onAction="#handleAdd" styleClass="button"/>
     </HBox>
 
-    <TableView fx:id="table" VBox.vgrow="ALWAYS"/>
+    <VBox styleClass="agent-card">
+        <GridPane styleClass="agent-grid-header">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="50"/>
+                <ColumnConstraints percentWidth="25"/>
+                <ColumnConstraints percentWidth="25"/>
+            </columnConstraints>
+            <Label text="LABEL" GridPane.columnIndex="0"/>
+            <Label text="ACTIVE" GridPane.columnIndex="1"/>
+            <Label text="ACTION" GridPane.columnIndex="2"/>
+        </GridPane>
+        <VBox fx:id="rows"/>
+    </VBox>
     <Label fx:id="errorLabel" styleClass="error-message"/>
 </VBox>
