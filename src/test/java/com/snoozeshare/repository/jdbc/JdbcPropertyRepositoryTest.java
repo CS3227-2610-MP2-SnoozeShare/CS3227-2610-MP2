@@ -26,6 +26,67 @@ import com.snoozeshare.domain.enums.AccountStatus;
 class JdbcPropertyRepositoryTest {
 
     @Test
+    void saveAndFindByIdRoundTripsAllListingFields() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var users = new JdbcUserRepository(connection);
+            var repo = new JdbcPropertyRepository(connection);
+            User host = saveHost(users);
+            Property property = new Property(UUID.randomUUID(), host.userId(), ListingStatus.ACTIVE,
+                    "Full Listing", "Detailed description", PropertyType.CONDO,
+                    "45 Orchard Road", "Singapore", "Central", "238879", 5, 3, 2.5,
+                    new BigDecimal("245.50"), LocalTime.of(15, 30), LocalTime.of(10, 30),
+                    Set.of(AmenityType.PARKING, AmenityType.WASHER), Instant.now());
+            repo.save(property);
+
+            Property found = repo.findById(property.propertyId()).orElseThrow();
+
+            assertEquals(property.propertyId(), found.propertyId());
+            assertEquals(property.hostId(), found.hostId());
+            assertEquals(property.status(), found.status());
+            assertEquals(property.title(), found.title());
+            assertEquals(property.description(), found.description());
+            assertEquals(property.propertyType(), found.propertyType());
+            assertEquals(property.streetAddress(), found.streetAddress());
+            assertEquals(property.city(), found.city());
+            assertEquals(property.region(), found.region());
+            assertEquals(property.postalCode(), found.postalCode());
+            assertEquals(property.maxGuests(), found.maxGuests());
+            assertEquals(property.bedrooms(), found.bedrooms());
+            assertEquals(property.bathrooms(), found.bathrooms());
+            assertEquals(0, property.baseNightlyRate().compareTo(found.baseNightlyRate()));
+            assertEquals(property.checkInTime(), found.checkInTime());
+            assertEquals(property.checkOutTime(), found.checkOutTime());
+            assertEquals(property.amenities(), found.amenities());
+        }
+    }
+
+    @Test
+    void saveStatusUpdatePersistsInactiveWithoutChangingListingFields() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var users = new JdbcUserRepository(connection);
+            var repo = new JdbcPropertyRepository(connection);
+            User host = saveHost(users);
+            Property active = makeProperty(host.userId(), "Status Listing", "Singapore",
+                    ListingStatus.ACTIVE, 2);
+            repo.save(active);
+
+            repo.save(new Property(active.propertyId(), active.hostId(), ListingStatus.INACTIVE,
+                    active.title(), active.description(), active.propertyType(),
+                    active.streetAddress(), active.city(), active.region(), active.postalCode(),
+                    active.maxGuests(), active.bedrooms(), active.bathrooms(),
+                    active.baseNightlyRate(), active.checkInTime(), active.checkOutTime(),
+                    active.amenities(), active.createdAt()));
+
+            Property found = repo.findById(active.propertyId()).orElseThrow();
+
+            assertEquals(ListingStatus.INACTIVE, found.status());
+            assertEquals(active.hostId(), found.hostId());
+            assertEquals(active.title(), found.title());
+            assertEquals(0, active.baseNightlyRate().compareTo(found.baseNightlyRate()));
+        }
+    }
+
+    @Test
     void saveAndFindById() throws Exception {
         try (Connection connection = migratedConnection()) {
             var users = new JdbcUserRepository(connection);
