@@ -250,6 +250,8 @@
     -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 5px 4px 5px 10px;
+    -fx-alignment: center-right;
+    -fx-text-alignment: right;
 }
 .agent-root .combo-box-base > .arrow-button {
     -fx-background-color: transparent;
@@ -279,6 +281,8 @@
     -fx-font-size: 12px;
     -fx-font-weight: normal;
     -fx-padding: 7px 12px 7px 12px;
+    -fx-alignment: center-right;
+    -fx-text-alignment: right;
 }
 .agent-root .combo-box-popup .list-cell:filled:hover,
 .agent-root .combo-box-popup .list-cell:filled:selected,
@@ -388,6 +392,7 @@
     -fx-cell-size: 47px;
     -fx-padding: 0;
 }
+.agent-root .agent-table .table-row-cell:filled { -fx-cursor: hand; }
 .agent-root .agent-table .table-row-cell:hover { -fx-background-color: rgba(240, 232, 216, 0.4); }
 .agent-root .agent-table .table-row-cell:selected { -fx-background-color: transparent; }
 .agent-root .agent-table .table-cell {
@@ -476,6 +481,18 @@
 .agent-root .agent-input .content { -fx-padding: 8px 12px 8px 12px; -fx-background-radius: 8px; }
 .agent-root .agent-notes, .agent-root .agent-notes .content { -fx-background-color: bg-overlay; }
 .agent-root .agent-notes .content { -fx-padding: 8px 12px 8px 12px; -fx-background-radius: 8px; }
+.agent-root .agent-resize-grip { -fx-min-height: 10px; -fx-pref-height: 10px; -fx-max-height: 10px; -fx-cursor: s-resize; }
+.agent-root .agent-resize-bar {
+    -fx-background-color: border;
+    -fx-background-radius: 2px;
+    -fx-min-width: 36px;
+    -fx-pref-width: 36px;
+    -fx-max-width: 36px;
+    -fx-min-height: 3px;
+    -fx-pref-height: 3px;
+    -fx-max-height: 3px;
+}
+.agent-root .agent-resize-grip:hover .agent-resize-bar { -fx-background-color: accent; }
 .agent-root .agent-action { -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10px 20px 10px 20px; }
 .agent-root .agent-action-success { -fx-background-color: success; }
 .agent-root .agent-action-success:hover { -fx-background-color: #33540a; }
@@ -524,3 +541,6 @@
 .agent-root .agent-confirm-danger { -fx-background-color: danger; }
 .agent-root .agent-confirm-danger:hover { -fx-background-color: #7e0a17; }
 .agent-root .agent-confirm-accent { -fx-background-color: accent; }
+
+/* ---- Modal scrim: light grey, 50% opacity, over the whole owner window while a modal is open ---- */
+.modal-scrim { -fx-background-color: rgba(160, 160, 160, 0.5); }
