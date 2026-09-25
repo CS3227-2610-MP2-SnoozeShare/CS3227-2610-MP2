@@ -5,6 +5,7 @@ why, with a commit, plan or artifact as the reference. Not a copy of `git log`.
 
 | Date | What changed | Workstream | Ref |
 |---|---|---|---|
+| 2026-09-25 | Rewrote all 129 mock-seed timestamps to end in `Z` (the format the app itself writes via `Instant.toString()`), rebuilt `db/snoozeshare-mock.db`, re-verified FK and ledger invariants; W10 plan Task 3 drops its `JdbcCodecs.instant` tolerance change | W10 | `db/seed-mock-data.sql`, `db/snoozeshare-mock.db`, W10 plan Task 3 |
 | 2026-09-25 | Wrote the W10 implementation plan (18 TDD tasks: settlement math, JDBC ticket/category repos, atomic full-escrow settlement, ticket/query services, in-memory chat, Agent Disputes/Categories UI); linked from W10 | W10 | `docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md` |
 | 2026-09-25 | Corrected the shared mock DB in place to follow C17/C20/C23: open tickets on held `CONFIRMED` bookings, resolved tickets settle full escrow two-sided, tickets filed inside the 7-day window, `FORCE_COMPLETED` row converted, wallet 5 `balanceAfter` chain fixed; seed SQL edited and `.db` rebuilt from `schema.sql` + seed; FK/ledger invariants verified | W10 | `db/seed-mock-data.sql`, `db/snoozeshare-mock.db`, `PROJECT_STATE.md` D6 |
 | 2026-09-25 | Updated `docs/ProductBacklog.md` for W10: F9.2.1 dropped, F9.2.2/F9.1.1/F7.3.1 reworded, new epic F12 Messaging (W13), changelog entry; recorded W3 handoffs in `PROJECT_STATE.md` § Workstreams | W10 | `docs/ProductBacklog.md`, `PROJECT_STATE.md` |

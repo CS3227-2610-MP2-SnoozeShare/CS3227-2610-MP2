@@ -28,7 +28,7 @@
 |---|---|
 | `WalletTransactionRepository.findByBookingId` already exists | No repository addition needed for the escrow-held check. |
 | `WalletLedgerWriter` opens its own transaction and computes `balanceAfter = balance + amount − fee`; the architecture doc and mock DB treat `feeAmount` as **informational** (`amount` is already net) | Settlement must **not** use it. `DisputeSettlementServiceImpl` writes wallet + ledger rows itself inside one outer transaction. |
-| Mock DB timestamps look like `2026-08-28T14:00:00` (no `Z`); `Instant.parse` throws on them | Task 3 makes `JdbcCodecs.instant` tolerant. |
+| The mock seed used to store timestamps like `2026-08-28T14:00:00` (no `Z`), which `Instant.parse` rejects; the app itself always writes `Instant.toString()` (with `Z`) | Fixed at the source: all 129 seed timestamps now end in `Z` and the `.db` was rebuilt (S4, 2026-09-25). No codec change. |
 | `MigrationRunner` unconditionally runs V001 (plain `CREATE TABLE`) if `schema_history` is absent | Task 3 lets it adopt a pre-provisioned reference DB. |
 | V001 and `db/schema.sql` are identical for all 8 relevant tables today | Task 4's parity test should pass at once; if it ever fails, stop and record a deviation. |
 | No test in the repo starts the FX toolkit; UI tests are file-content checks | UI logic is kept in pure classes; one guarded toolkit smoke test is added (skips itself if the toolkit cannot start). |
@@ -36,7 +36,7 @@
 | The admin shell (W1) is a **sidebar** (`Operations / Disputes / Accounts`), not the canvas's tab strip | W10 fills the center pane from the existing `Disputes` item and adds a `Categories` item. `ShellNavigationTest` requires `showOperations/showDisputes/showAccounts` to stay. |
 | `theme.css` has the W1 navy palette, not the canvas "Fall Light" tokens | W10 adds classes using the existing palette; adopting the canvas palette is a separate UI-design-system workstream. |
 
-**Spec amendments this plan makes** (applied to the spec in Task 18): (1) `DisputeSettlementService.settle(ticketId, mode, guestRefund, agentId, reason)` — booking is derived from the ticket and `ResolutionMode` replaces `SettlementKind`; (2) new `DisputeQueryService` read-model interface for the UI; (3) `JdbcCodecs.instant` tolerance and `MigrationRunner` adoption of a pre-provisioned DB (D10); (4) UI smoke test uses the FX toolkit directly (no TestFX `ApplicationTest`), and the shell is sidebar-based (D11).
+**Spec amendments this plan makes** (applied to the spec in Task 18): (1) `DisputeSettlementService.settle(ticketId, mode, guestRefund, agentId, reason)` — booking is derived from the ticket and `ResolutionMode` replaces `SettlementKind`; (2) new `DisputeQueryService` read-model interface for the UI; (3) `MigrationRunner` adoption of a pre-provisioned DB (D10); (4) UI smoke test uses the FX toolkit directly (no TestFX `ApplicationTest`), and the shell is sidebar-based (D11).
 
 ---
 
@@ -76,7 +76,6 @@
 | File | Change |
 |---|---|
 | `domain/statemachine/BookingStateMachine.java` | Allow `AGENT` on `CONFIRMED → COMPLETED` (C23) |
-| `repository/jdbc/support/JdbcCodecs.java` | Tolerate zone-less timestamps |
 | `repository/jdbc/support/RowMappers.java` | `ticket`, `ticketCategory` mappers |
 | `infra/db/migration/MigrationRunner.java` | Adopt a pre-provisioned DB |
 | `repository/TicketRepository.java`, `TicketCategoryRepository.java` | Queue/category query methods |
@@ -85,7 +84,7 @@
 | `ui/admin/AdminShellController.java`, `resources/.../admin-shell.fxml` | Load queue/detail/categories into the center pane |
 | `resources/.../ui/common/theme.css` | Badge/chip/chat classes |
 
-**Create (test)** — all under `src/test/java/com/snoozeshare/`: `testsupport/{MockIds,MockDbFixture,Fakes}.java`, `domain/statemachine/AgentCompletionTest`, `domain/settlement/{SettlementCalculatorTest,EscrowPolicyTest}`, `repository/jdbc/{JdbcCodecsInstantTest,JdbcTicketRepositoryTest,JdbcTicketCategoryRepositoryTest}`, `infra/db/{SchemaParityTest,MigrationRunnerReferenceDbTest,MockDbFixtureTest}`, `service/{SettlementFixtures,DisputeSettlementServiceTest,DisputeSettlementAtomicityTest,TicketServiceTest,TicketServiceCategoryTest,TicketServiceIntegrationTest,DisputeQueryServiceTest,InMemoryMessageServiceTest,DisputeFlowEndToEndTest}`, `ui/admin/{ResolutionPreviewTest,AdminFxmlLayoutTest,AdminUiSmokeTest}`.
+**Create (test)** — all under `src/test/java/com/snoozeshare/`: `testsupport/{MockIds,MockDbFixture,Fakes}.java`, `domain/statemachine/AgentCompletionTest`, `domain/settlement/{SettlementCalculatorTest,EscrowPolicyTest}`, `repository/jdbc/{JdbcTicketRepositoryTest,JdbcTicketCategoryRepositoryTest}`, `infra/db/{SchemaParityTest,MigrationRunnerReferenceDbTest,MockDbFixtureTest}`, `service/{SettlementFixtures,DisputeSettlementServiceTest,DisputeSettlementAtomicityTest,TicketServiceTest,TicketServiceCategoryTest,TicketServiceIntegrationTest,DisputeQueryServiceTest,InMemoryMessageServiceTest,DisputeFlowEndToEndTest}`, `ui/admin/{ResolutionPreviewTest,AdminFxmlLayoutTest,AdminUiSmokeTest}`.
 
 ---
 
@@ -464,80 +463,16 @@ git commit -m "feat: add pure settlement calculator and escrow policy" -m "Co-Au
 
 ---
 
-### Task 3: Read the mock DB — tolerant timestamps and adoptable schema
+### Task 3: Read the mock DB — adoptable schema and test fixture
 
-The mock DB stores `2026-08-28T14:00:00` (no `Z`) and has no `schema_history`. Both break any code that reads it through the real adapters.
+The mock DB has no `schema_history` table, so `MigrationRunner` would try to re-create its tables. (Its timestamps already end in `Z`, matching what the app writes, so no codec change is needed.)
 
 **Files:**
-- Modify: `src/main/java/com/snoozeshare/repository/jdbc/support/JdbcCodecs.java`
 - Modify: `src/main/java/com/snoozeshare/infra/db/migration/MigrationRunner.java`
 - Create (test support, needed here): `src/test/java/com/snoozeshare/testsupport/MockIds.java`, `MockDbFixture.java`
-- Test: `src/test/java/com/snoozeshare/repository/jdbc/JdbcCodecsInstantTest.java`, `src/test/java/com/snoozeshare/infra/db/MockDbFixtureTest.java`, `src/test/java/com/snoozeshare/infra/db/MigrationRunnerReferenceDbTest.java`
+- Test: `src/test/java/com/snoozeshare/infra/db/MockDbFixtureTest.java`, `src/test/java/com/snoozeshare/infra/db/MigrationRunnerReferenceDbTest.java`
 
-- [ ] **Step 1: Write the failing codec test**
-
-```java
-package com.snoozeshare.repository.jdbc;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
-import java.time.Instant;
-
-import org.junit.jupiter.api.Test;
-
-import com.snoozeshare.repository.jdbc.support.JdbcCodecs;
-
-class JdbcCodecsInstantTest {
-
-    @Test
-    void parsesZoneSuffixedInstantsAsBefore() {
-        assertEquals(Instant.parse("2026-08-28T14:00:00Z"),
-                JdbcCodecs.instant("2026-08-28T14:00:00Z"));
-    }
-
-    @Test
-    void readsZoneLessLocalDateTimesAsUtc() {
-        assertEquals(Instant.parse("2026-08-28T14:00:00Z"),
-                JdbcCodecs.instant("2026-08-28T14:00:00"));
-    }
-
-    @Test
-    void nullStaysNull() {
-        assertNull(JdbcCodecs.instant((String) null));
-    }
-}
-```
-
-- [ ] **Step 2: Run to verify it fails**
-
-Run: `.\gradlew test --tests "com.snoozeshare.repository.jdbc.JdbcCodecsInstantTest"`
-Expected: `readsZoneLessLocalDateTimesAsUtc` FAILS with `DateTimeParseException`.
-
-- [ ] **Step 3: Implement** — replace the `instant(String)` method in `JdbcCodecs` and add imports
-
-Add imports (keep alphabetical inside the `java.time` block): `java.time.LocalDateTime;`, `java.time.ZoneOffset;`, `java.time.format.DateTimeParseException;`.
-
-```java
-    public static Instant instant(String value) {
-        if (value == null) {
-            return null;
-        }
-        try {
-            return Instant.parse(value);
-        } catch (DateTimeParseException zoneLess) {
-            // Reference/mock data stores local date-times without a zone; treat them as UTC.
-            return LocalDateTime.parse(value).toInstant(ZoneOffset.UTC);
-        }
-    }
-```
-
-- [ ] **Step 4: Run to verify the codec test passes**
-
-Run: `.\gradlew test --tests "com.snoozeshare.repository.jdbc.JdbcCodecsInstantTest"`
-Expected: PASS.
-
-- [ ] **Step 5: Create the shared test support** — `MockIds.java`
+- [ ] **Step 1: Create the shared test support** — `MockIds.java`
 
 ```java
 package com.snoozeshare.testsupport;
@@ -719,7 +654,7 @@ public final class MockDbFixture implements AutoCloseable {
 }
 ```
 
-- [ ] **Step 6: Write the failing fixture and migration tests**
+- [ ] **Step 2: Write the failing fixture and migration tests**
 
 `MockDbFixtureTest.java`:
 
@@ -794,12 +729,12 @@ class MigrationRunnerReferenceDbTest {
 }
 ```
 
-- [ ] **Step 7: Run to verify they fail**
+- [ ] **Step 3: Run to verify they fail**
 
 Run: `.\gradlew test --tests "com.snoozeshare.infra.db.MockDbFixtureTest" --tests "com.snoozeshare.infra.db.MigrationRunnerReferenceDbTest"`
-Expected: `MockDbFixtureTest` PASSES (it only needs Steps 3 and 5); `MigrationRunnerReferenceDbTest` FAILS with `table users already exists`.
+Expected: `MockDbFixtureTest` PASSES (it only needs Step 1); `MigrationRunnerReferenceDbTest` FAILS with `table users already exists`.
 
-- [ ] **Step 8: Implement the adoption in `MigrationRunner.migrate`**
+- [ ] **Step 4: Implement the adoption in `MigrationRunner.migrate`**
 
 Replace the body of the `if (!migrationApplied(...))` block:
 
@@ -827,16 +762,16 @@ and add the helper next to `migrationApplied`:
     }
 ```
 
-- [ ] **Step 9: Run the whole suite**
+- [ ] **Step 5: Run the whole suite**
 
 Run: `.\gradlew test`
 Expected: PASS. (`DatabaseBootstrapTest` still passes — a fresh in-memory DB has no `users` table, so the foundation is applied as before.)
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 6: Commit**
 
 ```powershell
 git add src/main src/test
-git commit -m "feat: read zone-less timestamps and adopt pre-provisioned DBs; add mock-DB test fixture" -m "Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+git commit -m "feat: adopt pre-provisioned DBs in MigrationRunner; add mock-DB test fixture" -m "Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 ```
 
 ---
@@ -1242,7 +1177,7 @@ public final class JdbcTicketRepository implements TicketRepository {
 - [ ] **Step 5: Run to verify it passes**
 
 Run: `.\gradlew test --tests "com.snoozeshare.repository.jdbc.JdbcTicketRepositoryTest"`
-Expected: PASS (5 tests). If `readsEveryFieldOfAnOpenMockTicket` fails on `createdAt`, re-check Task 3's codec change.
+Expected: PASS (5 tests). If `readsEveryFieldOfAnOpenMockTicket` fails on `createdAt`, re-check that the seed timestamps end in `Z`.
 
 - [ ] **Step 6: Write the failing category repository test**
 
@@ -5205,15 +5140,15 @@ Clear the env var afterwards: `Remove-Item Env:SNOOZESHARE_DB_URL`.
 
 In `docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md`:
 - § 4.2: replace the `DisputeSettlementService` snippet with `Settlement settle(UUID ticketId, ResolutionMode mode, BigDecimal guestRefund, UUID agentId, String reason)`, remove `SettlementKind`, and add a `DisputeQueryService` paragraph (`queue`, `detail`).
-- § 4.4: note `JdbcCodecs.instant` now tolerates zone-less timestamps and `MigrationRunner` adopts a pre-provisioned DB.
+- § 4.4: note `MigrationRunner` adopts a pre-provisioned DB, and that the mock seed timestamps now end in `Z` like the app's own writes.
 - § 4.5: state the shell is sidebar-based and the palette is the current `theme.css`.
 - § 5.2 row 10: replace "TestFX" with "FX toolkit smoke test (skips when the toolkit cannot start) + file-content layout tests + pure `ResolutionPreview` tests".
-- § 6: add rows **D10** (codec/migration adoption) and **D11** (sidebar shell, current palette).
+- § 6: add rows **D10** (`MigrationRunner` adopts a pre-provisioned DB) and **D11** (sidebar shell, current palette).
 
 - [ ] **Step 4: Update `PROJECT_STATE.md`**
 
 - § Workstreams W10: `Status` → `In review`; `Progress` → `Tasks 1–18 done; awaiting review and merge`; leave `Guide` as `—` for now.
-- § Architecture: §4.3 Service — add `TicketServiceImpl`, `DisputeSettlementServiceImpl`, `DisputeQueryServiceImpl`, temporary `InMemoryMessageService`; §4.4 Domain — add `domain.settlement` (`SettlementCalculator`, `EscrowPolicy`) and the `AGENT` completion permission; §4.5 Repository — add `JdbcTicketRepository`, `JdbcTicketCategoryRepository`, codec tolerance, `MigrationRunner` adoption; §4.2 UI — add the agent Disputes/Categories screens and how to run against a DB copy (`SNOOZESHARE_DB_URL`).
+- § Architecture: §4.3 Service — add `TicketServiceImpl`, `DisputeSettlementServiceImpl`, `DisputeQueryServiceImpl`, temporary `InMemoryMessageService`; §4.4 Domain — add `domain.settlement` (`SettlementCalculator`, `EscrowPolicy`) and the `AGENT` completion permission; §4.5 Repository — add `JdbcTicketRepository`, `JdbcTicketCategoryRepository`, `MigrationRunner` adoption; §4.2 UI — add the agent Disputes/Categories screens and how to run against a DB copy (`SNOOZESHARE_DB_URL`).
 - § Deviations: add D10 and D11 (short, linking to the spec § 6).
 - § Handoffs into W3: update item 2 to note that W3's branch stubs `applyTicketRemedy`/`manualOverride` as `"Owned by W10"` — at merge, either delegate them to `DisputeSettlementService` or leave them unsupported; W10 never edits `TransactionServiceImpl`.
 - § How to Resume: S4 row → `Paused`, `Doing` → "W10 implemented; in review. Next: operator review, then merge; W10 Guide checkpoint after operator confirms".
@@ -5221,7 +5156,7 @@ In `docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md`:
 
 - [ ] **Step 5: Add Done-ledger entries** (newest first, in `docs/project-state/done-ledger.md`)
 
-One line each: "Implemented W10 Agent Dispute Resolution (F9.1.1, F9.1.2, F9.2.2, F9.3.1): atomic full-escrow settlement, ticket queue/assign/notes/categories, dispute read models, temporary in-memory chat, Agent Disputes and Categories screens"; "Made JdbcCodecs.instant tolerate zone-less timestamps and MigrationRunner adopt a pre-provisioned DB (needed to read the mock DB)"; "Allowed agents on CONFIRMED→COMPLETED in BookingStateMachine (C23)". Refs: this plan and the spec. Update the entry count in § Record.
+One line each: "Implemented W10 Agent Dispute Resolution (F9.1.1, F9.1.2, F9.2.2, F9.3.1): atomic full-escrow settlement, ticket queue/assign/notes/categories, dispute read models, temporary in-memory chat, Agent Disputes and Categories screens"; "Made MigrationRunner adopt a pre-provisioned DB (needed to open the mock DB)"; "Allowed agents on CONFIRMED→COMPLETED in BookingStateMachine (C23)". Refs: this plan and the spec. Update the entry count in § Record.
 
 - [ ] **Step 6: Tick the plan's checkboxes and commit**
 
