@@ -15,7 +15,9 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         try {
-            context = AppContext.create();
+            String databaseUrl = System.getenv("SNOOZESHARE_DB_URL");
+            context = databaseUrl == null || databaseUrl.isBlank()
+                    ? AppContext.create() : AppContext.create(databaseUrl);
             context.sceneRouter().show(primaryStage, context);
         } catch (Exception exception) {
             throw new IllegalStateException("Unable to start SnoozeShare", exception);
