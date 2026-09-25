@@ -9,6 +9,7 @@ import com.snoozeshare.ui.guest.wallet.WalletDashboardController;
 import com.snoozeshare.ui.host.listings.HostListingDetailController;
 import com.snoozeshare.ui.host.listings.HostListingFormController;
 import com.snoozeshare.ui.host.listings.HostListingsController;
+import com.snoozeshare.ui.host.calendar.HostCalendarController;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -40,6 +41,7 @@ public final class HostShellController extends NavShellController {
             controller.setOnCreateListing(this::showCreateListing);
             controller.setOnEditListing(this::showEditListing);
             controller.setOnViewListing(this::showListingDetail);
+            controller.setOnOpenCalendar(this::showCalendar);
             shellRoot.setCenter(listingsView);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load host listings view", exception);
@@ -81,6 +83,21 @@ public final class HostShellController extends NavShellController {
             shellRoot.setCenter(formView);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load listing form", exception);
+        }
+    }
+
+    private void showCalendar(Property property) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/snoozeshare/ui/host/calendar/host-calendar.fxml"));
+            Node calendarView = loader.load();
+            HostCalendarController controller = loader.getController();
+            controller.setContext(getContext());
+            controller.setProperty(property);
+            controller.setOnBack(this::showListings);
+            shellRoot.setCenter(calendarView);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load host booking calendar", exception);
         }
     }
 
