@@ -182,6 +182,22 @@ class TicketServiceTest {
     }
 
     @Test
+    void acceptOfAPartialOrOtherRequestNeedsAPositiveAmount() {
+        Ticket partial = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.PARTIAL_REFUND, "2026-09-01T00:00:00Z");
+        Ticket other = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
+
+        assertThrows(IllegalArgumentException.class, () -> service.resolve(partial.ticketId(),
+                new ResolutionRequest(ResolutionMode.ACCEPT, BigDecimal.ZERO, "ok"), amy));
+        assertThrows(IllegalArgumentException.class, () -> service.resolve(other.ticketId(),
+                new ResolutionRequest(ResolutionMode.ACCEPT, BigDecimal.ZERO, "ok"), amy));
+        assertEquals(0, settlement.calls());
+
+        service.resolve(partial.ticketId(),
+                new ResolutionRequest(ResolutionMode.MANUAL, BigDecimal.ZERO, "full payout"), amy);
+        assertEquals(1, settlement.calls());
+    }
+
+    @Test
     void rejectAlwaysRefundsNothingAndManualNeedsAnAmount() {
         Ticket t = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.FULL_REFUND, "2026-09-01T00:00:00Z");
 
