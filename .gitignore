@@ -40,3 +40,9 @@ replay_pid*
 
 # Superpowers brainstorming visual companion
 .superpowers/brainstorm
+
+# IDEs and editors
+.vscode
+
+# Eclipse/VS Code Java language server build output
+bin/

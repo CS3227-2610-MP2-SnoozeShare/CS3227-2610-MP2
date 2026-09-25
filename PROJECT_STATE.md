@@ -418,7 +418,7 @@ the JDBC loader. It is non-fatal in the current runtime and does not change W1 b
 The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-state/done-ledger.md)**
 — every change, big or small, newest first.
 
-- **Latest entry:** 2026-09-24
-- **Entries:** 16 (4 backfilled coarsely from git history, 12 current/history entries)
+- **Latest entry:** 2026-09-25
+- **Entries:** 17 (4 backfilled coarsely from git history, 13 current/history entries)
 
 Deviations stay in § Deviations above: those are read every session.
