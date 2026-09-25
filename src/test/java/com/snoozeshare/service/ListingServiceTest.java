@@ -29,8 +29,8 @@ import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.infra.db.ConnectionFactory;
 import com.snoozeshare.infra.db.migration.MigrationRunner;
-import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcAuditLogRepository;
+import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
@@ -68,8 +68,7 @@ class ListingServiceTest {
             TestContext ctx = seedContext(connection);
             ListingService service = createService(connection);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.create(draft, ctx.hostId()));
+            assertThrows(IllegalArgumentException.class, () -> service.create(draft, ctx.hostId()));
         }
     }
 
@@ -79,8 +78,7 @@ class ListingServiceTest {
             TestContext ctx = seedContext(connection);
             ListingService service = createService(connection);
 
-            assertThrows(IllegalStateException.class,
-                    () -> service.create(validDraft(), ctx.guestId()));
+            assertThrows(IllegalStateException.class, () -> service.create(validDraft(), ctx.guestId()));
         }
     }
 
@@ -94,8 +92,7 @@ class ListingServiceTest {
                     AccountStatus.SUSPENDED, host.registrationCode(), host.createdAt()));
             ListingService service = createService(connection);
 
-            assertThrows(IllegalStateException.class,
-                    () -> service.create(validDraft(), ctx.hostId()));
+            assertThrows(IllegalStateException.class, () -> service.create(validDraft(), ctx.hostId()));
         }
     }
 
@@ -112,8 +109,7 @@ class ListingServiceTest {
                     validDraft().checkInTime(), validDraft().checkOutTime(), Set.of(),
                     Instant.now());
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.create(draft, ctx.hostId()));
+            assertThrows(IllegalArgumentException.class, () -> service.create(draft, ctx.hostId()));
         }
     }
 
@@ -166,9 +162,8 @@ class ListingServiceTest {
             users.save(otherHost);
             ListingService service = createService(connection);
 
-            assertThrows(IllegalStateException.class,
-                    () -> service.updateStatus(ctx.singaporeId(), ListingStatus.INACTIVE,
-                            otherHost.userId()));
+            assertThrows(IllegalStateException.class, () -> service.updateStatus(
+                    ctx.singaporeId(), ListingStatus.INACTIVE, otherHost.userId()));
         }
     }
 
@@ -178,9 +173,8 @@ class ListingServiceTest {
             TestContext ctx = seedContext(connection);
             ListingService service = createService(connection);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.updateStatus(UUID.randomUUID(), ListingStatus.INACTIVE,
-                            ctx.hostId()));
+            assertThrows(IllegalArgumentException.class, () -> service.updateStatus(
+                    UUID.randomUUID(), ListingStatus.INACTIVE, ctx.hostId()));
         }
     }
 
@@ -282,8 +276,7 @@ class ListingServiceTest {
         try (Connection connection = migratedConnection()) {
             ListingService service = createService(connection);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.getDetail(UUID.randomUUID()));
+            assertThrows(IllegalArgumentException.class, () -> service.getDetail(UUID.randomUUID()));
         }
     }
 
@@ -308,12 +301,10 @@ class ListingServiceTest {
             var ctx = seedContext(connection);
             ListingService service = createService(connection);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.estimateCost(ctx.singaporeId,
-                            LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 5)));
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.estimateCost(ctx.singaporeId,
-                            LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 3)));
+            assertThrows(IllegalArgumentException.class, () -> service.estimateCost(
+                    ctx.singaporeId, LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 5)));
+            assertThrows(IllegalArgumentException.class, () -> service.estimateCost(
+                    ctx.singaporeId, LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 3)));
         }
     }
 

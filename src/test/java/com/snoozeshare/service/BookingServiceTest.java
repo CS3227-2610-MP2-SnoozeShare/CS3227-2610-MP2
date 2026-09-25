@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import com.snoozeshare.domain.enums.AccountStatus;
 import com.snoozeshare.domain.enums.BookingStatus;
@@ -108,8 +109,8 @@ class BookingServiceTest {
             LocalDate start = LocalDate.now().plusDays(10);
             LocalDate end = LocalDate.now().plusDays(13);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.submitRequest(ctx.guestId, ctx.propertyId, start, end));
+            Executable action = () -> service.submitRequest(ctx.guestId, ctx.propertyId, start, end);
+            assertThrows(IllegalArgumentException.class, action);
 
             var bookingRepo = new JdbcBookingRepository(connection);
             assertTrue(bookingRepo.findByGuest(ctx.guestId).isEmpty());
@@ -133,9 +134,8 @@ class BookingServiceTest {
 
             service.submitRequest(ctx.guestId, ctx.propertyId, start, end);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.submitRequest(ctx.guestId, ctx.propertyId,
-                            start.plusDays(1), end.plusDays(1)));
+            assertThrows(IllegalArgumentException.class, () -> service.submitRequest(
+                    ctx.guestId, ctx.propertyId, start.plusDays(1), end.plusDays(1)));
         }
     }
 
@@ -146,8 +146,8 @@ class BookingServiceTest {
             BookingService service = createService(connection);
             LocalDate date = LocalDate.now().plusDays(10);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.submitRequest(ctx.guestId, ctx.propertyId, date, date));
+            Executable action = () -> service.submitRequest(ctx.guestId, ctx.propertyId, date, date);
+            assertThrows(IllegalArgumentException.class, action);
         }
     }
 
@@ -157,9 +157,9 @@ class BookingServiceTest {
             var ctx = seedContext(connection, new BigDecimal("500.00"));
             BookingService service = createService(connection);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.submitRequest(ctx.guestId, UUID.randomUUID(),
-                            LocalDate.now().plusDays(1), LocalDate.now().plusDays(3)));
+            assertThrows(IllegalArgumentException.class, () -> service.submitRequest(
+                    ctx.guestId, UUID.randomUUID(), LocalDate.now().plusDays(1),
+                    LocalDate.now().plusDays(3)));
         }
     }
 
@@ -250,8 +250,8 @@ class BookingServiceTest {
                     booking.nightlyRateSnapshot(), booking.totalAmount(),
                     booking.createdAt(), Instant.now(), Instant.now()));
 
-            assertThrows(IllegalStateException.class,
-                    () -> service.cancel(booking.bookingId(), ctx.guestId));
+            Executable action = () -> service.cancel(booking.bookingId(), ctx.guestId);
+            assertThrows(IllegalStateException.class, action);
         }
     }
 
@@ -265,8 +265,8 @@ class BookingServiceTest {
 
             Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId, start, end);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.cancel(booking.bookingId(), UUID.randomUUID()));
+            Executable action = () -> service.cancel(booking.bookingId(), UUID.randomUUID());
+            assertThrows(IllegalArgumentException.class, action);
         }
     }
 
@@ -332,8 +332,8 @@ class BookingServiceTest {
             Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
                     LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.decide(booking.bookingId(), true, UUID.randomUUID()));
+            Executable action = () -> service.decide(booking.bookingId(), true, UUID.randomUUID());
+            assertThrows(IllegalArgumentException.class, action);
         }
     }
 
@@ -347,8 +347,8 @@ class BookingServiceTest {
 
             service.decide(booking.bookingId(), true, ctx.hostId);
 
-            assertThrows(IllegalStateException.class,
-                    () -> service.decide(booking.bookingId(), true, ctx.hostId));
+            Executable action = () -> service.decide(booking.bookingId(), true, ctx.hostId);
+            assertThrows(IllegalStateException.class, action);
         }
     }
 

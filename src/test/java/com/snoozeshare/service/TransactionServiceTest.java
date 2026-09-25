@@ -8,6 +8,8 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,7 @@ import com.snoozeshare.domain.enums.PropertyType;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.WalletTransactionType;
 import com.snoozeshare.domain.model.Booking;
+import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.domain.model.WalletTransaction;
@@ -30,10 +33,6 @@ import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
 import com.snoozeshare.service.impl.TransactionServiceImpl;
-
-import java.time.LocalTime;
-import java.util.Set;
-import com.snoozeshare.domain.model.Property;
 
 class TransactionServiceTest {
 
@@ -60,8 +59,7 @@ class TransactionServiceTest {
             var context = seedBookingContext(connection, new BigDecimal("100.00"));
             TransactionService service = createService(connection);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.holdEscrow(context.bookingId));
+            assertThrows(IllegalArgumentException.class, () -> service.holdEscrow(context.bookingId));
         }
     }
 
@@ -71,8 +69,7 @@ class TransactionServiceTest {
             MigrationRunner.migrate(connection);
             TransactionService service = createService(connection);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.holdEscrow(UUID.randomUUID()));
+            assertThrows(IllegalArgumentException.class, () -> service.holdEscrow(UUID.randomUUID()));
         }
     }
 

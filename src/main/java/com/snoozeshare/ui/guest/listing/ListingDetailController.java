@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-
 import java.util.function.Consumer;
 
 import com.snoozeshare.app.AppContext;
@@ -21,6 +20,9 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 
 public final class ListingDetailController {
+
+    private static final DateTimeFormatter TIME_FORMAT =
+            DateTimeFormatter.ofPattern("h:mm a");
 
     @FXML private Label titleLabel;
     @FXML private Label typeLabel;
@@ -58,9 +60,6 @@ public final class ListingDetailController {
     public void setOnBookingComplete(Consumer<Booking> onBookingComplete) {
         this.onBookingComplete = onBookingComplete;
     }
-
-    private static final DateTimeFormatter TIME_FORMAT =
-            DateTimeFormatter.ofPattern("h:mm a");
 
     public void populate(Property property, LocalDate checkIn, LocalDate checkOut) {
         this.property = property;

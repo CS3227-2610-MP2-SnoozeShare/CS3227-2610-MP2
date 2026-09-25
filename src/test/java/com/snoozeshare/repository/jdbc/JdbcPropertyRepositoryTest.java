@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import com.snoozeshare.domain.enums.AccountStatus;
 import com.snoozeshare.domain.enums.AmenityType;
 import com.snoozeshare.domain.enums.ListingStatus;
 import com.snoozeshare.domain.enums.PropertyType;
@@ -21,7 +22,6 @@ import com.snoozeshare.domain.model.User;
 import com.snoozeshare.infra.db.ConnectionFactory;
 import com.snoozeshare.infra.db.migration.MigrationRunner;
 import com.snoozeshare.service.SearchCriteria;
-import com.snoozeshare.domain.enums.AccountStatus;
 
 class JdbcPropertyRepositoryTest {
 
