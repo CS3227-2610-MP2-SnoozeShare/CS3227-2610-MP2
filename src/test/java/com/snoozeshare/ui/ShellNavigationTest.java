@@ -72,6 +72,8 @@ class ShellNavigationTest {
         assertTrue(hostController.contains("host-listing-detail.fxml"));
         assertTrue(hostController.contains("host-listing-form.fxml"));
         assertTrue(hostController.contains("host-wallet-dashboard.fxml"));
+        assertTrue(hostController.contains("shellRoot.setCenter(walletView)"));
+        assertTrue(hostController.contains("showContentRoot"));
     }
 
     @Test

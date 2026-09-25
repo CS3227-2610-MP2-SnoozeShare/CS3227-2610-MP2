@@ -13,6 +13,8 @@
     <VBox spacing="20">
         <padding><Insets top="8" right="24" bottom="24" left="24"/></padding>
 
+        <Label text="Wallet" styleClass="page-title"/>
+
         <VBox styleClass="wallet-balance-section" spacing="4">
             <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
             <Label text="Current Balance" styleClass="small"/>

@@ -15,6 +15,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 
 public final class HostShellController extends NavShellController {
 
@@ -23,6 +24,9 @@ public final class HostShellController extends NavShellController {
 
     @FXML
     private StackPane contentPane;
+
+    @FXML
+    private VBox contentRoot;
 
     private WalletDashboardController walletController;
 
@@ -35,6 +39,7 @@ public final class HostShellController extends NavShellController {
     @FXML
     private void showListings() {
         cleanupWalletController();
+        showContentRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/host/listings/host-listings.fxml"));
@@ -60,6 +65,7 @@ public final class HostShellController extends NavShellController {
     }
 
     private void showListingDetail(Property property) {
+        showContentRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
@@ -75,6 +81,7 @@ public final class HostShellController extends NavShellController {
     }
 
     private void showListingForm(Property property) {
+        showContentRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/host/listings/host-listing-form.fxml"));
@@ -95,6 +102,7 @@ public final class HostShellController extends NavShellController {
     @FXML
     private void showBookings() {
         cleanupWalletController();
+        showContentRoot();
         contentPane.getChildren().clear();
         displayPage("Bookings", "Review booking requests and upcoming stays.");
     }
@@ -108,8 +116,7 @@ public final class HostShellController extends NavShellController {
             Node walletView = loader.load();
             walletController = loader.getController();
             walletController.setContext(getContext());
-            displayPage("Wallet", "Manage your host wallet and transaction history.");
-            contentPane.getChildren().setAll(walletView);
+            shellRoot.setCenter(walletView);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load host wallet dashboard", exception);
         }
@@ -119,6 +126,12 @@ public final class HostShellController extends NavShellController {
         if (walletController != null) {
             walletController.cleanup();
             walletController = null;
+        }
+    }
+
+    private void showContentRoot() {
+        if (shellRoot.getCenter() != contentRoot) {
+            shellRoot.setCenter(contentRoot);
         }
     }
 }
