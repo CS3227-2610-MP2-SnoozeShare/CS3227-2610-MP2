@@ -112,7 +112,28 @@ public final class ListingServiceImpl implements ListingService {
 
     @Override
     public Property updateStatus(UUID propertyId, ListingStatus status, UUID hostId) {
-        throw new UnsupportedOperationException("Owned by W6 (F5)");
+        User host = requireActiveHost(hostId);
+        if (status == null) {
+            throw new IllegalArgumentException("Listing status must not be null");
+        }
+        Property existing = properties.findById(propertyId)
+                .orElseThrow(() -> new IllegalArgumentException("Property does not exist"));
+        if (!host.userId().equals(existing.hostId())) {
+            throw new IllegalStateException("Host does not own this property");
+        }
+        if (existing.status() == status) {
+            return existing;
+        }
+        Property updated = new Property(existing.propertyId(), existing.hostId(), status,
+                existing.title(), existing.description(), existing.propertyType(),
+                existing.streetAddress(), existing.city(), existing.region(),
+                existing.postalCode(), existing.maxGuests(), existing.bedrooms(),
+                existing.bathrooms(), existing.baseNightlyRate(), existing.checkInTime(),
+                existing.checkOutTime(), existing.amenities(), existing.createdAt());
+        Property persisted = properties.save(updated);
+        audit.record(host.userId(), "LISTING_STATUS_CHANGED", "PROPERTY", propertyId,
+                existing, persisted);
+        return persisted;
     }
 
     private User requireActiveHost(UUID hostId) {

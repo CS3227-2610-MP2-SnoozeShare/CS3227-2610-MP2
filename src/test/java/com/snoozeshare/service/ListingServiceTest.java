@@ -117,6 +117,84 @@ class ListingServiceTest {
         }
     }
 
+    @Test
+    void owningHostCanToggleListingStatusAndAuditTheChange() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            ListingService service = createService(connection);
+
+            Property deactivated = service.updateStatus(ctx.singaporeId(), ListingStatus.INACTIVE,
+                    ctx.hostId());
+
+            assertEquals(ListingStatus.INACTIVE, deactivated.status());
+            assertEquals(ListingStatus.INACTIVE,
+                    new JdbcPropertyRepository(connection).findById(ctx.singaporeId())
+                            .orElseThrow().status());
+            var audit = new JdbcAuditLogRepository(connection)
+                    .query(ctx.hostId(), null, "LISTING_STATUS_CHANGED");
+            assertEquals(1, audit.size());
+            assertTrue(audit.get(0).beforeState().contains("ACTIVE"));
+            assertTrue(audit.get(0).afterState().contains("INACTIVE"));
+
+            Property reactivated = service.updateStatus(ctx.singaporeId(), ListingStatus.ACTIVE,
+                    ctx.hostId());
+            assertEquals(ListingStatus.ACTIVE, reactivated.status());
+        }
+    }
+
+    @Test
+    void repeatingListingStatusIsIdempotentWithoutAnotherAuditEntry() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            ListingService service = createService(connection);
+
+            service.updateStatus(ctx.singaporeId(), ListingStatus.ACTIVE, ctx.hostId());
+
+            assertEquals(0, new JdbcAuditLogRepository(connection)
+                    .query(ctx.hostId(), null, "LISTING_STATUS_CHANGED").size());
+        }
+    }
+
+    @Test
+    void anotherHostCannotUpdateListingStatus() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            var users = new JdbcUserRepository(connection);
+            User otherHost = new User(UUID.randomUUID(), Role.HOST, "Other Host",
+                    "other-host-" + UUID.randomUUID() + "@test.com", AccountStatus.ACTIVE,
+                    "HOST2026", Instant.now());
+            users.save(otherHost);
+            ListingService service = createService(connection);
+
+            assertThrows(IllegalStateException.class,
+                    () -> service.updateStatus(ctx.singaporeId(), ListingStatus.INACTIVE,
+                            otherHost.userId()));
+        }
+    }
+
+    @Test
+    void missingListingCannotUpdateStatus() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            ListingService service = createService(connection);
+
+            assertThrows(IllegalArgumentException.class,
+                    () -> service.updateStatus(UUID.randomUUID(), ListingStatus.INACTIVE,
+                            ctx.hostId()));
+        }
+    }
+
+    @Test
+    void hostQueryReturnsOnlyOwnedListings() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            ListingService service = createService(connection);
+
+            assertEquals(2, service.findByHostId(ctx.hostId()).size());
+            assertTrue(service.findByHostId(ctx.guestId()).isEmpty());
+        }
+    }
+
     private static Stream<Arguments> invalidListingDrafts() {
         Property valid = validDraft();
         return Stream.of(
