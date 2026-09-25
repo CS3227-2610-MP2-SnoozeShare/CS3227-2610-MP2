@@ -65,7 +65,7 @@ three iterations).
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 | S7 | 2026-09-25 | Codex | w7 | W7 scope assessment | Paused | `w7` created from `w6`; booking display maps to W8/F7.1, while W7 remains calendar/date overrides | 2026-09-25 |
-| S8 | 2026-09-26 | Codex | w7 | W7 | Active | W7 design spec drafted; includes all-month manual overrides with start/end and Remove action; awaiting spec review | 2026-09-26 |
+| S8 | 2026-09-26 | Codex | w7 | W7 | Active | Approved W7 spec; implementation plan drafted for persistence, service, navigation, calendar rendering, and mutation UX | 2026-09-26 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -87,7 +87,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Not started | — | — | Backlog only: §3 | — |
 | W5 | F4 — Guest Wallet Management (top-up/withdraw) | Done | [wallet-management design](docs/superpowers/specs/2026-09-25-w5-wallet-management-design.md) | [wallet-management plan](docs/superpowers/plans/2026-09-25-w5-wallet-management.md) | All 6 tasks complete: dashboard, modal, navigation, CSS, sidebar refresh | Awaiting confirmation |
 | W6 | F5 — Host Listing Management & Publishing | Done | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md) | [listing-management plan](docs/superpowers/plans/2026-09-25-w6-listing-management.md) | Implementation complete: listing CRUD/status/detail flows, host wallet/navigation refinements, wallet refresh fix, and clean build verification | Awaiting confirmation |
-| W7 | F6 — Host Calendar & Date Overrides | Spec'd | [host calendar design](docs/superpowers/specs/2026-09-26-w7-host-calendar-design.md) | — | Design spec drafted: listing-specific calendar, manual blackout form, all-month overrides, and remove action; awaiting review | — |
+| W7 | F6 — Host Calendar & Date Overrides | Planned | [host calendar design](docs/superpowers/specs/2026-09-26-w7-host-calendar-design.md) | [host calendar plan](docs/superpowers/plans/2026-09-26-w7-host-calendar.md) | Approved design and implementation plan: persistence, service rules, listing entry, month renderer, blocking/removal UX | — |
 | W8 | F7 — Host Request Queue, Earnings & Disputes | Not started | — | — | Backlog only: §4 | — |
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
 | W10 | F9 — Agent Dispute Resolution & State Overrides | Not started | — | — | Backlog only: §5 | — |
