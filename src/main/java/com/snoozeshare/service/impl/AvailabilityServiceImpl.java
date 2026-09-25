@@ -6,9 +6,9 @@ import java.util.UUID;
 
 import com.snoozeshare.domain.model.AvailabilityBlock;
 import com.snoozeshare.domain.model.Property;
-import com.snoozeshare.repository.PropertyRepository;
 import com.snoozeshare.repository.AvailabilityBlockRepository;
 import com.snoozeshare.repository.BookingRepository;
+import com.snoozeshare.repository.PropertyRepository;
 import com.snoozeshare.service.AvailabilityService;
 
 public final class AvailabilityServiceImpl implements AvailabilityService {

@@ -6,10 +6,10 @@ import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.ui.common.NavShellController;
 import com.snoozeshare.ui.guest.wallet.WalletDashboardController;
+import com.snoozeshare.ui.host.calendar.HostCalendarController;
 import com.snoozeshare.ui.host.listings.HostListingDetailController;
 import com.snoozeshare.ui.host.listings.HostListingFormController;
 import com.snoozeshare.ui.host.listings.HostListingsController;
-import com.snoozeshare.ui.host.calendar.HostCalendarController;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;

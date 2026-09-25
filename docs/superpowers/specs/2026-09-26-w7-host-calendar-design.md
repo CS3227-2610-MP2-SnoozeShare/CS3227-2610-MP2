@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-26  
 **Workstream:** W7 / F6 — Host Calendar & Date Overrides  
-**Status:** Draft for operator review
+**Status:** Approved
 
 ## Goal
 
