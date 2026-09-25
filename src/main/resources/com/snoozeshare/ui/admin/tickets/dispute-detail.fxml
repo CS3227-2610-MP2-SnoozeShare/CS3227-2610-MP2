@@ -9,6 +9,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
 <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="agent-scroll" xmlns:fx="http://javafx.com/fxml"
@@ -40,7 +41,7 @@
         </HBox>
 
         <HBox spacing="16">
-            <VBox styleClass="agent-chat-box" spacing="0" HBox.hgrow="ALWAYS" prefWidth="100" minHeight="460" prefHeight="460" maxHeight="460">
+            <VBox fx:id="guestBox" styleClass="agent-chat-box" spacing="0" HBox.hgrow="ALWAYS" prefWidth="100" minHeight="240" prefHeight="460" maxHeight="900">
                 <HBox styleClass="agent-chat-header" spacing="8" alignment="CENTER_LEFT">
                     <Label fx:id="guestThreadTitle" text="GUEST MESSAGES" styleClass="agent-chat-title"/>
                     <Label text="OPENED TICKET" styleClass="agent-pill-solid"/>
@@ -52,8 +53,9 @@
                     <TextField fx:id="guestInput" promptText="Reply to guest…" styleClass="agent-input" HBox.hgrow="ALWAYS"/>
                     <Button text="Send" onAction="#handleSendGuest" styleClass="button, agent-button-sm"/>
                 </HBox>
+                <StackPane fx:id="guestGrip" styleClass="agent-resize-grip"><Region styleClass="agent-resize-bar"/></StackPane>
             </VBox>
-            <VBox styleClass="agent-chat-box" spacing="0" HBox.hgrow="ALWAYS" prefWidth="100" minHeight="460" prefHeight="460" maxHeight="460">
+            <VBox fx:id="hostBox" styleClass="agent-chat-box" spacing="0" HBox.hgrow="ALWAYS" prefWidth="100" minHeight="240" prefHeight="460" maxHeight="900">
                 <HBox styleClass="agent-chat-header" spacing="8" alignment="CENTER_LEFT">
                     <Label fx:id="hostThreadTitle" text="HOST MESSAGES" styleClass="agent-chat-title"/>
                 </HBox>
@@ -64,14 +66,22 @@
                     <TextField fx:id="hostInput" promptText="Reply to host…" styleClass="agent-input" HBox.hgrow="ALWAYS"/>
                     <Button text="Send" onAction="#handleSendHost" styleClass="button, agent-button-sm"/>
                 </HBox>
+                <StackPane fx:id="hostGrip" styleClass="agent-resize-grip"><Region styleClass="agent-resize-bar"/></StackPane>
             </VBox>
         </HBox>
 
         <VBox spacing="6">
             <Label text="Internal notes (invisible to guest or host)" styleClass="agent-field-label"/>
-            <TextArea fx:id="notesArea" promptText="Add investigation notes…" styleClass="agent-notes"
-                      minHeight="60" prefHeight="60" wrapText="true"/>
-            <Button fx:id="saveNotesButton" text="Save" onAction="#handleSaveNotes" styleClass="button, agent-button-sm"/>
+            <StackPane alignment="BOTTOM_CENTER">
+                <TextArea fx:id="notesArea" promptText="Add investigation notes…" styleClass="agent-notes"
+                          minHeight="56" prefHeight="60" maxHeight="400" wrapText="true"/>
+                <StackPane fx:id="notesGrip" styleClass="agent-resize-grip" maxHeight="10">
+                    <Region styleClass="agent-resize-bar"/>
+                </StackPane>
+            </StackPane>
+            <HBox alignment="CENTER_RIGHT">
+                <Button fx:id="saveNotesButton" text="Save" onAction="#handleSaveNotes" styleClass="button, agent-button-sm"/>
+            </HBox>
         </VBox>
 
         <HBox spacing="10" alignment="CENTER_LEFT">

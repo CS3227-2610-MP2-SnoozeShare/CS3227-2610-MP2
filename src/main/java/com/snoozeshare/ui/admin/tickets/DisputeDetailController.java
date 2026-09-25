@@ -17,6 +17,7 @@ import com.snoozeshare.domain.enums.TicketStatus;
 import com.snoozeshare.domain.model.Message;
 import com.snoozeshare.domain.model.Ticket;
 import com.snoozeshare.service.DisputeDetail;
+import com.snoozeshare.ui.admin.HeightGrip;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -25,6 +26,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 public final class DisputeDetailController {
@@ -32,7 +34,16 @@ public final class DisputeDetailController {
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH);
     private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("MMM d, h:mm a", Locale.ENGLISH);
     private static final double BUBBLE_SHARE = 0.85;
+    private static final double CHAT_MIN_HEIGHT = 240;
+    private static final double CHAT_MAX_HEIGHT = 900;
+    private static final double NOTES_MIN_HEIGHT = 56;
+    private static final double NOTES_MAX_HEIGHT = 400;
 
+    @FXML private VBox guestBox;
+    @FXML private VBox hostBox;
+    @FXML private StackPane guestGrip;
+    @FXML private StackPane hostGrip;
+    @FXML private StackPane notesGrip;
     @FXML private Label crumbLabel;
     @FXML private Label statusBadge;
     @FXML private Button assignButton;
@@ -59,6 +70,14 @@ public final class DisputeDetailController {
     private UUID ticketId;
     private DisputeDetail detail;
     private Runnable onBack = () -> { };
+
+    @FXML
+    private void initialize() {
+        // Both chat boxes follow either grip so they always keep an equal height; the notes box has its own.
+        HeightGrip.attach(guestGrip, CHAT_MIN_HEIGHT, CHAT_MAX_HEIGHT, guestBox, hostBox);
+        HeightGrip.attach(hostGrip, CHAT_MIN_HEIGHT, CHAT_MAX_HEIGHT, guestBox, hostBox);
+        HeightGrip.attach(notesGrip, NOTES_MIN_HEIGHT, NOTES_MAX_HEIGHT, notesArea);
+    }
 
     public void setContext(AppContext appContext) {
         context = appContext;

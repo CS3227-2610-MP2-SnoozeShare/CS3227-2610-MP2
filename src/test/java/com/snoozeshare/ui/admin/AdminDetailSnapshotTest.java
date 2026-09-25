@@ -22,7 +22,13 @@ import com.snoozeshare.testsupport.MockIds;
 import com.snoozeshare.ui.admin.tickets.ResolutionDialogController;
 
 import javafx.application.Platform;
+import javafx.event.Event;
+import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
 /**
@@ -114,6 +120,48 @@ class AdminDetailSnapshotTest {
 
             assertTrue(Files.size(open) > 0);
             assertTrue(Files.size(assigned) > 0);
+        }
+    }
+
+    private static void drag(Node grip, double screenY) {
+        Event.fireEvent(grip, new MouseEvent(MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, MouseButton.PRIMARY, 1, false,
+                false, false, false, true, false, false, true, false, false, null));
+        Event.fireEvent(grip, new MouseEvent(MouseEvent.MOUSE_DRAGGED, 0, 0, 0, screenY, MouseButton.PRIMARY, 1,
+                false, false, false, false, true, false, false, true, false, false, null));
+    }
+
+    /** Drags the chat grip down and the notes grip down, then snapshots the whole detail page. */
+    @Test
+    void writesResizedDetailSnapshot(@TempDir Path directory) throws Exception {
+        assumeTrue(toolkitAvailable, "JavaFX toolkit unavailable");
+        try (MockDbFixture db = MockDbFixture.open(directory);
+             AppContext ben = login(db, "ben.alvarez@snoozeshare.test")) {
+            Path file = AdminUiSnapshotTest.onFx(() -> {
+                AdminUiSnapshotTest.Shell shell = AdminUiSnapshotTest.loadShell(ben);
+                Method showDetail = AdminShellController.class.getDeclaredMethod("showDetail", UUID.class);
+                showDetail.setAccessible(true);
+                showDetail.invoke(shell.controller(), MockIds.TICKET_3);
+                Scene scene = new Scene(shell.root(), 1280, 1020);
+                Stage stage = new Stage();
+                stage.setScene(scene);
+                stage.show();
+                shell.root().applyCss();
+                shell.root().layout();
+                drag(shell.root().lookup("#hostGrip"), -150);
+                drag(shell.root().lookup("#notesGrip"), 90);
+                shell.root().applyCss();
+                shell.root().layout();
+                Region guestBox = (Region) shell.root().lookup("#guestBox");
+                Region hostBox = (Region) shell.root().lookup("#hostBox");
+                Region notes = (Region) shell.root().lookup("#notesArea");
+                System.out.println("RESIZED guest=" + guestBox.getHeight() + " host=" + hostBox.getHeight()
+                        + " notes=" + notes.getHeight());
+                Path written = AdminUiSnapshotTest.writePng(scene.snapshot(null), "agent-detail-resized");
+                stage.close();
+                return written;
+            });
+
+            assertTrue(Files.size(file) > 0);
         }
     }
 
