@@ -15,16 +15,24 @@ import com.snoozeshare.service.ListingService;
 import com.snoozeshare.service.PriceBreakdown;
 import com.snoozeshare.service.SearchCriteria;
 import com.snoozeshare.service.SearchResult;
+import com.snoozeshare.service.AuditService;
+import com.snoozeshare.service.UserService;
 
 public final class ListingServiceImpl implements ListingService {
 
     private final PropertyRepository properties;
     private final AvailabilityService availability;
+    private final UserService users;
+    private final AuditService audit;
 
     public ListingServiceImpl(PropertyRepository properties,
-                               AvailabilityService availability) {
+                               AvailabilityService availability,
+                               UserService users,
+                               AuditService audit) {
         this.properties = properties;
         this.availability = availability;
+        this.users = users;
+        this.audit = audit;
     }
 
     @Override
@@ -70,6 +78,11 @@ public final class ListingServiceImpl implements ListingService {
         BigDecimal totalAmount = property.baseNightlyRate()
                 .multiply(BigDecimal.valueOf(nights));
         return new PriceBreakdown(property.baseNightlyRate(), (int) nights, totalAmount);
+    }
+
+    @Override
+    public List<Property> findByHostId(UUID hostId) {
+        return properties.findByHostId(hostId);
     }
 
     @Override

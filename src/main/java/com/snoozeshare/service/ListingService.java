@@ -14,6 +14,8 @@ public interface ListingService {
 
     PriceBreakdown estimateCost(UUID propertyId, LocalDate start, LocalDate end);
 
+    List<Property> findByHostId(UUID hostId);
+
     Property create(Property draft, UUID hostId);
 
     Property updateStatus(UUID propertyId, ListingStatus status, UUID hostId);

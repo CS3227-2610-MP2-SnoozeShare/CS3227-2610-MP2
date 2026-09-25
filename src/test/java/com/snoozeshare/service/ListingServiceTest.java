@@ -26,11 +26,15 @@ import com.snoozeshare.domain.model.User;
 import com.snoozeshare.infra.db.ConnectionFactory;
 import com.snoozeshare.infra.db.migration.MigrationRunner;
 import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
+import com.snoozeshare.repository.jdbc.JdbcAuditLogRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
+import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
+import com.snoozeshare.service.impl.AuditServiceImpl;
 import com.snoozeshare.service.impl.AvailabilityServiceImpl;
 import com.snoozeshare.service.impl.ListingServiceImpl;
+import com.snoozeshare.service.impl.UserServiceImpl;
 
 class ListingServiceTest {
 
@@ -169,7 +173,11 @@ class ListingServiceTest {
         var blocks = new JdbcAvailabilityBlockRepository(connection);
         var bookings = new JdbcBookingRepository(connection);
         var availability = new AvailabilityServiceImpl(blocks, bookings);
-        return new ListingServiceImpl(properties, availability);
+        var users = new JdbcUserRepository(connection);
+        var userService = new UserServiceImpl(connection, users,
+                new JdbcWalletRepository(connection));
+        var auditService = new AuditServiceImpl(new JdbcAuditLogRepository(connection));
+        return new ListingServiceImpl(properties, availability, userService, auditService);
     }
 
     private static Connection migratedConnection() throws Exception {
