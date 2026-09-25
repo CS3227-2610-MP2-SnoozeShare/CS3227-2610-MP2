@@ -6,7 +6,7 @@ every boundary, not at the end of the session.
 
 - **Phase:** W2 Listing Search — complete; W3 next for Guest features
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `w2` (Guest features — Listing Search & Property Discovery)
+- **Branch:** `agent-dispute-resolution-and-state-overrides` (W10 — Agent Dispute Resolution & State Overrides; branched from `main` after W2 merge)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
 - **Last updated:** 2026-09-24 by Claude Opus 4.6 — completed W2 implementation: search/filter, JDBC adapters, service layer, search UI, detail modal
 - **Last verified against repo:** 2026-09-24
@@ -62,7 +62,8 @@ three iterations).
 |---|---|---|---|---|---|---|---|
 | S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Paused | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
-| S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
+| S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete and merged to main (PR #2). Row kept until W2 guide confirmation resolves | 2026-09-24 |
+| S4 | 2026-09-25 | Claude Sonnet 5 | agent-dispute-resolution-and-state-overrides | W10 | Active | Branch created from main. W10 design spec written and committed (`docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md`); awaiting operator review, then `writing-plans`. No code yet. Note: `origin/w3` exists (W3 in progress elsewhere) — W10 must not touch W3-owned files | 2026-09-25 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -87,9 +88,10 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W7 | F6 — Host Calendar & Date Overrides | Not started | — | — | Backlog only: §4 | — |
 | W8 | F7 — Host Request Queue, Earnings & Disputes | Not started | — | — | Backlog only: §4 | — |
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
-| W10 | F9 — Agent Dispute Resolution & State Overrides | Not started | — | — | Backlog only: §5 | — |
+| W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Spec'd | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | — | Spec written, awaiting operator review; plan next | — |
 | W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
 | W12 | F11 — Platform Audit Trail & Analytics | Not started | — | — | Backlog only: §5 | — |
+| W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
 
 Status vocabulary, used verbatim: `Not started` · `Spec'd` · `Planned` · `Building` ·
 `Blocked — needs human` · `In review` · `Done` · `Abandoned`
@@ -340,11 +342,29 @@ architecture area remain recorded in that area's table.
 | C12 | 2026-09-23 | Host and Agent registration codes are mock constants | Operator approved this F0 simplification; real credential or configuration management is out of scope | Operator conversation, 2026-09-23 |
 | C13 | 2026-09-23 | W1 owns the complete shared foundation and all cross-cutting logic required by later workstreams; feature workstreams own feature-specific business rules and UI behavior | Operator clarified that W1 must provide the full common base before parallel development begins | Operator conversation, 2026-09-23 |
 | C14 | 2026-09-23 | Use a combined Login/Register entry screen; display Support Agent as the user-facing Agent role; use a shared header/left-navigation/content shell, shared CSS, Guest/Host wallet panels, and a minimum window size around 1280×800 | Operator approved all W1 UI recommendations before execution | Operator conversation, 2026-09-23 |
+| C16 | 2026-09-25 | W10 is built concurrently with W3/W4 against the service interfaces (no waiting on `origin/w3`). W10 owns the ticket persistence + `TicketServiceImpl` + Agent UI; its remedy/override money logic lives in its own class (not inside W3's `TransactionServiceImpl`) so the only shared touchpoints are `AppContext` wiring and one new `BookingService` agent force-transition method. Tests use fakes/seeded tickets; guest ticket filing (W4) is out of W10 scope | Operator pointed out that interface-based design should allow concurrent development; agent had over-stated the coupling | Operator conversation, 2026-09-25 |
+| C17 | 2026-09-25 | Escrow is held through the 7-day dispute window (checkout + 7d). A ticket opened in the window keeps escrow on hold and the agent fully controls its settlement; only an unchallenged window releases escrow to the host. Consequence: agent money overrides always operate on **held escrow** — no clawback from host wallets, no `COMPLETED`-and-paid-out case. Requires W3/W8's auto-complete trigger (F7.3.1) to skip bookings with an open ticket | Operator answer while scoping W10 override semantics; consistent with `docs/ProductBacklog.md` F7.3.1 and F3.1.1 | Operator conversation, 2026-09-25 |
+| C18 | 2026-09-25 | On an agent Full Payout or Partial split, the 3% platform fee applies to the host's share (host gets share × 0.97, fee recorded informationally as with `BOOKING_PAYOUT`); a Full Refund to guest carries no fee | Operator chose the recommended uniform-fee rule | Operator conversation, 2026-09-25 |
+| C19 | 2026-09-25 | Agent Force Cancel = 100% escrow refund to guest (per C8); Force Complete = normal settlement, host paid net of 3%. Each is one atomic action with a required reason and an audit row. Other splits go through the ticket money override, not the force action | Operator chose the recommended coupled-defaults option | Operator conversation, 2026-09-25 |
+| C20 | 2026-09-25 | Every ticket resolution and manual adjustment settles the **full** held escrow: guest refund R (no fee), host receives (escrow − R) × 0.97. Platform cut is only ever taken from host earnings, never from guest money. Accept = requested remedy; Reject = R 0 (host paid in full, net of fee); Manual = agent-set R (Full refund = all, Full payout = 0). Supersedes the mockup's single-wallet "Adjust wallet" dropdown; the mockups are otherwise accurate but the operator's discussions take precedence | Operator answer while reviewing the W10 design artifact | Operator conversation, 2026-09-25 |
+| C21 | 2026-09-25 | Ticket chat threads (guest↔agent and host↔agent, as shown in the design artifact's dispute detail) are required. No backing columns or service exist today and the backlog has no messaging epic. **Ownership: a general `MessageService` owned by new workstream W13 (Messaging)** — the agent chat is just another participant in the same chat, so it does not belong to W10 (the first draft had W10 owning a `ticket_messages` table; operator corrected this). W10 codes against a `MessageService` interface with a fake in tests | Operator: "There should be chat threads"; then "shouldn't the service that configures the chat be the one to own this?" | Operator conversation, 2026-09-25 |
+| C22 | 2026-09-25 | **Reverses C19 and drops backlog F9.2.1 (Force Cancel / Force Complete) from W10.** Force actions are redundant: Accept with full refund ≡ force cancel, Reject ≡ force complete, and both close the ticket. The agent only ever settles via ticket resolution. F9.2.1, the two Force confirm artboards, and the "Booking state override" block on the dispute detail artboard are out of scope. `BookingStatus.FORCE_*` enum values stay in the enum, unused by W10 | Operator: force actions are just a forced ticket close the agent can already achieve by accepting/rejecting | Operator conversation, 2026-09-25 |
+| C23 | 2026-09-25 | Ticket resolution moves the booking `CONFIRMED → COMPLETED` (funds settled per C20), which requires allowing `Role.AGENT` on that transition in `BookingStateMachine` (small additive change to a W1 file). Bookings in the dispute window are `CONFIRMED`; "Stay ended — escrow held" is a derived display label (`CONFIRMED`, stay over, escrow still held — within the 7-day window, or beyond it while a ticket is open), not a new status | Operator chose the recommended option; also clarifies the "COMPLETED with open ticket" mock rows meant stay-over-funds-held | Operator conversation, 2026-09-25 |
 | C15 | 2026-09-23 | Execute W1 natively in the existing `w1` checkout rather than creating a separate worktree | Operator explicitly selected the current checkout for execution | Operator conversation, 2026-09-23 |
 
 ---
 
 ## 9. Deviations & Discoveries
+
+### W10 deviations (OPEN 2026-09-25) — full detail in the [W10 spec § 6](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md)
+
+- **D5** — W10 adds `DisputeSettlementService` instead of `TransactionService.applyTicketRemedy`/`manualOverride` (single-sided, cannot express C20). Reconcile with W3 at merge.
+- **D6** — Mock DB is hand-written and holds rows predating C17/C20 (booking 9 paid out with an open ticket; ticket 4/booking 13 single-sided). Tests normalise a temp copy and run a schema-parity test; the committed DB is untouched.
+- **D7** — Design artifact differs from decisions: Force actions (C22), newest-first queue (F9.1.1 wins), "Adjust wallet" dropdown (C20), no Accept amount field (added).
+- **D8** — `tickets.category` is label text, not an FK; renames don't propagate.
+- **D9** — `BookingStateMachine` gains `AGENT` on `CONFIRMED → COMPLETED` (C23); W3 must be told at merge.
+- **Backlog edits proposed, not made:** mark F9.2.1 dropped; add a Messaging epic (W13). Awaiting operator approval.
+- **Cross-workstream requirement (C17):** the W3/W8 auto-complete trigger must skip bookings with an open ticket.
 
 ### D2 — Two schema gaps found while grounding the UI mockups against `db/schema.sql` (OPEN 2026-09-23)
 
@@ -419,6 +439,6 @@ The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-st
 — every change, big or small, newest first.
 
 - **Latest entry:** 2026-09-25
-- **Entries:** 17 (4 backfilled coarsely from git history, 13 current/history entries)
+- **Entries:** 18 (4 backfilled coarsely from git history, 13 current/history entries)
 
 Deviations stay in § Deviations above: those are read every session.
