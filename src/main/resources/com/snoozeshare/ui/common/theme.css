@@ -99,3 +99,4 @@
 .chat-pane { -fx-background-color: white; -fx-border-color: #d4dbe7; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 12px; }
 .chat-bubble { -fx-background-color: #e8edf5; -fx-background-radius: 8px; -fx-padding: 8px 12px; }
 .chat-bubble-agent { -fx-background-color: #d9e2f3; -fx-background-radius: 8px; -fx-padding: 8px 12px; }
+.small { -fx-font-size: 11px; }
