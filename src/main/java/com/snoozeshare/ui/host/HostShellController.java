@@ -14,19 +14,11 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 
 public final class HostShellController extends NavShellController {
 
     @FXML
     private BorderPane shellRoot;
-
-    @FXML
-    private StackPane contentPane;
-
-    @FXML
-    private VBox contentRoot;
 
     private WalletDashboardController walletController;
 
@@ -39,7 +31,6 @@ public final class HostShellController extends NavShellController {
     @FXML
     private void showListings() {
         cleanupWalletController();
-        showContentRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/host/listings/host-listings.fxml"));
@@ -49,8 +40,7 @@ public final class HostShellController extends NavShellController {
             controller.setOnCreateListing(this::showCreateListing);
             controller.setOnEditListing(this::showEditListing);
             controller.setOnViewListing(this::showListingDetail);
-            displayPage("Listings", "Manage your properties and listing status.");
-            contentPane.getChildren().setAll(listingsView);
+            shellRoot.setCenter(listingsView);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load host listings view", exception);
         }
@@ -65,7 +55,6 @@ public final class HostShellController extends NavShellController {
     }
 
     private void showListingDetail(Property property) {
-        showContentRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
@@ -73,15 +62,13 @@ public final class HostShellController extends NavShellController {
             HostListingDetailController controller = loader.getController();
             controller.setProperty(property);
             controller.setOnBack(this::showListings);
-            displayPage("Listing Details", "Review the complete details for your property.");
-            contentPane.getChildren().setAll(detailView);
+            shellRoot.setCenter(detailView);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load host listing detail view", exception);
         }
     }
 
     private void showListingForm(Property property) {
-        showContentRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/host/listings/host-listing-form.fxml"));
@@ -91,9 +78,7 @@ public final class HostShellController extends NavShellController {
             controller.setProperty(property);
             controller.setOnBack(this::showListings);
             controller.setOnSaved(this::showListings);
-            displayPage(property == null ? "Create Listing" : "Edit Listing",
-                    property == null ? "Publish a new property." : "Update your property details.");
-            contentPane.getChildren().setAll(formView);
+            shellRoot.setCenter(formView);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load listing form", exception);
         }
@@ -102,9 +87,13 @@ public final class HostShellController extends NavShellController {
     @FXML
     private void showBookings() {
         cleanupWalletController();
-        showContentRoot();
-        contentPane.getChildren().clear();
-        displayPage("Bookings", "Review booking requests and upcoming stays.");
+        try {
+            Node bookingsView = FXMLLoader.load(getClass().getResource(
+                    "/com/snoozeshare/ui/host/bookings/host-bookings.fxml"));
+            shellRoot.setCenter(bookingsView);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load host bookings view", exception);
+        }
     }
 
     @FXML
@@ -129,9 +118,4 @@ public final class HostShellController extends NavShellController {
         }
     }
 
-    private void showContentRoot() {
-        if (shellRoot.getCenter() != contentRoot) {
-            shellRoot.setCenter(contentRoot);
-        }
-    }
 }

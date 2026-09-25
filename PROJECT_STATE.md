@@ -4,11 +4,11 @@
 anything, then run `git log --oneline -20` to confirm it still matches reality. Update it at
 every boundary, not at the end of the session.
 
-- **Phase:** Wallet balance refresh fix — implementation complete, awaiting review
+- **Phase:** Guest/Host shell display alignment — implementation complete, awaiting review
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `w6` (Host features — Listing Management & Publishing)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-25 by Codex — fixed booking wallet event publication
+- **Last updated:** 2026-09-25 by Codex — aligned Host navigation and page display with Guest shell
 - **Last verified against repo:** 2026-09-25
 - **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
 
@@ -64,7 +64,7 @@ three iterations).
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S4 | 2026-09-25 | Codex | w6 | W6 | In review | W6 implementation and clean build complete; handoff record written, awaiting review. | 2026-09-25 |
-| S5 | 2026-09-25 | Codex | w6 | W6 | In review | Booking escrow now publishes the wallet transaction event after commit so the header balance refreshes; clean build verified. | 2026-09-25 |
+| S5 | 2026-09-25 | Codex | w6 | W6 | In review | Host navigation now replaces the shell center directly like Guest; Host pages own their headings and Bookings has a page view; clean build verified. | 2026-09-25 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
@@ -173,6 +173,8 @@ Host Wallet now replaces the shell center directly, matching Guest Wallet’s fu
 area and modal-overlay behavior.
 Booking escrow publishes `WalletTransactionRecordedEvent` after its transaction commits, keeping
 wallet headers and wallet dashboards synchronized with the persisted balance.
+Host Listings, Bookings, listing details, and listing forms now also replace the shell center
+directly; their page titles and descriptions are defined inside each page view.
 Per the proposal,
 each role gets its own FXML+Controller tree under `ui.<role>`, and `ui.common` holds shared
 pieces (`WalletPanelController`, `NavShell`, formatting/validation helpers, shared components)

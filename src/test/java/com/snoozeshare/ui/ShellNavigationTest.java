@@ -17,7 +17,9 @@ class ShellNavigationTest {
     void eachShellUsesTextNavigationAndASharedCenterPageMessage() throws Exception {
         for (String shell : SHELLS) {
             String fxml = Files.readString(Path.of("src/main/resources/com/snoozeshare/ui/" + shell));
-            assertTrue(fxml.contains("fx:id=\"pageMessage\""), shell);
+            if (!shell.equals("host/host-shell.fxml")) {
+                assertTrue(fxml.contains("fx:id=\"pageMessage\""), shell);
+            }
             assertTrue(fxml.contains("styleClass=\"nav-item\""), shell);
             assertTrue(fxml.contains("onMouseClicked=\"#"), shell);
         }
@@ -73,7 +75,9 @@ class ShellNavigationTest {
         assertTrue(hostController.contains("host-listing-form.fxml"));
         assertTrue(hostController.contains("host-wallet-dashboard.fxml"));
         assertTrue(hostController.contains("shellRoot.setCenter(walletView)"));
-        assertTrue(hostController.contains("showContentRoot"));
+        assertTrue(hostController.contains("shellRoot.setCenter(listingsView)"));
+        assertTrue(hostController.contains("shellRoot.setCenter(detailView)"));
+        assertTrue(hostController.contains("shellRoot.setCenter(formView)"));
     }
 
     @Test
@@ -87,6 +91,23 @@ class ShellNavigationTest {
         assertTrue(guestController.contains("showExplore();"));
         assertTrue(hostController.contains("void setContext(AppContext"));
         assertTrue(hostController.contains("showListings();"));
+    }
+
+    @Test
+    void hostPagesCarryTheirOwnPageTitlesLikeGuestPages() throws Exception {
+        String listings = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listings.fxml"));
+        String form = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.fxml"));
+        String detail = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
+        String wallet = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/wallet/host-wallet-dashboard.fxml"));
+
+        assertTrue(listings.contains("styleClass=\"page-title\""));
+        assertTrue(form.contains("styleClass=\"page-title\""));
+        assertTrue(detail.contains("styleClass=\"page-title\""));
+        assertTrue(wallet.contains("styleClass=\"page-title\""));
     }
 
     private static void assertControllerMethods(String file, String... methods) throws Exception {
