@@ -54,6 +54,7 @@
         </center>
         <right>
             <VBox styleClass="calendar-side-panel" spacing="10" prefWidth="300">
+                <BorderPane.margin><Insets left="12"/></BorderPane.margin>
                 <Label text="Block dates" styleClass="card-title"/>
                 <Label text="From" styleClass="small"/>
                 <TextField fx:id="fromField" promptText="YYYY-MM-DD"/>

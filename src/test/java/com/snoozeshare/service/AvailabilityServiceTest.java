@@ -93,19 +93,35 @@ class AvailabilityServiceTest {
     }
 
     @Test
-    void createHostBlockRejectsInvalidRangeAndNonOwner() throws Exception {
+    void createHostBlockAllowsSingleDateAndRejectsNonOwner() throws Exception {
         try (Connection connection = migratedConnection()) {
             var ctx = seedContext(connection);
             AvailabilityService service = createService(connection);
 
-            assertThrows(IllegalArgumentException.class, () -> service.createHostBlock(
+            AvailabilityBlock singleDate = service.createHostBlock(
                     ctx.propertyId, LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 5),
-                    ctx.hostId, "maintenance"));
+                    ctx.hostId, "maintenance");
+            assertEquals(LocalDate.of(2026, 10, 5), singleDate.startDate());
+            assertEquals(LocalDate.of(2026, 10, 6), singleDate.endDate());
             assertThrows(IllegalStateException.class, () -> service.createHostBlock(
                     ctx.propertyId, LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 7),
                     ctx.guestId, "maintenance"));
-            assertTrue(new JdbcAvailabilityBlockRepository(connection)
-                    .findByPropertyId(ctx.propertyId).isEmpty());
+        }
+    }
+
+    @Test
+    void createHostBlockTreatsEndDateAsInclusive() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection);
+            AvailabilityService service = createService(connection);
+
+            service.createHostBlock(ctx.propertyId, LocalDate.of(2026, 10, 1),
+                    LocalDate.of(2026, 10, 5), ctx.hostId, "maintenance");
+
+            assertFalse(service.isRangeAvailable(ctx.propertyId,
+                    LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 6)));
+            assertTrue(service.isRangeAvailable(ctx.propertyId,
+                    LocalDate.of(2026, 10, 6), LocalDate.of(2026, 10, 7)));
         }
     }
 
@@ -134,7 +150,7 @@ class AvailabilityServiceTest {
     }
 
     @Test
-    void createHostBlockTrimsReasonAndAllowsHalfOpenBoundary() throws Exception {
+    void createHostBlockTrimsReasonAndAllowsNextDayBoundary() throws Exception {
         try (Connection connection = migratedConnection()) {
             var ctx = seedContext(connection);
             AvailabilityService service = createService(connection);
@@ -142,9 +158,10 @@ class AvailabilityServiceTest {
                     LocalDate.of(2026, 10, 5), ctx.hostId, "  maintenance  ");
 
             AvailabilityBlock adjacent = service.createHostBlock(ctx.propertyId,
-                    LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 7), ctx.hostId, " ");
+                    LocalDate.of(2026, 10, 6), LocalDate.of(2026, 10, 7), ctx.hostId, " ");
 
             assertEquals("maintenance", service.blocksFor(ctx.propertyId).get(0).reason());
+            assertEquals(LocalDate.of(2026, 10, 8), adjacent.endDate());
             assertEquals(null, adjacent.reason());
         }
     }

@@ -34,23 +34,24 @@ public final class AvailabilityServiceImpl implements AvailabilityService {
     @Override
     public AvailabilityBlock createHostBlock(UUID propertyId, LocalDate start, LocalDate end,
                                               UUID hostId, String reason) {
-        if (propertyId == null || start == null || end == null || start.compareTo(end) >= 0) {
+        if (propertyId == null || start == null || end == null || start.isAfter(end)) {
             throw new IllegalArgumentException("Property and a valid date range are required");
         }
+        LocalDate exclusiveEnd = end.plusDays(1);
         Property property = properties.findById(propertyId)
                 .orElseThrow(() -> new IllegalArgumentException("Property does not exist"));
         if (!property.hostId().equals(hostId)) {
             throw new IllegalStateException("Host does not own this property");
         }
-        if (!bookings.findOverlapping(propertyId, start, end).isEmpty()
-                || !blocks.findOverlapping(propertyId, start, end).isEmpty()) {
+        if (!bookings.findOverlapping(propertyId, start, exclusiveEnd).isEmpty()
+                || !blocks.findOverlapping(propertyId, start, exclusiveEnd).isEmpty()) {
             throw new IllegalStateException("Date range is not available");
         }
         String normalizedReason = reason == null ? null : reason.trim();
         if (normalizedReason != null && normalizedReason.isEmpty()) {
             normalizedReason = null;
         }
-        return blocks.save(new AvailabilityBlock(UUID.randomUUID(), propertyId, start, end,
+        return blocks.save(new AvailabilityBlock(UUID.randomUUID(), propertyId, start, exclusiveEnd,
                 "HOST_BLOCK", null, normalizedReason));
     }
 

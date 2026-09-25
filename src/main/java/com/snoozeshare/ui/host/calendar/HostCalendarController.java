@@ -157,7 +157,7 @@ public final class HostCalendarController {
 
     private void addOverrideRow(AvailabilityBlock block) {
         Label dates = new Label(DATE_FORMAT.format(block.startDate()) + " – "
-                + DATE_FORMAT.format(block.endDate()));
+                + DATE_FORMAT.format(displayEndDate(block)));
         Button remove = new Button("Remove");
         remove.setAccessibleText("Remove override " + dates.getText());
         remove.getStyleClass().add("text-button");
@@ -167,6 +167,12 @@ public final class HostCalendarController {
         HBox row = new HBox(8, dates, spacer, remove);
         row.getStyleClass().add("override-row");
         overridesContainer.getChildren().add(row);
+    }
+
+    private static LocalDate displayEndDate(AvailabilityBlock block) {
+        return "HOST_BLOCK".equals(block.source())
+                ? block.endDate().minusDays(1)
+                : block.endDate();
     }
 
     private static boolean hasSource(List<AvailabilityBlock> blocks, LocalDate date, String source) {

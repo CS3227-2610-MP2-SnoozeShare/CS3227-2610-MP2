@@ -29,6 +29,8 @@ class HostCalendarControllerTest {
         assertTrue(fxml.contains("Current overrides"));
         assertTrue(fxml.contains("onAction=\"#handleBack\""));
         assertFalse(fxml.contains("BorderPane.hgrow"));
+        assertTrue(fxml.contains("BorderPane.margin"));
+        assertTrue(fxml.contains("left=\"12\""));
     }
 
     @Test
