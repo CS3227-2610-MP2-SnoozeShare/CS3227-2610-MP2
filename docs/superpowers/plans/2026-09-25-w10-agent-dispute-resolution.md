@@ -92,21 +92,21 @@
 
 **Files:** none.
 
-- [ ] **Step 1: Confirm branch and clean tree**
+- [x] **Step 1: Confirm branch and clean tree**
 
 Run: `git branch --show-current; git status --short`
 Expected: `agent-dispute-resolution-and-state-overrides`, and no output from `status`.
 
-- [ ] **Step 2: Run the whole suite to get a green baseline**
+- [x] **Step 2: Run the whole suite to get a green baseline**
 
 Run: `.\gradlew build`
 Expected: `BUILD SUCCESSFUL` (all existing tests pass; checkstyle passes). If it fails **before** any change, stop and report — do not proceed on a red baseline. Note the number of tests reported so later tasks can confirm nothing disappeared.
 
-- [ ] **Step 3: Mark the plan in `PROJECT_STATE.md`**
+- [x] **Step 3: Mark the plan in `PROJECT_STATE.md`**
 
 In § Workstreams change W10 `Status` to `Planned`, `Plan` to `[W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md)`, `Progress` to `Task 0/18 baseline green`. Update session row S4 `Doing` to "Executing W10 plan".
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```powershell
 git add PROJECT_STATE.md docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md
@@ -121,7 +121,7 @@ git commit -m "docs: add W10 implementation plan" -m "Co-Authored-By: Claude Son
 - Modify: `src/main/java/com/snoozeshare/domain/statemachine/BookingStateMachine.java` (the `case COMPLETED` line inside `case CONFIRMED`)
 - Test: `src/test/java/com/snoozeshare/domain/statemachine/AgentCompletionTest.java`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 package com.snoozeshare.domain.statemachine;
@@ -166,12 +166,12 @@ class AgentCompletionTest {
 }
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `.\gradlew test --tests "com.snoozeshare.domain.statemachine.AgentCompletionTest"`
 Expected: `agentCanCompleteAConfirmedBooking` FAILS (`expected: <true> but was: <false>`); the other three pass.
 
-- [ ] **Step 3: Minimal implementation**
+- [x] **Step 3: Minimal implementation**
 
 In `BookingStateMachine.java`, inside the `case CONFIRMED -> switch (to) { ... }` block change
 
@@ -185,12 +185,12 @@ to
                 case COMPLETED -> actingRole == Role.HOST || actingRole == Role.AGENT;
 ```
 
-- [ ] **Step 4: Run the state-machine tests**
+- [x] **Step 4: Run the state-machine tests**
 
 Run: `.\gradlew test --tests "com.snoozeshare.domain.statemachine.*"`
 Expected: PASS (both `AgentCompletionTest` and the existing `StateMachineTest`).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add src/main/java/com/snoozeshare/domain/statemachine/BookingStateMachine.java src/test/java/com/snoozeshare/domain/statemachine/AgentCompletionTest.java
@@ -205,7 +205,7 @@ git commit -m "feat: allow agent CONFIRMED->COMPLETED in BookingStateMachine (C2
 - Create: `src/main/java/com/snoozeshare/domain/settlement/package-info.java`, `SettlementBreakdown.java`, `SettlementCalculator.java`, `EscrowPolicy.java`
 - Test: `src/test/java/com/snoozeshare/domain/settlement/SettlementCalculatorTest.java`, `EscrowPolicyTest.java`
 
-- [ ] **Step 1: Write the failing calculator test**
+- [x] **Step 1: Write the failing calculator test**
 
 ```java
 package com.snoozeshare.domain.settlement;
@@ -277,12 +277,12 @@ class SettlementCalculatorTest {
 
 Import order note: `org.junit.jupiter.api.Test` sorts **before** `org.junit.jupiter.params...`. Put the imports in this order to satisfy checkstyle: `org.junit.jupiter.api.Test;` then `org.junit.jupiter.params.ParameterizedTest;` then `org.junit.jupiter.params.provider.CsvSource;`.
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `.\gradlew test --tests "com.snoozeshare.domain.settlement.SettlementCalculatorTest"`
 Expected: FAIL — compilation error, `cannot find symbol: class SettlementCalculator`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `package-info.java`:
 
@@ -351,12 +351,12 @@ public final class SettlementCalculator {
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `.\gradlew test --tests "com.snoozeshare.domain.settlement.SettlementCalculatorTest"`
 Expected: PASS (all 9 invocations).
 
-- [ ] **Step 5: Write the failing escrow-policy test**
+- [x] **Step 5: Write the failing escrow-policy test**
 
 ```java
 package com.snoozeshare.domain.settlement;
@@ -405,12 +405,12 @@ class EscrowPolicyTest {
 }
 ```
 
-- [ ] **Step 6: Run to verify it fails**
+- [x] **Step 6: Run to verify it fails**
 
 Run: `.\gradlew test --tests "com.snoozeshare.domain.settlement.EscrowPolicyTest"`
 Expected: FAIL — `cannot find symbol: class EscrowPolicy`.
 
-- [ ] **Step 7: Implement `EscrowPolicy`**
+- [x] **Step 7: Implement `EscrowPolicy`**
 
 ```java
 package com.snoozeshare.domain.settlement;
@@ -449,12 +449,12 @@ public final class EscrowPolicy {
 }
 ```
 
-- [ ] **Step 8: Run both test classes**
+- [x] **Step 8: Run both test classes**
 
 Run: `.\gradlew test --tests "com.snoozeshare.domain.settlement.*"`
 Expected: PASS.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```powershell
 git add src/main/java/com/snoozeshare/domain/settlement src/test/java/com/snoozeshare/domain/settlement
@@ -472,7 +472,7 @@ The mock DB has no `schema_history` table, so `MigrationRunner` would try to re-
 - Create (test support, needed here): `src/test/java/com/snoozeshare/testsupport/MockIds.java`, `MockDbFixture.java`
 - Test: `src/test/java/com/snoozeshare/infra/db/MockDbFixtureTest.java`, `src/test/java/com/snoozeshare/infra/db/MigrationRunnerReferenceDbTest.java`
 
-- [ ] **Step 1: Create the shared test support** — `MockIds.java`
+- [x] **Step 1: Create the shared test support** — `MockIds.java`
 
 ```java
 package com.snoozeshare.testsupport;
@@ -654,7 +654,7 @@ public final class MockDbFixture implements AutoCloseable {
 }
 ```
 
-- [ ] **Step 2: Write the failing fixture and migration tests**
+- [x] **Step 2: Write the failing fixture and migration tests**
 
 `MockDbFixtureTest.java`:
 
@@ -729,12 +729,12 @@ class MigrationRunnerReferenceDbTest {
 }
 ```
 
-- [ ] **Step 3: Run to verify they fail**
+- [x] **Step 3: Run to verify they fail**
 
 Run: `.\gradlew test --tests "com.snoozeshare.infra.db.MockDbFixtureTest" --tests "com.snoozeshare.infra.db.MigrationRunnerReferenceDbTest"`
 Expected: `MockDbFixtureTest` PASSES (it only needs Step 1); `MigrationRunnerReferenceDbTest` FAILS with `table users already exists`.
 
-- [ ] **Step 4: Implement the adoption in `MigrationRunner.migrate`**
+- [x] **Step 4: Implement the adoption in `MigrationRunner.migrate`**
 
 Replace the body of the `if (!migrationApplied(...))` block:
 
@@ -762,12 +762,12 @@ and add the helper next to `migrationApplied`:
     }
 ```
 
-- [ ] **Step 5: Run the whole suite**
+- [x] **Step 5: Run the whole suite**
 
 Run: `.\gradlew test`
 Expected: PASS. (`DatabaseBootstrapTest` still passes — a fresh in-memory DB has no `users` table, so the foundation is applied as before.)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```powershell
 git add src/main src/test
@@ -783,7 +783,7 @@ Guards the hand-written mock DB schema against drifting from the app's migration
 **Files:**
 - Test: `src/test/java/com/snoozeshare/infra/db/SchemaParityTest.java`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 ```java
 package com.snoozeshare.infra.db;
@@ -847,12 +847,12 @@ class SchemaParityTest {
 }
 ```
 
-- [ ] **Step 2: Run**
+- [x] **Step 2: Run**
 
 Run: `.\gradlew test --tests "com.snoozeshare.infra.db.SchemaParityTest"`
 Expected: PASS (verified equal when this plan was written). **If it fails:** the two schemas have drifted — do not "fix" either silently; record the difference as a deviation in `PROJECT_STATE.md` § Deviations and ask the operator which side is right.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```powershell
 git add src/test/java/com/snoozeshare/infra/db/SchemaParityTest.java
@@ -869,7 +869,7 @@ git commit -m "test: guard mock-DB schema against migration drift" -m "Co-Author
 - Create: `repository/jdbc/JdbcTicketRepository.java`, `repository/jdbc/JdbcTicketCategoryRepository.java`
 - Test: `src/test/java/com/snoozeshare/repository/jdbc/JdbcTicketRepositoryTest.java`, `JdbcTicketCategoryRepositoryTest.java`
 
-- [ ] **Step 1: Add the enum and extend the repository interfaces**
+- [x] **Step 1: Add the enum and extend the repository interfaces**
 
 `AssigneeFilter.java`:
 
@@ -905,7 +905,7 @@ public enum AssigneeFilter {
     boolean labelInUse(String label, UUID excludeCategoryId);
 ```
 
-- [ ] **Step 2: Write the failing ticket repository test**
+- [x] **Step 2: Write the failing ticket repository test**
 
 ```java
 package com.snoozeshare.repository.jdbc;
@@ -1021,12 +1021,12 @@ class JdbcTicketRepositoryTest {
 }
 ```
 
-- [ ] **Step 3: Run to verify it fails**
+- [x] **Step 3: Run to verify it fails**
 
 Run: `.\gradlew test --tests "com.snoozeshare.repository.jdbc.JdbcTicketRepositoryTest"`
 Expected: FAIL — `cannot find symbol: class JdbcTicketRepository`.
 
-- [ ] **Step 4: Implement mappers and `JdbcTicketRepository`**
+- [x] **Step 4: Implement mappers and `JdbcTicketRepository`**
 
 In `RowMappers.java` add imports `com.snoozeshare.domain.enums.RemedyType`, `TicketStatus`, `com.snoozeshare.domain.model.Ticket`, `TicketCategory` (alphabetical within their groups) and two methods:
 
@@ -1174,12 +1174,12 @@ public final class JdbcTicketRepository implements TicketRepository {
 }
 ```
 
-- [ ] **Step 5: Run to verify it passes**
+- [x] **Step 5: Run to verify it passes**
 
 Run: `.\gradlew test --tests "com.snoozeshare.repository.jdbc.JdbcTicketRepositoryTest"`
 Expected: PASS (5 tests). If `readsEveryFieldOfAnOpenMockTicket` fails on `createdAt`, re-check that the seed timestamps end in `Z`.
 
-- [ ] **Step 6: Write the failing category repository test**
+- [x] **Step 6: Write the failing category repository test**
 
 ```java
 package com.snoozeshare.repository.jdbc;
@@ -1255,7 +1255,7 @@ class JdbcTicketCategoryRepositoryTest {
 }
 ```
 
-- [ ] **Step 7: Run to verify it fails**, then **implement** `JdbcTicketCategoryRepository`
+- [x] **Step 7: Run to verify it fails**, then **implement** `JdbcTicketCategoryRepository`
 
 Run: `.\gradlew test --tests "com.snoozeshare.repository.jdbc.JdbcTicketCategoryRepositoryTest"` → FAIL (`cannot find symbol`).
 
@@ -1355,12 +1355,12 @@ public final class JdbcTicketCategoryRepository implements TicketCategoryReposit
 }
 ```
 
-- [ ] **Step 8: Run all repository tests**
+- [x] **Step 8: Run all repository tests**
 
 Run: `.\gradlew test --tests "com.snoozeshare.repository.*"`
 Expected: PASS.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```powershell
 git add src/main src/test
@@ -1375,7 +1375,7 @@ git commit -m "feat: add JDBC ticket and ticket-category repositories" -m "Co-Au
 - Create: `domain/enums/ThreadChannel.java`, `domain/model/Message.java`, `service/MessageService.java`, `service/impl/InMemoryMessageService.java`
 - Test: `src/test/java/com/snoozeshare/service/InMemoryMessageServiceTest.java`
 
-- [ ] **Step 1: Create the types**
+- [x] **Step 1: Create the types**
 
 `ThreadChannel.java`:
 
@@ -1433,7 +1433,7 @@ public interface MessageService {
 }
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 ```java
 package com.snoozeshare.service;
@@ -1501,9 +1501,9 @@ class InMemoryMessageServiceTest {
 }
 ```
 
-- [ ] **Step 3: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.service.InMemoryMessageServiceTest"` → FAIL (`cannot find symbol: class InMemoryMessageService`).
+- [x] **Step 3: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.service.InMemoryMessageServiceTest"` → FAIL (`cannot find symbol: class InMemoryMessageService`).
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 ```java
 package com.snoozeshare.service.impl;
@@ -1562,9 +1562,9 @@ public final class InMemoryMessageService implements MessageService {
 }
 ```
 
-- [ ] **Step 5: Run to verify it passes** — same command → PASS (4 tests).
+- [x] **Step 5: Run to verify it passes** — same command → PASS (4 tests).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```powershell
 git add src/main src/test
@@ -1581,7 +1581,7 @@ Compile-only task: the interfaces and records the next tasks implement. Nothing 
 - Create: `domain/enums/ResolutionMode.java`, `service/requests/ResolutionRequest.java`, `service/Settlement.java`, `service/DisputeSettlementService.java`, `service/DisputeSummary.java`, `service/DisputeDetail.java`, `service/DisputeQueryService.java`
 - Modify: `service/TicketService.java` (full replacement)
 
-- [ ] **Step 1: Create the files**
+- [x] **Step 1: Create the files**
 
 `ResolutionMode.java`:
 
@@ -1775,12 +1775,12 @@ public interface TicketService {
 }
 ```
 
-- [ ] **Step 2: Compile and run the whole suite**
+- [x] **Step 2: Compile and run the whole suite**
 
 Run: `.\gradlew build`
 Expected: `BUILD SUCCESSFUL`. (No class implemented `TicketService` before, so nothing else needed changing. If the build reports a class that does, adapt it minimally and note it.)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```powershell
 git add src/main
@@ -1799,7 +1799,7 @@ The core of W10. Writes wallets, ledger rows, ticket, booking and audit in **one
 
 Reference numbers (mock DB, verified): ticket 3 is `UNDER_REVIEW`, assigned to Ben, requested `FULL_REFUND`, on booking 11 (escrow **210.00**, guest Sophia wallet **790.00**, host Diego wallet **150.00**, status `CONFIRMED`).
 
-- [ ] **Step 1: Test support** — `SettlementFixtures.java`
+- [x] **Step 1: Test support** — `SettlementFixtures.java`
 
 ```java
 package com.snoozeshare.service;
@@ -1839,7 +1839,7 @@ final class SettlementFixtures {
 }
 ```
 
-- [ ] **Step 2: Write the failing settlement test**
+- [x] **Step 2: Write the failing settlement test**
 
 ```java
 package com.snoozeshare.service;
@@ -2089,9 +2089,9 @@ class DisputeSettlementServiceTest {
 }
 ```
 
-- [ ] **Step 3: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.service.DisputeSettlementServiceTest"` → FAIL (`cannot find symbol: class DisputeSettlementServiceImpl`).
+- [x] **Step 3: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.service.DisputeSettlementServiceTest"` → FAIL (`cannot find symbol: class DisputeSettlementServiceImpl`).
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 ```java
 package com.snoozeshare.service.impl;
@@ -2290,9 +2290,9 @@ public final class DisputeSettlementServiceImpl implements DisputeSettlementServ
 }
 ```
 
-- [ ] **Step 5: Run to verify it passes** — `.\gradlew test --tests "com.snoozeshare.service.DisputeSettlementServiceTest"` → PASS (10 tests). If money assertions are off by a cent, re-check `SettlementCalculator`; if `walletBalance` differs in scale, the test uses `compareTo` already.
+- [x] **Step 5: Run to verify it passes** — `.\gradlew test --tests "com.snoozeshare.service.DisputeSettlementServiceTest"` → PASS (10 tests). If money assertions are off by a cent, re-check `SettlementCalculator`; if `walletBalance` differs in scale, the test uses `compareTo` already.
 
-- [ ] **Step 6: Write the failing atomicity test**
+- [x] **Step 6: Write the failing atomicity test**
 
 ```java
 package com.snoozeshare.service;
@@ -2404,9 +2404,9 @@ class DisputeSettlementAtomicityTest {
 }
 ```
 
-- [ ] **Step 7: Run** — `.\gradlew test --tests "com.snoozeshare.service.DisputeSettlementAtomicityTest"` → PASS (the implementation already provides atomicity; this test is the proof). If it FAILS with a partial write, the transaction is not spanning all repositories — check that every repository in `SettlementFixtures` was built from the same `db.connection()`.
+- [x] **Step 7: Run** — `.\gradlew test --tests "com.snoozeshare.service.DisputeSettlementAtomicityTest"` → PASS (the implementation already provides atomicity; this test is the proof). If it FAILS with a partial write, the transaction is not spanning all repositories — check that every repository in `SettlementFixtures` was built from the same `db.connection()`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```powershell
 git add src/main src/test
@@ -2423,7 +2423,7 @@ Unit tests use in-memory fakes (test type "Unit — service (fakes)"); an integr
 - Create: `src/main/java/com/snoozeshare/service/impl/TicketServiceImpl.java`
 - Test: `src/test/java/com/snoozeshare/testsupport/Fakes.java`, `src/test/java/com/snoozeshare/service/TicketServiceTest.java`, `TicketServiceIntegrationTest.java`
 
-- [ ] **Step 1: Test fakes** — `Fakes.java`
+- [x] **Step 1: Test fakes** — `Fakes.java`
 
 ```java
 package com.snoozeshare.testsupport;
@@ -2609,7 +2609,7 @@ public final class Fakes {
 
 Fix the import order when saving: put `com.snoozeshare.domain.model.AuditLogEntry` with the other `domain.model` imports (alphabetical: `AuditLogEntry`, `Ticket`, `TicketCategory`, `User`).
 
-- [ ] **Step 2: Write the failing unit test** — `TicketServiceTest.java`
+- [x] **Step 2: Write the failing unit test** — `TicketServiceTest.java`
 
 ```java
 package com.snoozeshare.service;
@@ -2836,9 +2836,9 @@ class TicketServiceTest {
 
 Wrap any line over 120 columns when saving (several `ticket(...)` calls here are close to the limit).
 
-- [ ] **Step 3: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.service.TicketServiceTest"` → FAIL (`cannot find symbol: class TicketServiceImpl`).
+- [x] **Step 3: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.service.TicketServiceTest"` → FAIL (`cannot find symbol: class TicketServiceImpl`).
 
-- [ ] **Step 4: Implement `TicketServiceImpl`** (categories included — Task 10 only adds tests for them)
+- [x] **Step 4: Implement `TicketServiceImpl`** (categories included — Task 10 only adds tests for them)
 
 ```java
 package com.snoozeshare.service.impl;
@@ -3037,9 +3037,9 @@ public final class TicketServiceImpl implements TicketService {
 }
 ```
 
-- [ ] **Step 5: Run to verify it passes** — `.\gradlew test --tests "com.snoozeshare.service.TicketServiceTest"` → PASS (10 tests).
+- [x] **Step 5: Run to verify it passes** — `.\gradlew test --tests "com.snoozeshare.service.TicketServiceTest"` → PASS (10 tests).
 
-- [ ] **Step 6: Write the failing integration test** — `TicketServiceIntegrationTest.java`
+- [x] **Step 6: Write the failing integration test** — `TicketServiceIntegrationTest.java`
 
 Ticket 2 (`OPEN`, unassigned, requested `OTHER`) is on booking 9: escrow **875.00**, guest Aria wallet **525.00**, host Priya wallet **0.00**. Accepting with a 175.00 refund gives host gross 700.00, fee 21.00, net **679.00**.
 
@@ -3140,9 +3140,9 @@ class TicketServiceIntegrationTest {
 }
 ```
 
-- [ ] **Step 7: Run** — `.\gradlew test --tests "com.snoozeshare.service.TicketServiceIntegrationTest"` → PASS.
+- [x] **Step 7: Run** — `.\gradlew test --tests "com.snoozeshare.service.TicketServiceIntegrationTest"` → PASS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```powershell
 git add src/main src/test
@@ -3158,7 +3158,7 @@ git commit -m "feat: add TicketServiceImpl (queue, assign, notes, resolve, categ
 **Files:**
 - Test: `src/test/java/com/snoozeshare/service/TicketServiceCategoryTest.java`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 ```java
 package com.snoozeshare.service;
@@ -3250,9 +3250,9 @@ class TicketServiceCategoryTest {
 }
 ```
 
-- [ ] **Step 2: Run** — `.\gradlew test --tests "com.snoozeshare.service.TicketServiceCategoryTest"` → PASS (5 tests). If a test fails, fix `TicketServiceImpl` (not the test) unless the test contradicts the spec.
+- [x] **Step 2: Run** — `.\gradlew test --tests "com.snoozeshare.service.TicketServiceCategoryTest"` → PASS (5 tests). If a test fails, fix `TicketServiceImpl` (not the test) unless the test contradicts the spec.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```powershell
 git add src/test/java/com/snoozeshare/service/TicketServiceCategoryTest.java
@@ -3267,7 +3267,7 @@ git commit -m "test: cover ticket category administration (F9.3.1)" -m "Co-Autho
 - Create: `src/main/java/com/snoozeshare/service/impl/DisputeQueryServiceImpl.java`
 - Test: `src/test/java/com/snoozeshare/service/DisputeQueryServiceTest.java`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 package com.snoozeshare.service;
@@ -3379,9 +3379,9 @@ class DisputeQueryServiceTest {
 }
 ```
 
-- [ ] **Step 2: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.service.DisputeQueryServiceTest"` → FAIL (`cannot find symbol: class DisputeQueryServiceImpl`).
+- [x] **Step 2: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.service.DisputeQueryServiceTest"` → FAIL (`cannot find symbol: class DisputeQueryServiceImpl`).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```java
 package com.snoozeshare.service.impl;
@@ -3499,9 +3499,9 @@ public final class DisputeQueryServiceImpl implements DisputeQueryService {
 }
 ```
 
-- [ ] **Step 4: Run** — same command → PASS (5 tests).
+- [x] **Step 4: Run** — same command → PASS (5 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add src/main src/test
@@ -3516,7 +3516,7 @@ git commit -m "feat: add dispute queue/detail read models" -m "Co-Authored-By: C
 - Modify: `src/main/java/com/snoozeshare/app/AppContext.java`, `src/main/java/com/snoozeshare/app/Main.java`
 - Test: `src/test/java/com/snoozeshare/service/DisputeFlowEndToEndTest.java`
 
-- [ ] **Step 1: Write the failing end-to-end test**
+- [x] **Step 1: Write the failing end-to-end test**
 
 ```java
 package com.snoozeshare.service;
@@ -3585,9 +3585,9 @@ class DisputeFlowEndToEndTest {
 }
 ```
 
-- [ ] **Step 2: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.service.DisputeFlowEndToEndTest"` → FAIL (`cannot find symbol: method create(String)` / `disputeQueryService()`).
+- [x] **Step 2: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.service.DisputeFlowEndToEndTest"` → FAIL (`cannot find symbol: method create(String)` / `disputeQueryService()`).
 
-- [ ] **Step 3: Modify `AppContext`**
+- [x] **Step 3: Modify `AppContext`**
 
 Add imports (alphabetical within groups): `java.time.Clock`; `com.snoozeshare.repository.jdbc.JdbcTicketCategoryRepository`, `JdbcTicketRepository`; `com.snoozeshare.service.DisputeQueryService`, `DisputeSettlementService`, `MessageService`, `TicketService`; `com.snoozeshare.service.impl.DisputeQueryServiceImpl`, `DisputeSettlementServiceImpl`, `InMemoryMessageService`, `TicketServiceImpl`.
 
@@ -3637,7 +3637,7 @@ Add a factory and accessors:
     }
 ```
 
-- [ ] **Step 4: Modify `Main.start`** so a developer can run against a copy of the mock DB
+- [x] **Step 4: Modify `Main.start`** so a developer can run against a copy of the mock DB
 
 Replace `context = AppContext.create();` with:
 
@@ -3647,12 +3647,12 @@ Replace `context = AppContext.create();` with:
                     ? AppContext.create() : AppContext.create(databaseUrl);
 ```
 
-- [ ] **Step 5: Run the end-to-end test, then the whole suite**
+- [x] **Step 5: Run the end-to-end test, then the whole suite**
 
 Run: `.\gradlew test --tests "com.snoozeshare.service.DisputeFlowEndToEndTest"` → PASS.
 Run: `.\gradlew test` → PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```powershell
 git add src/main src/test
@@ -3668,7 +3668,7 @@ git commit -m "feat: wire W10 services into AppContext; allow running against a 
 - Modify: `src/main/resources/com/snoozeshare/ui/common/theme.css`
 - Test: `src/test/java/com/snoozeshare/ui/admin/ResolutionPreviewTest.java`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 package com.snoozeshare.ui.admin;
@@ -3715,9 +3715,9 @@ class ResolutionPreviewTest {
 }
 ```
 
-- [ ] **Step 2: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.ui.admin.ResolutionPreviewTest"` → FAIL (`cannot find symbol: class ResolutionPreview`).
+- [x] **Step 2: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.ui.admin.ResolutionPreviewTest"` → FAIL (`cannot find symbol: class ResolutionPreview`).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```java
 package com.snoozeshare.ui.admin.tickets;
@@ -3770,9 +3770,9 @@ public final class ResolutionPreview {
 }
 ```
 
-- [ ] **Step 4: Run** — same command → PASS.
+- [x] **Step 4: Run** — same command → PASS.
 
-- [ ] **Step 5: Append the theme classes** to `theme.css` (matches the existing navy palette)
+- [x] **Step 5: Append the theme classes** to `theme.css` (matches the existing navy palette)
 
 ```css
 /* --- W10: agent dispute screens --- */
@@ -3788,7 +3788,7 @@ public final class ResolutionPreview {
 .chat-bubble-agent { -fx-background-color: #d9e2f3; -fx-background-radius: 8px; -fx-padding: 8px 12px; }
 ```
 
-- [ ] **Step 6: Run** `.\gradlew test --tests "com.snoozeshare.ui.*"` → PASS (existing `AuthLayoutTest` reads `theme.css` for specific strings — still present). Commit:
+- [x] **Step 6: Run** `.\gradlew test --tests "com.snoozeshare.ui.*"` → PASS (existing `AuthLayoutTest` reads `theme.css` for specific strings — still present). Commit:
 
 ```powershell
 git add src/main src/test
@@ -3804,7 +3804,7 @@ git commit -m "feat: add resolution preview logic and dispute theme classes" -m 
 - Modify: `ui/admin/AdminShellController.java`, `resources/com/snoozeshare/ui/admin/admin-shell.fxml`
 - Test: `src/test/java/com/snoozeshare/ui/admin/AdminFxmlLayoutTest.java` (grows in Tasks 15–16)
 
-- [ ] **Step 1: Write the failing layout test**
+- [x] **Step 1: Write the failing layout test**
 
 ```java
 package com.snoozeshare.ui.admin;
@@ -3862,9 +3862,9 @@ class AdminFxmlLayoutTest {
 }
 ```
 
-- [ ] **Step 2: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.ui.admin.AdminFxmlLayoutTest"` → FAIL (files missing / `shellRoot` absent).
+- [x] **Step 2: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.ui.admin.AdminFxmlLayoutTest"` → FAIL (files missing / `shellRoot` absent).
 
-- [ ] **Step 3: Create `dispute-queue.fxml`**
+- [x] **Step 3: Create `dispute-queue.fxml`**
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -3897,7 +3897,7 @@ class AdminFxmlLayoutTest {
 </VBox>
 ```
 
-- [ ] **Step 4: Create `DisputeQueueController`**
+- [x] **Step 4: Create `DisputeQueueController`**
 
 ```java
 package com.snoozeshare.ui.admin.tickets;
@@ -4038,7 +4038,7 @@ public final class DisputeQueueController {
 }
 ```
 
-- [ ] **Step 5: Update the admin shell.** In `admin-shell.fxml` change the root to expose the center and add the nav item:
+- [x] **Step 5: Update the admin shell.** In `admin-shell.fxml` change the root to expose the center and add the nav item:
 
 ```xml
 <BorderPane fx:id="shellRoot" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
@@ -4188,9 +4188,9 @@ public final class CategoryAdminController {
 
 plus placeholder `dispute-detail.fxml` / `category-admin.fxml` files containing just `<?xml version="1.0" encoding="UTF-8"?><javafx.scene.layout.VBox xmlns:fx="http://javafx.com/fxml" fx:controller="<the controller>"/>` (with the matching controller name) so `showDetail`/`showCategories` load without error until replaced.
 
-- [ ] **Step 6: Run** — `.\gradlew test --tests "com.snoozeshare.ui.*"` → PASS (including the existing `ShellNavigationTest`, which still finds `showOperations/showDisputes/showAccounts`, and `UiDependencyTest`, which forbids `repository`/`java.sql` imports — none used).
+- [x] **Step 6: Run** — `.\gradlew test --tests "com.snoozeshare.ui.*"` → PASS (including the existing `ShellNavigationTest`, which still finds `showOperations/showDisputes/showAccounts`, and `UiDependencyTest`, which forbids `repository`/`java.sql` imports — none used).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```powershell
 git add src/main src/test
@@ -4206,7 +4206,7 @@ git commit -m "feat: agent dispute queue screen and admin shell navigation" -m "
 - Create: `ui/admin/tickets/ResolutionDialogController.java`, `resources/.../tickets/resolution-dialog.fxml`
 - Test: extend `AdminFxmlLayoutTest`
 
-- [ ] **Step 1: Extend the failing layout test** — add to `AdminFxmlLayoutTest`
+- [x] **Step 1: Extend the failing layout test** — add to `AdminFxmlLayoutTest`
 
 ```java
     @Test
@@ -4236,9 +4236,9 @@ git commit -m "feat: agent dispute queue screen and admin shell navigation" -m "
     }
 ```
 
-- [ ] **Step 2: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.ui.admin.AdminFxmlLayoutTest"` → the two new tests FAIL (placeholder FXML).
+- [x] **Step 2: Run to verify it fails** — `.\gradlew test --tests "com.snoozeshare.ui.admin.AdminFxmlLayoutTest"` → the two new tests FAIL (placeholder FXML).
 
-- [ ] **Step 3: Write `dispute-detail.fxml`** (replace the placeholder)
+- [x] **Step 3: Write `dispute-detail.fxml`** (replace the placeholder)
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -4310,7 +4310,7 @@ git commit -m "feat: agent dispute queue screen and admin shell navigation" -m "
 </ScrollPane>
 ```
 
-- [ ] **Step 4: Replace `DisputeDetailController`**
+- [x] **Step 4: Replace `DisputeDetailController`**
 
 ```java
 package com.snoozeshare.ui.admin.tickets;
@@ -4506,7 +4506,7 @@ public final class DisputeDetailController {
 
 `DisputeQueueController.statusText` is package-private and this controller is in the same package — fine.
 
-- [ ] **Step 5: Create `resolution-dialog.fxml`**
+- [x] **Step 5: Create `resolution-dialog.fxml`**
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -4545,7 +4545,7 @@ public final class DisputeDetailController {
 </VBox>
 ```
 
-- [ ] **Step 6: Create `ResolutionDialogController`**
+- [x] **Step 6: Create `ResolutionDialogController`**
 
 ```java
 package com.snoozeshare.ui.admin.tickets;
@@ -4725,9 +4725,9 @@ public final class ResolutionDialogController {
 }
 ```
 
-- [ ] **Step 7: Run** — `.\gradlew test --tests "com.snoozeshare.ui.*"` → PASS. Then `.\gradlew build` to catch checkstyle problems in the new UI files (long lines, import order); fix any it reports.
+- [x] **Step 7: Run** — `.\gradlew test --tests "com.snoozeshare.ui.*"` → PASS. Then `.\gradlew build` to catch checkstyle problems in the new UI files (long lines, import order); fix any it reports.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```powershell
 git add src/main src/test
@@ -4742,7 +4742,7 @@ git commit -m "feat: dispute detail screen and Accept/Reject/Manual resolution d
 - Replace stubs: `ui/admin/categories/CategoryAdminController.java`, `resources/.../categories/category-admin.fxml`
 - Test: extend `AdminFxmlLayoutTest`
 
-- [ ] **Step 1: Extend the failing test**
+- [x] **Step 1: Extend the failing test**
 
 ```java
     @Test
@@ -4757,9 +4757,9 @@ git commit -m "feat: dispute detail screen and Accept/Reject/Manual resolution d
     }
 ```
 
-- [ ] **Step 2: Run to verify it fails** → the new test FAILS (placeholder FXML).
+- [x] **Step 2: Run to verify it fails** → the new test FAILS (placeholder FXML).
 
-- [ ] **Step 3: Write `category-admin.fxml`**
+- [x] **Step 3: Write `category-admin.fxml`**
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -4790,7 +4790,7 @@ git commit -m "feat: dispute detail screen and Accept/Reject/Manual resolution d
 </VBox>
 ```
 
-- [ ] **Step 4: Replace `CategoryAdminController`**
+- [x] **Step 4: Replace `CategoryAdminController`**
 
 ```java
 package com.snoozeshare.ui.admin.categories;
@@ -4907,9 +4907,9 @@ public final class CategoryAdminController {
 }
 ```
 
-- [ ] **Step 5: Run** — `.\gradlew test --tests "com.snoozeshare.ui.*"` → PASS; then `.\gradlew build` → checkstyle clean.
+- [x] **Step 5: Run** — `.\gradlew test --tests "com.snoozeshare.ui.*"` → PASS; then `.\gradlew build` → checkstyle clean.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```powershell
 git add src/main src/test
@@ -4925,7 +4925,7 @@ No test in the repo starts the FX toolkit today. This test loads the real FXML w
 **Files:**
 - Test: `src/test/java/com/snoozeshare/ui/admin/AdminUiSmokeTest.java`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 ```java
 package com.snoozeshare.ui.admin;
@@ -5090,12 +5090,12 @@ class AdminUiSmokeTest {
 
 Tidy when saving: replace every fully-qualified name (`com.snoozeshare.ui.admin.tickets.DisputeQueueController`, `java.util.List`, `javafx.scene.Parent`) with an import; wrap lines over 120; `ScrollPane` content is not in `getChildrenUnmodifiable` — if `containsForce` misses nested content, read `scrollPane.getContent()` too (add a `ScrollPane` branch).
 
-- [ ] **Step 2: Run**
+- [x] **Step 2: Run**
 
 Run: `.\gradlew test --tests "com.snoozeshare.ui.admin.AdminUiSmokeTest"`
 Expected: PASS (3 tests) on a machine with a display; **skipped** (not failed) if the toolkit cannot start. Report which one happened. If a test *fails* on the real toolkit, the FXML/controller wiring has a bug — fix the source (id typo, missing `@FXML`), not the test.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```powershell
 git add src/test/java/com/snoozeshare/ui/admin/AdminUiSmokeTest.java
