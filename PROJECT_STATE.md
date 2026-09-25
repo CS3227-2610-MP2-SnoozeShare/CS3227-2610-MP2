@@ -88,7 +88,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W7 | F6 — Host Calendar & Date Overrides | Not started | — | — | Backlog only: §4 | — |
 | W8 | F7 — Host Request Queue, Earnings & Disputes | Not started | — | — | Backlog only: §4 | — |
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
-| W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Building | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | Task 0/18 baseline green (after W2 lint fix) | — |
+| W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Building | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | Task 2/18 done; Task 3 next | — |
 | W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
 | W12 | F11 — Platform Audit Trail & Analytics | Not started | — | — | Backlog only: §5 | — |
 | W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
