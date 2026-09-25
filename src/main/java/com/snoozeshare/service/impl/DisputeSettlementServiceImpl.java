@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import com.snoozeshare.domain.enums.BookingStatus;
+import com.snoozeshare.domain.enums.RemedyType;
 import com.snoozeshare.domain.enums.ResolutionMode;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.TicketStatus;
@@ -112,6 +113,7 @@ public final class DisputeSettlementServiceImpl implements DisputeSettlementServ
             throw new IllegalStateException("Escrow is not held for this booking");
         }
         SettlementBreakdown split = SettlementCalculator.split(booking.totalAmount(), guestRefund);
+        requireConsistent(mode, split, ticket);
         TicketStatus resolved = statusFor(mode, split);
         if (!TicketStateMachine.canTransition(ticket.status(), resolved, Role.AGENT)
                 || !BookingStateMachine.canTransition(booking.status(), BookingStatus.COMPLETED,
@@ -153,6 +155,17 @@ public final class DisputeSettlementServiceImpl implements DisputeSettlementServ
                         "hostPayout", split.hostNet().toPlainString(),
                         "fee", split.fee().toPlainString(), "reason", reason));
         return new Settlement(updatedTicket, updatedBooking, split, guestTransaction, hostTransaction);
+    }
+
+    private static void requireConsistent(ResolutionMode mode, SettlementBreakdown split, Ticket ticket) {
+        boolean refunds = split.guestRefund().signum() > 0;
+        if (mode == ResolutionMode.REJECT && refunds) {
+            throw new IllegalArgumentException("Reject cannot refund the guest");
+        }
+        if (mode == ResolutionMode.ACCEPT && !refunds && ticket.requestedRemedy() != RemedyType.HOST_PAYOUT) {
+            throw new IllegalArgumentException(
+                    "Accept needs a refund above zero unless the requested remedy is a host payout");
+        }
     }
 
     private WalletTransaction credit(Wallet wallet, WalletTransactionType type, BigDecimal amount,
