@@ -1,5 +1,6 @@
 package com.snoozeshare.ui;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
@@ -27,6 +28,7 @@ class HostCalendarControllerTest {
         assertTrue(fxml.contains("fx:id=\"reasonField\""));
         assertTrue(fxml.contains("Current overrides"));
         assertTrue(fxml.contains("onAction=\"#handleBack\""));
+        assertFalse(fxml.contains("BorderPane.hgrow"));
     }
 
     @Test

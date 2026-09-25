@@ -24,7 +24,7 @@
     </HBox>
     <BorderPane VBox.vgrow="ALWAYS">
         <center>
-            <VBox styleClass="calendar-main" spacing="12" BorderPane.hgrow="ALWAYS">
+    <VBox styleClass="calendar-main" spacing="12">
                 <HBox alignment="CENTER_LEFT" spacing="8">
                     <Button text="‹" accessibleText="Previous month" onAction="#handlePreviousMonth"/>
                     <Label fx:id="monthLabel" text="Month Year" styleClass="calendar-month-label"/>
