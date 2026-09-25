@@ -11,56 +11,76 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<ScrollPane fitToWidth="true" xmlns:fx="http://javafx.com/fxml"
+<ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="agent-scroll" xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.snoozeshare.ui.admin.tickets.DisputeDetailController">
-    <VBox spacing="16">
-        <padding><Insets top="20" right="32" bottom="28" left="32"/></padding>
+    <VBox spacing="16" styleClass="agent-content">
+        <padding><Insets top="18" right="32" bottom="28" left="32"/></padding>
 
         <HBox spacing="8" alignment="CENTER_LEFT">
-            <Hyperlink fx:id="backLink" text="Disputes" onAction="#handleBack"/>
-            <Label text="&gt;"/>
-            <Label fx:id="crumbLabel" styleClass="card-title"/>
-            <Label fx:id="statusBadge"/>
+            <Hyperlink fx:id="backLink" text="Disputes" onAction="#handleBack" styleClass="agent-crumb-link"/>
+            <Label text="›" styleClass="agent-crumb"/>
+            <Label fx:id="crumbLabel" styleClass="agent-crumb-current"/>
+            <Label fx:id="statusBadge">
+                <HBox.margin><Insets left="6"/></HBox.margin>
+            </Label>
             <Region HBox.hgrow="ALWAYS"/>
-            <Button fx:id="assignButton" text="Assign to me" onAction="#handleAssign" styleClass="button"/>
+            <Button fx:id="assignButton" text="Assign to me" onAction="#handleAssign" styleClass="button, agent-button-sm"/>
         </HBox>
 
-        <HBox styleClass="summary-card" spacing="28" alignment="CENTER_LEFT">
-            <VBox spacing="2"><Label text="Booking" styleClass="summary-caption"/><Label fx:id="listingLabel" styleClass="card-title"/><Label fx:id="datesLabel" styleClass="small"/></VBox>
-            <VBox spacing="2"><Label text="Guest" styleClass="summary-caption"/><Label fx:id="guestLabel" styleClass="card-title"/></VBox>
-            <VBox spacing="2"><Label text="Host" styleClass="summary-caption"/><Label fx:id="hostLabel" styleClass="card-title"/></VBox>
-            <VBox spacing="2"><Label text="Escrow" styleClass="summary-caption"/><Label fx:id="escrowLabel" styleClass="card-title"/></VBox>
-            <VBox spacing="2"><Label text="Booking phase" styleClass="summary-caption"/><Label fx:id="phaseLabel" styleClass="badge-warning"/></VBox>
+        <HBox styleClass="agent-card, summary-card" spacing="28" alignment="CENTER_LEFT">
+            <Region styleClass="agent-thumb"/>
+            <VBox spacing="2">
+                <Label fx:id="listingLabel" styleClass="agent-summary-title"/>
+                <Label fx:id="datesLabel" styleClass="small"/>
+            </VBox>
+            <VBox spacing="2"><Label text="GUEST" styleClass="summary-caption"/><Label fx:id="guestLabel" styleClass="card-title"/></VBox>
+            <VBox spacing="2"><Label text="HOST" styleClass="summary-caption"/><Label fx:id="hostLabel" styleClass="card-title"/></VBox>
+            <VBox spacing="2"><Label text="AMOUNT HELD IN ESCROW" styleClass="summary-caption"/><Label fx:id="escrowLabel" styleClass="agent-escrow"/></VBox>
+            <VBox spacing="2" alignment="TOP_LEFT"><Label text="BOOKING STATUS" styleClass="summary-caption"/><Label fx:id="phaseLabel" styleClass="badge-warning"/></VBox>
         </HBox>
 
         <HBox spacing="16">
-            <VBox styleClass="chat-pane" spacing="8" HBox.hgrow="ALWAYS" minHeight="300">
-                <Label fx:id="guestThreadTitle" text="Guest messages" styleClass="card-title"/>
-                <VBox fx:id="guestThread" spacing="8" VBox.vgrow="ALWAYS"/>
-                <HBox spacing="8">
-                    <TextField fx:id="guestInput" promptText="Reply to guest..." HBox.hgrow="ALWAYS"/>
-                    <Button text="Send" onAction="#handleSendGuest" styleClass="button"/>
+            <VBox styleClass="agent-chat-box" spacing="0" HBox.hgrow="ALWAYS" prefWidth="100" minHeight="460" prefHeight="460" maxHeight="460">
+                <HBox styleClass="agent-chat-header" spacing="8" alignment="CENTER_LEFT">
+                    <Label fx:id="guestThreadTitle" text="GUEST MESSAGES" styleClass="agent-chat-title"/>
+                    <Label text="OPENED TICKET" styleClass="agent-pill-solid"/>
+                </HBox>
+                <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="agent-chat-scroll" VBox.vgrow="ALWAYS">
+                    <VBox fx:id="guestThread" spacing="10" styleClass="agent-thread"/>
+                </ScrollPane>
+                <HBox styleClass="agent-chat-footer" spacing="8" alignment="CENTER_LEFT">
+                    <TextField fx:id="guestInput" promptText="Reply to guest…" styleClass="agent-input" HBox.hgrow="ALWAYS"/>
+                    <Button text="Send" onAction="#handleSendGuest" styleClass="button, agent-button-sm"/>
                 </HBox>
             </VBox>
-            <VBox styleClass="chat-pane" spacing="8" HBox.hgrow="ALWAYS" minHeight="300">
-                <Label fx:id="hostThreadTitle" text="Host messages" styleClass="card-title"/>
-                <VBox fx:id="hostThread" spacing="8" VBox.vgrow="ALWAYS"/>
-                <HBox spacing="8">
-                    <TextField fx:id="hostInput" promptText="Reply to host..." HBox.hgrow="ALWAYS"/>
-                    <Button text="Send" onAction="#handleSendHost" styleClass="button"/>
+            <VBox styleClass="agent-chat-box" spacing="0" HBox.hgrow="ALWAYS" prefWidth="100" minHeight="460" prefHeight="460" maxHeight="460">
+                <HBox styleClass="agent-chat-header" spacing="8" alignment="CENTER_LEFT">
+                    <Label fx:id="hostThreadTitle" text="HOST MESSAGES" styleClass="agent-chat-title"/>
+                </HBox>
+                <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="agent-chat-scroll" VBox.vgrow="ALWAYS">
+                    <VBox fx:id="hostThread" spacing="10" styleClass="agent-thread"/>
+                </ScrollPane>
+                <HBox styleClass="agent-chat-footer" spacing="8" alignment="CENTER_LEFT">
+                    <TextField fx:id="hostInput" promptText="Reply to host…" styleClass="agent-input" HBox.hgrow="ALWAYS"/>
+                    <Button text="Send" onAction="#handleSendHost" styleClass="button, agent-button-sm"/>
                 </HBox>
             </VBox>
         </HBox>
 
-        <Label text="Internal notes (invisible to guest or host)" styleClass="card-title"/>
-        <Label fx:id="notesHistory" wrapText="true" styleClass="small"/>
-        <TextArea fx:id="notesArea" promptText="Add investigation notes..." prefRowCount="3"/>
-        <HBox><Button fx:id="addNoteButton" text="Add note" onAction="#handleAddNote" styleClass="outline-button"/></HBox>
+        <VBox spacing="6">
+            <Label text="Internal notes (invisible to guest or host)" styleClass="agent-field-label"/>
+            <TextArea fx:id="notesArea" promptText="Add investigation notes…" styleClass="agent-input"
+                      minHeight="56" prefHeight="56" maxHeight="56" wrapText="true"/>
+            <HBox spacing="10" alignment="TOP_LEFT">
+                <Button fx:id="addNoteButton" text="Add note" onAction="#handleAddNote" styleClass="outline-button"/>
+                <Label fx:id="notesHistory" wrapText="true" styleClass="small" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            </HBox>
+        </VBox>
 
         <HBox spacing="10" alignment="CENTER_LEFT">
-            <Button fx:id="acceptButton" text="Accept" onAction="#handleAccept" styleClass="button"/>
-            <Button fx:id="rejectButton" text="Reject dispute" onAction="#handleReject" styleClass="outline-button"/>
-            <Button fx:id="manualButton" text="Manual adjustment..." onAction="#handleManual" styleClass="outline-button"/>
+            <Button fx:id="acceptButton" text="Accept — remedy guest" onAction="#handleAccept" styleClass="button, agent-action, agent-action-success"/>
+            <Button fx:id="rejectButton" text="Reject dispute" onAction="#handleReject" styleClass="outline-button, agent-action, agent-action-reject"/>
+            <Button fx:id="manualButton" text="Manual adjustment…" onAction="#handleManual" styleClass="outline-button, agent-action"/>
         </HBox>
         <Label fx:id="errorLabel" styleClass="error-message"/>
     </VBox>
