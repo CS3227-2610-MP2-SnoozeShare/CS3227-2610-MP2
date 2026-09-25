@@ -46,7 +46,7 @@ class TicketServiceIntegrationTest {
 
             Ticket assigned = service.assignToMe(MockIds.TICKET_2, MockIds.AGENT_AMY);
             assertEquals(TicketStatus.UNDER_REVIEW, assigned.status());
-            service.addAgentNote(MockIds.TICKET_2, "Requested gate photos", MockIds.AGENT_AMY);
+            service.saveNotes(MockIds.TICKET_2, "Requested gate photos", MockIds.AGENT_AMY);
 
             Ticket resolved = service.resolve(MockIds.TICKET_2,
                     new ResolutionRequest(ResolutionMode.ACCEPT, new BigDecimal("175.00"),
@@ -59,6 +59,31 @@ class TicketServiceIntegrationTest {
             assertEquals("COMPLETED", db.scalarString(
                     "SELECT status FROM bookings WHERE bookingId = ?", MockIds.BOOKING_9));
             db.assertLedgerInvariant();
+        }
+    }
+
+    @Test
+    void unassignPersistsAnOpenTicketWithNoAssigneeOnTheMockDatabase(@TempDir Path directory)
+            throws Exception {
+        try (MockDbFixture db = MockDbFixture.open(directory)) {
+            TicketServiceImpl service = service(db);
+            service.assignToMe(MockIds.TICKET_2, MockIds.AGENT_AMY);
+            service.saveNotes(MockIds.TICKET_2, "keep me", MockIds.AGENT_AMY);
+
+            Ticket released = service.unassign(MockIds.TICKET_2, MockIds.AGENT_AMY);
+
+            assertEquals(TicketStatus.OPEN, released.status());
+            assertEquals("OPEN", db.scalarString(
+                    "SELECT status FROM tickets WHERE ticketId = ?", MockIds.TICKET_2));
+            assertEquals(0L, db.scalarLong(
+                    "SELECT COUNT(*) FROM tickets WHERE ticketId = '" + MockIds.TICKET_2
+                            + "' AND assignedAgentId IS NOT NULL"));
+            assertEquals(1L, db.scalarLong(
+                    "SELECT COUNT(*) FROM audit_log WHERE actionType = 'TICKET_UNASSIGNED'"));
+            assertEquals("keep me", db.scalarString(
+                    "SELECT agentNotes FROM tickets WHERE ticketId = ?", MockIds.TICKET_2));
+            assertEquals(TicketStatus.UNDER_REVIEW,
+                    service.assignToMe(MockIds.TICKET_2, MockIds.AGENT_BEN).status());
         }
     }
 

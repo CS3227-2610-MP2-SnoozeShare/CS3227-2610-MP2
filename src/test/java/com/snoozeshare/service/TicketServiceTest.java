@@ -1,6 +1,7 @@
 package com.snoozeshare.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -135,23 +136,63 @@ class TicketServiceTest {
     }
 
     @Test
-    void notesAreAppendedWithAuthorAndTimestampOnlyByTheAssignedAgent() {
+    void saveNotesReplacesTheStoredTextOnlyForTheAssignedAgent() {
         Ticket mine = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
 
-        service.addAgentNote(mine.ticketId(), "Requested photos", amy);
-        Ticket updated = service.addAgentNote(mine.ticketId(), "Photos received", amy);
+        service.saveNotes(mine.ticketId(), "Requested photos", amy);
+        Ticket updated = service.saveNotes(mine.ticketId(), "Photos received", amy);
 
-        assertEquals("[2026-09-25T04:00:00Z] Amy: Requested photos\n"
-                + "[2026-09-25T04:00:00Z] Amy: Photos received", updated.agentNotes());
-        assertThrows(IllegalStateException.class, () -> service.addAgentNote(mine.ticketId(), "x", ben));
-        assertThrows(IllegalArgumentException.class, () -> service.addAgentNote(mine.ticketId(), " ", amy));
+        assertEquals("Photos received", updated.agentNotes());
+        assertEquals("Photos received", tickets.findById(mine.ticketId()).orElseThrow().agentNotes());
+        assertEquals(List.of("TICKET_NOTE_SAVED", "TICKET_NOTE_SAVED"), audit.actions());
+        assertThrows(IllegalStateException.class, () -> service.saveNotes(mine.ticketId(), "x", ben));
+        assertThrows(IllegalStateException.class, () -> service.saveNotes(mine.ticketId(), "x", host));
+    }
+
+    @Test
+    void saveNotesMayClearTheText() {
+        Ticket mine = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
+        service.saveNotes(mine.ticketId(), "something", amy);
+
+        Ticket cleared = service.saveNotes(mine.ticketId(), "", amy);
+
+        assertEquals("", cleared.agentNotes());
+        assertEquals("", service.saveNotes(mine.ticketId(), null, amy).agentNotes());
     }
 
     @Test
     void notesRequireAnUnderReviewTicket() {
         Ticket open = ticket(TicketStatus.OPEN, null, RemedyType.OTHER, "2026-09-01T00:00:00Z");
+        Ticket done = ticket(TicketStatus.RESOLVED_APPROVED, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
 
-        assertThrows(IllegalStateException.class, () -> service.addAgentNote(open.ticketId(), "x", amy));
+        assertThrows(IllegalStateException.class, () -> service.saveNotes(open.ticketId(), "x", amy));
+        assertThrows(IllegalStateException.class, () -> service.saveNotes(done.ticketId(), "x", amy));
+    }
+
+    @Test
+    void unassignReturnsMyUnderReviewTicketToOpenWithNoAssigneeAndAuditsIt() {
+        Ticket mine = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
+
+        Ticket released = service.unassign(mine.ticketId(), amy);
+
+        assertEquals(TicketStatus.OPEN, released.status());
+        assertNull(released.assignedAgentId());
+        assertEquals(TicketStatus.OPEN, tickets.findById(mine.ticketId()).orElseThrow().status());
+        assertEquals(List.of("TICKET_UNASSIGNED"), audit.actions());
+    }
+
+    @Test
+    void unassignRejectsOtherAgentsNonAgentsAndTicketsNotUnderReview() {
+        Ticket mine = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
+        Ticket open = ticket(TicketStatus.OPEN, null, RemedyType.OTHER, "2026-09-02T00:00:00Z");
+        Ticket done = ticket(TicketStatus.RESOLVED_REJECTED, amy, RemedyType.OTHER, "2026-09-03T00:00:00Z");
+
+        assertThrows(IllegalStateException.class, () -> service.unassign(mine.ticketId(), ben));
+        assertThrows(IllegalStateException.class, () -> service.unassign(mine.ticketId(), host));
+        assertThrows(IllegalStateException.class, () -> service.unassign(open.ticketId(), amy));
+        assertThrows(IllegalStateException.class, () -> service.unassign(done.ticketId(), amy));
+        assertThrows(IllegalArgumentException.class, () -> service.unassign(UUID.randomUUID(), amy));
+        assertTrue(audit.actions().isEmpty());
     }
 
     @Test

@@ -121,21 +121,34 @@ public final class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public Ticket addAgentNote(UUID ticketId, String note, UUID agentId) {
-        User agent = requireAgent(agentId);
-        String text = DomainValidation.requireText(note, "note").trim();
+    public Ticket saveNotes(UUID ticketId, String notes, UUID agentId) {
+        requireAgent(agentId);
         Ticket ticket = loadTicket(ticketId);
         if (ticket.status() != TicketStatus.UNDER_REVIEW) {
-            throw new IllegalStateException("Notes can only be added while the ticket is under review");
+            throw new IllegalStateException("Notes can only be saved while the ticket is under review");
         }
         if (!agentId.equals(ticket.assignedAgentId())) {
             throw new IllegalStateException("Ticket is not assigned to this agent");
         }
-        String entry = "[" + clock.instant() + "] " + agent.displayName() + ": " + text;
-        String notes = ticket.agentNotes() == null || ticket.agentNotes().isBlank()
-                ? entry : ticket.agentNotes() + "\n" + entry;
-        Ticket updated = tickets.save(with(ticket, ticket.status(), ticket.assignedAgentId(), notes));
-        audit.record(agentId, "TICKET_NOTE_ADDED", "Ticket", ticketId, null, entry);
+        String text = notes == null ? "" : notes;
+        Ticket updated = tickets.save(with(ticket, ticket.status(), ticket.assignedAgentId(), text));
+        audit.record(agentId, "TICKET_NOTE_SAVED", "Ticket", ticketId, ticket.agentNotes(), text);
+        return updated;
+    }
+
+    @Override
+    public Ticket unassign(UUID ticketId, UUID agentId) {
+        requireAgent(agentId);
+        Ticket ticket = loadTicket(ticketId);
+        if (ticket.status() != TicketStatus.UNDER_REVIEW || !TicketStateMachine.canTransition(
+                ticket.status(), TicketStatus.OPEN, Role.AGENT)) {
+            throw new IllegalStateException("Ticket is not under review");
+        }
+        if (!agentId.equals(ticket.assignedAgentId())) {
+            throw new IllegalStateException("Ticket is not assigned to this agent");
+        }
+        Ticket updated = tickets.save(with(ticket, TicketStatus.OPEN, null, ticket.agentNotes()));
+        audit.record(agentId, "TICKET_UNASSIGNED", "Ticket", ticketId, ticket.status(), updated.status());
         return updated;
     }
 

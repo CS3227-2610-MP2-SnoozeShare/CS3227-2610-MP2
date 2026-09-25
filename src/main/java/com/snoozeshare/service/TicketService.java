@@ -31,7 +31,11 @@ public interface TicketService {
 
     Ticket assignToMe(UUID ticketId, UUID agentId);
 
-    Ticket addAgentNote(UUID ticketId, String note, UUID agentId);
+    /** Returns an UNDER_REVIEW ticket to OPEN with no assignee; only the assigned agent may do this. */
+    Ticket unassign(UUID ticketId, UUID agentId);
+
+    /** Replaces the single internal-notes text (may be empty); only while UNDER_REVIEW and assigned to the agent. */
+    Ticket saveNotes(UUID ticketId, String notes, UUID agentId);
 
     /** Superseded by MessageService (C21); not implemented. */
     @Deprecated

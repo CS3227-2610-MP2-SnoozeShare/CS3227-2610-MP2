@@ -57,6 +57,16 @@ class StateMachineTest {
     }
 
     @Test
+    void agentMayReturnAnUnderReviewTicketToOpenButNobodyElse() {
+        assertTrue(TicketStateMachine.canTransition(
+                TicketStatus.UNDER_REVIEW, TicketStatus.OPEN, Role.AGENT));
+        assertFalse(TicketStateMachine.canTransition(
+                TicketStatus.UNDER_REVIEW, TicketStatus.OPEN, Role.HOST));
+        assertFalse(TicketStateMachine.canTransition(
+                TicketStatus.RESOLVED_APPROVED, TicketStatus.OPEN, Role.AGENT));
+    }
+
+    @Test
     void resolvedTicketCannotTransitionAgain() {
         assertFalse(TicketStateMachine.canTransition(
                 TicketStatus.RESOLVED_APPROVED, TicketStatus.UNDER_REVIEW, Role.AGENT));

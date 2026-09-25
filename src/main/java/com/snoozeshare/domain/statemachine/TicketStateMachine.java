@@ -15,7 +15,8 @@ public final class TicketStateMachine {
         return switch (from) {
             case OPEN -> to == TicketStatus.UNDER_REVIEW;
             case UNDER_REVIEW -> to == TicketStatus.RESOLVED_APPROVED
-                    || to == TicketStatus.RESOLVED_REJECTED;
+                    || to == TicketStatus.RESOLVED_REJECTED
+                    || to == TicketStatus.OPEN;
             case RESOLVED_APPROVED, RESOLVED_REJECTED -> false;
         };
     }
