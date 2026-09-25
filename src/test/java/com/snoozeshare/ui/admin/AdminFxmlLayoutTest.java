@@ -78,4 +78,15 @@ class AdminFxmlLayoutTest {
         assertTrue(dialog.contains("Reason (required, written to the audit log)"));
         assertFalse(dialog.contains("Adjust wallet"));
     }
+
+    @Test
+    void categoryScreenHasTheTableAndAddButton() throws Exception {
+        String screen = read("categories/category-admin.fxml");
+
+        assertTrue(screen.contains("fx:id=\"table\""));
+        assertTrue(screen.contains("fx:id=\"errorLabel\""));
+        assertTrue(screen.contains("Ticket categories"));
+        assertTrue(screen.contains("onAction=\"#handleAdd\""));
+        assertTrue(screen.contains("+ Add category"));
+    }
 }
