@@ -20,7 +20,10 @@ public final class MigrationRunner {
         try {
             createHistoryTable(connection);
             if (!migrationApplied(connection, FOUNDATION_VERSION)) {
-                applyFoundationMigration(connection);
+                if (!tableExists(connection, "users")) {
+                    applyFoundationMigration(connection);
+                }
+                // else: a pre-provisioned reference database (db/snoozeshare-mock.db) already has the schema.
                 recordMigration(connection, FOUNDATION_VERSION);
             }
             connection.commit();
@@ -44,6 +47,16 @@ public final class MigrationRunner {
         try (var statement = connection.prepareStatement(
                 "SELECT 1 FROM schema_history WHERE version = ?")) {
             statement.setInt(1, version);
+            try (var result = statement.executeQuery()) {
+                return result.next();
+            }
+        }
+    }
+
+    private static boolean tableExists(Connection connection, String table) throws SQLException {
+        try (var statement = connection.prepareStatement(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?")) {
+            statement.setString(1, table);
             try (var result = statement.executeQuery()) {
                 return result.next();
             }
