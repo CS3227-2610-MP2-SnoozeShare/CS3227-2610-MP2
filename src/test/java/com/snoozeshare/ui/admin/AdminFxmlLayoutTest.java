@@ -50,4 +50,32 @@ class AdminFxmlLayoutTest {
         }
         assertFalse(controller("AdminShellController.java").toLowerCase().contains("force"));
     }
+
+    @Test
+    void detailScreenHasBookingSummaryChatPanesNotesAndTheThreeResolutionActions() throws Exception {
+        String detail = read("tickets/dispute-detail.fxml");
+        String[] ids = {"crumbLabel", "statusBadge", "assignButton", "listingLabel",
+            "datesLabel", "guestLabel", "hostLabel", "escrowLabel", "phaseLabel", "guestThread",
+            "hostThread", "guestInput", "hostInput", "notesHistory", "notesArea", "addNoteButton",
+            "acceptButton", "rejectButton", "manualButton", "errorLabel"};
+
+        for (String id : ids) {
+            assertTrue(detail.contains("fx:id=\"" + id + "\""), id);
+        }
+        assertTrue(detail.contains("Internal notes"));
+        assertFalse(detail.toLowerCase().contains("force"));
+    }
+
+    @Test
+    void resolutionDialogHasModeChipsAmountPreviewAndRequiredReason() throws Exception {
+        String dialog = read("tickets/resolution-dialog.fxml");
+        String[] ids = {"remedyLabel", "fullRefundChip", "fullPayoutChip", "customChip",
+            "amountBox", "amountField", "previewLabel", "reasonArea", "errorLabel"};
+
+        for (String id : ids) {
+            assertTrue(dialog.contains("fx:id=\"" + id + "\""), id);
+        }
+        assertTrue(dialog.contains("Reason (required, written to the audit log)"));
+        assertFalse(dialog.contains("Adjust wallet"));
+    }
 }
