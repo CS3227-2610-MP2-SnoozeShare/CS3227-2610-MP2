@@ -5,6 +5,7 @@ why, with a commit, plan or artifact as the reference. Not a copy of `git log`.
 
 | Date | What changed | Workstream | Ref |
 |---|---|---|---|
+| 2026-09-25 | Fixed 7 pre-existing checkstyle violations from merged W2 (imports, static-field order, lambda line breaks) that made `gradlew build` red on a clean tree; no behaviour change | W10 | commits `fix: checkstyle ...` |
 | 2026-09-25 | Rewrote all 129 mock-seed timestamps to end in `Z` (the format the app itself writes via `Instant.toString()`), rebuilt `db/snoozeshare-mock.db`, re-verified FK and ledger invariants; W10 plan Task 3 drops its `JdbcCodecs.instant` tolerance change | W10 | `db/seed-mock-data.sql`, `db/snoozeshare-mock.db`, W10 plan Task 3 |
 | 2026-09-25 | Wrote the W10 implementation plan (18 TDD tasks: settlement math, JDBC ticket/category repos, atomic full-escrow settlement, ticket/query services, in-memory chat, Agent Disputes/Categories UI); linked from W10 | W10 | `docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md` |
 | 2026-09-25 | Corrected the shared mock DB in place to follow C17/C20/C23: open tickets on held `CONFIRMED` bookings, resolved tickets settle full escrow two-sided, tickets filed inside the 7-day window, `FORCE_COMPLETED` row converted, wallet 5 `balanceAfter` chain fixed; seed SQL edited and `.db` rebuilt from `schema.sql` + seed; FK/ledger invariants verified | W10 | `db/seed-mock-data.sql`, `db/snoozeshare-mock.db`, `PROJECT_STATE.md` D6 |
