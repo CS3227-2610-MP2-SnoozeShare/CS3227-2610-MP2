@@ -100,8 +100,8 @@ class ListingServiceTest {
         try (Connection connection = migratedConnection()) {
             ListingService service = createService(connection);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.getDetail(UUID.randomUUID()));
+            assertThrows(IllegalArgumentException.class, () ->
+                    service.getDetail(UUID.randomUUID()));
         }
     }
 
@@ -126,11 +126,11 @@ class ListingServiceTest {
             var ctx = seedContext(connection);
             ListingService service = createService(connection);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.estimateCost(ctx.singaporeId,
+            assertThrows(IllegalArgumentException.class, () ->
+                    service.estimateCost(ctx.singaporeId,
                             LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 5)));
-            assertThrows(IllegalArgumentException.class,
-                    () -> service.estimateCost(ctx.singaporeId,
+            assertThrows(IllegalArgumentException.class, () ->
+                    service.estimateCost(ctx.singaporeId,
                             LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 3)));
         }
     }
