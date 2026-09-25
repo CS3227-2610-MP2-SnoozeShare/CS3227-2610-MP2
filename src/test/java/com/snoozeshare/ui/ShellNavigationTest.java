@@ -18,7 +18,8 @@ class ShellNavigationTest {
         for (String shell : SHELLS) {
             String fxml = Files.readString(Path.of("src/main/resources/com/snoozeshare/ui/" + shell));
             assertTrue(fxml.contains("fx:id=\"pageMessage\""), shell);
-            assertTrue(fxml.contains("styleClass=\"nav-item\""), shell);
+            String navClass = shell.startsWith("admin/") ? "agent-tab" : "nav-item";
+            assertTrue(fxml.contains("styleClass=\"" + navClass), shell);
             assertTrue(fxml.contains("onMouseClicked=\"#"), shell);
         }
     }
