@@ -84,11 +84,11 @@ public final class HostListingsController {
                     parseTime(checkOutField.getText()), selectedAmenities(), Instant.now());
             context.listingService().create(draft,
                     context.session().currentUser().orElseThrow().userId());
-            errorLabel.setText("Listing created successfully.");
+            showSuccess("Listing created successfully.");
             reload();
             clearForm();
         } catch (IllegalArgumentException | IllegalStateException exception) {
-            errorLabel.setText(exception.getMessage());
+            showError(exception.getMessage());
         }
     }
 
@@ -138,12 +138,28 @@ public final class HostListingsController {
                     ? ListingStatus.INACTIVE : ListingStatus.ACTIVE;
             context.listingService().updateStatus(property.propertyId(), target,
                     context.session().currentUser().orElseThrow().userId());
-            errorLabel.setText("Listing status updated successfully.");
+            showSuccess("Listing status updated successfully.");
             reload();
         } catch (IllegalArgumentException | IllegalStateException exception) {
-            errorLabel.setText(exception.getMessage());
+            showError(exception.getMessage());
             toggle.setDisable(false);
         }
+    }
+
+    private void showSuccess(String message) {
+        errorLabel.getStyleClass().remove("form-error");
+        if (!errorLabel.getStyleClass().contains("success-message")) {
+            errorLabel.getStyleClass().add("success-message");
+        }
+        errorLabel.setText(message);
+    }
+
+    private void showError(String message) {
+        errorLabel.getStyleClass().remove("success-message");
+        if (!errorLabel.getStyleClass().contains("form-error")) {
+            errorLabel.getStyleClass().add("form-error");
+        }
+        errorLabel.setText(message);
     }
 
     private Set<AmenityType> selectedAmenities() {

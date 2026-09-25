@@ -20,6 +20,8 @@ class HostListingsControllerTest {
         assertTrue(source.contains("listingService().updateStatus"));
         assertTrue(source.contains("DateTimeFormatter.ofPattern(\"HH:mm\")"));
         assertTrue(source.contains("errorLabel.setText"));
+        assertTrue(source.contains("success-message"));
+        assertTrue(source.contains("form-error"));
         assertTrue(fxml.contains("onAction=\"#handleCreate\""));
         assertTrue(source.contains("status-toggle"));
         assertTrue(fxml.contains("bedroomsField"));

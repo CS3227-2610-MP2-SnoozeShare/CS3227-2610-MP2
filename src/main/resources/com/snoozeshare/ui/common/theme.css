@@ -86,7 +86,7 @@
 .status-active { -fx-text-fill: #067647; -fx-background-color: #d1fae5; }
 .status-inactive { -fx-text-fill: #667085; -fx-background-color: #eaecf0; }
 .status-toggle { -fx-padding: 4px 10px; -fx-font-size: 11px; }
-.form-error { -fx-text-fill: #067647; }
+.form-error { -fx-text-fill: #b42318; }
 .empty-state { -fx-text-fill: #667085; -fx-font-style: italic; }
 
 /* Detail modal */
