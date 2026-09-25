@@ -28,7 +28,7 @@ class ShellNavigationTest {
         assertControllerMethods("guest/GuestShellController.java", "showExplore",
                 "showMyTrips", "showWallet", "showSupport");
         assertControllerMethods("host/HostShellController.java", "showDashboard",
-                "showListings", "showBookings");
+                "showListings", "showBookings", "showWallet", "cleanupWalletController");
         assertControllerMethods("admin/AdminShellController.java", "showOperations",
                 "showDisputes", "showAccounts");
     }
@@ -58,6 +58,7 @@ class ShellNavigationTest {
         assertTrue(hostController.contains("showListingDetail"));
         assertTrue(hostController.contains("host-listing-detail.fxml"));
         assertTrue(hostController.contains("host-listing-form.fxml"));
+        assertTrue(hostController.contains("host-wallet-dashboard.fxml"));
     }
 
     private static void assertControllerMethods(String file, String... methods) throws Exception {

@@ -16,7 +16,6 @@ public class NavShellController {
     @FXML protected Label roleLabel;
     @FXML protected Label pageTitle;
     @FXML protected Label pageMessage;
-    @FXML protected Label walletTitle;
     @FXML protected Label walletAmount;
     protected AppContext context;
     private Runnable onLoggedOut = () -> { };

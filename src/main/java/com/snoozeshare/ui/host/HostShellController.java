@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.ui.common.NavShellController;
+import com.snoozeshare.ui.guest.wallet.WalletDashboardController;
 import com.snoozeshare.ui.host.listings.HostListingDetailController;
 import com.snoozeshare.ui.host.listings.HostListingFormController;
 import com.snoozeshare.ui.host.listings.HostListingsController;
@@ -22,14 +23,18 @@ public final class HostShellController extends NavShellController {
     @FXML
     private StackPane contentPane;
 
+    private WalletDashboardController walletController;
+
     @FXML
     private void showDashboard() {
+        cleanupWalletController();
         contentPane.getChildren().clear();
         displayPage("Dashboard", "Review your hosting activity and open tasks.");
     }
 
     @FXML
     private void showListings() {
+        cleanupWalletController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/host/listings/host-listings.fxml"));
@@ -89,7 +94,31 @@ public final class HostShellController extends NavShellController {
 
     @FXML
     private void showBookings() {
+        cleanupWalletController();
         contentPane.getChildren().clear();
         displayPage("Bookings", "Review booking requests and upcoming stays.");
+    }
+
+    @FXML
+    private void showWallet() {
+        cleanupWalletController();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/snoozeshare/ui/host/wallet/host-wallet-dashboard.fxml"));
+            Node walletView = loader.load();
+            walletController = loader.getController();
+            walletController.setContext(getContext());
+            displayPage("Wallet", "Manage your host wallet and transaction history.");
+            contentPane.getChildren().setAll(walletView);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load host wallet dashboard", exception);
+        }
+    }
+
+    private void cleanupWalletController() {
+        if (walletController != null) {
+            walletController.cleanup();
+            walletController = null;
+        }
     }
 }
