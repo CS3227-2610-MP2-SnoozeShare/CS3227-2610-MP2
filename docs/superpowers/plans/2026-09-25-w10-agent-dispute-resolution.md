@@ -979,7 +979,7 @@ class JdbcTicketRepositoryTest {
             assertEquals(List.of(MockIds.TICKET_2), ids(repository.findQueue(
                     TicketStatus.OPEN, AssigneeFilter.ALL, null)));
             assertEquals(List.of(MockIds.TICKET_3), ids(repository.findQueue(
-                    TicketStatus.UNDER_REVIEW, AssigneeFilter.ALL, null)));
+                    TicketStatus.IN_REVIEW, AssigneeFilter.ALL, null)));
         }
     }
 
@@ -1797,7 +1797,7 @@ The core of W10. Writes wallets, ledger rows, ticket, booking and audit in **one
 - Create: `src/main/java/com/snoozeshare/service/impl/DisputeSettlementServiceImpl.java`
 - Test: `src/test/java/com/snoozeshare/service/SettlementFixtures.java`, `DisputeSettlementServiceTest.java`, `DisputeSettlementAtomicityTest.java`
 
-Reference numbers (mock DB, verified): ticket 3 is `UNDER_REVIEW`, assigned to Ben, requested `FULL_REFUND`, on booking 11 (escrow **210.00**, guest Sophia wallet **790.00**, host Diego wallet **150.00**, status `CONFIRMED`).
+Reference numbers (mock DB, verified): ticket 3 is `IN_REVIEW`, assigned to Ben, requested `FULL_REFUND`, on booking 11 (escrow **210.00**, guest Sophia wallet **790.00**, host Diego wallet **150.00**, status `CONFIRMED`).
 
 - [x] **Step 1: Test support** — `SettlementFixtures.java`
 
@@ -2079,7 +2079,7 @@ class DisputeSettlementServiceTest {
     private static void assertUnchanged(MockDbFixture db, long transactionCount, String bookingStatus)
             throws Exception {
         assertEquals(transactionCount, db.scalarLong("SELECT COUNT(*) FROM wallet_transactions"));
-        assertEquals("UNDER_REVIEW", db.scalarString(
+        assertEquals("IN_REVIEW", db.scalarString(
                 "SELECT status FROM tickets WHERE ticketId = ?", MockIds.TICKET_3));
         assertEquals(bookingStatus, db.scalarString(
                 "SELECT status FROM bookings WHERE bookingId = ?", MockIds.BOOKING_11));
@@ -2193,8 +2193,8 @@ public final class DisputeSettlementServiceImpl implements DisputeSettlementServ
                              String reason, Instant now) {
         Ticket ticket = tickets.findById(ticketId)
                 .orElseThrow(() -> new IllegalArgumentException("Ticket does not exist"));
-        if (ticket.status() != TicketStatus.UNDER_REVIEW) {
-            throw new IllegalStateException("Ticket is not under review");
+        if (ticket.status() != TicketStatus.IN_REVIEW) {
+            throw new IllegalStateException("Ticket is not in review");
         }
         if (!agentId.equals(ticket.assignedAgentId())) {
             throw new IllegalStateException("Ticket is not assigned to this agent");
@@ -2372,7 +2372,7 @@ class DisputeSettlementAtomicityTest {
             assertEquals(before, db.scalarLong("SELECT COUNT(*) FROM wallet_transactions"));
             assertEquals(0, new BigDecimal("790").compareTo(db.walletBalance(MockIds.WALLET_SOPHIA)));
             assertEquals(0, new BigDecimal("150").compareTo(db.walletBalance(MockIds.WALLET_DIEGO)));
-            assertEquals("UNDER_REVIEW", db.scalarString(
+            assertEquals("IN_REVIEW", db.scalarString(
                     "SELECT status FROM tickets WHERE ticketId = ?", MockIds.TICKET_3));
             assertEquals("CONFIRMED", db.scalarString(
                     "SELECT status FROM bookings WHERE bookingId = ?", MockIds.BOOKING_11));
@@ -2712,7 +2712,7 @@ class TicketServiceTest {
     void queueIsOldestFirstAndFiltersByAssignee() {
         Ticket newer = ticket(TicketStatus.OPEN, null, RemedyType.OTHER, "2026-09-10T00:00:00Z");
         Ticket older = ticket(TicketStatus.OPEN, null, RemedyType.OTHER, "2026-09-01T00:00:00Z");
-        Ticket mine = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-05T00:00:00Z");
+        Ticket mine = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.OTHER, "2026-09-05T00:00:00Z");
 
         assertEquals(List.of(older.ticketId(), mine.ticketId(), newer.ticketId()), ids(
                 service.queueForAgent(null, AssigneeFilter.ALL, amy)));
@@ -2721,16 +2721,16 @@ class TicketServiceTest {
         assertEquals(List.of(mine.ticketId()), ids(
                 service.queueForAgent(null, AssigneeFilter.MINE, amy)));
         assertEquals(List.of(mine.ticketId()), ids(
-                service.queueForAgent(TicketStatus.UNDER_REVIEW, AssigneeFilter.ALL, amy)));
+                service.queueForAgent(TicketStatus.IN_REVIEW, AssigneeFilter.ALL, amy)));
     }
 
     @Test
-    void assignToMeMovesAnOpenTicketUnderReviewAndAuditsIt() {
+    void assignToMeMovesAnOpenTicketInReviewAndAuditsIt() {
         Ticket open = ticket(TicketStatus.OPEN, null, RemedyType.OTHER, "2026-09-01T00:00:00Z");
 
         Ticket assigned = service.assignToMe(open.ticketId(), amy);
 
-        assertEquals(TicketStatus.UNDER_REVIEW, assigned.status());
+        assertEquals(TicketStatus.IN_REVIEW, assigned.status());
         assertEquals(amy, assigned.assignedAgentId());
         assertEquals(List.of("TICKET_ASSIGNED"), audit.actions());
     }
@@ -2739,7 +2739,7 @@ class TicketServiceTest {
     void assignRejectsNonAgentsNonOpenTicketsAndTicketsTakenByAnotherAgent() {
         Ticket open = ticket(TicketStatus.OPEN, null, RemedyType.OTHER, "2026-09-01T00:00:00Z");
         Ticket taken = ticket(TicketStatus.OPEN, ben, RemedyType.OTHER, "2026-09-02T00:00:00Z");
-        Ticket reviewing = ticket(TicketStatus.UNDER_REVIEW, ben, RemedyType.OTHER, "2026-09-03T00:00:00Z");
+        Ticket reviewing = ticket(TicketStatus.IN_REVIEW, ben, RemedyType.OTHER, "2026-09-03T00:00:00Z");
 
         assertThrows(IllegalStateException.class, () -> service.assignToMe(open.ticketId(), host));
         assertThrows(IllegalStateException.class, () -> service.assignToMe(taken.ticketId(), amy));
@@ -2750,7 +2750,7 @@ class TicketServiceTest {
 
     @Test
     void notesAreAppendedWithAuthorAndTimestampOnlyByTheAssignedAgent() {
-        Ticket mine = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
+        Ticket mine = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
 
         service.addAgentNote(mine.ticketId(), "Requested photos", amy);
         Ticket updated = service.addAgentNote(mine.ticketId(), "Photos received", amy);
@@ -2762,7 +2762,7 @@ class TicketServiceTest {
     }
 
     @Test
-    void notesRequireAnUnderReviewTicket() {
+    void notesRequireAnInReviewTicket() {
         Ticket open = ticket(TicketStatus.OPEN, null, RemedyType.OTHER, "2026-09-01T00:00:00Z");
 
         assertThrows(IllegalStateException.class, () -> service.addAgentNote(open.ticketId(), "x", amy));
@@ -2770,8 +2770,8 @@ class TicketServiceTest {
 
     @Test
     void acceptDerivesTheRefundFromTheRequestedRemedy() {
-        Ticket full = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.FULL_REFUND, "2026-09-01T00:00:00Z");
-        Ticket payout = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.HOST_PAYOUT, "2026-09-01T00:00:00Z");
+        Ticket full = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.FULL_REFUND, "2026-09-01T00:00:00Z");
+        Ticket payout = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.HOST_PAYOUT, "2026-09-01T00:00:00Z");
 
         service.resolve(full.ticketId(), new ResolutionRequest(ResolutionMode.ACCEPT, null, "ok"), amy);
         assertEquals(0, new BigDecimal("210.00").compareTo(settlement.refund()));
@@ -2783,8 +2783,8 @@ class TicketServiceTest {
 
     @Test
     void acceptOfAPartialOrOtherRequestNeedsAnAmount() {
-        Ticket partial = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.PARTIAL_REFUND, "2026-09-01T00:00:00Z");
-        Ticket other = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
+        Ticket partial = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.PARTIAL_REFUND, "2026-09-01T00:00:00Z");
+        Ticket other = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.OTHER, "2026-09-01T00:00:00Z");
 
         assertThrows(IllegalArgumentException.class, () -> service.resolve(partial.ticketId(),
                 new ResolutionRequest(ResolutionMode.ACCEPT, null, "ok"), amy));
@@ -2797,7 +2797,7 @@ class TicketServiceTest {
 
     @Test
     void rejectAlwaysRefundsNothingAndManualNeedsAnAmount() {
-        Ticket t = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.FULL_REFUND, "2026-09-01T00:00:00Z");
+        Ticket t = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.FULL_REFUND, "2026-09-01T00:00:00Z");
 
         service.resolve(t.ticketId(),
                 new ResolutionRequest(ResolutionMode.REJECT, new BigDecimal("99"), "no"), amy);
@@ -2813,7 +2813,7 @@ class TicketServiceTest {
 
     @Test
     void resolveRejectsNonAgents() {
-        Ticket t = ticket(TicketStatus.UNDER_REVIEW, amy, RemedyType.FULL_REFUND, "2026-09-01T00:00:00Z");
+        Ticket t = ticket(TicketStatus.IN_REVIEW, amy, RemedyType.FULL_REFUND, "2026-09-01T00:00:00Z");
 
         assertThrows(IllegalStateException.class, () -> service.resolve(t.ticketId(),
                 new ResolutionRequest(ResolutionMode.REJECT, null, "x"), host));
@@ -2951,13 +2951,13 @@ public final class TicketServiceImpl implements TicketService {
         requireAgent(agentId);
         Ticket ticket = loadTicket(ticketId);
         if (ticket.status() != TicketStatus.OPEN || !TicketStateMachine.canTransition(
-                ticket.status(), TicketStatus.UNDER_REVIEW, Role.AGENT)) {
+                ticket.status(), TicketStatus.IN_REVIEW, Role.AGENT)) {
             throw new IllegalStateException("Ticket is not open");
         }
         if (ticket.assignedAgentId() != null && !agentId.equals(ticket.assignedAgentId())) {
             throw new IllegalStateException("Ticket is already assigned to another agent");
         }
-        Ticket updated = tickets.save(with(ticket, TicketStatus.UNDER_REVIEW, agentId,
+        Ticket updated = tickets.save(with(ticket, TicketStatus.IN_REVIEW, agentId,
                 ticket.agentNotes()));
         audit.record(agentId, "TICKET_ASSIGNED", "Ticket", ticketId, ticket.status(), updated.status());
         return updated;
@@ -2968,8 +2968,8 @@ public final class TicketServiceImpl implements TicketService {
         User agent = requireAgent(agentId);
         String text = DomainValidation.requireText(note, "note").trim();
         Ticket ticket = loadTicket(ticketId);
-        if (ticket.status() != TicketStatus.UNDER_REVIEW) {
-            throw new IllegalStateException("Notes can only be added while the ticket is under review");
+        if (ticket.status() != TicketStatus.IN_REVIEW) {
+            throw new IllegalStateException("Notes can only be added while the ticket is in review");
         }
         if (!agentId.equals(ticket.assignedAgentId())) {
             throw new IllegalStateException("Ticket is not assigned to this agent");
@@ -3091,7 +3091,7 @@ class TicketServiceIntegrationTest {
             TicketServiceImpl service = service(db);
 
             Ticket assigned = service.assignToMe(MockIds.TICKET_2, MockIds.AGENT_AMY);
-            assertEquals(TicketStatus.UNDER_REVIEW, assigned.status());
+            assertEquals(TicketStatus.IN_REVIEW, assigned.status());
             service.addAgentNote(MockIds.TICKET_2, "Requested gate photos", MockIds.AGENT_AMY);
 
             Ticket resolved = service.resolve(MockIds.TICKET_2,
@@ -3120,13 +3120,13 @@ class TicketServiceIntegrationTest {
                     MockIds.AGENT_AMY));
 
             assertEquals(before, db.scalarLong("SELECT COUNT(*) FROM wallet_transactions"));
-            assertEquals("UNDER_REVIEW", db.scalarString(
+            assertEquals("IN_REVIEW", db.scalarString(
                     "SELECT status FROM tickets WHERE ticketId = ?", MockIds.TICKET_2));
         }
     }
 
     @Test
-    void anotherAgentCannotTakeOrResolveATicketAlreadyUnderReview(@TempDir Path directory)
+    void anotherAgentCannotTakeOrResolveATicketAlreadyInReview(@TempDir Path directory)
             throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
             TicketServiceImpl service = service(db);
@@ -3927,10 +3927,10 @@ import javafx.scene.control.ToggleGroup;
 public final class DisputeQueueController {
 
     private static final String[] STATUS_LABELS = {
-        "All statuses", "Open", "Under review", "Resolved (approved)", "Resolved (rejected)"
+        "All statuses", "Open", "In review", "Resolved (approved)", "Resolved (rejected)"
     };
     private static final TicketStatus[] STATUS_VALUES = {
-        null, TicketStatus.OPEN, TicketStatus.UNDER_REVIEW, TicketStatus.RESOLVED_APPROVED,
+        null, TicketStatus.OPEN, TicketStatus.IN_REVIEW, TicketStatus.RESOLVED_APPROVED,
         TicketStatus.RESOLVED_REJECTED
     };
 
@@ -4030,7 +4030,7 @@ public final class DisputeQueueController {
     static String statusText(TicketStatus status) {
         return switch (status) {
             case OPEN -> "Open";
-            case UNDER_REVIEW -> "Under review";
+            case IN_REVIEW -> "In review";
             case RESOLVED_APPROVED -> "Resolved (approved)";
             case RESOLVED_REJECTED -> "Resolved (rejected)";
         };
@@ -4387,13 +4387,13 @@ public final class DisputeDetailController {
         detail = context.disputeQueryService().detail(ticketId);
         Ticket ticket = detail.ticket();
         boolean mine = me().equals(ticket.assignedAgentId());
-        boolean underReview = ticket.status() == TicketStatus.UNDER_REVIEW;
-        boolean canResolve = underReview && mine && detail.escrowHeld();
+        boolean inReview = ticket.status() == TicketStatus.IN_REVIEW;
+        boolean canResolve = inReview && mine && detail.escrowHeld();
 
         crumbLabel.setText(detail.ticketLabel() + " " + ticket.title());
         statusBadge.setText(ticket.status() == TicketStatus.OPEN ? "Unassigned" : statusText(ticket.status()));
         statusBadge.getStyleClass().setAll(ticket.status() == TicketStatus.OPEN ? "badge-danger"
-                : underReview ? "badge-warning" : "badge-success");
+                : inReview ? "badge-warning" : "badge-success");
         assignButton.setDisable(ticket.status() != TicketStatus.OPEN);
         listingLabel.setText(detail.listingTitle());
         datesLabel.setText(detail.startDate() + " to " + detail.endDate());
@@ -4404,7 +4404,7 @@ public final class DisputeDetailController {
         guestThreadTitle.setText("Guest messages · " + detail.guestName());
         hostThreadTitle.setText("Host messages · " + detail.hostName());
         notesHistory.setText(ticket.agentNotes() == null ? "No notes yet." : ticket.agentNotes());
-        addNoteButton.setDisable(!(underReview && mine));
+        addNoteButton.setDisable(!(inReview && mine));
         acceptButton.setText("Accept — remedy " + (ticket.raisedByRole() == Role.HOST ? "host" : "guest"));
         acceptButton.setDisable(!canResolve);
         rejectButton.setDisable(!canResolve);
@@ -5180,7 +5180,7 @@ Invoke `superpowers:requesting-code-review` on the whole branch (`git diff main.
 | § 3.1.1 queue oldest-first + All/Unassigned/Mine + status filter | 5 (SQL), 9 (service), 11 (read model), 14 (UI) |
 | § 3.1.2 detail: summary, chat panes, notes, actions | 11, 15 |
 | § 3.1.3 Accept / Reject / Manual dialogs, reason required, live preview, amount field | 13 (preview), 15 |
-| § 3.1.4 assign (`OPEN → UNDER_REVIEW`) and notes (F9.1.2) | 9 |
+| § 3.1.4 assign (`OPEN → IN_REVIEW`) and notes (F9.1.2) | 9 |
 | § 3.1.5 category admin (F9.3.1) | 5 (repo), 9 (service), 10 (tests), 16 (UI) |
 | § 3.1.6 one audit row per mutation | 8 (`TICKET_RESOLVED`), 9 (`TICKET_ASSIGNED`, `TICKET_NOTE_ADDED`, category actions) |
 | § 4.3 settlement semantics table, preconditions, one transaction, events after commit, ledger row types, fee math, `COMPLETED` (C23) | 1, 2, 8 |

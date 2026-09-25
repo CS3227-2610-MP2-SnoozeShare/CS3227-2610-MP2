@@ -99,7 +99,7 @@ session; these must be honoured or reconciled when that branch merges with
 
 1. **Auto-complete must skip bookings with an open ticket** (C17, backlog F7.3.1 updated). Any
    scheduler or service that moves `CONFIRMED → COMPLETED` after checkout + 7 days must leave a
-   booking alone while a dispute ticket on it is `OPEN` or `UNDER_REVIEW`; its escrow stays held
+   booking alone while a dispute ticket on it is `OPEN` or `IN_REVIEW`; its escrow stays held
    until an agent resolves the ticket.
 2. **Reconcile the settlement service** (D5). W10 adds `DisputeSettlementService` for two-sided,
    full-escrow agent settlement (C20). `TransactionService.applyTicketRemedy` / `manualOverride`

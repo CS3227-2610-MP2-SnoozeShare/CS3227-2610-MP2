@@ -30,10 +30,10 @@ All recorded in `PROJECT_STATE.md`; restated here so the spec reads alone.
 
 ### 3.1 In scope
 
-1. **Dispute queue** — tickets sorted by `createdAt` ascending (F9.1.1; the artboard shows newest-first, the backlog says chronological, the backlog wins). Filters: All / Unassigned / Mine. Status filter: Open / Under review / Resolved. Row shows ticket, subject (`title`), booking, guest/host names, assignee, status badge.
+1. **Dispute queue** — tickets sorted by `createdAt` ascending (F9.1.1; the artboard shows newest-first, the backlog says chronological, the backlog wins). Filters: All / Unassigned / Mine. Status filter: Open / In review / Resolved. Row shows ticket, subject (`title`), booking, guest/host names, assignee, status badge.
 2. **Dispute detail** — booking summary (listing, dates, guest, host, escrow held, derived booking phase), guest evidence pane and host response pane (thread from `MessageService`), internal-notes editor, action bar: **Assign to me**, **Accept**, **Reject**, **Manual adjustment…**.
 3. **Resolution dialogs** — Accept, Reject, Manual adjustment (§ 4.3), each requiring a reason.
-4. **Assign & notes** (F9.1.2) — `OPEN → UNDER_REVIEW` on assign; agent notes append to `agentNotes`.
+4. **Assign & notes** (F9.1.2) — `OPEN → IN_REVIEW` on assign; agent notes append to `agentNotes`.
 5. **Category administration** (F9.3.1) — list, add, rename, activate/deactivate.
 6. **Audit** — one `AuditService.record` per mutation.
 
@@ -70,8 +70,8 @@ repository: TicketRepository, TicketCategoryRepository, BookingRepository, Walle
 | Method | Behaviour |
 |---|---|
 | `queueForAgent(TicketStatus, AssigneeFilter, UUID agentId)` | Replaces the single-arg form. Sorted `createdAt` ascending. `AssigneeFilter` = `ALL`, `UNASSIGNED`, `MINE`. |
-| `assignToMe(UUID ticketId, UUID agentId)` | `OPEN → UNDER_REVIEW`, sets `assignedAgentId`. Fails if already assigned to another agent or not `OPEN`. |
-| `addAgentNote(ticketId, note, agentId)` | Existing. Appends a timestamped, attributed entry to `agentNotes`. Ticket must be `UNDER_REVIEW` and assigned to the caller. |
+| `assignToMe(UUID ticketId, UUID agentId)` | `OPEN → IN_REVIEW`, sets `assignedAgentId`. Fails if already assigned to another agent or not `OPEN`. |
+| `addAgentNote(ticketId, note, agentId)` | Existing. Appends a timestamped, attributed entry to `agentNotes`. Ticket must be `IN_REVIEW` and assigned to the caller. |
 | `resolve(ticketId, ResolutionRequest, agentId)` | See § 4.3. Replaces the `(approve, remedy, amount, reason)` overload. |
 | `listCategories()` | Existing (active only, for guests). |
 | `listAllCategories()`, `createCategory(label, agentId)`, `renameCategory(id, label, agentId)`, `setCategoryActive(id, active, agentId)` | Category admin. Label unique (case-insensitive) and non-blank. |
@@ -114,7 +114,7 @@ Rules:
 
 - Host row: `amount = H − fee`, `feeAmount = round(H × 0.03, 2, HALF_UP)`. The fee is informational per the existing Known Gap (no platform wallet). Both rows carry `relatedBookingId` and `relatedTicketId`, `initiatedBy = agentId`.
 - A zero-amount row is never written. A guest refund of `0` or a host share of `0` simply omits that row.
-- **Preconditions** (all checked inside the transaction, failure ⇒ nothing written): caller has `Role.AGENT`; ticket is `UNDER_REVIEW` and assigned to the caller; booking is `CONFIRMED`; escrow is currently **held**; `0 ≤ R ≤ E`; reason non-blank.
+- **Preconditions** (all checked inside the transaction, failure ⇒ nothing written): caller has `Role.AGENT`; ticket is `IN_REVIEW` and assigned to the caller; booking is `CONFIRMED`; escrow is currently **held**; `0 ≤ R ≤ E`; reason non-blank.
 - **Escrow held** ≡ the booking has an `ESCROW_HOLD` row and no `ESCROW_REFUND`, `BOOKING_PAYOUT`, `TICKET_REMEDY`, or `AGENT_OVERRIDE` row.
 - **One DB transaction** covers: both wallet balance updates, both ledger inserts, ticket update (`status`, `resolutionReason`, `resolvedAt`), booking update (`COMPLETED`, `completedAt`), and the audit row. Events (`TicketResolvedEvent`, `WalletTransactionRecordedEvent`) are published only after commit.
 - Booking transition goes through `BookingStateMachine.canTransition(CONFIRMED, COMPLETED, AGENT)` (C23); ticket transition through `TicketStateMachine`.
@@ -165,7 +165,7 @@ TDD-first, service layer first. The team's shared mock database `db/snoozeshare-
 | Ticket | Status | Booking (total) | Booking status / ledger | Used for |
 |---|---|---|---|---|
 | #2 | `OPEN`, unassigned | 9 (875.00, stay ended 08-06) | `CONFIRMED`; `ESCROW_HOLD` only | Queue "Unassigned" filter; assign flow; resolve-Accept/Reject/Manual scenarios (mutating tests, on the temp copy) |
-| #3 | `UNDER_REVIEW`, assigned to Ben Alvarez | 11 (210.00, stay ended 09-04) | `CONFIRMED`; `ESCROW_HOLD` only | "Mine" filter (as Ben); resolve scenarios; not-assigned-to-caller rejection when run as another agent |
+| #3 | `IN_REVIEW`, assigned to Ben Alvarez | 11 (210.00, stay ended 09-04) | `CONFIRMED`; `ESCROW_HOLD` only | "Mine" filter (as Ben); resolve scenarios; not-assigned-to-caller rejection when run as another agent |
 | #1 | `RESOLVED_APPROVED` | 10 (480.00) | `COMPLETED`; hold + `TICKET_REMEDY` 100.00 + host payout 368.60 (fee 11.40) | Read-only reference for the Accept-partial ledger shape; already-resolved rejection |
 | #4 | `RESOLVED_APPROVED` | 13 (330.00) | `COMPLETED`; hold + `AGENT_OVERRIDE` 165.00 + host payout 160.05 (fee 4.95) | Read-only reference for the Manual-adjustment ledger shape |
 | #5, #6 | `RESOLVED_REJECTED` | 8, 6 (cancelled bookings) | escrow already refunded | Rejection of settlement on a non-`CONFIRMED` / non-held booking |
@@ -206,7 +206,7 @@ Plus 6 categories (all active), and the guest/host/agent users and wallets. Scen
 ## 7. Acceptance criteria
 
 1. An agent logged in via the mocked session sees the Disputes queue built from the mock DB, oldest ticket first, and can filter All / Unassigned / Mine.
-2. Assigning an `OPEN` ticket makes it `UNDER_REVIEW` and assigned to the caller; a second agent cannot take it.
+2. Assigning an `OPEN` ticket makes it `IN_REVIEW` and assigned to the caller; a second agent cannot take it.
 3. Accept, Reject, and Manual adjustment each settle the **entire** held escrow, write the exact ledger rows in § 4.3, set the ticket and booking (`COMPLETED`) end states, and leave the ledger invariant intact.
 4. Any precondition failure or mid-flight error leaves the database unchanged and publishes no event.
 5. A reason is required on every resolution and is stored in `resolutionReason` and the audit log.
