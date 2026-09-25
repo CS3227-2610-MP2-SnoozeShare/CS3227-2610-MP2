@@ -9,32 +9,24 @@ import com.snoozeshare.domain.enums.ResolutionMode;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.service.DisputeDetail;
 import com.snoozeshare.service.requests.ResolutionRequest;
+import com.snoozeshare.ui.admin.AgentModal;
 
-import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import javafx.stage.Window;
 
 public final class ResolutionDialogController {
 
-    private static final String THEME = "/com/snoozeshare/ui/admin/agent-theme.css";
     private static final String FXML = "/com/snoozeshare/ui/admin/tickets/resolution-dialog.fxml";
 
     @FXML private Label titleLabel;
@@ -98,45 +90,17 @@ public final class ResolutionDialogController {
 
     private static Stage build(Loaded loaded) {
         ResolutionDialogController controller = loaded.controller();
-        Window owner = Window.getWindows().stream().filter(Window::isFocused).findFirst()
-                .orElseGet(() -> Window.getWindows().stream().filter(Window::isShowing).findFirst().orElse(null));
-        Stage stage = new Stage(StageStyle.TRANSPARENT);
-        stage.initModality(Modality.APPLICATION_MODAL);
-        if (owner != null) {
-            stage.initOwner(owner);
-        }
-        stage.setTitle(controller.title());
-        Scene scene = new Scene((Parent) loaded.card());
-        scene.setFill(Color.TRANSPARENT);
-        scene.getStylesheets().add(ResolutionDialogController.class.getResource(THEME).toExternalForm());
-        scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-            if (event.getCode() == KeyCode.ESCAPE) {
-                event.consume();
-                stage.close();
-            }
-        });
-        stage.setScene(scene);
-        stage.sizeToScene();
-        Runnable center = () -> {
-            if (owner != null) {
-                stage.setX(owner.getX() + (owner.getWidth() - stage.getWidth()) / 2);
-                stage.setY(owner.getY() + (owner.getHeight() - stage.getHeight()) / 2);
-            }
-        };
-        stage.setOnShown(event -> center.run());
+        AgentModal modal = AgentModal.create((Parent) loaded.card(), controller.title());
         // The card grows or shrinks (amount field, error text): keep the window exactly the card's size.
-        controller.resizeAction = () -> Platform.runLater(() -> {
-            stage.sizeToScene();
-            center.run();
-        });
-        controller.cancelAction = stage::close;
+        controller.resizeAction = modal::refit;
+        controller.cancelAction = modal::close;
         controller.confirmAction = () -> {
             if (controller.validate()) {
                 controller.result = controller.buildRequest();
-                stage.close();
+                modal.close();
             }
         };
-        return stage;
+        return modal.stage();
     }
 
     @FXML
