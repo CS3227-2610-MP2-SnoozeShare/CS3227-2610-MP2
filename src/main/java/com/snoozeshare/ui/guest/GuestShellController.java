@@ -7,6 +7,7 @@ import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.ui.common.NavShellController;
 import com.snoozeshare.ui.guest.listing.ListingDetailController;
 import com.snoozeshare.ui.guest.search.GuestSearchController;
+import com.snoozeshare.ui.guest.trips.TripDashboardController;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -21,6 +22,7 @@ public final class GuestShellController extends NavShellController {
     private BorderPane shellRoot;
 
     private GuestSearchController searchController;
+    private TripDashboardController tripController;
 
     @FXML
     private void showExplore() {
@@ -69,7 +71,24 @@ public final class GuestShellController extends NavShellController {
 
     @FXML
     private void showMyTrips() {
-        displayPage("My Trips", "Your upcoming and past trips will appear here.");
+        cleanupTripController();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/snoozeshare/ui/guest/trips/trip-dashboard.fxml"));
+            Node tripsView = loader.load();
+            tripController = loader.getController();
+            tripController.setContext(getContext());
+            shellRoot.setCenter(tripsView);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load trip dashboard", exception);
+        }
+    }
+
+    private void cleanupTripController() {
+        if (tripController != null) {
+            tripController.cleanup();
+            tripController = null;
+        }
     }
 
     @FXML

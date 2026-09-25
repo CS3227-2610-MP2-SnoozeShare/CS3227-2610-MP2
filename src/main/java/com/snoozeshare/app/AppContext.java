@@ -16,12 +16,16 @@ import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
 import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.AvailabilityService;
+import com.snoozeshare.service.BookingService;
 import com.snoozeshare.service.ListingService;
+import com.snoozeshare.service.TransactionService;
 import com.snoozeshare.service.UserService;
 import com.snoozeshare.service.WalletService;
 import com.snoozeshare.service.impl.AuditServiceImpl;
 import com.snoozeshare.service.impl.AvailabilityServiceImpl;
+import com.snoozeshare.service.impl.BookingServiceImpl;
 import com.snoozeshare.service.impl.ListingServiceImpl;
+import com.snoozeshare.service.impl.TransactionServiceImpl;
 import com.snoozeshare.service.impl.UserServiceImpl;
 import com.snoozeshare.service.impl.WalletServiceImpl;
 import com.snoozeshare.session.MockSessionContext;
@@ -36,6 +40,8 @@ public final class AppContext implements AutoCloseable {
     private final AuditService auditService;
     private final ListingService listingService;
     private final AvailabilityService availabilityService;
+    private final BookingService bookingService;
+    private final TransactionService transactionService;
     private final EventBus eventBus;
     private final SceneRouter sceneRouter;
 
@@ -55,6 +61,11 @@ public final class AppContext implements AutoCloseable {
         JdbcBookingRepository bookingRepo = new JdbcBookingRepository(connection);
         this.availabilityService = new AvailabilityServiceImpl(blockRepo, bookingRepo);
         this.listingService = new ListingServiceImpl(propertyRepo, availabilityService);
+        JdbcWalletTransactionRepository txnRepo = new JdbcWalletTransactionRepository(connection);
+        this.transactionService = new TransactionServiceImpl(connection, bookingRepo,
+                wallets, txnRepo, eventBus);
+        this.bookingService = new BookingServiceImpl(connection, bookingRepo, propertyRepo,
+                blockRepo, wallets, txnRepo, eventBus);
         this.sceneRouter = new SceneRouter();
     }
 
@@ -84,6 +95,14 @@ public final class AppContext implements AutoCloseable {
 
     public AvailabilityService availabilityService() {
         return availabilityService;
+    }
+
+    public BookingService bookingService() {
+        return bookingService;
+    }
+
+    public TransactionService transactionService() {
+        return transactionService;
     }
 
     public EventBus eventBus() {
