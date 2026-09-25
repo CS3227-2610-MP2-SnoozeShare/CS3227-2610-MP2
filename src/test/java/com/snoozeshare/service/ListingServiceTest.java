@@ -114,6 +114,49 @@ class ListingServiceTest {
     }
 
     @Test
+    void owningHostCanUpdateListingDetails() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            ListingService service = createService(connection);
+            Property existing = new JdbcPropertyRepository(connection)
+                    .findById(ctx.singaporeId()).orElseThrow();
+            Property edited = new Property(existing.propertyId(), null, existing.status(),
+                    "Updated title", "Updated description", existing.propertyType(),
+                    existing.streetAddress(), existing.city(), existing.region(),
+                    existing.postalCode(), 6, existing.bedrooms(), existing.bathrooms(),
+                    new BigDecimal("199.00"), existing.checkInTime(), existing.checkOutTime(),
+                    existing.amenities(), existing.createdAt());
+
+            Property saved = service.update(edited, ctx.hostId());
+
+            assertEquals("Updated title", saved.title());
+            assertEquals(6, saved.maxGuests());
+            assertEquals(0, new BigDecimal("199.00").compareTo(saved.baseNightlyRate()));
+            assertEquals("Updated description",
+                    new JdbcPropertyRepository(connection).findById(ctx.singaporeId())
+                            .orElseThrow().description());
+        }
+    }
+
+    @Test
+    void anotherHostCannotUpdateListingDetails() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            var users = new JdbcUserRepository(connection);
+            User otherHost = new User(UUID.randomUUID(), Role.HOST, "Other Host",
+                    "edit-host-" + UUID.randomUUID() + "@test.com", AccountStatus.ACTIVE,
+                    "HOST2026", Instant.now());
+            users.save(otherHost);
+            ListingService service = createService(connection);
+            Property existing = new JdbcPropertyRepository(connection)
+                    .findById(ctx.singaporeId()).orElseThrow();
+
+            assertThrows(IllegalStateException.class, () ->
+                    service.update(existing, otherHost.userId()));
+        }
+    }
+
+    @Test
     void owningHostCanToggleListingStatusAndAuditTheChange() throws Exception {
         try (Connection connection = migratedConnection()) {
             TestContext ctx = seedContext(connection);

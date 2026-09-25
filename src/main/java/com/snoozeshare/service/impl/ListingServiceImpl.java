@@ -111,6 +111,29 @@ public final class ListingServiceImpl implements ListingService {
     }
 
     @Override
+    public Property update(Property draft, UUID hostId) {
+        User host = requireActiveHost(hostId);
+        if (draft == null || draft.propertyId() == null) {
+            throw new IllegalArgumentException("Property ID must not be null");
+        }
+        Property existing = properties.findById(draft.propertyId())
+                .orElseThrow(() -> new IllegalArgumentException("Property does not exist"));
+        if (!host.userId().equals(existing.hostId())) {
+            throw new IllegalStateException("Host does not own this property");
+        }
+        validateDraft(draft);
+        Property edited = new Property(existing.propertyId(), existing.hostId(), existing.status(),
+                draft.title(), draft.description(), draft.propertyType(), draft.streetAddress(),
+                draft.city(), draft.region(), draft.postalCode(), draft.maxGuests(),
+                draft.bedrooms(), draft.bathrooms(), draft.baseNightlyRate(), draft.checkInTime(),
+                draft.checkOutTime(), draft.amenities(), existing.createdAt());
+        Property persisted = properties.save(edited);
+        audit.record(host.userId(), "LISTING_UPDATED", "PROPERTY", edited.propertyId(),
+                existing, persisted);
+        return persisted;
+    }
+
+    @Override
     public Property updateStatus(UUID propertyId, ListingStatus status, UUID hostId) {
         User host = requireActiveHost(hostId);
         if (status == null) {

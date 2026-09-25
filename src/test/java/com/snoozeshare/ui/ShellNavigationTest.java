@@ -47,8 +47,15 @@ class ShellNavigationTest {
         assertTrue(page.contains("Create Listing"));
         assertTrue(page.contains("listingCards"));
         assertTrue(page.contains("statusLabel"));
+        assertTrue(!page.contains("descriptionField"));
         assertTrue(controller.contains("setContext"));
         assertTrue(controller.contains("reload"));
+
+        String hostController = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/HostShellController.java"));
+        assertTrue(hostController.contains("showCreateListing"));
+        assertTrue(hostController.contains("showEditListing"));
+        assertTrue(hostController.contains("host-listing-form.fxml"));
     }
 
     private static void assertControllerMethods(String file, String... methods) throws Exception {
