@@ -5,6 +5,7 @@ why, with a commit, plan or artifact as the reference. Not a copy of `git log`.
 
 | Date | What changed | Workstream | Ref |
 |---|---|---|---|
+| 2026-09-25 | Mock-seed IDs used non-hex prefixes (`k`,`w`,`p`,`t`,`l`,`v`,`g`,`r`) so `UUID.fromString` threw on any booking/wallet/ticket-category row; rewrote 212 IDs to valid hex (`p`->1, `k`->2, `w`->3, `t`->4, `l`->5, `v`->6, `g`->7, `r`->8), rebuilt the `.db`, verified FK and UUID parse of every `*Id` column; found by Task 3 | W10 | `db/seed-mock-data.sql`, `db/snoozeshare-mock.db` |
 | 2026-09-25 | Fixed 7 pre-existing checkstyle violations from merged W2 (imports, static-field order, lambda line breaks) that made `gradlew build` red on a clean tree; no behaviour change | W10 | commits `fix: checkstyle ...` |
 | 2026-09-25 | Rewrote all 129 mock-seed timestamps to end in `Z` (the format the app itself writes via `Instant.toString()`), rebuilt `db/snoozeshare-mock.db`, re-verified FK and ledger invariants; W10 plan Task 3 drops its `JdbcCodecs.instant` tolerance change | W10 | `db/seed-mock-data.sql`, `db/snoozeshare-mock.db`, W10 plan Task 3 |
 | 2026-09-25 | Wrote the W10 implementation plan (18 TDD tasks: settlement math, JDBC ticket/category repos, atomic full-escrow settlement, ticket/query services, in-memory chat, Agent Disputes/Categories UI); linked from W10 | W10 | `docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md` |
