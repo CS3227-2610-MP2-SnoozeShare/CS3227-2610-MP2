@@ -2,7 +2,11 @@ package com.snoozeshare.ui.admin.tickets;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import com.snoozeshare.app.AppContext;
@@ -15,13 +19,19 @@ import com.snoozeshare.domain.model.Ticket;
 import com.snoozeshare.service.DisputeDetail;
 
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public final class DisputeDetailController {
+
+    private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH);
+    private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("MMM d, h:mm a", Locale.ENGLISH);
+    private static final double BUBBLE_SHARE = 0.85;
 
     @FXML private Label crumbLabel;
     @FXML private Label statusBadge;
@@ -76,21 +86,25 @@ public final class DisputeDetailController {
         boolean canResolve = underReview && mine && detail.escrowHeld();
 
         crumbLabel.setText(detail.ticketLabel() + " " + ticket.title());
-        statusBadge.setText(ticket.status() == TicketStatus.OPEN ? "Unassigned" : statusText(ticket.status()));
-        statusBadge.getStyleClass().setAll(ticket.status() == TicketStatus.OPEN ? "badge-danger"
-                : underReview ? "badge-warning" : "badge-success");
-        assignButton.setDisable(ticket.status() != TicketStatus.OPEN);
+        boolean open = ticket.status() == TicketStatus.OPEN;
+        statusBadge.setText((open ? "Unassigned" : statusText(ticket.status())).toUpperCase(Locale.ROOT));
+        statusBadge.getStyleClass().setAll(open ? "agent-pill-danger" : underReview ? "agent-pill-warning"
+                : "agent-pill-success", "agent-pill");
+        assignButton.setDisable(!open);
         listingLabel.setText(detail.listingTitle());
-        datesLabel.setText(detail.startDate() + " to " + detail.endDate());
+        datesLabel.setText("Booking #" + ticket.bookingId().toString().substring(0, 8).toUpperCase(Locale.ROOT)
+                + " \u00b7 " + dayText(detail.startDate()) + " \u2013 " + dayText(detail.endDate()));
         guestLabel.setText(detail.guestName());
         hostLabel.setText(detail.hostName());
-        escrowLabel.setText(detail.escrowHeld() ? money(detail.escrowAmount()) + " held" : "Settled");
-        phaseLabel.setText(detail.phaseLabel());
-        guestThreadTitle.setText("Guest messages · " + detail.guestName());
-        hostThreadTitle.setText("Host messages · " + detail.hostName());
+        escrowLabel.setText(detail.escrowHeld() ? money(detail.escrowAmount()) : "Settled");
+        phaseLabel.setText(detail.phaseLabel().toUpperCase(Locale.ROOT));
+        guestThreadTitle.setText(("Guest messages \u00b7 " + detail.guestName()).toUpperCase(Locale.ROOT));
+        hostThreadTitle.setText(("Host messages \u00b7 " + detail.hostName()).toUpperCase(Locale.ROOT));
+        guestInput.setPromptText("Reply to " + firstName(detail.guestName()) + "\u2026");
+        hostInput.setPromptText("Reply to " + firstName(detail.hostName()) + "\u2026");
         notesHistory.setText(ticket.agentNotes() == null ? "No notes yet." : ticket.agentNotes());
         addNoteButton.setDisable(!(underReview && mine));
-        acceptButton.setText("Accept — remedy " + (ticket.raisedByRole() == Role.HOST ? "host" : "guest"));
+        acceptButton.setText("Accept \u2014 remedy " + (ticket.raisedByRole() == Role.HOST ? "host" : "guest"));
         acceptButton.setDisable(!canResolve);
         rejectButton.setDisable(!canResolve);
         manualButton.setDisable(!canResolve);
@@ -107,11 +121,23 @@ public final class DisputeDetailController {
             box.getChildren().add(empty);
         }
         for (Message message : messages) {
-            Label bubble = new Label(message.body());
-            bubble.setWrapText(true);
-            bubble.getStyleClass().add(message.authorRole() == Role.AGENT ? "chat-bubble-agent" : "chat-bubble");
-            box.getChildren().add(bubble);
+            box.getChildren().add(bubble(box, message));
         }
+    }
+
+    private static HBox bubble(VBox thread, Message message) {
+        boolean agent = message.authorRole() == Role.AGENT;
+        Label body = new Label(message.body());
+        body.setWrapText(true);
+        body.getStyleClass().add("agent-bubble-body");
+        Label time = new Label(STAMP.format(message.sentAt().atZone(ZoneId.systemDefault())));
+        time.getStyleClass().add("agent-chat-time");
+        VBox card = new VBox(3, body, time);
+        card.getStyleClass().addAll("agent-bubble-box", agent ? "agent-bubble-out" : "agent-bubble-in");
+        card.maxWidthProperty().bind(thread.widthProperty().multiply(BUBBLE_SHARE));
+        HBox row = new HBox(card);
+        row.setAlignment(agent ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
+        return row;
     }
 
     @FXML
@@ -185,6 +211,15 @@ public final class DisputeDetailController {
 
     private static String statusText(TicketStatus status) {
         return DisputeQueueController.statusText(status);
+    }
+
+    private static String dayText(LocalDate date) {
+        return DAY.format(date);
+    }
+
+    private static String firstName(String fullName) {
+        int space = fullName.indexOf(' ');
+        return space < 0 ? fullName : fullName.substring(0, space);
     }
 
     private static String money(BigDecimal value) {
