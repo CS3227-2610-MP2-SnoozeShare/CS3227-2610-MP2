@@ -65,6 +65,7 @@ three iterations).
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S4 | 2026-09-25 | Codex | w6 | W6 | In review | W6 implementation and clean build complete; handoff record written, awaiting review. | 2026-09-25 |
 | S5 | 2026-09-25 | Codex | w6 | W6 | In review | Host listing cards now open a full host-facing detail page; clean build verified, final diff review and handoff remain. | 2026-09-25 |
+| S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -84,7 +85,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W2 | F1 — Listing Search & Property Discovery | Done | [listing-search design](docs/superpowers/specs/2026-09-24-w2-listing-search-design.md) | [listing-search plan](docs/superpowers/plans/2026-09-24-w2-listing-search.md) | Implementation complete: search/filter, detail modal, price breakdown | Awaiting confirmation |
 | W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Building | [booking-execution design](docs/superpowers/specs/2026-09-24-w3-booking-execution-design.md) | [booking-execution plan](docs/superpowers/plans/2026-09-24-w3-booking-execution.md) | All 9 tasks complete: TransactionServiceImpl, BookingServiceImpl (submit/cancel/decide), AppContext wiring, Trip Hub UI, Book Now button | — |
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Not started | — | — | Backlog only: §3 | — |
-| W5 | F4 — Guest Wallet Management (top-up/withdraw) | Not started | — | — | Backlog only: §3 | — |
+| W5 | F4 — Guest Wallet Management (top-up/withdraw) | Done | [wallet-management design](docs/superpowers/specs/2026-09-25-w5-wallet-management-design.md) | [wallet-management plan](docs/superpowers/plans/2026-09-25-w5-wallet-management.md) | All 6 tasks complete: dashboard, modal, navigation, CSS, sidebar refresh | Awaiting confirmation |
 | W6 | F5 — Host Listing Management & Publishing | In review | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md) | [listing-management plan](docs/superpowers/plans/2026-09-25-w6-listing-management.md) | Host listing detail flow complete: clickable cards, full details, Back navigation, and Edit isolation; clean build passed | Awaiting confirmation |
 | W7 | F6 — Host Calendar & Date Overrides | Not started | — | — | Backlog only: §4 | — |
 | W8 | F7 — Host Request Queue, Earnings & Disputes | Not started | — | — | Backlog only: §4 | — |
@@ -156,7 +157,14 @@ screen and property detail modal. W3 adds the Trip Hub dashboard
 (`ui.guest.trips.TripDashboardController` + `trip-dashboard.fxml`) with Pending/Upcoming/Active/
 Completed/Cancelled tabs, trip cards with cancel buttons, event bus subscriptions for real-time
 refresh, and the "Book Now" button on `ListingDetailController` wired to
-`BookingService.submitRequest()`. `theme.css` gains trip card, tab bar, and status pill styles.
+`BookingService.submitRequest()`. W5 adds the Wallet dashboard
+(`ui.guest.wallet.WalletDashboardController` + `wallet-dashboard.fxml`) with balance display,
+transaction history cards, and a shared top-up/withdraw modal dialog
+(`WalletActionDialogController`). `NavShellController` now subscribes to
+`WalletTransactionRecordedEvent` for real-time sidebar balance updates. `theme.css` gains
+wallet dashboard styles (transaction cards, amount coloring).
+W6 adds the Host Listings page, separate create/edit form flow, clickable listing cards with a
+host-facing detail page, listing status toggles, and owner-authorized listing updates.
 Per the proposal,
 each role gets its own FXML+Controller tree under `ui.<role>`, and `ui.common` holds shared
 pieces (`WalletPanelController`, `NavShell`, formatting/validation helpers, shared components)
@@ -191,6 +199,8 @@ gained a `findById(UUID)` method. The proposal specifies nine service interfaces
 `TransactionService`, `UserService`, `ReviewService`, `AuditService`) with full method
 signatures — see [architecture proposal §3.1](docs/SnoozeShare-Architecture-Proposal.md) for the
 exact contracts, including which backlog item (F-number) each method backs.
+W6 extends `ListingServiceImpl` with host-authorized listing creation, detail updates, and
+status changes, with validation and audit records.
 
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
