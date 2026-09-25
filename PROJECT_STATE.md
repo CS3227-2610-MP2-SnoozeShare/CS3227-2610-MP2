@@ -63,7 +63,7 @@ three iterations).
 | S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Paused | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete and merged to main (PR #2). Row kept until W2 guide confirmation resolves | 2026-09-24 |
-| S4 | 2026-09-25 | Claude Sonnet 5 | agent-dispute-resolution-and-state-overrides | W10 | Active | Branch created from main. W10 spec approved and implementation plan written (`docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md`, 18 tasks). Executing the plan subagent-driven (Sonnet 5, low effort; operator's choice 2026-09-25): small logical commits, titles <=50 chars, detail in body. Progress: see W10 row. Note: `origin/w3` exists (W3 in progress elsewhere) — W10 must not touch W3-owned files | 2026-09-25 |
+| S4 | 2026-09-25 | Claude Sonnet 5 | agent-dispute-resolution-and-state-overrides | W10 | Active | W10 code complete (154 tests green); awaiting manual visual acceptance and code review. Plan: `docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md`. Executed subagent-driven (Sonnet 5, low effort; operator's choice 2026-09-25): small logical commits, titles <=50 chars, detail in body. Note: `origin/w3` exists (W3 in progress elsewhere) — W10 must not touch W3-owned files | 2026-09-25 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -88,7 +88,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W7 | F6 — Host Calendar & Date Overrides | Not started | — | — | Backlog only: §4 | — |
 | W8 | F7 — Host Request Queue, Earnings & Disputes | Not started | — | — | Backlog only: §4 | — |
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
-| W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Building | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | Task 16/18 done; Task 17 next | — |
+| W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Building | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | Tasks 1-18 code done; visual acceptance + review pending | — |
 | W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
 | W12 | F11 — Platform Audit Trail & Analytics | Not started | — | — | Backlog only: §5 | — |
 | W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
@@ -107,7 +107,8 @@ session; these must be honoured or reconciled when that branch merges with
    into `TransactionServiceImpl` or keep both. On `origin/w3` those two methods are stubbed
    `throw new UnsupportedOperationException("Owned by W10")` and `settleBookingCompletion` as
    `"Owned by W8"` — W10 never edits `TransactionServiceImpl`, so at merge either delegate the two
-   W10 stubs to `DisputeSettlementService` or leave them unsupported.
+   W10 stubs (`applyTicketRemedy`, `manualOverride`) to `DisputeSettlementService` or leave them
+   unsupported.
    Also note: `WalletLedgerWriter` opens its own transaction and subtracts `feeAmount` from the
    balance, whereas the architecture doc and mock DB treat `feeAmount` on `BOOKING_PAYOUT` rows as
    informational (`amount` already net). W10 therefore writes wallet + ledger rows itself; whoever
@@ -190,6 +191,15 @@ pieces (`WalletPanelController`, `NavShell`, formatting/validation helpers, shar
 constructed once per session and embedded into whichever role shell is active. Controllers are
 meant to depend only on `service.*` interfaces, never `repository.*` or `infra.db.*` directly.
 
+**W10 Agent screens (built):** `ui.admin` has the sidebar-based admin shell with Disputes and
+Categories screens: `DisputeQueueController` (oldest-first table, All/Unassigned/Mine chips, status
+filter, unassigned badge), `DisputeDetailController` (booking summary, guest and host chat panes,
+notes, Accept / Reject / Manual actions), `ResolutionDialogController` (live refund/payout preview,
+reason required) and `CategoryAdminController`. It uses the current navy `theme.css`, not the canvas
+tabs/Fall Light palette (D11). To try it on a copy of the mock DB, set env `SNOOZESHARE_DB_URL`
+(e.g. `jdbc:sqlite:build/acceptance.db`); `Main` passes it to `AppContext.create(jdbcUrl)`.
+`AdminUiSmokeTest` exercises the screens on the FX toolkit.
+
 **Visual design (S2, branch `ui-mockup`):** fully spec'd. The design spec is
 [`docs/superpowers/specs/2026-09-23-ui-design-system-design.md`](docs/superpowers/specs/2026-09-23-ui-design-system-design.md)
 — design tokens, the AtlantaFX theming mechanism, the component library mapping, app shell/nav,
@@ -218,6 +228,11 @@ sorting, detail lookup, and `estimateCost` computing `rate × nights`). `UserSer
 signatures — see [architecture proposal §3.1](docs/SnoozeShare-Architecture-Proposal.md) for the
 exact contracts, including which backlog item (F-number) each method backs.
 
+**W10 adds:** `TicketServiceImpl` (queue, assign, notes, resolve, category admin),
+`DisputeSettlementServiceImpl` (atomic full-escrow two-sided settlement, C20),
+`DisputeQueryServiceImpl` (queue/detail read models for the Agent UI) and a temporary
+`InMemoryMessageService` (session-only chat; W13 replaces it).
+
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
 | C3 | unknown | Two separate financial interfaces: `WalletService` (dumb primitive — balance, top-up, withdraw) vs. `TransactionService` (business rules — escrow, 3% fee, refund policy, dispute remedies). UI may call `WalletService` directly only for top-up/withdrawal; `BookingService`/`TicketService` are the only callers of `TransactionService` | Keeps "how do bookings pay out" and "how do I add money to my account" independently testable; centralizes every balance change behind one choke point so wallets can't drift from booking/ticket state | [architecture proposal §3](docs/SnoozeShare-Architecture-Proposal.md) |
@@ -234,6 +249,10 @@ Java with zero
 JavaFX/JDBC dependencies. `BookingStateMachine.canTransition(from, to, actingRole)` and
 `TicketStateMachine` are meant to be the single legality check every role's service call goes
 through (guest cancel, host approve/reject, agent force-override all call the same function).
+
+**W10 adds:** `domain.settlement` (`SettlementCalculator` for refund/host-share/fee math,
+`EscrowPolicy` for the escrow-held check) and the `Role.AGENT` permission on
+`BookingStateMachine` `CONFIRMED -> COMPLETED` (C23, D9).
 
 | Path | Role |
 |---|---|
@@ -262,6 +281,10 @@ unbuilt). A hand-written (non-Flyway) copy of this schema plus a full mock datas
 into a **shared, committed reference DB** — `db/schema.sql` / `db/seed-mock-data.sql` /
 `db/snoozeshare-mock.db` — for the team to query together; it is a dev/reference artifact only,
 not loaded by the application at startup. See § Record.
+
+**W10 adds:** `JdbcTicketRepository` and `JdbcTicketCategoryRepository`, and `MigrationRunner` now
+adopts a pre-provisioned database (one with tables but no `schema_history`, such as the mock DB) by
+recording the baseline (D10).
 
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
@@ -390,6 +413,9 @@ architecture area remain recorded in that area's table.
 - **D7** — Design artifact differs from decisions: Force actions (C22), newest-first queue (F9.1.1 wins), "Adjust wallet" dropdown (C20), no Accept amount field (added).
 - **D8** — `tickets.category` is label text, not an FK; renames don't propagate.
 - **D9** — `BookingStateMachine` gains `AGENT` on `CONFIRMED → COMPLETED` (C23); W3 must be told at merge.
+- **D10** — `MigrationRunner` adopts a pre-provisioned DB: the mock DB has tables but no `schema_history`, and the app could not open it otherwise. See the [W10 spec § 6](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md).
+- **D11** — The admin shell is sidebar-based and uses the current navy `theme.css`, not the canvas tabs / Fall Light palette. Accepted; alignment is a separate UI-design workstream. See the [W10 spec § 6](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md).
+- **Found during W10 execution (2026-09-25, all fixed, each in the ledger):** (a) mock seed timestamps lacked the trailing `Z`, so `JdbcCodecs.instant` rejected them; (b) mock seed IDs used non-hex prefixes, so `UUID.fromString` threw (rule now in § Orientation repo map); (c) the baseline build was red from 7 pre-existing W2 checkstyle violations.
 - **Backlog edits made 2026-09-25 (operator approved):** `docs/ProductBacklog.md` — F9.2.1 struck as dropped; F9.2.2 reworded to full-escrow settlement; F9.1.1 gains chat threads; F7.3.1 gains the open-ticket guard; new epic F12 Messaging (W13); changelog entry added.
 - **Cross-workstream requirements:** listed under § Workstreams → *Handoffs into W3*.
 
@@ -466,6 +492,6 @@ The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-st
 — every change, big or small, newest first.
 
 - **Latest entry:** 2026-09-25
-- **Entries:** 24 (4 backfilled coarsely from git history, 13 current/history entries)
+- **Entries:** 35 (4 backfilled coarsely from git history)
 
 Deviations stay in § Deviations above: those are read every session.
