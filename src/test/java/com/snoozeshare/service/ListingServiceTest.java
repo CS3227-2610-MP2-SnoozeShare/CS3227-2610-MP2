@@ -12,8 +12,12 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.snoozeshare.domain.enums.AccountStatus;
 import com.snoozeshare.domain.enums.BookingStatus;
@@ -37,6 +41,102 @@ import com.snoozeshare.service.impl.ListingServiceImpl;
 import com.snoozeshare.service.impl.UserServiceImpl;
 
 class ListingServiceTest {
+
+    @Test
+    void validHostCanCreateActiveListing() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            ListingService service = createService(connection);
+
+            Property draft = validDraft();
+            Property created = service.create(draft, ctx.hostId());
+
+            assertTrue(created.propertyId() != null);
+            assertEquals(ctx.hostId(), created.hostId());
+            assertEquals(ListingStatus.ACTIVE, created.status());
+            assertTrue(new JdbcPropertyRepository(connection)
+                    .findById(created.propertyId()).isPresent());
+            assertEquals(1, new JdbcAuditLogRepository(connection)
+                    .query(ctx.hostId(), null, "LISTING_CREATED").size());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidListingDrafts")
+    void invalidListingDraftIsRejectedBeforePersistence(Property draft) throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            ListingService service = createService(connection);
+
+            assertThrows(IllegalArgumentException.class,
+                    () -> service.create(draft, ctx.hostId()));
+        }
+    }
+
+    @Test
+    void guestCannotCreateListing() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            ListingService service = createService(connection);
+
+            assertThrows(IllegalStateException.class,
+                    () -> service.create(validDraft(), ctx.guestId()));
+        }
+    }
+
+    @Test
+    void suspendedHostCannotCreateListing() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            var users = new JdbcUserRepository(connection);
+            User host = users.findById(ctx.hostId()).orElseThrow();
+            users.save(new User(host.userId(), host.role(), host.displayName(), host.email(),
+                    AccountStatus.SUSPENDED, host.registrationCode(), host.createdAt()));
+            ListingService service = createService(connection);
+
+            assertThrows(IllegalStateException.class,
+                    () -> service.create(validDraft(), ctx.hostId()));
+        }
+    }
+
+    @Test
+    void createRejectsAnExistingPropertyId() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            ListingService service = createService(connection);
+            Property draft = new Property(ctx.singaporeId(), null, ListingStatus.INACTIVE,
+                    validDraft().title(), validDraft().description(), validDraft().propertyType(),
+                    validDraft().streetAddress(), validDraft().city(), validDraft().region(),
+                    validDraft().postalCode(), validDraft().maxGuests(), validDraft().bedrooms(),
+                    validDraft().bathrooms(), validDraft().baseNightlyRate(),
+                    validDraft().checkInTime(), validDraft().checkOutTime(), Set.of(),
+                    Instant.now());
+
+            assertThrows(IllegalArgumentException.class,
+                    () -> service.create(draft, ctx.hostId()));
+        }
+    }
+
+    private static Stream<Arguments> invalidListingDrafts() {
+        Property valid = validDraft();
+        return Stream.of(
+                Arguments.of(with(valid, null, valid.description(), valid.streetAddress(),
+                        valid.city(), valid.region(), valid.postalCode(), valid.maxGuests(),
+                        valid.bedrooms(), valid.bathrooms(), valid.baseNightlyRate(),
+                        valid.propertyType(), valid.checkInTime(), valid.checkOutTime())),
+                Arguments.of(with(valid, valid.title(), valid.description(), valid.streetAddress(),
+                        valid.city(), valid.region(), valid.postalCode(), 0, valid.bedrooms(),
+                        valid.bathrooms(), valid.baseNightlyRate(), valid.propertyType(),
+                        valid.checkInTime(), valid.checkOutTime())),
+                Arguments.of(with(valid, valid.title(), valid.description(), valid.streetAddress(),
+                        valid.city(), valid.region(), valid.postalCode(), valid.maxGuests(),
+                        valid.bedrooms(), valid.bathrooms(), new BigDecimal("-1.00"),
+                        valid.propertyType(), valid.checkInTime(), valid.checkOutTime())),
+                Arguments.of(with(valid, valid.title(), valid.description(), valid.streetAddress(),
+                        valid.city(), valid.region(), valid.postalCode(), valid.maxGuests(),
+                        valid.bedrooms(), valid.bathrooms(), valid.baseNightlyRate(), null,
+                        valid.checkInTime(), valid.checkOutTime())));
+    }
 
     @Test
     void searchWithNoCriteriaReturnsAllActive() throws Exception {
@@ -139,7 +239,7 @@ class ListingServiceTest {
         }
     }
 
-    private record TestContext(UUID singaporeId, UUID tokyoId, UUID guestId) {
+    private record TestContext(UUID singaporeId, UUID tokyoId, UUID guestId, UUID hostId) {
     }
 
     private static TestContext seedContext(Connection connection) {
@@ -165,7 +265,25 @@ class ListingServiceTest {
                 new BigDecimal("200.00"), LocalTime.of(15, 0), LocalTime.of(10, 0),
                 Set.of(), Instant.now());
         properties.save(tokyo);
-        return new TestContext(singapore.propertyId(), tokyo.propertyId(), guest.userId());
+        return new TestContext(singapore.propertyId(), tokyo.propertyId(), guest.userId(), host.userId());
+    }
+
+    private static Property validDraft() {
+        return new Property(null, null, ListingStatus.INACTIVE, "New Listing", "A new place",
+                PropertyType.CONDO, "1 Main Street", "Singapore", "Central", "123456", 3,
+                2, 1.5, new BigDecimal("175.00"), LocalTime.of(15, 0), LocalTime.of(11, 0),
+                Set.of(), Instant.now());
+    }
+
+    private static Property with(Property source, String title, String description,
+                                 String streetAddress, String city, String region,
+                                 String postalCode, int maxGuests, int bedrooms,
+                                 double bathrooms, BigDecimal rate, PropertyType propertyType,
+                                 LocalTime checkIn, LocalTime checkOut) {
+        return new Property(source.propertyId(), source.hostId(), source.status(), title,
+                description, propertyType, streetAddress, city, region, postalCode, maxGuests,
+                bedrooms, bathrooms, rate, checkIn, checkOut, source.amenities(),
+                source.createdAt());
     }
 
     private static ListingService createService(Connection connection) {
