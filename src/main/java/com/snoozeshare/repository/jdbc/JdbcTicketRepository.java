@@ -36,6 +36,19 @@ public final class JdbcTicketRepository implements TicketRepository {
     }
 
     @Override
+    public boolean existsByCategory(String categoryLabel) {
+        try (var statement = connection.prepareStatement(
+                "SELECT 1 FROM tickets WHERE LOWER(category) = LOWER(?) LIMIT 1")) {
+            statement.setString(1, categoryLabel);
+            try (var result = statement.executeQuery()) {
+                return result.next();
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to check tickets for category", exception);
+        }
+    }
+
+    @Override
     public List<Ticket> findByStatus(TicketStatus status) {
         return findQueue(status, AssigneeFilter.ALL, null);
     }

@@ -57,6 +57,11 @@ public final class Fakes {
         }
 
         @Override
+        public boolean existsByCategory(String categoryLabel) {
+            return store.values().stream().anyMatch(t -> t.category().equalsIgnoreCase(categoryLabel));
+        }
+
+        @Override
         public Ticket save(Ticket ticket) {
             store.put(ticket.ticketId(), ticket);
             return ticket;
@@ -92,6 +97,11 @@ public final class Fakes {
         public TicketCategory save(TicketCategory category) {
             store.put(category.categoryId(), category);
             return category;
+        }
+
+        @Override
+        public void deleteById(UUID categoryId) {
+            store.remove(categoryId);
         }
     }
 

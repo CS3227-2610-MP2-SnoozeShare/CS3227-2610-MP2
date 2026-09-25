@@ -58,6 +58,18 @@ class JdbcTicketCategoryRepositoryTest {
     }
 
     @Test
+    void deleteByIdRemovesOnlyThatCategory(@TempDir Path directory) throws Exception {
+        try (MockDbFixture db = MockDbFixture.open(directory)) {
+            JdbcTicketCategoryRepository repository = new JdbcTicketCategoryRepository(db.connection());
+
+            repository.deleteById(MockIds.CATEGORY_CLEANLINESS);
+
+            assertTrue(repository.findById(MockIds.CATEGORY_CLEANLINESS).isEmpty());
+            assertEquals(5, repository.findAll().size());
+        }
+    }
+
+    @Test
     void labelInUseIsCaseInsensitiveAndCanExcludeTheCategoryBeingRenamed(@TempDir Path directory)
             throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {

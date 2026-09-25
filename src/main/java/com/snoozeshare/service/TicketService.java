@@ -26,6 +26,9 @@ public interface TicketService {
 
     TicketCategory setCategoryActive(UUID categoryId, boolean active, UUID agentId);
 
+    /** Permanently removes a category no ticket was filed under; a used category must be deactivated instead. */
+    void deleteCategory(UUID categoryId, UUID agentId);
+
     /** Oldest first. */
     List<Ticket> queueForAgent(TicketStatus statusFilter, AssigneeFilter assignee, UUID agentId);
 

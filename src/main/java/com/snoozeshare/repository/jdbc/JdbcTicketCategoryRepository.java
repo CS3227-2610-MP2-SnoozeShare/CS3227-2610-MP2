@@ -78,6 +78,16 @@ public final class JdbcTicketCategoryRepository implements TicketCategoryReposit
         }
     }
 
+    @Override
+    public void deleteById(UUID categoryId) {
+        try (var statement = connection.prepareStatement("DELETE FROM ticket_categories WHERE categoryId = ?")) {
+            statement.setString(1, JdbcCodecs.uuid(categoryId));
+            statement.executeUpdate();
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to delete ticket category", exception);
+        }
+    }
+
     private List<TicketCategory> query(String sql) {
         try (var statement = connection.prepareStatement(sql);
              var result = statement.executeQuery()) {

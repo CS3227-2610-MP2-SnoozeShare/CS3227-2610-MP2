@@ -18,5 +18,8 @@ public interface TicketRepository {
      */
     List<Ticket> findQueue(TicketStatus status, AssigneeFilter assignee, UUID agentId);
 
+    /** True when any ticket (any status) was filed under this category label, compared case-insensitively. */
+    boolean existsByCategory(String categoryLabel);
+
     Ticket save(Ticket ticket);
 }

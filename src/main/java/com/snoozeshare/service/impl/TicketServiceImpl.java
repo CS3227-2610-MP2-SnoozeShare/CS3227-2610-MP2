@@ -99,6 +99,17 @@ public final class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    public void deleteCategory(UUID categoryId, UUID agentId) {
+        requireAgent(agentId);
+        TicketCategory existing = loadCategory(categoryId);
+        if (tickets.existsByCategory(existing.label())) {
+            throw new IllegalStateException("Category is in use by tickets; deactivate it instead");
+        }
+        categories.deleteById(categoryId);
+        audit.record(agentId, "CATEGORY_DELETED", "TicketCategory", categoryId, existing, null);
+    }
+
+    @Override
     public List<Ticket> queueForAgent(TicketStatus statusFilter, AssigneeFilter assignee, UUID agentId) {
         return tickets.findQueue(statusFilter, assignee, agentId);
     }

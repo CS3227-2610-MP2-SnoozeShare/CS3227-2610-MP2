@@ -63,6 +63,23 @@ class TicketServiceIntegrationTest {
     }
 
     @Test
+    void deleteCategoryRemovesAnUnusedOneButRefusesOneFiledOnTicketsOnTheMockDatabase(@TempDir Path directory)
+            throws Exception {
+        try (MockDbFixture db = MockDbFixture.open(directory)) {
+            TicketServiceImpl service = service(db);
+            var noise = service.createCategory("Noise", MockIds.AGENT_AMY);
+
+            service.deleteCategory(noise.categoryId(), MockIds.AGENT_AMY);
+            IllegalStateException refused = assertThrows(IllegalStateException.class, () ->
+                    service.deleteCategory(MockIds.CATEGORY_CLEANLINESS, MockIds.AGENT_AMY));
+
+            assertEquals("Category is in use by tickets; deactivate it instead", refused.getMessage());
+            assertEquals(6, service.listAllCategories().size());
+            assertEquals(1, db.scalarLong("SELECT COUNT(*) FROM audit_log WHERE actionType = 'CATEGORY_DELETED'"));
+        }
+    }
+
+    @Test
     void unassignPersistsAnOpenTicketWithNoAssigneeOnTheMockDatabase(@TempDir Path directory)
             throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {

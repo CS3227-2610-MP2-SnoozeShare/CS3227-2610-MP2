@@ -19,4 +19,6 @@ public interface TicketCategoryRepository {
     boolean labelInUse(String label, UUID excludeCategoryId);
 
     TicketCategory save(TicketCategory category);
+
+    void deleteById(UUID categoryId);
 }

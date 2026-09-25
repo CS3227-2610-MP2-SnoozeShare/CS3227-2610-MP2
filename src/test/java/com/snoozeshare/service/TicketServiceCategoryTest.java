@@ -14,7 +14,10 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 import com.snoozeshare.domain.enums.AccountStatus;
+import com.snoozeshare.domain.enums.RemedyType;
 import com.snoozeshare.domain.enums.Role;
+import com.snoozeshare.domain.enums.TicketStatus;
+import com.snoozeshare.domain.model.Ticket;
 import com.snoozeshare.domain.model.TicketCategory;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.service.impl.TicketServiceImpl;
@@ -25,7 +28,8 @@ class TicketServiceCategoryTest {
     private final UUID agent = UUID.randomUUID();
     private final UUID guest = UUID.randomUUID();
     private final Fakes.RecordingAudit audit = new Fakes.RecordingAudit();
-    private final TicketService service = new TicketServiceImpl(new Fakes.InMemoryTickets(),
+    private final Fakes.InMemoryTickets tickets = new Fakes.InMemoryTickets();
+    private final TicketService service = new TicketServiceImpl(tickets,
             new Fakes.InMemoryCategories(), null,
             new Fakes.StubUsers()
                     .with(new User(agent, Role.AGENT, "Amy", "amy@x.test", AccountStatus.ACTIVE, null,
@@ -79,6 +83,41 @@ class TicketServiceCategoryTest {
 
         service.setCategoryActive(noise.categoryId(), true, agent);
         assertEquals(1, service.listCategories().size());
+    }
+
+    @Test
+    void deleteRemovesAnUnusedCategoryAndAuditsIt() {
+        TicketCategory noise = service.createCategory("Noise", agent);
+
+        service.deleteCategory(noise.categoryId(), agent);
+
+        assertTrue(service.listAllCategories().isEmpty());
+        assertEquals(List.of("TICKET_CATEGORY_CREATED", "CATEGORY_DELETED"), audit.actions());
+    }
+
+    @Test
+    void deleteIsRefusedWhenAnyTicketUsesTheCategory() {
+        TicketCategory noise = service.createCategory("Noise", agent);
+        tickets.save(new Ticket(UUID.randomUUID(), UUID.randomUUID(), guest, Role.GUEST, "noise", "t", "d",
+                RemedyType.OTHER, null, TicketStatus.RESOLVED_REJECTED, null, null, null,
+                Instant.parse("2026-09-01T00:00:00Z"), null));
+
+        IllegalStateException refused = assertThrows(IllegalStateException.class, () ->
+                service.deleteCategory(noise.categoryId(), agent));
+
+        assertEquals("Category is in use by tickets; deactivate it instead", refused.getMessage());
+        assertEquals(1, service.listAllCategories().size());
+    }
+
+    @Test
+    void deleteNeedsAnExistingCategoryAndAnAgent() {
+        TicketCategory noise = service.createCategory("Noise", agent);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                service.deleteCategory(UUID.randomUUID(), agent));
+        assertThrows(IllegalStateException.class, () ->
+                service.deleteCategory(noise.categoryId(), guest));
+        assertEquals(1, service.listAllCategories().size());
     }
 
     @Test
