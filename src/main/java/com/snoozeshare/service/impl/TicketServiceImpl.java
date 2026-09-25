@@ -136,7 +136,7 @@ public final class TicketServiceImpl implements TicketService {
         requireAgent(agentId);
         Ticket ticket = loadTicket(ticketId);
         if (ticket.status() != TicketStatus.UNDER_REVIEW) {
-            throw new IllegalStateException("Notes can only be saved while the ticket is under review");
+            throw new IllegalStateException("Notes can only be saved while the ticket is in review");
         }
         if (!agentId.equals(ticket.assignedAgentId())) {
             throw new IllegalStateException("Ticket is not assigned to this agent");

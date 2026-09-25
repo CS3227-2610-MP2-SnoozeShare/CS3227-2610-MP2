@@ -34,7 +34,7 @@ public final class DisputeQueueController {
     private static final double TOTAL_SHARE = 5.8;
     private static final double WIDTH_FACTOR = 0.995;
     private static final String[] STATUS_LABELS = {
-        "All statuses", "Open", "Under review", "Resolved (approved)", "Resolved (rejected)"
+        "All statuses", "Open", "Under review", "Approved", "Rejected"
     };
     private static final TicketStatus[] STATUS_VALUES = {
         null, TicketStatus.OPEN, TicketStatus.UNDER_REVIEW, TicketStatus.RESOLVED_APPROVED,
