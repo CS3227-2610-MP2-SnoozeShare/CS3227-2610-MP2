@@ -2,6 +2,7 @@ package com.snoozeshare.ui.host;
 
 import java.io.IOException;
 
+import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.ui.common.NavShellController;
 import com.snoozeshare.ui.guest.wallet.WalletDashboardController;
@@ -25,11 +26,10 @@ public final class HostShellController extends NavShellController {
 
     private WalletDashboardController walletController;
 
-    @FXML
-    private void showDashboard() {
-        cleanupWalletController();
-        contentPane.getChildren().clear();
-        displayPage("Dashboard", "Review your hosting activity and open tasks.");
+    @Override
+    public void setContext(AppContext appContext) {
+        super.setContext(appContext);
+        showListings();
     }
 
     @FXML

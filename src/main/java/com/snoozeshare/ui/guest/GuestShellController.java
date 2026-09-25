@@ -3,6 +3,7 @@ package com.snoozeshare.ui.guest;
 import java.io.IOException;
 import java.time.LocalDate;
 
+import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.ui.common.NavShellController;
 import com.snoozeshare.ui.guest.listing.ListingDetailController;
@@ -25,6 +26,12 @@ public final class GuestShellController extends NavShellController {
     private GuestSearchController searchController;
     private TripDashboardController tripController;
     private WalletDashboardController walletController;
+
+    @Override
+    public void setContext(AppContext appContext) {
+        super.setContext(appContext);
+        showExplore();
+    }
 
     @FXML
     private void showExplore() {

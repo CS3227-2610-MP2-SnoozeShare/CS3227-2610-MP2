@@ -24,11 +24,24 @@ class ShellNavigationTest {
     }
 
     @Test
+    void guestAndHostShellsExposeTheApprovedInitialNavigation() throws Exception {
+        String guestPage = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/guest/guest-shell.fxml"));
+        String hostPage = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/host-shell.fxml"));
+
+        assertTrue(guestPage.contains("text=\"Search\""));
+        assertTrue(hostPage.contains("text=\"Listings\""));
+        assertTrue(!hostPage.contains("text=\"Dashboard\""));
+        assertTrue(hostPage.contains("text=\"Messages\""));
+    }
+
+    @Test
     void roleControllersDeclareTheirNavigationDestinations() throws Exception {
         assertControllerMethods("guest/GuestShellController.java", "showExplore",
                 "showMyTrips", "showWallet", "showSupport");
-        assertControllerMethods("host/HostShellController.java", "showDashboard",
-                "showListings", "showBookings", "showWallet", "cleanupWalletController");
+        assertControllerMethods("host/HostShellController.java", "showListings",
+                "showBookings", "showWallet", "cleanupWalletController");
         assertControllerMethods("admin/AdminShellController.java", "showOperations",
                 "showDisputes", "showAccounts");
     }
@@ -59,6 +72,19 @@ class ShellNavigationTest {
         assertTrue(hostController.contains("host-listing-detail.fxml"));
         assertTrue(hostController.contains("host-listing-form.fxml"));
         assertTrue(hostController.contains("host-wallet-dashboard.fxml"));
+    }
+
+    @Test
+    void authenticatedShellsLoadTheirFirstPagesFromContextSetup() throws Exception {
+        String guestController = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/guest/GuestShellController.java"));
+        String hostController = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/HostShellController.java"));
+
+        assertTrue(guestController.contains("void setContext(AppContext"));
+        assertTrue(guestController.contains("showExplore();"));
+        assertTrue(hostController.contains("void setContext(AppContext"));
+        assertTrue(hostController.contains("showListings();"));
     }
 
     private static void assertControllerMethods(String file, String... methods) throws Exception {
