@@ -45,4 +45,29 @@ class HostCalendarControllerTest {
         assertTrue(source.contains("setProperty"));
         assertTrue(source.contains("setContext"));
     }
+
+    @Test
+    void calendarSupportsBlockingAndRemovingAllManualOverrides() throws Exception {
+        String source = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/calendar/HostCalendarController.java"));
+        String fxml = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/calendar/host-calendar.fxml"));
+        String theme = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/common/theme.css"));
+
+        assertTrue(source.contains("createHostBlock"));
+        assertTrue(source.contains("fromField"));
+        assertTrue(source.contains("toField"));
+        assertTrue(source.contains("reasonField"));
+        assertTrue(source.contains("removeHostBlock"));
+        assertTrue(source.contains("handleRemoveOverride"));
+        assertTrue(source.contains("refresh()"));
+        assertTrue(fxml.contains("onAction=\"#handleBlockDates\""));
+        assertTrue(theme.contains("calendar-cell-available"));
+        assertTrue(theme.contains("calendar-cell-booked"));
+        assertTrue(theme.contains("calendar-cell-blocked"));
+        assertTrue(theme.contains("calendar-cell-other-month"));
+        assertTrue(theme.contains("calendar-legend"));
+        assertTrue(theme.contains("override-row"));
+    }
 }

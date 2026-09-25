@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.function.Consumer;
 
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.AvailabilityBlock;
@@ -17,6 +16,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 public final class HostCalendarController {
@@ -49,7 +50,6 @@ public final class HostCalendarController {
     private Property property;
     private YearMonth displayedMonth = YearMonth.now();
     private Runnable onBack = () -> { };
-    private Consumer<AvailabilityBlock> onRemoveOverride = block -> { };
 
     public void setContext(AppContext appContext) {
         context = appContext;
@@ -64,11 +64,6 @@ public final class HostCalendarController {
 
     public void setOnBack(Runnable callback) {
         onBack = callback == null ? () -> { } : callback;
-    }
-
-    public void setOnRemoveOverride(Consumer<AvailabilityBlock> callback) {
-        onRemoveOverride = callback == null ? block -> { } : callback;
-        refresh();
     }
 
     @FXML
@@ -86,6 +81,34 @@ public final class HostCalendarController {
     @FXML
     private void handleBack() {
         onBack.run();
+    }
+
+    @FXML
+    private void handleBlockDates() {
+        try {
+            LocalDate start = LocalDate.parse(fromField.getText(), DATE_FORMAT);
+            LocalDate end = LocalDate.parse(toField.getText(), DATE_FORMAT);
+            context.availabilityService().createHostBlock(property.propertyId(), start, end,
+                    context.session().currentUser().orElseThrow().userId(), reasonField.getText());
+            fromField.clear();
+            toField.clear();
+            reasonField.clear();
+            statusLabel.setText("Dates blocked.");
+            refresh();
+        } catch (IllegalArgumentException | IllegalStateException exception) {
+            statusLabel.setText(exception.getMessage());
+        }
+    }
+
+    private void handleRemoveOverride(AvailabilityBlock block) {
+        try {
+            context.availabilityService().removeHostBlock(block.blockId(),
+                    context.session().currentUser().orElseThrow().userId());
+            statusLabel.setText("Override removed.");
+            refresh();
+        } catch (IllegalArgumentException | IllegalStateException exception) {
+            statusLabel.setText(exception.getMessage());
+        }
     }
 
     public void refresh() {
@@ -115,6 +138,8 @@ public final class HostCalendarController {
                 cell.getStyleClass().add("calendar-cell-booked");
             } else if (hasSource(blocks, date, "HOST_BLOCK")) {
                 cell.getStyleClass().add("calendar-cell-blocked");
+            } else {
+                cell.getStyleClass().add("calendar-cell-available");
             }
             GridPane.setRowIndex(cell, index / 7);
             GridPane.setColumnIndex(cell, index % 7);
@@ -136,8 +161,10 @@ public final class HostCalendarController {
         Button remove = new Button("Remove");
         remove.setAccessibleText("Remove override " + dates.getText());
         remove.getStyleClass().add("text-button");
-        remove.setOnAction(event -> onRemoveOverride.accept(block));
-        HBox row = new HBox(8, dates, remove);
+        remove.setOnAction(event -> handleRemoveOverride(block));
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox row = new HBox(8, dates, spacer, remove);
         row.getStyleClass().add("override-row");
         overridesContainer.getChildren().add(row);
     }
