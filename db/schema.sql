@@ -46,7 +46,8 @@ CREATE TABLE availability_blocks (
     startDate           TEXT NOT NULL,
     endDate             TEXT NOT NULL,
     source              TEXT NOT NULL CHECK (source IN ('HOST_BLOCK','BOOKING')),
-    bookingId           TEXT REFERENCES bookings(bookingId)
+    bookingId           TEXT REFERENCES bookings(bookingId),
+    reason              TEXT
 );
 
 CREATE TABLE bookings (

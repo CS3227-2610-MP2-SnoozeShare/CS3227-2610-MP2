@@ -52,7 +52,7 @@ class AvailabilityServiceTest {
             var blocks = new JdbcAvailabilityBlockRepository(connection);
             blocks.save(new AvailabilityBlock(UUID.randomUUID(), ctx.propertyId,
                     LocalDate.of(2026, 10, 3), LocalDate.of(2026, 10, 7),
-                    "HOST_BLOCK", null));
+                    "HOST_BLOCK", null, null));
             AvailabilityService service = new AvailabilityServiceImpl(blocks,
                     new JdbcBookingRepository(connection));
 
