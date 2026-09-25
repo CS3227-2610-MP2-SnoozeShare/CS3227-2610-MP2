@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="12" prefWidth="480" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.snoozeshare.ui.admin.tickets.ResolutionDialogController">
+    <padding><Insets top="16" right="16" bottom="8" left="16"/></padding>
+
+    <Label fx:id="subtitleLabel" styleClass="small"/>
+    <Label fx:id="remedyLabel" styleClass="card-title"/>
+
+    <HBox fx:id="modeChips" spacing="6">
+        <ToggleButton fx:id="fullRefundChip" text="Full refund to guest" styleClass="filter-chip"/>
+        <ToggleButton fx:id="fullPayoutChip" text="Full payout to host" styleClass="filter-chip"/>
+        <ToggleButton fx:id="customChip" text="Custom" styleClass="filter-chip"/>
+    </HBox>
+
+    <VBox fx:id="amountBox" spacing="4">
+        <Label text="Guest refund (SGD)"/>
+        <TextField fx:id="amountField"/>
+    </VBox>
+
+    <Label fx:id="previewLabel" styleClass="price-panel" wrapText="true"/>
+
+    <Label text="Reason (required, written to the audit log)"/>
+    <TextArea fx:id="reasonArea" prefRowCount="3"/>
+    <Label fx:id="errorLabel" styleClass="error-message"/>
+</VBox>
