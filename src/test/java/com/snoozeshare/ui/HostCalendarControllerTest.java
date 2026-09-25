@@ -48,6 +48,8 @@ class HostCalendarControllerTest {
         assertTrue(source.contains("setOnBack"));
         assertTrue(source.contains("setProperty"));
         assertTrue(source.contains("setContext"));
+        assertTrue(source.contains("DateTimeParseException"));
+        assertTrue(source.contains("Use YYYY-MM-DD for both dates."));
     }
 
     @Test

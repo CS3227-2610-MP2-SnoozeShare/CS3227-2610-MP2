@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 import com.snoozeshare.app.AppContext;
@@ -95,6 +96,8 @@ public final class HostCalendarController {
             reasonField.clear();
             statusLabel.setText("Dates blocked.");
             refresh();
+        } catch (DateTimeParseException exception) {
+            statusLabel.setText("Use YYYY-MM-DD for both dates.");
         } catch (IllegalArgumentException | IllegalStateException exception) {
             statusLabel.setText(exception.getMessage());
         }
