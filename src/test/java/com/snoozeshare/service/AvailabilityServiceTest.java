@@ -1,6 +1,8 @@
 package com.snoozeshare.service;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
@@ -36,9 +38,7 @@ class AvailabilityServiceTest {
     void availableWhenNoBlocksOrBookings() throws Exception {
         try (Connection connection = migratedConnection()) {
             var ctx = seedContext(connection);
-            AvailabilityService service = new AvailabilityServiceImpl(
-                    new JdbcAvailabilityBlockRepository(connection),
-                    new JdbcBookingRepository(connection));
+            AvailabilityService service = createService(connection);
 
             assertTrue(service.isRangeAvailable(ctx.propertyId,
                     LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 5)));
@@ -53,8 +53,7 @@ class AvailabilityServiceTest {
             blocks.save(new AvailabilityBlock(UUID.randomUUID(), ctx.propertyId,
                     LocalDate.of(2026, 10, 3), LocalDate.of(2026, 10, 7),
                     "HOST_BLOCK", null, null));
-            AvailabilityService service = new AvailabilityServiceImpl(blocks,
-                    new JdbcBookingRepository(connection));
+            AvailabilityService service = createService(connection);
 
             assertFalse(service.isRangeAvailable(ctx.propertyId,
                     LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 5)));
@@ -70,8 +69,7 @@ class AvailabilityServiceTest {
                     LocalDate.of(2026, 10, 3), LocalDate.of(2026, 10, 7),
                     BookingStatus.CONFIRMED, new BigDecimal("100.00"),
                     new BigDecimal("400.00"), Instant.now(), null, null));
-            AvailabilityService service = new AvailabilityServiceImpl(
-                    new JdbcAvailabilityBlockRepository(connection), bookings);
+            AvailabilityService service = createService(connection);
 
             assertFalse(service.isRangeAvailable(ctx.propertyId,
                     LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 5)));
@@ -87,15 +85,107 @@ class AvailabilityServiceTest {
                     LocalDate.of(2026, 10, 3), LocalDate.of(2026, 10, 7),
                     BookingStatus.CANCELLED_BY_GUEST, new BigDecimal("100.00"),
                     new BigDecimal("400.00"), Instant.now(), null, null));
-            AvailabilityService service = new AvailabilityServiceImpl(
-                    new JdbcAvailabilityBlockRepository(connection), bookings);
+            AvailabilityService service = createService(connection);
 
             assertTrue(service.isRangeAvailable(ctx.propertyId,
                     LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 5)));
         }
     }
 
-    private record TestContext(UUID propertyId, UUID guestId) {
+    @Test
+    void createHostBlockRejectsInvalidRangeAndNonOwner() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection);
+            AvailabilityService service = createService(connection);
+
+            assertThrows(IllegalArgumentException.class, () -> service.createHostBlock(
+                    ctx.propertyId, LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 5),
+                    ctx.hostId, "maintenance"));
+            assertThrows(IllegalStateException.class, () -> service.createHostBlock(
+                    ctx.propertyId, LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 7),
+                    ctx.guestId, "maintenance"));
+            assertTrue(new JdbcAvailabilityBlockRepository(connection)
+                    .findByPropertyId(ctx.propertyId).isEmpty());
+        }
+    }
+
+    @Test
+    void createHostBlockRejectsActiveBookingAndExistingBlockOverlap() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection);
+            var bookings = new JdbcBookingRepository(connection);
+            bookings.save(new Booking(UUID.randomUUID(), ctx.propertyId, ctx.guestId,
+                    LocalDate.of(2026, 10, 3), LocalDate.of(2026, 10, 7),
+                    BookingStatus.PENDING, new BigDecimal("100.00"),
+                    new BigDecimal("400.00"), Instant.now(), null, null));
+            AvailabilityService service = createService(connection);
+
+            assertThrows(IllegalStateException.class, () -> service.createHostBlock(
+                    ctx.propertyId, LocalDate.of(2026, 10, 6), LocalDate.of(2026, 10, 8),
+                    ctx.hostId, "maintenance"));
+
+            new JdbcAvailabilityBlockRepository(connection).save(new AvailabilityBlock(
+                    UUID.randomUUID(), ctx.propertyId, LocalDate.of(2026, 11, 3),
+                    LocalDate.of(2026, 11, 7), "HOST_BLOCK", null, null));
+            assertThrows(IllegalStateException.class, () -> service.createHostBlock(
+                    ctx.propertyId, LocalDate.of(2026, 11, 6), LocalDate.of(2026, 11, 8),
+                    ctx.hostId, "maintenance"));
+        }
+    }
+
+    @Test
+    void createHostBlockTrimsReasonAndAllowsHalfOpenBoundary() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection);
+            AvailabilityService service = createService(connection);
+            service.createHostBlock(ctx.propertyId, LocalDate.of(2026, 10, 1),
+                    LocalDate.of(2026, 10, 5), ctx.hostId, "  maintenance  ");
+
+            AvailabilityBlock adjacent = service.createHostBlock(ctx.propertyId,
+                    LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 7), ctx.hostId, " ");
+
+            assertEquals("maintenance", service.blocksFor(ctx.propertyId).get(0).reason());
+            assertEquals(null, adjacent.reason());
+        }
+    }
+
+    @Test
+    void removeHostBlockRequiresOwnerAndManualSource() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection);
+            AvailabilityService service = createService(connection);
+            AvailabilityBlock manual = service.createHostBlock(ctx.propertyId,
+                    LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 3), ctx.hostId, null);
+
+            assertThrows(IllegalStateException.class, () -> service.removeHostBlock(
+                    manual.blockId(), ctx.guestId));
+            assertTrue(new JdbcAvailabilityBlockRepository(connection)
+                    .findById(manual.blockId()).isPresent());
+
+            AvailabilityBlock booking = new AvailabilityBlock(UUID.randomUUID(), ctx.propertyId,
+                    LocalDate.of(2026, 12, 4), LocalDate.of(2026, 12, 6),
+                    "BOOKING", null, null);
+            new JdbcAvailabilityBlockRepository(connection).save(booking);
+            assertThrows(IllegalStateException.class, () -> service.removeHostBlock(
+                    booking.blockId(), ctx.hostId));
+            service.removeHostBlock(manual.blockId(), ctx.hostId);
+            assertTrue(new JdbcAvailabilityBlockRepository(connection)
+                    .findById(manual.blockId()).isEmpty());
+        }
+    }
+
+    @Test
+    void removeHostBlockRejectsUnknownBlock() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection);
+            AvailabilityService service = createService(connection);
+
+            assertThrows(IllegalArgumentException.class, () -> service.removeHostBlock(
+                    UUID.randomUUID(), ctx.hostId));
+        }
+    }
+
+    private record TestContext(UUID propertyId, UUID hostId, UUID guestId) {
     }
 
     private static TestContext seedContext(Connection connection) {
@@ -115,7 +205,13 @@ class AvailabilityServiceTest {
                 new BigDecimal("100.00"), LocalTime.of(14, 0), LocalTime.of(11, 0),
                 Set.of(), Instant.now());
         properties.save(property);
-        return new TestContext(property.propertyId(), guest.userId());
+        return new TestContext(property.propertyId(), host.userId(), guest.userId());
+    }
+
+    private static AvailabilityService createService(Connection connection) {
+        return new AvailabilityServiceImpl(new JdbcPropertyRepository(connection),
+                new JdbcAvailabilityBlockRepository(connection),
+                new JdbcBookingRepository(connection));
     }
 
     private static Connection migratedConnection() throws Exception {
