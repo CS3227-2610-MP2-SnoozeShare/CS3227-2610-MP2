@@ -78,8 +78,8 @@ class JdbcTicketRepositoryTest {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
             JdbcTicketRepository repository = new JdbcTicketRepository(db.connection());
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> repository.findQueue(null, AssigneeFilter.MINE, null));
+            assertThrows(IllegalArgumentException.class, () ->
+                    repository.findQueue(null, AssigneeFilter.MINE, null));
         }
     }
 
