@@ -204,7 +204,7 @@
     -fx-cursor: hand;
 }
 .agent-root .agent-button-danger:hover { -fx-background-color: danger-subtle; }
-.agent-root .agent-logout {
+.agent-root #logoutButton {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
     -fx-text-fill: fg-subtle;
@@ -212,7 +212,7 @@
     -fx-font-weight: 600;
     -fx-padding: 4px 8px 4px 8px;
 }
-.agent-root .agent-logout:hover { -fx-background-color: transparent; -fx-text-fill: accent; }
+.agent-root #logoutButton:hover { -fx-background-color: transparent; -fx-text-fill: accent; }
 
 /* ---- Inputs ---- */
 .agent-root .text-field, .agent-root .text-area, .agent-root .combo-box-base {

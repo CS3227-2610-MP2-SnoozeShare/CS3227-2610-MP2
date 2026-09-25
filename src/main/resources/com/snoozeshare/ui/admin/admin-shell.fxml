@@ -1,13 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.scene.control.Label?>
+<?import java.net.URL?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
-<BorderPane fx:id="shellRoot" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+<?import javafx.geometry.Insets?>
+<BorderPane fx:id="shellRoot" styleClass="agent-root" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.snoozeshare.ui.admin.AdminShellController" minWidth="1280" minHeight="800">
-    <top><HBox styleClass="header" spacing="24" alignment="CENTER_LEFT"><Label text="SnoozeShare" styleClass="app-title"/><Region HBox.hgrow="ALWAYS"/><Label fx:id="roleLabel" text="Support Agent"/></HBox></top>
-    <left><VBox styleClass="sidebar" spacing="12"><Label text="Operations" styleClass="nav-item" onMouseClicked="#showOperations"/><Label text="Disputes" styleClass="nav-item" onMouseClicked="#showDisputes"/><Label text="Accounts" styleClass="nav-item" onMouseClicked="#showAccounts"/><Label text="Categories" styleClass="nav-item" onMouseClicked="#showCategories"/><Button text="Log out" styleClass="outline-button" onAction="#logout"/></VBox></left>
-    <center><VBox styleClass="content" spacing="16"><Label fx:id="pageTitle" text="Operations" styleClass="page-title"/><Label fx:id="pageMessage" text="Monitor support operations and platform activity."/></VBox></center>
+    <stylesheets>
+        <URL value="@agent-theme.css"/>
+    </stylesheets>
+    <top>
+        <VBox>
+            <HBox styleClass="agent-topbar" spacing="24" alignment="CENTER_LEFT">
+                <Label text="SnoozeShare" styleClass="agent-brand"/>
+                <Label fx:id="roleLabel" text="Support Agent workspace" styleClass="agent-workspace-pill"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="logoutButton" text="Log out" styleClass="outline-button" onAction="#logout"/>
+                <Label fx:id="avatarLabel" text="SA" styleClass="agent-avatar"/>
+            </HBox>
+            <HBox styleClass="agent-tabstrip" spacing="4" alignment="CENTER_LEFT">
+                <Label fx:id="disputesTab" text="Disputes" styleClass="agent-tab, agent-tab-active" onMouseClicked="#showDisputes"/>
+                <Label fx:id="accountsTab" text="Accounts" styleClass="agent-tab" onMouseClicked="#showAccounts"/>
+                <Label fx:id="auditTab" text="Audit Log" styleClass="agent-tab" onMouseClicked="#showAuditLog"/>
+                <Label fx:id="categoriesTab" text="Categories" styleClass="agent-tab" onMouseClicked="#showCategories"/>
+            </HBox>
+        </VBox>
+    </top>
+    <center>
+        <VBox fx:id="placeholder" styleClass="agent-content" spacing="16">
+            <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
+            <Label fx:id="pageTitle" text="Disputes" styleClass="agent-page-title"/>
+            <Label fx:id="pageMessage" text="Review and resolve guest and host disputes." styleClass="agent-subtitle"/>
+        </VBox>
+    </center>
 </BorderPane>
