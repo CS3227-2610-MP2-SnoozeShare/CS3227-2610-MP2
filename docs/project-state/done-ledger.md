@@ -5,6 +5,7 @@ why, with a commit, plan or artifact as the reference. Not a copy of `git log`.
 
 | Date | What changed | Workstream | Ref |
 |---|---|---|---|
+| 2026-09-25 | Independent code review of W10: fixed settlement mode/refund consistency guard (Reject cannot refund; Accept needs a refund unless HOST_PAYOUT), Accept-with-zero-refund rejected in `TicketServiceImpl` and the dialog, render failures in the detail screen now shown instead of thrown | W10 | commits `1a3fa21`..`ef7b2c1` |
 | 2026-09-25 | Implemented W10 Agent Dispute Resolution (F9.1.1, F9.1.2, F9.2.2, F9.3.1): atomic full-escrow settlement, ticket queue/assign/notes/categories, dispute read models, temporary in-memory chat, Agent Disputes and Categories screens; `gradlew clean build` green with 154 tests | W10 | `docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md`, `docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md` |
 | 2026-09-25 | Made MigrationRunner adopt a pre-provisioned DB (needed to open the mock DB, which has no `schema_history`; D10) | W10 | `docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md`, `docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md` § 6 |
 | 2026-09-25 | Allowed agents on CONFIRMED->COMPLETED in BookingStateMachine (C23, D9) | W10 | `docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md`, `docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md` § 6 |
