@@ -5,9 +5,9 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
-<BorderPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+<BorderPane fx:id="shellRoot" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.snoozeshare.ui.admin.AdminShellController" minWidth="1280" minHeight="800">
     <top><HBox styleClass="header" spacing="24" alignment="CENTER_LEFT"><Label text="SnoozeShare" styleClass="app-title"/><Region HBox.hgrow="ALWAYS"/><Label fx:id="roleLabel" text="Support Agent"/></HBox></top>
-    <left><VBox styleClass="sidebar" spacing="12"><Label text="Operations" styleClass="nav-item" onMouseClicked="#showOperations"/><Label text="Disputes" styleClass="nav-item" onMouseClicked="#showDisputes"/><Label text="Accounts" styleClass="nav-item" onMouseClicked="#showAccounts"/><Button text="Log out" styleClass="outline-button" onAction="#logout"/></VBox></left>
+    <left><VBox styleClass="sidebar" spacing="12"><Label text="Operations" styleClass="nav-item" onMouseClicked="#showOperations"/><Label text="Disputes" styleClass="nav-item" onMouseClicked="#showDisputes"/><Label text="Accounts" styleClass="nav-item" onMouseClicked="#showAccounts"/><Label text="Categories" styleClass="nav-item" onMouseClicked="#showCategories"/><Button text="Log out" styleClass="outline-button" onAction="#logout"/></VBox></left>
     <center><VBox styleClass="content" spacing="16"><Label fx:id="pageTitle" text="Operations" styleClass="page-title"/><Label fx:id="pageMessage" text="Monitor support operations and platform activity."/></VBox></center>
 </BorderPane>
