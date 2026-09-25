@@ -49,7 +49,7 @@ Property updateStatus(UUID propertyId, ListingStatus status, UUID hostId);
 
 1. Require a non-null host actor with `Role.HOST` and an `ACTIVE` account.
 2. Validate the draft's required text, numeric values, enum/time fields, and date-independent property data.
-3. Create a new property identity if the draft has no ID; preserve the host-supplied ID only when it is non-null and not already owned by another host.
+3. Create a new property identity if the draft has no ID; reject any supplied ID that already exists so creation cannot become an unintended UPSERT.
 4. Normalize the new property to the acting host and `ListingStatus.ACTIVE`.
 5. Persist through `PropertyRepository.save`.
 6. Record one `LISTING_CREATED` audit entry with `before = null` and `after = saved property`.
