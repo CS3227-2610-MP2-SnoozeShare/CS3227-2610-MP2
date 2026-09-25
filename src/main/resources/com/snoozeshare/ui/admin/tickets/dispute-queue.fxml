@@ -9,20 +9,24 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="16" xmlns:fx="http://javafx.com/fxml"
+<VBox spacing="16" styleClass="agent-content" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.snoozeshare.ui.admin.tickets.DisputeQueueController">
     <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
 
     <HBox spacing="10" alignment="CENTER_LEFT">
         <Label text="Dispute queue" styleClass="page-title"/>
-        <Label fx:id="unassignedBadge" styleClass="badge-danger"/>
+        <Label fx:id="unassignedBadge" styleClass="badge-danger, agent-count-pill"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <ToggleButton fx:id="allChip" text="All" styleClass="filter-chip" selected="true"/>
-        <ToggleButton fx:id="unassignedChip" text="Unassigned" styleClass="filter-chip"/>
-        <ToggleButton fx:id="mineChip" text="Mine" styleClass="filter-chip"/>
-        <ComboBox fx:id="statusCombo" prefWidth="180"/>
+        <HBox spacing="8" alignment="CENTER_LEFT">
+            <ToggleButton fx:id="allChip" text="All" styleClass="filter-chip" selected="true"/>
+            <ToggleButton fx:id="unassignedChip" text="Unassigned" styleClass="filter-chip"/>
+            <ToggleButton fx:id="mineChip" text="Mine" styleClass="filter-chip"/>
+            <ComboBox fx:id="statusCombo" styleClass="agent-combo" prefWidth="160" prefHeight="28"/>
+        </HBox>
     </HBox>
 
-    <TableView fx:id="table" VBox.vgrow="ALWAYS"/>
+    <VBox styleClass="agent-card">
+        <TableView fx:id="table"/>
+    </VBox>
     <Label fx:id="emptyLabel" styleClass="small"/>
 </VBox>

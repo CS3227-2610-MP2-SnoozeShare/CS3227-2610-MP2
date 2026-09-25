@@ -1,5 +1,6 @@
 package com.snoozeshare.ui.admin.tickets;
 
+import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -12,10 +13,14 @@ import com.snoozeshare.infra.events.events.TicketResolvedEvent;
 import com.snoozeshare.service.DisputeSummary;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.DoubleBinding;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
@@ -24,6 +29,10 @@ import javafx.scene.control.ToggleGroup;
 
 public final class DisputeQueueController {
 
+    private static final double ROW_HEIGHT = 47;
+    private static final double HEADER_HEIGHT = 34;
+    private static final double TOTAL_SHARE = 5.8;
+    private static final double WIDTH_FACTOR = 0.995;
     private static final String[] STATUS_LABELS = {
         "All statuses", "Open", "Under review", "Resolved (approved)", "Resolved (rejected)"
     };
@@ -64,14 +73,22 @@ public final class DisputeQueueController {
         statusCombo.getSelectionModel().selectFirst();
         statusCombo.valueProperty().addListener((observable, previous, selected) -> refresh());
 
-        table.getColumns().add(column("Ticket", 90, DisputeSummary::ticketLabel));
-        table.getColumns().add(column("Subject", 260, DisputeSummary::title));
-        table.getColumns().add(column("Booking", 190, DisputeSummary::listingTitle));
-        table.getColumns().add(column("Guest / Host", 210,
-                summary -> summary.guestName() + " / " + summary.hostName()));
-        table.getColumns().add(column("Assigned", 130,
-                summary -> summary.assignedAgentName() == null ? "—" : summary.assignedAgentName()));
-        table.getColumns().add(column("Status", 150, summary -> statusText(summary.status())));
+        table.getStyleClass().add("agent-table");
+        table.setFixedCellSize(ROW_HEIGHT);
+        table.setPlaceholder(new Label());
+        table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+        table.prefHeightProperty().bind(Bindings.max(1, Bindings.size(table.getItems()))
+                .multiply(ROW_HEIGHT).add(HEADER_HEIGHT));
+        table.minHeightProperty().bind(table.prefHeightProperty());
+        table.maxHeightProperty().bind(table.prefHeightProperty());
+        table.getColumns().add(column("TICKET", 0.6, DisputeSummary::ticketLabel, "cell-id"));
+        table.getColumns().add(column("SUBJECT", 1.4, DisputeSummary::title, "cell-strong"));
+        table.getColumns().add(column("BOOKING", 1, DisputeSummary::listingTitle, null));
+        table.getColumns().add(column("GUEST / HOST", 1,
+                summary -> summary.guestName() + " / " + summary.hostName(), null));
+        table.getColumns().add(column("ASSIGNED", 1,
+                summary -> summary.assignedAgentName() == null ? "\u2014" : summary.assignedAgentName(), null));
+        table.getColumns().add(statusColumn());
         table.setRowFactory(view -> {
             TableRow<DisputeSummary> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
@@ -117,12 +134,71 @@ public final class DisputeQueueController {
         unassignedBadge.setManaged(unassigned > 0);
     }
 
-    private static TableColumn<DisputeSummary, String> column(String title, double width,
-            Function<DisputeSummary, String> value) {
-        TableColumn<DisputeSummary, String> column = new TableColumn<>(title);
+    private TableColumn<DisputeSummary, String> column(String title, double share,
+            Function<DisputeSummary, String> value, String cellClass) {
+        TableColumn<DisputeSummary, String> column = baseColumn(title, share);
         column.setCellValueFactory(cell -> new ReadOnlyStringWrapper(value.apply(cell.getValue())));
-        column.setPrefWidth(width);
+        column.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty ? null : item);
+                getStyleClass().remove(cellClass == null ? "" : cellClass);
+                if (!empty && cellClass != null) {
+                    getStyleClass().add(cellClass);
+                }
+            }
+        });
         return column;
+    }
+
+    private TableColumn<DisputeSummary, DisputeSummary> statusColumn() {
+        TableColumn<DisputeSummary, DisputeSummary> column = baseColumn("STATUS", 0.8);
+        column.setCellValueFactory(cell -> new ReadOnlyObjectWrapper<>(cell.getValue()));
+        column.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(DisputeSummary item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                    return;
+                }
+                Label pill = new Label(pillText(item).toUpperCase(Locale.ROOT));
+                pill.getStyleClass().addAll("agent-pill", pillClass(item));
+                setGraphic(pill);
+            }
+        });
+        return column;
+    }
+
+    private <T> TableColumn<DisputeSummary, T> baseColumn(String title, double share) {
+        TableColumn<DisputeSummary, T> column = new TableColumn<>(title);
+        column.setResizable(false);
+        column.setReorderable(false);
+        column.setSortable(false);
+        DoubleBinding width = table.widthProperty().multiply(share * WIDTH_FACTOR / TOTAL_SHARE);
+        column.prefWidthProperty().bind(width);
+        column.minWidthProperty().bind(width);
+        column.maxWidthProperty().bind(width);
+        return column;
+    }
+
+    static String pillText(DisputeSummary summary) {
+        return switch (summary.status()) {
+            case OPEN -> summary.assignedAgentName() == null ? "Unassigned" : "In review";
+            case UNDER_REVIEW -> "In review";
+            case RESOLVED_APPROVED -> "Resolved";
+            case RESOLVED_REJECTED -> "Rejected";
+        };
+    }
+
+    static String pillClass(DisputeSummary summary) {
+        return switch (summary.status()) {
+            case OPEN -> summary.assignedAgentName() == null ? "agent-pill-danger" : "agent-pill-warning";
+            case UNDER_REVIEW -> "agent-pill-warning";
+            case RESOLVED_APPROVED -> "agent-pill-success";
+            case RESOLVED_REJECTED -> "agent-pill-danger";
+        };
     }
 
     static String statusText(TicketStatus status) {
