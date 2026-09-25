@@ -77,7 +77,7 @@ class DisputeQueryServiceTest {
             assertEquals(BookingStatus.CONFIRMED, detail.bookingStatus());
             assertTrue(detail.escrowHeld());
             assertEquals(0, new BigDecimal("210").compareTo(detail.escrowAmount()));
-            assertEquals("Stay ended — escrow held", detail.phaseLabel());
+            assertEquals("Stay ended \u2014 escrow held", detail.phaseLabel());
             assertEquals("Sophia Rossi", detail.guestName());
             assertEquals("Diego Fernandez", detail.hostName());
             assertEquals("Modern Studio Near Metro", detail.listingTitle());

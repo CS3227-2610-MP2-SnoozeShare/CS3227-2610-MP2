@@ -110,7 +110,7 @@ class AdminUiSmokeTest {
                 Button accept = (Button) loader.getNamespace().get("acceptButton");
                 Button reject = (Button) loader.getNamespace().get("rejectButton");
                 Button manual = (Button) loader.getNamespace().get("manualButton");
-                assertEquals("Accept — remedy guest", accept.getText());
+                assertEquals("Accept \u2014 remedy guest", accept.getText());
                 return new boolean[] {assign.isDisabled(), accept.isDisabled(), reject.isDisabled(),
                     manual.isDisabled(), containsForce(root)};
             });

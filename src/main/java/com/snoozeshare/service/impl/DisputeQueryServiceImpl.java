@@ -94,7 +94,7 @@ public final class DisputeQueryServiceImpl implements DisputeQueryService {
     private static String phase(Booking booking, boolean held, LocalDate today) {
         if (booking.status() == BookingStatus.CONFIRMED) {
             if (held && booking.endDate().isBefore(today)) {
-                return "Stay ended — escrow held";
+                return "Stay ended \u2014 escrow held";
             }
             if (booking.startDate().isAfter(today)) {
                 return "Upcoming";
