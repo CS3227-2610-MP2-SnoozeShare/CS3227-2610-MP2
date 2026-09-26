@@ -93,9 +93,8 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W12 | F11 — Platform Audit Trail & Analytics | Not started | — | — | Backlog only: §5 | — |
 | W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
 
-**Handoffs into W3 (raised by W10, 2026-09-25)** — W3 is being built on `origin/w3` by another
-session; these must be honoured or reconciled when that branch merges with
-`agent-dispute-resolution-and-state-overrides`:
+**Handoffs into W3 (raised by W10, 2026-09-25; W3 reached `main` 2026-09-25, W10 merged `main` 2026-09-26 and the
+stubs below are still open)** — honour or reconcile these:
 
 1. **Auto-complete must skip bookings with an open ticket** (C17, backlog F7.3.1 updated). Any
    scheduler or service that moves `CONFIRMED → COMPLETED` after checkout + 7 days must leave a
@@ -113,6 +112,7 @@ session; these must be honoured or reconciled when that branch merges with
    balance, whereas the architecture doc and mock DB treat `feeAmount` on `BOOKING_PAYOUT` rows as
    informational (`amount` already net). W10 therefore writes wallet + ledger rows itself; whoever
    builds W8's payout settlement must not pass a fee through `WalletLedgerWriter` unchanged.
+   **Merge finding (2026-09-26):** `BookingServiceImpl.forceTransition(...)` on `main` is stubbed `"Owned by W10"`, but force actions were dropped (C22), so W10 does not implement it; remove it from `BookingService` or leave it unsupported. `BookingServiceImpl.complete` (`"Owned by W8"`) and the auto-complete guard in item 1 are still unbuilt on `main`.
 3. **Reconcile the state machine** (D9, C23). W10 allows `Role.AGENT` on `CONFIRMED → COMPLETED` in
    `BookingStateMachine`. If W3 touches that file, keep the AGENT permission.
 4. **Shared wiring:** both branches edit `AppContext` (additive service/repository wiring) —
@@ -512,6 +512,6 @@ The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-st
 — every change, big or small, newest first.
 
 - **Latest entry:** 2026-09-25
-- **Entries:** 42 (4 backfilled coarsely from git history)
+- **Entries:** 59 (4 backfilled coarsely from git history)
 
 Deviations stay in § Deviations above: those are read every session.

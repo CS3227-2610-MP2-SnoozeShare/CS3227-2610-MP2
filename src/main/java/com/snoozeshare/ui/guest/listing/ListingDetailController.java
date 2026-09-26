@@ -20,9 +20,6 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 
 public final class ListingDetailController {
-    private static final DateTimeFormatter TIME_FORMAT =
-            DateTimeFormatter.ofPattern("h:mm a");
-
 
     private static final DateTimeFormatter TIME_FORMAT =
             DateTimeFormatter.ofPattern("h:mm a");
