@@ -26,7 +26,8 @@
                     <Label fx:id="balanceAmountLabel" text="\$0.00" styleClass="wallet-balance-amount"/>
                     <Label text="SGD" styleClass="wallet-balance-currency"/>
                 </HBox>
-                <Label text="Funds available for wallet actions" styleClass="wallet-balance-hint"/>
+                <Label text="Includes $0.00 currently held in escrow for pending bookings"
+                       styleClass="wallet-balance-hint"/>
             </VBox>
             <VBox spacing="12" prefWidth="220" alignment="CENTER">
                 <Button text="Top up" maxWidth="Infinity" styleClass="wallet-top-up-button"
@@ -49,8 +50,6 @@
                     <TableColumn fx:id="balanceAfterColumn" text="BALANCE AFTER" prefWidth="180"/>
                 </columns>
             </TableView>
-            <Label fx:id="emptyLabel" text="No transactions yet." styleClass="small"
-                   visible="false" managed="false"/>
         </VBox>
     </VBox>
 </StackPane>

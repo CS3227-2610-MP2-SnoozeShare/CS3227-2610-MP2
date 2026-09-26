@@ -45,6 +45,10 @@ class WalletUiStructureTest {
             assertTrue(fxml.contains(heading), heading);
         }
         assertTrue(fxml.contains("AVAILABLE BALANCE"));
+        assertTrue(fxml.contains(
+                "Includes $0.00 currently held in escrow for pending bookings"));
+        assertTrue(!fxml.contains("Funds available for wallet actions"));
+        assertTrue(!fxml.contains("No transactions yet."));
         assertTrue(fxml.contains("fx:id=\"balanceAmountLabel\""));
         assertTrue(fxml.contains("styleClass=\"wallet-balance-currency\""));
         assertTrue(fxml.contains("wallet.css"));

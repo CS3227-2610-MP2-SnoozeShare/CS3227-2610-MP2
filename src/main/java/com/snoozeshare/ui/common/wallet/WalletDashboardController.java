@@ -38,7 +38,6 @@ public final class WalletDashboardController {
     @FXML private TableColumn<WalletTransaction, String> relatedColumn;
     @FXML private TableColumn<WalletTransaction, String> amountColumn;
     @FXML private TableColumn<WalletTransaction, String> balanceAfterColumn;
-    @FXML private Label emptyLabel;
 
     private AppContext context;
     private final List<Subscription> subscriptions = new ArrayList<>();
@@ -95,13 +94,9 @@ public final class WalletDashboardController {
         java.util.Collections.reverse(newestFirst);
         transactionTable.getItems().setAll(newestFirst);
         if (newestFirst.isEmpty()) {
-            emptyLabel.setVisible(true);
-            emptyLabel.setManaged(true);
             return;
         }
 
-        emptyLabel.setVisible(false);
-        emptyLabel.setManaged(false);
     }
 
     private static String amountWithFee(WalletTransaction transaction) {
