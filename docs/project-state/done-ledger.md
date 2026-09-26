@@ -5,6 +5,7 @@ why, with a commit, plan or artifact as the reference. Not a copy of `git log`.
 
 | Date | What changed | Workstream | Ref |
 |---|---|---|---|
+| 2026-09-26 | W12 Platform Audit Trail marked Done on operator confirmation; Guide set to Pending | W12 | `PROJECT_STATE.md` § Workstreams |
 | 2026-09-26 | Recorded C33 (operator UI amendments), fixed spec § 5-6 (multi-select, date pickers, Clear button, fixed headers), added D18 and cleared the double-border Known Gap | W12 | `PROJECT_STATE.md` C33; W12 spec |
 | 2026-09-26 | Audit Log UI amendments (C33): `MultiSelectMenu` action filter at the same height as the other inputs, board-styled single-border date pickers and calendar popup (no range, no Clear/Apply), red-outline Clear, fixed headers with only rows scrolling in the queue, audit and categories screens, grey audit row hover with default cursor; new layout/multi-select tests and popup snapshots | W12 | commit `4882c0c`; `build/ui-snapshots/agent-audit-*.png` |
 | 2026-09-26 | Audit filter takes a set of actions (`AuditFilter.actions`, `AuditCriteria.actionTypes`, `IN` clause with bound parameters, empty = all) with repository and service tests | W12 | commit `cea5340` |
