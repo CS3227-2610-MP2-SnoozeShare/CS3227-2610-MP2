@@ -10,8 +10,11 @@ import org.junit.jupiter.api.Test;
 
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.app.SceneRouter;
+import com.snoozeshare.domain.enums.AuditAction;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
+import com.snoozeshare.service.AuditFilter;
+import com.snoozeshare.service.AuditRecord;
 
 class W1FoundationIntegrationTest {
 
@@ -40,16 +43,16 @@ class W1FoundationIntegrationTest {
             AtomicInteger events = new AtomicInteger();
             context.eventBus().subscribe(WalletTransactionRecordedEvent.class, event -> {
                 events.incrementAndGet();
-                context.auditService().record(guest.userId(), "WALLET_TRANSACTION_RECORDED",
-                        "WALLET_TRANSACTION", event.transactionId(), null, event.walletId());
+                context.auditService().record(AuditRecord.builder(guest.userId(), AuditAction.TOP_UP,
+                        "WalletTransaction", event.transactionId()).subject(guest.userId()).build());
             });
             var transaction = context.walletService().topUp(guest.userId(),
                     new BigDecimal("25.00"));
 
             assertEquals(1, events.get());
             assertEquals(0, new BigDecimal("25.00").compareTo(transaction.balanceAfter()));
-            assertEquals(1, context.auditService().query(guest.userId(), null,
-                    "WALLET_TRANSACTION_RECORDED").size());
+            assertEquals(1, context.auditService().search(
+                    new AuditFilter(guest.userId().toString(), AuditAction.TOP_UP, null, null), 50, 0).size());
         }
     }
 }

@@ -16,6 +16,7 @@ import com.snoozeshare.domain.enums.AccountStatus;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.infra.db.migration.MigrationRunner;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
+import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.impl.UserServiceImpl;
 
@@ -58,10 +59,8 @@ class AuditTrailMigrationTest {
             assertEquals("SnoozeShare System", system.displayName());
             assertEquals(Role.AGENT, system.role());
             assertEquals(AccountStatus.SUSPENDED, system.accountStatus());
-            assertThrows(IllegalStateException.class,
-                    () -> new UserServiceImpl(connection, users,
-                            new com.snoozeshare.repository.jdbc.JdbcWalletRepository(connection))
-                            .authenticate(system.email()));
+            var userService = new UserServiceImpl(connection, users, new JdbcWalletRepository(connection));
+            assertThrows(IllegalStateException.class, () -> userService.authenticate(system.email()));
         }
     }
 }

@@ -41,12 +41,12 @@ class AuditRecordTest {
 
     @Test
     void requiresActorActionAndEntity() {
-        assertThrows(IllegalArgumentException.class,
-                () -> AuditRecord.builder(null, AuditAction.TOP_UP, "WalletTransaction", ENTITY).build());
-        assertThrows(IllegalArgumentException.class,
-                () -> AuditRecord.builder(ACTOR, null, "WalletTransaction", ENTITY).build());
-        assertThrows(IllegalArgumentException.class,
-                () -> AuditRecord.builder(ACTOR, AuditAction.TOP_UP, "WalletTransaction", null).build());
+        assertThrows(IllegalArgumentException.class, () ->
+                AuditRecord.builder(null, AuditAction.TOP_UP, "WalletTransaction", ENTITY).build());
+        assertThrows(IllegalArgumentException.class, () ->
+                AuditRecord.builder(ACTOR, null, "WalletTransaction", ENTITY).build());
+        assertThrows(IllegalArgumentException.class, () ->
+                AuditRecord.builder(ACTOR, AuditAction.TOP_UP, "WalletTransaction", null).build());
     }
 
     @Test

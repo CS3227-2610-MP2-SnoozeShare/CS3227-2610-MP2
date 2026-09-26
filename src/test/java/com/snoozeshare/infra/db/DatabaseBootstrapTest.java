@@ -58,7 +58,7 @@ class DatabaseBootstrapTest {
             try (Statement statement = connection.createStatement();
                  ResultSet result = statement.executeQuery("SELECT COUNT(*) FROM users")) {
                 result.next();
-                assertEquals(0, result.getInt(1));
+                assertEquals(1, result.getInt(1)); // only the System user seeded by V002
             }
         }
     }
@@ -82,7 +82,7 @@ class DatabaseBootstrapTest {
             try (Statement statement = connection.createStatement();
                  ResultSet result = statement.executeQuery("SELECT COUNT(*) FROM users")) {
                 result.next();
-                assertEquals(1, result.getInt(1));
+                assertEquals(2, result.getInt(1)); // the System user plus the committed one
             }
         }
     }

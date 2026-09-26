@@ -69,7 +69,8 @@ public final class AppContext implements AutoCloseable {
         this.userService = new UserServiceImpl(connection, users, wallets);
         this.walletService = new WalletServiceImpl(connection, wallets,
                 new JdbcWalletTransactionRepository(connection), eventBus);
-        this.auditService = new AuditServiceImpl(new JdbcAuditLogRepository(connection));
+        this.auditService = new AuditServiceImpl(new JdbcAuditLogRepository(connection), users,
+                Clock.systemDefaultZone());
         JdbcPropertyRepository propertyRepo = new JdbcPropertyRepository(connection);
         JdbcAvailabilityBlockRepository blockRepo = new JdbcAvailabilityBlockRepository(connection);
         JdbcBookingRepository bookingRepo = new JdbcBookingRepository(connection);

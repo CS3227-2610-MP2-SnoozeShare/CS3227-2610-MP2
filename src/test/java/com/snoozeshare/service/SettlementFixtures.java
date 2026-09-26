@@ -30,6 +30,7 @@ final class SettlementFixtures {
         return new DisputeSettlementServiceImpl(connection, new JdbcTicketRepository(connection),
                 new JdbcBookingRepository(connection), new JdbcPropertyRepository(connection),
                 new JdbcUserRepository(connection), new JdbcWalletRepository(connection),
-                transactions, new AuditServiceImpl(new JdbcAuditLogRepository(connection)), bus, CLOCK);
+                transactions, new AuditServiceImpl(new JdbcAuditLogRepository(connection),
+                        new JdbcUserRepository(connection), CLOCK), bus, CLOCK);
     }
 }

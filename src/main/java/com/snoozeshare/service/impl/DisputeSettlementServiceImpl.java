@@ -7,6 +7,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 
+import com.snoozeshare.domain.enums.AuditAction;
 import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.domain.enums.RemedyType;
 import com.snoozeshare.domain.enums.ResolutionMode;
@@ -35,6 +36,7 @@ import com.snoozeshare.repository.TicketRepository;
 import com.snoozeshare.repository.UserRepository;
 import com.snoozeshare.repository.WalletRepository;
 import com.snoozeshare.repository.WalletTransactionRepository;
+import com.snoozeshare.service.AuditRecord;
 import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.DisputeSettlementService;
 import com.snoozeshare.service.Settlement;
@@ -148,12 +150,9 @@ public final class DisputeSettlementServiceImpl implements DisputeSettlementServ
                 booking.guestId(), booking.startDate(), booking.endDate(), BookingStatus.COMPLETED,
                 booking.nightlyRateSnapshot(), booking.totalAmount(), booking.createdAt(),
                 booking.decidedAt(), now));
-        audit.record(agentId, "TICKET_RESOLVED", "Ticket", ticketId,
-                json("status", ticket.status().name()),
-                json("status", resolved.name(), "mode", mode.name(),
-                        "guestRefund", split.guestRefund().toPlainString(),
-                        "hostPayout", split.hostNet().toPlainString(),
-                        "fee", split.fee().toPlainString(), "reason", reason));
+        audit.record(AuditRecord.builder(agentId, AuditAction.TICKET_RESOLVED, "Ticket", ticketId)
+                .status(ticket.status(), resolved).reason(reason).subject(ticket.raisedByUserId())
+                .booking(booking.bookingId()).ticket(ticketId).at(now).build());
         return new Settlement(updatedTicket, updatedBooking, split, guestTransaction, hostTransaction);
     }
 
