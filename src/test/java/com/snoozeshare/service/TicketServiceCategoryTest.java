@@ -29,6 +29,17 @@ class TicketServiceCategoryTest {
     private final UUID guest = UUID.randomUUID();
     private final Fakes.RecordingAudit audit = new Fakes.RecordingAudit();
     private final Fakes.InMemoryTickets tickets = new Fakes.InMemoryTickets();
+    private static final com.snoozeshare.infra.events.EventBus NOOP_BUS =
+            new com.snoozeshare.infra.events.EventBus() {
+                @Override
+                public <T extends com.snoozeshare.infra.events.DomainEvent>
+                        com.snoozeshare.infra.events.Subscription subscribe(Class<T> type,
+                        java.util.function.Consumer<T> subscriber) {
+                    return () -> {};
+                }
+                @Override
+                public void publish(com.snoozeshare.infra.events.DomainEvent event) {}
+            };
     private final TicketService service = new TicketServiceImpl(tickets,
             new Fakes.InMemoryCategories(), null,
             new Fakes.StubUsers()
@@ -37,7 +48,7 @@ class TicketServiceCategoryTest {
                     .with(new User(guest, Role.GUEST, "Gus", "gus@x.test", AccountStatus.ACTIVE, null,
                             Instant.parse("2026-01-01T00:00:00Z"))),
             new Fakes.RecordingSettlement(), audit,
-            Clock.fixed(Instant.parse("2026-09-25T04:00:00Z"), ZoneOffset.UTC));
+            Clock.fixed(Instant.parse("2026-09-25T04:00:00Z"), ZoneOffset.UTC), NOOP_BUS);
 
     @Test
     void createTrimsTheLabelAndMakesTheCategoryActive() {

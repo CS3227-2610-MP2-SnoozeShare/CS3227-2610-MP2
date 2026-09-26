@@ -2,10 +2,13 @@ package com.snoozeshare.service.impl;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 import com.snoozeshare.domain.enums.AssigneeFilter;
+import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.TicketStatus;
 import com.snoozeshare.domain.model.Booking;
@@ -14,6 +17,8 @@ import com.snoozeshare.domain.model.TicketCategory;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.statemachine.TicketStateMachine;
 import com.snoozeshare.domain.validation.DomainValidation;
+import com.snoozeshare.infra.events.EventBus;
+import com.snoozeshare.infra.events.events.TicketOpenedEvent;
 import com.snoozeshare.repository.BookingRepository;
 import com.snoozeshare.repository.TicketCategoryRepository;
 import com.snoozeshare.repository.TicketRepository;
@@ -33,10 +38,12 @@ public final class TicketServiceImpl implements TicketService {
     private final DisputeSettlementService settlement;
     private final AuditService audit;
     private final Clock clock;
+    private final EventBus eventBus;
 
     public TicketServiceImpl(TicketRepository tickets, TicketCategoryRepository categories,
                              BookingRepository bookings, UserRepository users,
-                             DisputeSettlementService settlement, AuditService audit, Clock clock) {
+                             DisputeSettlementService settlement, AuditService audit,
+                             Clock clock, EventBus eventBus) {
         this.tickets = tickets;
         this.categories = categories;
         this.bookings = bookings;
@@ -44,11 +51,56 @@ public final class TicketServiceImpl implements TicketService {
         this.settlement = settlement;
         this.audit = audit;
         this.clock = clock;
+        this.eventBus = eventBus;
     }
 
     @Override
     public Ticket fileTicket(NewTicketRequest request, UUID raisedByUserId, Role raisedByRole) {
-        throw new UnsupportedOperationException("Owned by W4");
+        Booking booking = bookings.findById(request.bookingId())
+                .orElseThrow(() -> new IllegalArgumentException("Booking does not exist"));
+
+        if (!booking.guestId().equals(raisedByUserId)) {
+            throw new IllegalArgumentException("Only the booking guest may file a ticket");
+        }
+
+        LocalDate today = LocalDate.now(clock);
+        boolean stayEnded = !booking.endDate().isAfter(today);
+        boolean statusEligible = booking.status() == BookingStatus.CONFIRMED
+                || booking.status() == BookingStatus.COMPLETED;
+        if (!statusEligible || (booking.status() == BookingStatus.CONFIRMED && !stayEnded)) {
+            throw new IllegalStateException("Booking is not eligible for a dispute");
+        }
+
+        if (today.isAfter(booking.endDate().plusDays(7))) {
+            throw new IllegalStateException("Dispute window has closed (7 days after stay end)");
+        }
+
+        String category = DomainValidation.requireText(request.category(), "category");
+        boolean validCategory = categories.findActive().stream()
+                .anyMatch(c -> c.label().equalsIgnoreCase(category.trim()));
+        if (!validCategory) {
+            throw new IllegalArgumentException("Invalid ticket category");
+        }
+
+        String title = DomainValidation.requireText(request.title(), "title");
+        String description = DomainValidation.requireText(request.description(), "description");
+
+        boolean duplicate = tickets.findByRaisedByUserId(raisedByUserId).stream()
+                .anyMatch(t -> t.bookingId().equals(request.bookingId()));
+        if (duplicate) {
+            throw new IllegalStateException("A ticket already exists for this booking");
+        }
+
+        Instant now = clock.instant();
+        Ticket ticket = new Ticket(UUID.randomUUID(), request.bookingId(), raisedByUserId,
+                raisedByRole, category.trim(), title.trim(), description.trim(),
+                request.requestedRemedy(), request.supportingText(),
+                TicketStatus.OPEN, null, null, null, now, null);
+
+        Ticket saved = tickets.save(ticket);
+        audit.record(raisedByUserId, "TICKET_FILED", "Ticket", saved.ticketId(), null, saved);
+        eventBus.publish(new TicketOpenedEvent(saved.ticketId(), raisedByUserId, now));
+        return saved;
     }
 
     @Override

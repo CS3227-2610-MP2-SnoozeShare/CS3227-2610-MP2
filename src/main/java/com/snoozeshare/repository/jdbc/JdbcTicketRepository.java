@@ -89,6 +89,23 @@ public final class JdbcTicketRepository implements TicketRepository {
     }
 
     @Override
+    public List<Ticket> findByRaisedByUserId(UUID userId) {
+        try (var statement = connection.prepareStatement(
+                "SELECT * FROM tickets WHERE raisedByUserId = ? ORDER BY createdAt DESC")) {
+            statement.setString(1, JdbcCodecs.uuid(userId));
+            try (var result = statement.executeQuery()) {
+                List<Ticket> tickets = new ArrayList<>();
+                while (result.next()) {
+                    tickets.add(RowMappers.ticket(result));
+                }
+                return tickets;
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to query tickets by user", exception);
+        }
+    }
+
+    @Override
     public Ticket save(Ticket ticket) {
         try (var statement = connection.prepareStatement(
                 "INSERT INTO tickets (ticketId, bookingId, raisedByUserId, raisedByRole, category, "

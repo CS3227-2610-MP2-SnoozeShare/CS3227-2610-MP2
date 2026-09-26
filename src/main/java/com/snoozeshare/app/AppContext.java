@@ -88,7 +88,7 @@ public final class AppContext implements AutoCloseable {
                 ticketRepo, bookingRepo, propertyRepo, users, wallets, txnRepo, auditService,
                 eventBus, clock);
         this.ticketService = new TicketServiceImpl(ticketRepo, categoryRepo, bookingRepo, users,
-                settlementService, auditService, clock);
+                settlementService, auditService, clock, eventBus);
         this.disputeQueryService = new DisputeQueryServiceImpl(ticketRepo, bookingRepo, propertyRepo,
                 users, txnRepo, clock);
         this.messageService = new InMemoryMessageService(clock);

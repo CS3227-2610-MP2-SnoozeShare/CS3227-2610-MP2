@@ -32,10 +32,12 @@ class TicketServiceIntegrationTest {
         var connection = db.connection();
         var settlement = SettlementFixtures.settlement(db, new InProcessEventBus(),
                 new JdbcWalletTransactionRepository(connection));
+        var eventBus = new InProcessEventBus();
         return new TicketServiceImpl(new JdbcTicketRepository(connection),
                 new JdbcTicketCategoryRepository(connection), new JdbcBookingRepository(connection),
                 new JdbcUserRepository(connection), settlement,
-                new AuditServiceImpl(new JdbcAuditLogRepository(connection)), SettlementFixtures.CLOCK);
+                new AuditServiceImpl(new JdbcAuditLogRepository(connection)), SettlementFixtures.CLOCK,
+                eventBus);
     }
 
     @Test

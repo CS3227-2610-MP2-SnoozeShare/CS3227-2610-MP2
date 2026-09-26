@@ -62,6 +62,14 @@ public final class Fakes {
         }
 
         @Override
+        public List<Ticket> findByRaisedByUserId(UUID userId) {
+            return store.values().stream()
+                    .filter(t -> t.raisedByUserId().equals(userId))
+                    .sorted(Comparator.comparing(Ticket::createdAt).reversed())
+                    .toList();
+        }
+
+        @Override
         public Ticket save(Ticket ticket) {
             store.put(ticket.ticketId(), ticket);
             return ticket;
