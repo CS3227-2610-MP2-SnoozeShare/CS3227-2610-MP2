@@ -8,7 +8,7 @@ every boundary, not at the end of the session.
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `w8`
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-27 by Codex — W8 optional host rejection message approved for implementation
+- **Last updated:** 2026-09-27 by Codex — W8 implementation complete; awaiting operator confirmation
 - **Last verified against repo:** 2026-09-26
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
 
@@ -67,7 +67,7 @@ three iterations).
 | S7 | 2026-09-25 | Codex | w7 | W7 scope assessment | Paused | `w7` created from `w6`; booking display maps to W8/F7.1, while W7 remains calendar/date overrides | 2026-09-25 |
 | S8 | 2026-09-26 | Codex | w7 | W7 | Paused | W7 complete: host calendar, inclusive manual blocks, removal, validation, and layout delivered; full tests/build pass | 2026-09-26 |
 | S9 | 2026-09-26 | Codex | w8 | Host portal UI refinement | Paused | Completed wallet/listing layout, copy, metrics, action sizing, and status-control spacing; focused tests, XML validation, Checkstyle, and diff checks pass; full suite retains two unrelated UI failures | 2026-09-26 |
-| S14 | 2026-09-26 | Codex | w8 | W8 — Host Request Queue, Earnings & Disputes | Active | Tasks 1–5 complete; executing final verification and state reconciliation | 2026-09-27 |
+| S14 | 2026-09-26 | Codex | w8 | W8 — Host Request Queue, Earnings & Disputes | Paused | W8 implementation and verification complete; awaiting operator confirmation | 2026-09-27 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -209,6 +209,9 @@ Booking escrow publishes `WalletTransactionRecordedEvent` after its transaction 
 wallet headers and wallet dashboards synchronized with the persisted balance.
 Host Listings, Bookings, listing details, and listing forms now also replace the shell center
 directly; their page titles and descriptions are defined inside each page view.
+W8 adds the native Host Booking requests page with agent-style active/past tables, gross/net/rating
+projections, approve/reject confirmation modals, optional persisted host rejection messages, and
+startup/page-load completion sweeps.
 The Host listing create/edit form uses a responsive two-column, four-card layout with
 human-readable property/status dropdowns, text-field capacity inputs, two-column amenity tiles,
 and create/edit-specific action labels.
@@ -244,8 +247,8 @@ of this becomes code — not yet started. Two schema gaps found while grounding 
 atomic wallet ledger, and audit implementation exist. W2 adds `AvailabilityServiceImpl` and
 `ListingServiceImpl`. W3 adds `BookingServiceImpl` (submitRequest with atomic escrow+block,
 cancel with 48h refund policy, decide for host approve/reject, tripsFor/pendingRequestsFor
-queries) and `TransactionServiceImpl` (holdEscrow, refundEscrow, historyFor — with
-settleBookingCompletion/applyTicketRemedy/manualOverride stubbed for W8/W10). `UserService`
+queries) and `TransactionServiceImpl` (holdEscrow, refundEscrow, historyFor, and atomic
+normal booking settlement; `applyTicketRemedy`/`manualOverride` remain owned by W10). `UserService`
 gained a `findById(UUID)` method. The proposal specifies nine service interfaces
 (`ListingService`, `AvailabilityService`, `BookingService`, `TicketService`, `WalletService`,
 `TransactionService`, `UserService`, `ReviewService`, `AuditService`) with full method
@@ -256,7 +259,8 @@ status changes, with validation and audit records.
 `ListingMetricsService` supplies host dashboard booking counts and average review ratings with
 zero-value fallbacks for listings without activity.
 
-**W10 adds:** `TicketServiceImpl` (queue, assign, notes, resolve, category admin),
+**W8 adds:** host booking row projections, message-aware host decisions, guarded completion and
+net host payout settlement after the 7-day dispute window. **W10 adds:** `TicketServiceImpl` (queue, assign, notes, resolve, category admin),
 `DisputeSettlementServiceImpl` (atomic full-escrow two-sided settlement, C20),
 `DisputeQueryServiceImpl` (queue/detail read models for the Agent UI) and a temporary
 `InMemoryMessageService` (session-only chat; W13 replaces it).
@@ -294,7 +298,9 @@ through (guest cancel, host approve/reject, agent force-override all call the sa
 `User`, `Wallet`, `WalletTransaction`, and `AuditLog` JDBC adapters. W2 adds
 `JdbcPropertyRepository` (dynamic WHERE clause building for search, UPSERT for save),
 `JdbcAvailabilityBlockRepository` (overlap detection: `startDate < ? AND endDate > ?`), and
-`JdbcBookingRepository` (overlap detection filtering PENDING+CONFIRMED only). Shared `RowMappers`
+`JdbcBookingRepository` (overlap detection filtering PENDING+CONFIRMED only, host/history and
+completion projections), `JdbcReviewRepository`, and `JdbcTicketRepository` booking lookup.
+Shared `RowMappers`
 centralizes result-set-to-record mapping with graceful unknown-amenity handling. Remaining
 feature-specific aggregate adapters are owned by the workstreams that implement those features. The proposal specifies one
 repository interface per aggregate (`UserRepository`,
@@ -303,16 +309,17 @@ repository interface per aggregate (`UserRepository`,
 each returning/consuming domain records — only `repository.jdbc.*` may import `java.sql.*`.
 Schema is specified table-by-table in
 [architecture proposal §4](docs/SnoozeShare-Architecture-Proposal.md) (users, properties,
-availability_blocks, bookings, wallets, wallet_transactions — an append-only ledger, tickets,
+availability_blocks, bookings (including nullable `hostDecisionMessage`), wallets, wallet_transactions — an append-only ledger, tickets,
 ticket_categories, reviews, audit_log). No migrations exist yet (`infra.db.migration` is still
 unbuilt). A hand-written (non-Flyway) copy of this schema plus a full mock dataset has been built
 into a **shared, committed reference DB** — `db/schema.sql` / `db/seed-mock-data.sql` /
 `db/snoozeshare-mock.db` — for the team to query together; it is a dev/reference artifact only,
 not loaded by the application at startup. See § Record.
 
-**W10 adds:** `JdbcTicketRepository` and `JdbcTicketCategoryRepository`, and `MigrationRunner` now
-adopts a pre-provisioned database (one with tables but no `schema_history`, such as the mock DB) by
-recording the baseline (D10).
+**W8 adds:** migration V002 for `bookings.hostDecisionMessage`; `MigrationRunner` applies it to
+fresh and adopted databases, while JDBC booking reads/writes remain compatible with older
+pre-provisioned copies. **W10 adds:** `JdbcTicketRepository` and `JdbcTicketCategoryRepository`,
+and `MigrationRunner` adopts a pre-provisioned database (D10).
 
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
@@ -456,6 +463,11 @@ architecture area remain recorded in that area's table.
 - **Found during W10 execution (2026-09-25, all fixed, each in the ledger):** (a) mock seed timestamps lacked the trailing `Z`, so `JdbcCodecs.instant` rejected them; (b) mock seed IDs used non-hex prefixes, so `UUID.fromString` threw (rule now in § Orientation repo map); (c) the baseline build was red from 7 pre-existing W2 checkstyle violations.
 - **Backlog edits made 2026-09-25 (operator approved):** `docs/ProductBacklog.md` — F9.2.1 struck as dropped; F9.2.2 reworded to full-escrow settlement; F9.1.1 gains chat threads; F7.3.1 gains the open-ticket guard; new epic F12 Messaging (W13); changelog entry added.
 - **Cross-workstream requirements:** listed under § Workstreams → *Handoffs into W3*.
+- **D13 (W8, resolved 2026-09-27)** — The committed reference/mock database predates V002 and
+  some tests open it without running migrations. W8 maps a missing `hostDecisionMessage` as null
+  and uses a legacy-column save shape when needed; migrated application databases still receive
+  V002 normally. Full verification retains three pre-existing UI failures in `ShellLayoutTest`
+  and `AgentModalTest`, unrelated to W8; all W8-focused tests and Checkstyle pass.
 
 ### D2 — Two schema gaps found while grounding the UI mockups against `db/schema.sql` (OPEN 2026-09-23)
 
