@@ -38,6 +38,14 @@ class WalletDashboardControllerTest {
                 WalletTransactionFormatter.amountLabel(new BigDecimal("-12.5")));
         assertEquals("SGD 487.50",
                 WalletTransactionFormatter.balanceLabel(new BigDecimal("487.5")));
+        assertEquals("+$500.00",
+                WalletTransactionFormatter.dollarAmountLabel(new BigDecimal("500")));
+        assertEquals("-$12.50",
+                WalletTransactionFormatter.dollarAmountLabel(new BigDecimal("-12.5")));
+        assertEquals("$487.50",
+                WalletTransactionFormatter.dollarBalanceLabel(new BigDecimal("487.5")));
+        assertEquals("Fee: $15.00",
+                WalletTransactionFormatter.dollarFeeLabel(new BigDecimal("15")));
         assertEquals("Fee: SGD 15.00",
                 WalletTransactionFormatter.feeLabel(new BigDecimal("15")));
         assertEquals("", WalletTransactionFormatter.feeLabel(BigDecimal.ZERO));

@@ -50,11 +50,33 @@ public final class WalletTransactionFormatter {
         return "SGD " + balance.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
+    public static String dollarAmountLabel(BigDecimal amount) {
+        BigDecimal display = amount.setScale(2, RoundingMode.HALF_UP);
+        if (display.signum() > 0) {
+            return "+$" + display.toPlainString();
+        }
+        if (display.signum() < 0) {
+            return "-$" + display.abs().toPlainString();
+        }
+        return "$0.00";
+    }
+
+    public static String dollarBalanceLabel(BigDecimal balance) {
+        return "$" + balance.setScale(2, RoundingMode.HALF_UP).toPlainString();
+    }
+
     public static String feeLabel(BigDecimal feeAmount) {
         if (feeAmount == null || feeAmount.signum() == 0) {
             return "";
         }
         return "Fee: " + balanceLabel(feeAmount);
+    }
+
+    public static String dollarFeeLabel(BigDecimal feeAmount) {
+        if (feeAmount == null || feeAmount.signum() == 0) {
+            return "";
+        }
+        return "Fee: " + dollarBalanceLabel(feeAmount);
     }
 
     public static BigDecimal escrowHeldAmount(List<WalletTransaction> transactions) {

@@ -18,6 +18,7 @@ public final class WalletActionDialogController {
 
     @FXML private Label titleLabel;
     @FXML private Label currentBalanceLabel;
+    @FXML private Label noticeLabel;
     @FXML private TextField amountField;
     @FXML private Button actionButton;
     @FXML private Label statusLabel;
@@ -43,14 +44,19 @@ public final class WalletActionDialogController {
             titleLabel.setText("Top up wallet");
             actionButton.setText("Confirm top up");
             currentBalanceLabel.setText("Current balance "
-                    + WalletTransactionFormatter.balanceLabel(this.currentBalance));
+                    + WalletTransactionFormatter.dollarBalanceLabel(this.currentBalance) + " SGD");
+            noticeLabel.setText("Mocked top-up — no real payment gateway is charged. "
+                    + "This records a TOP_UP wallet transaction and credits your balance immediately.");
             setPresetVisibility(true);
         } else {
             titleLabel.setText("Withdraw funds");
             actionButton.setText("Confirm withdraw");
             currentBalanceLabel.setText("Available to withdraw "
-                    + WalletTransactionFormatter.balanceLabel(this.currentBalance)
+                    + WalletTransactionFormatter.dollarBalanceLabel(this.currentBalance) + " SGD"
                     + " — non-escrowed balance only");
+            noticeLabel.setText("Mocked withdrawal — no real payout rail. You can only withdraw up to "
+                    + "your available balance; funds held in escrow for pending bookings are not "
+                    + "withdrawable.");
             setPresetVisibility(false);
         }
 

@@ -8,37 +8,42 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="16" maxWidth="500" styleClass="wallet-action-modal"
+<VBox spacing="16" prefWidth="650" maxWidth="650" minHeight="-Infinity" maxHeight="-Infinity"
+      styleClass="wallet-action-modal"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.snoozeshare.ui.common.wallet.WalletActionDialogController">
     <stylesheets>
         <URL value="@wallet.css"/>
     </stylesheets>
-    <padding><Insets top="28" right="28" bottom="28" left="28"/></padding>
+    <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
 
-    <Label fx:id="titleLabel" text="Wallet action" styleClass="wallet-modal-title"/>
-    <Label fx:id="currentBalanceLabel" text="Current balance SGD 0.00"
-           styleClass="wallet-modal-balance" wrapText="true"/>
+    <VBox spacing="4">
+        <Label fx:id="titleLabel" text="Wallet action" styleClass="wallet-modal-title"/>
+        <Label fx:id="currentBalanceLabel" text="Current balance \$0.00 SGD"
+               styleClass="wallet-modal-balance" wrapText="true"/>
+    </VBox>
     <Label text="Amount" styleClass="wallet-modal-label"/>
-    <TextField fx:id="amountField" promptText="\$ 0.00" styleClass="wallet-amount-field"/>
+    <VBox spacing="4">
+        <TextField fx:id="amountField" promptText="\$ 0.00" styleClass="wallet-amount-field"/>
 
-    <HBox spacing="10" styleClass="wallet-preset-row">
-        <Button fx:id="preset50" text="\$50" styleClass="wallet-preset-button"
-                onAction="#handlePreset50"/>
-        <Button fx:id="preset100" text="\$100" styleClass="wallet-preset-button"
-                onAction="#handlePreset100"/>
-        <Button fx:id="preset500" text="\$500" styleClass="wallet-preset-button"
-                onAction="#handlePreset500"/>
-        <Button fx:id="preset1000" text="\$1000" styleClass="wallet-preset-button"
-                onAction="#handlePreset1000"/>
-    </HBox>
-    <Label fx:id="fullBalanceLink" text="Withdraw full available balance"
-           styleClass="wallet-full-balance-link" onMouseClicked="#handleFullAvailableBalance"
-           visible="false" managed="false"/>
+        <HBox spacing="10" styleClass="wallet-preset-row">
+            <Button fx:id="preset50" text="\$50" styleClass="wallet-preset-button"
+                    onAction="#handlePreset50"/>
+            <Button fx:id="preset100" text="\$100" styleClass="wallet-preset-button"
+                    onAction="#handlePreset100"/>
+            <Button fx:id="preset500" text="\$500" styleClass="wallet-preset-button"
+                    onAction="#handlePreset500"/>
+            <Button fx:id="preset1000" text="\$1000" styleClass="wallet-preset-button"
+                    onAction="#handlePreset1000"/>
+        </HBox>
+        <Label fx:id="fullBalanceLink" text="Withdraw full available balance"
+               styleClass="wallet-full-balance-link" onMouseClicked="#handleFullAvailableBalance"
+               visible="false" managed="false"/>
+    </VBox>
 
     <Label fx:id="statusLabel" styleClass="error-message" visible="false" managed="false"
            wrapText="true"/>
-    <Label text="Mocked wallet action — no real payment or payout rail is connected."
+    <Label fx:id="noticeLabel" text="Mocked wallet action — no real payment or payout rail is connected."
            styleClass="wallet-modal-notice" wrapText="true"/>
 
     <HBox spacing="12" alignment="CENTER_RIGHT">

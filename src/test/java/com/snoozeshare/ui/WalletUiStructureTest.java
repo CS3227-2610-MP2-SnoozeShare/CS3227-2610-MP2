@@ -37,6 +37,8 @@ class WalletUiStructureTest {
         String theme = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/common/theme.css"));
         String walletCss = Files.readString(WALLET_DIR.resolve("wallet.css"));
+        String controller = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/common/wallet/WalletDashboardController.java"));
 
         assertTrue(fxml.contains(
                 "com.snoozeshare.ui.common.wallet.WalletDashboardController"));
@@ -57,6 +59,10 @@ class WalletUiStructureTest {
         assertTrue(!fxml.contains("transactionContainer"));
         assertTrue(walletCss.contains(".wallet-transaction-table"));
         assertTrue(walletCss.contains("-fx-cell-size: 47px"));
+        assertTrue(walletCss.contains(".table-cell .transaction-type"));
+        assertTrue(controller.contains("ContentDisplay.GRAPHIC_ONLY"));
+        assertTrue(controller.contains("transaction-type-positive"));
+        assertTrue(controller.contains("transaction-type-negative"));
         assertTrue(fxml.contains("text=\"Top up\""));
         assertTrue(fxml.contains("text=\"Withdraw\""));
         assertTrue(fxml.contains("wallet-top-up-button"));
@@ -68,6 +74,7 @@ class WalletUiStructureTest {
     @Test
     void commonActionDialogContainsPresetAndFullBalanceControls() throws Exception {
         String fxml = Files.readString(WALLET_DIR.resolve("wallet-action-dialog.fxml"));
+        String walletCss = Files.readString(WALLET_DIR.resolve("wallet.css"));
 
         assertTrue(fxml.contains(
                 "com.snoozeshare.ui.common.wallet.WalletActionDialogController"));
@@ -75,11 +82,31 @@ class WalletUiStructureTest {
             assertTrue(fxml.contains(preset), preset);
         }
         assertTrue(fxml.contains("Withdraw full available balance"));
+        assertTrue(fxml.contains("maxHeight=\"-Infinity\""));
+        assertTrue(fxml.contains("<VBox spacing=\"4\">"));
         assertTrue(fxml.contains("wallet-modal-cancel"));
         assertTrue(fxml.contains("wallet-modal-confirm"));
-        String walletCss = Files.readString(WALLET_DIR.resolve("wallet.css"));
+        assertTrue(fxml.contains("prefWidth=\"650\""));
+        assertTrue(fxml.contains("fx:id=\"noticeLabel\""));
         assertTrue(walletCss.contains(".wallet-modal-cancel"));
         assertTrue(walletCss.contains(".wallet-modal-confirm"));
+        assertTrue(walletCss.contains("-fx-pref-height: 76px"));
+        assertTrue(walletCss.contains(".wallet-action-modal .text-field.wallet-amount-field"));
+        assertTrue(walletCss.contains(".wallet-modal-scrim"));
+        assertTrue(walletCss.contains("#980c1c"));
+        assertTrue(walletCss.contains(".transaction-type-positive"));
+        assertTrue(walletCss.contains(".transaction-type-negative"));
+        assertTrue(walletCss.contains("-fx-background-color: #f0e8d8"));
+        assertTrue(walletCss.contains("-fx-text-fill: #381a10"));
+        String controller = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/common/wallet/WalletActionDialogController.java"));
+        assertTrue(controller.contains("dollarBalanceLabel"));
+        String dashboardController = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/common/wallet/WalletDashboardController.java"));
+        assertTrue(dashboardController.contains("WalletModal.create"));
+        assertTrue(!dashboardController.contains("modal-overlay"));
+        assertTrue(Files.exists(Path.of(
+                "src/main/java/com/snoozeshare/ui/common/wallet/WalletModal.java")));
     }
 
     @Test

@@ -128,13 +128,21 @@
 .wallet-transaction-table .table-cell:selected {
     -fx-text-fill: #381a10;
 }
-.wallet-transaction-table .transaction-type {
+.wallet-transaction-table .table-cell .transaction-type {
     -fx-background-radius: 999px;
     -fx-padding: 3px 11px 3px 11px;
     -fx-font-size: 10px;
     -fx-font-weight: bold;
-    -fx-background-color: #fce3d3;
-    -fx-text-fill: #a53916;
+    -fx-background-color: #f0e8d8;
+    -fx-text-fill: #381a10;
+}
+.wallet-transaction-table .table-cell .transaction-type-positive {
+    -fx-background-color: #e8f8d0;
+    -fx-text-fill: #40680c;
+}
+.wallet-transaction-table .table-cell .transaction-type-negative {
+    -fx-background-color: #fcd8da;
+    -fx-text-fill: #980c1c;
 }
 .wallet-transaction-table .transaction-amount-positive {
     -fx-font-weight: bold;
@@ -159,29 +167,42 @@
     -fx-border-width: 1px;
     -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.20), 24, 0, 0, 8);
 }
-.wallet-modal-title {
+.wallet-modal-scrim {
+    -fx-background-color: rgba(160, 160, 160, 0.50);
+}
+.wallet-action-modal .label.wallet-modal-title {
     -fx-font-size: 20px;
     -fx-font-weight: bold;
     -fx-text-fill: #100604;
 }
-.wallet-modal-balance,
-.wallet-modal-label {
+.wallet-action-modal .label.wallet-modal-balance,
+.wallet-action-modal .label.wallet-modal-label {
     -fx-text-fill: #6c4434;
     -fx-font-weight: bold;
 }
-.wallet-amount-field {
+.wallet-action-modal .text-field.wallet-amount-field {
     -fx-background-color: #fdf8f0;
     -fx-background-radius: 10px;
+    -fx-background-insets: 0;
     -fx-border-color: #c0a080;
     -fx-border-radius: 10px;
     -fx-border-width: 1px;
+    -fx-border-insets: 0;
     -fx-font-size: 20px;
+    -fx-text-fill: #6f6f6f;
+    -fx-prompt-text-fill: #6f6f6f;
+    -fx-focus-color: #c0a080;
+    -fx-faint-focus-color: transparent;
+    -fx-alignment: CENTER_LEFT;
+    -fx-pref-height: 76px;
+    -fx-min-height: 76px;
+    -fx-max-height: 76px;
     -fx-padding: 16px 20px 16px 20px;
 }
 .wallet-preset-button {
     -fx-background-color: #f0e8d8;
     -fx-background-radius: 999px;
-    -fx-text-fill: #553a2d;
+    -fx-text-fill: #381a10;
     -fx-font-weight: bold;
     -fx-padding: 8px 16px 8px 16px;
     -fx-cursor: hand;
@@ -190,10 +211,13 @@
     -fx-background-color: #e4d4bc;
 }
 .wallet-full-balance-link {
-    -fx-text-fill: #a53916;
+    -fx-text-fill: #980c1c;
     -fx-font-weight: bold;
     -fx-underline: true;
     -fx-cursor: hand;
+}
+.wallet-full-balance-link:hover {
+    -fx-text-fill: #7e0a17;
 }
 .wallet-modal-notice {
     -fx-background-color: #f0e8d8;

@@ -17,7 +17,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -54,9 +55,9 @@ public final class WalletDashboardController {
         amountColumn.setCellValueFactory(cell -> new SimpleStringProperty(amountWithFee(
                 cell.getValue())));
         balanceAfterColumn.setCellValueFactory(cell -> new SimpleStringProperty(
-                WalletTransactionFormatter.balanceLabel(cell.getValue().balanceAfter())));
+                WalletTransactionFormatter.dollarBalanceLabel(cell.getValue().balanceAfter())));
 
-        typeColumn.setCellFactory(column -> styledCell("transaction-type"));
+        typeColumn.setCellFactory(column -> styledBadgeCell());
         amountColumn.setCellFactory(column -> styledAmountCell());
         transactionTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
@@ -102,9 +103,9 @@ public final class WalletDashboardController {
     }
 
     private static String amountWithFee(WalletTransaction transaction) {
-        String fee = WalletTransactionFormatter.feeLabel(transaction.feeAmount());
-        return fee.isEmpty() ? WalletTransactionFormatter.amountLabel(transaction.amount())
-                : WalletTransactionFormatter.amountLabel(transaction.amount()) + "\n" + fee;
+        String fee = WalletTransactionFormatter.dollarFeeLabel(transaction.feeAmount());
+        return fee.isEmpty() ? WalletTransactionFormatter.dollarAmountLabel(transaction.amount())
+                : WalletTransactionFormatter.dollarAmountLabel(transaction.amount()) + "\n" + fee;
     }
 
     private static TableCell<WalletTransaction, String> styledCell(String styleClass) {
@@ -119,6 +120,30 @@ public final class WalletDashboardController {
                 }
             }
         };
+    }
+
+    private static TableCell<WalletTransaction, String> styledBadgeCell() {
+        Label badge = new Label();
+        badge.getStyleClass().add("transaction-type");
+        TableCell<WalletTransaction, String> cell = new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                badge.setText(empty ? null : item);
+                badge.getStyleClass().removeAll("transaction-type-positive",
+                        "transaction-type-negative");
+                if (!empty) {
+                    WalletTransaction transaction = getTableView().getItems().get(getIndex());
+                    badge.getStyleClass().add(transaction.amount().signum() >= 0
+                            ? "transaction-type-positive" : "transaction-type-negative");
+                }
+                setText(null);
+                setGraphic(empty ? null : badge);
+            }
+        };
+        cell.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        cell.setAlignment(Pos.CENTER_LEFT);
+        return cell;
     }
 
     private TableCell<WalletTransaction, String> styledAmountCell() {
@@ -141,20 +166,19 @@ public final class WalletDashboardController {
     private void showModal(WalletActionDialogController.Mode mode) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("wallet-action-dialog.fxml"));
-            Node dialogView = loader.load();
+            Parent dialogView = loader.load();
             WalletActionDialogController controller = loader.getController();
-
-            StackPane overlay = new StackPane(dialogView);
-            overlay.getStyleClass().add("modal-overlay");
-            StackPane.setAlignment(dialogView, Pos.CENTER);
-            dashboardRoot.getChildren().add(overlay);
 
             java.util.UUID userId = context.session().currentUser().orElseThrow().userId();
             BigDecimal balance = context.walletService().balanceOf(userId);
+            WalletModal modal = WalletModal.create(dialogView,
+                    mode == WalletActionDialogController.Mode.TOP_UP
+                            ? "Top up wallet" : "Withdraw funds");
             controller.configure(mode, context, balance, () -> {
-                dashboardRoot.getChildren().remove(overlay);
+                modal.close();
                 loadData();
             });
+            modal.showAndWait();
         } catch (java.io.IOException exception) {
             throw new IllegalStateException("Unable to load wallet action dialog", exception);
         }
