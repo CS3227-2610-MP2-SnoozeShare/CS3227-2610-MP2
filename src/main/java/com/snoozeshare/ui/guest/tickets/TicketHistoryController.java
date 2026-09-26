@@ -148,18 +148,17 @@ public final class TicketHistoryController {
             resHeader.getStyleClass().add("card-title");
             Label resolution = new Label(ticket.resolutionReason());
             resolution.setWrapText(true);
-            Label resolvedDate = new Label("Resolved: " + ticket.resolvedAt()
-                    .atZone(ZoneId.systemDefault()).format(DATE_FORMAT));
-            resolvedDate.getStyleClass().add("small");
-            detail.getChildren().addAll(resHeader, resolution, resolvedDate);
+            detail.getChildren().addAll(resHeader, resolution);
+            if (ticket.resolvedAt() != null) {
+                Label resolvedDate = new Label("Resolved: " + ticket.resolvedAt()
+                        .atZone(ZoneId.systemDefault()).format(DATE_FORMAT));
+                resolvedDate.getStyleClass().add("small");
+                detail.getChildren().add(resolvedDate);
+            }
         }
 
         Button back = new Button("Back to Tickets");
         back.getStyleClass().add("outline-button");
-        back.setOnAction(event -> {
-            historyRoot.getChildren().remove(historyRoot.getChildren().size() - 1);
-            loadTickets();
-        });
         detail.getChildren().add(back);
 
         StackPane overlay = new StackPane();
@@ -167,6 +166,11 @@ public final class TicketHistoryController {
         overlay.getChildren().add(detail);
         StackPane.setAlignment(detail, Pos.CENTER);
         historyRoot.getChildren().add(overlay);
+
+        back.setOnAction(event -> {
+            historyRoot.getChildren().remove(overlay);
+            loadTickets();
+        });
     }
 
     private static String formatStatus(TicketStatus status) {
