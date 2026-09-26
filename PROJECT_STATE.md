@@ -487,7 +487,7 @@ architecture area remain recorded in that area's table.
 - The Accounts list hides the System user. `BookingServiceImpl` gained a `UserRepository` constructor parameter and a suspended-guest guard. `MigrationRunner` now handles V003.
 - **Refund without an escrow check (accepted):** the suspension cascade credits the booking's `totalAmount` without checking that an `ESCROW_HOLD` row exists, consistent with `BookingServiceImpl`.
 - **Test fixture:** `AccountFixture.START_BALANCE` was raised from 1000 to 5000 so the cascade test can hold several escrows.
-- **UI nit (accepted):** the ACTIVE status pill sits slightly above row centre on Host rows (see `agent-accounts.png`).
+- **UI polish (fixed after operator acceptance run, 2026-09-27):** status pill vertically centred, Reactivate and Suspend buttons share one size, search field uses the white input fill.
 - **C36 boundary:** a stay whose check-in is today counts as started, so its CONFIRMED booking is not cancelled.
 - **Operator acceptance open:** the real-app GUI run (plan Task 14 Step 2) was not performed by the agent (no GUI driving available). Instead `AccountGovernanceService` was driven headlessly against a copy of the mock DB: suspending Noah Kim force-cancelled 2 PENDING bookings (`FORCE_CANCELLED`) with 2 `ESCROW_REFUND` rows, wrote `ACCOUNT_SUSPENDED`, and reactivating wrote `ACCOUNT_REACTIVATED` and flipped the status back. FX smoke/snapshot tests cover the screens. Operator should run the app on `build/acceptance.db` to accept.
 

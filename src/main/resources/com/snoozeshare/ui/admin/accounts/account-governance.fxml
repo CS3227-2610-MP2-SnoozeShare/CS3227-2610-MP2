@@ -20,7 +20,7 @@
             <Label text="Suspend or reactivate Guest and Host accounts" styleClass="small"/>
         </VBox>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField fx:id="searchField" promptText="Search..." prefWidth="260" styleClass="agent-input"/>
+        <TextField fx:id="searchField" promptText="Search..." prefWidth="260"/>
     </HBox>
 
     <VBox styleClass="agent-card">

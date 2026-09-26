@@ -14,6 +14,7 @@ import com.snoozeshare.ui.admin.accounts.SuspensionDialogController.Mode;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -107,6 +108,7 @@ public final class AccountGovernanceController {
         Label pill = new Label(AccountText.status(account.status()).toUpperCase(Locale.ROOT));
         pill.getStyleClass().addAll("agent-pill", suspended ? "agent-pill-danger" : "agent-pill-success");
         VBox box = new VBox(3, pill);
+        box.setAlignment(Pos.CENTER_LEFT);
         if (suspended && account.suspensionReason() != null) {
             Label reason = new Label("Reason: " + account.suspensionReason());
             reason.setWrapText(true);
@@ -124,7 +126,7 @@ public final class AccountGovernanceController {
         }
         boolean suspended = account.status() == AccountStatus.SUSPENDED;
         Button button = new Button(suspended ? "Reactivate" : "Suspend");
-        button.getStyleClass().add(suspended ? "outline-button" : "agent-button-danger");
+        button.getStyleClass().addAll(suspended ? "outline-button" : "agent-button-danger", "agent-account-action");
         button.setOnAction(event -> openDialog(suspended ? Mode.REACTIVATE : Mode.SUSPEND, account));
         return button;
     }

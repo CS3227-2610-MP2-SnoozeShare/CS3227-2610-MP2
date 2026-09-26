@@ -157,6 +157,14 @@
 .agent-root .agent-grid-row-click { -fx-cursor: hand; -fx-padding: 14px 18px 14px 18px; }
 .agent-root .agent-grid-row-click:hover { -fx-background-color: rgba(240, 232, 216, 0.4); }
 /* Account rows are not clickable: the shared grey hover, default cursor; only the action button is a hand. */
+.agent-root .outline-button.agent-account-action, .agent-root .agent-button-danger.agent-account-action {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 9px 18px 9px 18px;
+    -fx-min-width: 108px;
+    -fx-pref-width: 108px;
+    -fx-alignment: center;
+}
 .agent-root .agent-account-row:hover { -fx-background-color: rgba(240, 232, 216, 0.4); }
 .agent-root .agent-cell { -fx-font-size: 13px; -fx-text-fill: fg-muted; }
 .agent-root .agent-cell-id { -fx-text-fill: fg-subtle; }
