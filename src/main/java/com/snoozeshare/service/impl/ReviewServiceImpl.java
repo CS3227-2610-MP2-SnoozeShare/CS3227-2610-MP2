@@ -53,4 +53,9 @@ public final class ReviewServiceImpl implements ReviewService {
         audit.record(guestId, "REVIEW_SUBMITTED", "Review", saved.reviewId(), null, saved);
         return saved;
     }
+
+    @Override
+    public boolean hasReview(UUID bookingId) {
+        return !reviews.findByBookingId(bookingId).isEmpty();
+    }
 }
