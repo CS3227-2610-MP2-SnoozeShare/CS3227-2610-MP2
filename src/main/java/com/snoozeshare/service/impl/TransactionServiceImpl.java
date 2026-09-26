@@ -19,6 +19,7 @@ import com.snoozeshare.repository.BookingRepository;
 import com.snoozeshare.repository.PropertyRepository;
 import com.snoozeshare.repository.WalletRepository;
 import com.snoozeshare.repository.WalletTransactionRepository;
+import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.TransactionService;
 
 public final class TransactionServiceImpl implements TransactionService {
@@ -35,15 +36,30 @@ public final class TransactionServiceImpl implements TransactionService {
                                    WalletRepository wallets,
                                    WalletTransactionRepository transactions,
                                    EventBus eventBus) {
-        this(connection, bookings, null, wallets, transactions, eventBus);
+        this(connection, bookings, null, wallets, transactions, eventBus, null);
+    }
+
+    public TransactionServiceImpl(Connection connection, BookingRepository bookings,
+                                   WalletRepository wallets,
+                                   WalletTransactionRepository transactions,
+                                   EventBus eventBus, AuditService audit) {
+        this(connection, bookings, null, wallets, transactions, eventBus, audit);
     }
 
     public TransactionServiceImpl(Connection connection, BookingRepository bookings,
                                    PropertyRepository properties, WalletRepository wallets,
                                    WalletTransactionRepository transactions,
                                    EventBus eventBus) {
+        this(connection, bookings, properties, wallets, transactions, eventBus, null);
+    }
+
+    public TransactionServiceImpl(Connection connection, BookingRepository bookings,
+                                   PropertyRepository properties, WalletRepository wallets,
+                                   WalletTransactionRepository transactions,
+                                   EventBus eventBus, AuditService audit) {
         this.connection = connection;
-        this.ledger = new WalletLedgerWriter(connection, wallets, transactions, eventBus);
+        this.ledger = new WalletLedgerWriter(connection, wallets, transactions, eventBus,
+                audit == null ? new NoOpAuditService() : audit);
         this.bookings = bookings;
         this.properties = properties;
         this.wallets = wallets;

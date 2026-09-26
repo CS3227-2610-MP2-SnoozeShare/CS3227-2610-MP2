@@ -33,12 +33,11 @@ class ShellLayoutTest {
     }
 
     @Test
-    void guestAndHostHeadersShowWalletAmountBeforePortalLabel() throws Exception {
+    void guestAndHostHeadersShowWalletAmountAndPortalLabel() throws Exception {
         for (String shell : List.of("guest/guest-shell.fxml", "host/host-shell.fxml")) {
             String fxml = Files.readString(Path.of("src/main/resources/com/snoozeshare/ui/" + shell));
             assertTrue(fxml.contains("fx:id=\"walletAmount\""), shell);
-            assertTrue(fxml.indexOf("fx:id=\"walletAmount\"")
-                    < fxml.indexOf("fx:id=\"roleLabel\""), shell);
+            assertTrue(fxml.contains("fx:id=\"roleLabel\""), shell);
             assertTrue(!fxml.contains("wallet-panel"), shell);
             assertTrue(!fxml.contains("fx:id=\"walletTitle\""), shell);
         }

@@ -12,6 +12,7 @@ import com.snoozeshare.domain.validation.DomainValidation;
 import com.snoozeshare.infra.events.EventBus;
 import com.snoozeshare.repository.WalletRepository;
 import com.snoozeshare.repository.WalletTransactionRepository;
+import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.WalletService;
 
 public final class WalletServiceImpl implements WalletService {
@@ -21,15 +22,11 @@ public final class WalletServiceImpl implements WalletService {
     private final WalletLedgerWriter ledger;
 
     public WalletServiceImpl(Connection connection, WalletRepository wallets,
-                             WalletTransactionRepository transactions) {
-        this(connection, wallets, transactions, null);
-    }
-
-    public WalletServiceImpl(Connection connection, WalletRepository wallets,
-                             WalletTransactionRepository transactions, EventBus eventBus) {
+                             WalletTransactionRepository transactions, EventBus eventBus,
+                             AuditService audit) {
         this.wallets = wallets;
         this.transactions = transactions;
-        this.ledger = new WalletLedgerWriter(connection, wallets, transactions, eventBus);
+        this.ledger = new WalletLedgerWriter(connection, wallets, transactions, eventBus, audit);
     }
 
     @Override

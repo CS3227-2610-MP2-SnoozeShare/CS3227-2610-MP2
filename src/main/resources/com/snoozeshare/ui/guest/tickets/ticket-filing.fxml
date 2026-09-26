@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="16" maxWidth="480" styleClass="detail-modal"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.snoozeshare.ui.guest.tickets.TicketFilingController">
+    <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+    <Label text="File a Dispute" styleClass="page-title"/>
+    <Label text="Tell us what went wrong with your stay." styleClass="small"/>
+
+    <Label text="Category" styleClass="card-title"/>
+    <ComboBox fx:id="categoryCombo" maxWidth="Infinity" promptText="Select a category"/>
+
+    <Label text="Title" styleClass="card-title"/>
+    <TextField fx:id="titleField" promptText="Brief summary of the issue"/>
+
+    <Label text="Description" styleClass="card-title"/>
+    <TextArea fx:id="descriptionArea" promptText="Describe the issue in detail"
+              prefRowCount="3" wrapText="true"/>
+
+    <Label text="Requested Remedy" styleClass="card-title"/>
+    <ComboBox fx:id="remedyCombo" maxWidth="Infinity" promptText="What resolution do you seek?"/>
+
+    <Label text="Supporting Information (optional)" styleClass="card-title"/>
+    <TextArea fx:id="supportingArea" promptText="Any additional details or evidence"
+              prefRowCount="2" wrapText="true"/>
+
+    <Label fx:id="statusLabel" styleClass="error-message" visible="false" managed="false"/>
+
+    <HBox spacing="12">
+        <Button text="Submit" styleClass="button" onAction="#handleSubmit"/>
+        <Button text="Cancel" styleClass="outline-button" onAction="#handleCancel"/>
+    </HBox>
+</VBox>

@@ -25,5 +25,8 @@ public interface TicketRepository {
     /** True when any ticket (any status) was filed under this category label, compared case-insensitively. */
     boolean existsByCategory(String categoryLabel);
 
+    /** All tickets filed by the given user, newest first. */
+    List<Ticket> findByRaisedByUserId(UUID userId);
+
     Ticket save(Ticket ticket);
 }

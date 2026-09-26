@@ -23,7 +23,8 @@ class SchemaParityTest {
         try (Connection migration = DatabaseTestSupport.openIsolatedDatabase();
              Connection reference = DatabaseTestSupport.openIsolatedDatabase()) {
             apply(migration, "src/main/resources/db/migration/V001__foundation.sql");
-            apply(migration, "src/main/resources/db/migration/V002__booking_decision_message.sql");
+            apply(migration, "src/main/resources/db/migration/V002__audit_trail.sql");
+            applySql(migration, "ALTER TABLE bookings ADD COLUMN hostDecisionMessage TEXT;");
             apply(reference, "db/schema.sql");
 
             for (String table : TABLES) {
@@ -33,9 +34,12 @@ class SchemaParityTest {
     }
 
     private static void apply(Connection connection, String file) throws Exception {
-        String sql = Files.readString(Path.of(file)).lines()
+        applySql(connection, Files.readString(Path.of(file)).lines()
                 .map(line -> line.replaceAll("--.*", ""))
-                .reduce("", (left, right) -> left + "\n" + right);
+                .reduce("", (left, right) -> left + "\n" + right));
+    }
+
+    private static void applySql(Connection connection, String sql) throws Exception {
         for (String statementSql : sql.split(";")) {
             if (!statementSql.isBlank()) {
                 try (Statement statement = connection.createStatement()) {

@@ -133,5 +133,23 @@ CREATE TABLE audit_log (
     entityId              TEXT NOT NULL,
     beforeState           TEXT,
     afterState            TEXT,
-    timestamp             TEXT NOT NULL
+    timestamp             TEXT NOT NULL,
+    actorName             TEXT,
+    walletAdjustment      REAL,
+    reason                TEXT,
+    subjectUserId         TEXT REFERENCES users(userId),
+    subjectName           TEXT,
+    bookingId             TEXT REFERENCES bookings(bookingId),
+    ticketId              TEXT REFERENCES tickets(ticketId)
+);
+CREATE INDEX idx_audit_timestamp ON audit_log(timestamp);
+CREATE INDEX idx_audit_actor ON audit_log(actorUserId);
+CREATE INDEX idx_audit_subject ON audit_log(subjectUserId);
+CREATE INDEX idx_audit_booking ON audit_log(bookingId);
+CREATE INDEX idx_audit_ticket ON audit_log(ticketId);
+
+-- Migration bookkeeping, identical to what MigrationRunner creates. The seed records V001 and V002 as applied.
+CREATE TABLE IF NOT EXISTS schema_history (
+    version   INTEGER PRIMARY KEY,
+    appliedAt TEXT NOT NULL
 );

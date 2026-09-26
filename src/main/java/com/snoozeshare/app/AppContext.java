@@ -26,6 +26,7 @@ import com.snoozeshare.service.DisputeSettlementService;
 import com.snoozeshare.service.ListingMetricsService;
 import com.snoozeshare.service.ListingService;
 import com.snoozeshare.service.MessageService;
+import com.snoozeshare.service.ReviewService;
 import com.snoozeshare.service.TicketService;
 import com.snoozeshare.service.TransactionService;
 import com.snoozeshare.service.UserService;
@@ -38,6 +39,7 @@ import com.snoozeshare.service.impl.DisputeSettlementServiceImpl;
 import com.snoozeshare.service.impl.InMemoryMessageService;
 import com.snoozeshare.service.impl.ListingMetricsServiceImpl;
 import com.snoozeshare.service.impl.ListingServiceImpl;
+import com.snoozeshare.service.impl.ReviewServiceImpl;
 import com.snoozeshare.service.impl.TicketServiceImpl;
 import com.snoozeshare.service.impl.TransactionServiceImpl;
 import com.snoozeshare.service.impl.UserServiceImpl;
@@ -61,6 +63,7 @@ public final class AppContext implements AutoCloseable {
     private final TicketService ticketService;
     private final DisputeQueryService disputeQueryService;
     private final MessageService messageService;
+    private final ReviewService reviewService;
     private final SceneRouter sceneRouter;
 
     private AppContext(Connection connection) throws SQLException {
@@ -71,9 +74,10 @@ public final class AppContext implements AutoCloseable {
         this.eventBus = new InProcessEventBus();
         this.session = new MockSessionContext();
         this.userService = new UserServiceImpl(connection, users, wallets);
+        this.auditService = new AuditServiceImpl(new JdbcAuditLogRepository(connection), users,
+                Clock.systemDefaultZone());
         this.walletService = new WalletServiceImpl(connection, wallets,
-                new JdbcWalletTransactionRepository(connection), eventBus);
-        this.auditService = new AuditServiceImpl(new JdbcAuditLogRepository(connection));
+                new JdbcWalletTransactionRepository(connection), eventBus, auditService);
         JdbcPropertyRepository propertyRepo = new JdbcPropertyRepository(connection);
         JdbcAvailabilityBlockRepository blockRepo = new JdbcAvailabilityBlockRepository(connection);
         JdbcBookingRepository bookingRepo = new JdbcBookingRepository(connection);
@@ -84,7 +88,7 @@ public final class AppContext implements AutoCloseable {
         this.listingMetricsService = new ListingMetricsServiceImpl(connection);
         JdbcWalletTransactionRepository txnRepo = new JdbcWalletTransactionRepository(connection);
         this.transactionService = new TransactionServiceImpl(connection, bookingRepo,
-                propertyRepo, wallets, txnRepo, eventBus);
+                propertyRepo, wallets, txnRepo, eventBus, auditService);
         JdbcTicketRepository ticketRepo = new JdbcTicketRepository(connection);
         this.bookingService = new BookingServiceImpl(connection, bookingRepo, propertyRepo,
                 blockRepo, wallets, txnRepo, users, reviewRepo, eventBus, transactionService,
@@ -95,10 +99,11 @@ public final class AppContext implements AutoCloseable {
                 ticketRepo, bookingRepo, propertyRepo, users, wallets, txnRepo, auditService,
                 eventBus, clock);
         this.ticketService = new TicketServiceImpl(ticketRepo, categoryRepo, bookingRepo, users,
-                settlementService, auditService, clock);
+                settlementService, auditService, clock, eventBus);
         this.disputeQueryService = new DisputeQueryServiceImpl(ticketRepo, bookingRepo, propertyRepo,
                 users, txnRepo, clock);
         this.messageService = new InMemoryMessageService(clock);
+        this.reviewService = new ReviewServiceImpl(bookingRepo, reviewRepo, auditService, clock);
         this.sceneRouter = new SceneRouter();
         bookingService.completeEligibleBookings();
     }
@@ -121,6 +126,10 @@ public final class AppContext implements AutoCloseable {
 
     public MessageService messageService() {
         return messageService;
+    }
+
+    public ReviewService reviewService() {
+        return reviewService;
     }
 
     public SessionContext session() {

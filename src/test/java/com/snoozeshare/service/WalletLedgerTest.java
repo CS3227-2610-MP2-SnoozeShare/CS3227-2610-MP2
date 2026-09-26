@@ -17,6 +17,7 @@ import com.snoozeshare.infra.db.migration.MigrationRunner;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
+import com.snoozeshare.service.impl.NoOpAuditService;
 import com.snoozeshare.service.impl.WalletServiceImpl;
 
 class WalletLedgerTest {
@@ -27,7 +28,7 @@ class WalletLedgerTest {
             UUID userId = seedUser(connection);
             WalletService service = new WalletServiceImpl(connection,
                     new JdbcWalletRepository(connection),
-                    new JdbcWalletTransactionRepository(connection));
+                    new JdbcWalletTransactionRepository(connection), null, new NoOpAuditService());
 
             service.topUp(userId, new BigDecimal("50.00"));
             service.withdraw(userId, new BigDecimal("12.50"));
@@ -48,7 +49,7 @@ class WalletLedgerTest {
             UUID userId = seedUser(connection);
             WalletService service = new WalletServiceImpl(connection,
                     new JdbcWalletRepository(connection),
-                    new JdbcWalletTransactionRepository(connection));
+                    new JdbcWalletTransactionRepository(connection), null, new NoOpAuditService());
 
             assertThrows(IllegalArgumentException.class, () ->
                     service.topUp(userId, BigDecimal.ZERO));

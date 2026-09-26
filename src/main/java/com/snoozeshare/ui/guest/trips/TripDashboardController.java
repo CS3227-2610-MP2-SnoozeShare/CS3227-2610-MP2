@@ -1,5 +1,6 @@
 package com.snoozeshare.ui.guest.trips;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -7,22 +8,30 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.domain.model.Booking;
 import com.snoozeshare.domain.model.Property;
+import com.snoozeshare.domain.model.Ticket;
 import com.snoozeshare.infra.events.Subscription;
 import com.snoozeshare.infra.events.events.BookingCancelledEvent;
 import com.snoozeshare.infra.events.events.BookingConfirmedEvent;
+import com.snoozeshare.infra.events.events.TicketOpenedEvent;
+import com.snoozeshare.ui.guest.tickets.TicketFilingController;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 public final class TripDashboardController {
@@ -34,12 +43,14 @@ public final class TripDashboardController {
             BookingStatus.CANCELLED_BY_GUEST, BookingStatus.CANCELLED_BY_HOST,
             BookingStatus.REJECTED, BookingStatus.FORCE_CANCELLED);
 
+    @FXML private StackPane tripRoot;
     @FXML private HBox tabBar;
     @FXML private VBox tripsContainer;
     @FXML private Label emptyLabel;
 
     private AppContext context;
     private String currentTab = "Pending";
+    private Set<UUID> bookedTicketIds = Set.of();
     private final List<Subscription> subscriptions = new ArrayList<>();
 
     public void setContext(AppContext context) {
@@ -88,8 +99,12 @@ public final class TripDashboardController {
     void loadTrips(String tab) {
         this.currentTab = tab;
         updateTabStyles(tab);
-        List<Booking> all = context.bookingService().tripsFor(
-                context.session().currentUser().orElseThrow().userId(), null);
+        var userId = context.session().currentUser().orElseThrow().userId();
+        List<Booking> all = context.bookingService().tripsFor(userId, null);
+        var guestTickets = context.ticketService().myTickets(userId);
+        bookedTicketIds = guestTickets.stream()
+                .map(Ticket::bookingId)
+                .collect(Collectors.toSet());
         LocalDate today = LocalDate.now();
         List<Booking> filtered = all.stream().filter(b -> matchesTab(b, tab, today)).toList();
 
@@ -157,6 +172,20 @@ public final class TripDashboardController {
             card.getChildren().add(cancelButton);
         }
 
+        if (canFileDispute(booking)) {
+            Button disputeButton = new Button("File Dispute");
+            disputeButton.getStyleClass().add("outline-button");
+            disputeButton.setOnAction(event -> showDisputeModal(booking));
+            card.getChildren().add(disputeButton);
+        }
+
+        if (canReview(booking)) {
+            Button reviewButton = new Button("Leave Review");
+            reviewButton.getStyleClass().add("outline-button");
+            reviewButton.setOnAction(event -> showReviewModal(booking));
+            card.getChildren().add(reviewButton);
+        }
+
         return card;
     }
 
@@ -210,6 +239,67 @@ public final class TripDashboardController {
         }
     }
 
+    private boolean canFileDispute(Booking booking) {
+        if (bookedTicketIds.contains(booking.bookingId())) {
+            return false;
+        }
+        LocalDate today = LocalDate.now();
+        boolean stayEnded = !booking.endDate().isAfter(today);
+        boolean inWindow = !today.isAfter(booking.endDate().plusDays(7));
+        boolean statusOk = (booking.status() == BookingStatus.CONFIRMED && stayEnded)
+                || booking.status() == BookingStatus.COMPLETED;
+        return statusOk && inWindow;
+    }
+
+    private boolean canReview(Booking booking) {
+        return booking.status() == BookingStatus.COMPLETED
+                && !context.reviewService().hasReview(booking.bookingId());
+    }
+
+    private void showDisputeModal(Booking booking) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/snoozeshare/ui/guest/tickets/ticket-filing.fxml"));
+            Node dialogView = loader.load();
+            TicketFilingController controller = loader.getController();
+
+            StackPane overlay = new StackPane();
+            overlay.getStyleClass().add("modal-overlay");
+            overlay.getChildren().add(dialogView);
+            StackPane.setAlignment(dialogView, Pos.CENTER);
+            tripRoot.getChildren().add(overlay);
+
+            controller.configure(context, booking.bookingId(), () -> {
+                tripRoot.getChildren().remove(overlay);
+                loadTrips(currentTab);
+            });
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load ticket filing dialog", exception);
+        }
+    }
+
+    private void showReviewModal(Booking booking) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/snoozeshare/ui/guest/trips/review-dialog.fxml"));
+            Node dialogView = loader.load();
+            ReviewDialogController controller = loader.getController();
+
+            StackPane overlay = new StackPane();
+            overlay.getStyleClass().add("modal-overlay");
+            overlay.getChildren().add(dialogView);
+            StackPane.setAlignment(dialogView, Pos.CENTER);
+            tripRoot.getChildren().add(overlay);
+
+            controller.configure(context, booking.bookingId(), () -> {
+                tripRoot.getChildren().remove(overlay);
+                loadTrips(currentTab);
+            });
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load review dialog", exception);
+        }
+    }
+
     private void subscribeToEvents() {
         if (context.eventBus() == null) {
             return;
@@ -217,6 +307,8 @@ public final class TripDashboardController {
         subscriptions.add(context.eventBus().subscribe(BookingConfirmedEvent.class,
                 event -> Platform.runLater(() -> loadTrips(currentTab))));
         subscriptions.add(context.eventBus().subscribe(BookingCancelledEvent.class,
+                event -> Platform.runLater(() -> loadTrips(currentTab))));
+        subscriptions.add(context.eventBus().subscribe(TicketOpenedEvent.class,
                 event -> Platform.runLater(() -> loadTrips(currentTab))));
     }
 
