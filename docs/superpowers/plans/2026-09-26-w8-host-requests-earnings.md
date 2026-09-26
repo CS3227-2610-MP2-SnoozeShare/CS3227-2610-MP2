@@ -12,9 +12,10 @@
 
 ## Global Constraints
 
-- W8 covers F7.1.1–F7.1.4, F7.2.1, and F7.3.1; F7.2.2 host response notes/evidence is deferred to W13 by C29.
+- W8 covers F7.1.1–F7.1.4, F7.2.1, F7.3.1, and the approved optional rejection message; broader F7.2.2 host response notes/evidence is deferred to W13 by C29.
 - Pending requests remain oldest-first; past requests exclude `PENDING` rows.
 - Approve confirms without a second escrow debit; reject refunds 100% escrow and removes the booking block atomically.
+- Blank rejection messages persist as null; non-blank messages are trimmed and persisted on the booking.
 - Normal completion is eligible only for `CONFIRMED` bookings at checkout plus seven days, and open/`IN_REVIEW` tickets keep escrow held.
 - Normal host payout is gross × 0.97; the 3% fee is recorded as informational metadata according to existing wallet conventions.
 - Completion must be idempotent and publish `WalletTransactionRecordedEvent` only after commit.
@@ -29,6 +30,7 @@
 - An open or in-review ticket must prevent settlement while a resolved ticket does not silently trigger W8 logic; test the guard in Task 3.
 - Repeated or concurrent completion must create at most one payout; test idempotency and the single-payout invariant in Task 3.
 - The page must remain usable with no pending rows, no history rows, long listing names, and no guest ratings; test empty states/fallback rendering in Task 5.
+- A rejection message must survive reload and be visible to the guest; test trim/null behavior and guest rendering in Task 2.
 
 ---
 
@@ -60,22 +62,33 @@
 **Files:**
 - Modify: `src/main/java/com/snoozeshare/service/BookingService.java`
 - Modify: `src/main/java/com/snoozeshare/service/impl/BookingServiceImpl.java`
+- Modify: `src/main/java/com/snoozeshare/domain/model/Booking.java`
+- Modify: `src/main/java/com/snoozeshare/repository/jdbc/JdbcBookingRepository.java`
+- Modify: `src/main/java/com/snoozeshare/repository/jdbc/support/RowMappers.java`
+- Modify: `src/main/java/com/snoozeshare/ui/guest/trips/TripDashboardController.java`
+- Modify: `src/main/resources/com/snoozeshare/ui/guest/trips/trip-dashboard.fxml`
+- Modify: `db/schema.sql`
+- Create: `src/main/resources/db/migration/V002__booking_decision_message.sql`
+- Modify: `src/main/java/com/snoozeshare/infra/db/migration/MigrationRunner.java`
 - Modify: `src/main/java/com/snoozeshare/app/AppContext.java`
 - Test: `src/test/java/com/snoozeshare/service/BookingServiceTest.java`
+- Create: `src/test/java/com/snoozeshare/ui/TripDashboardControllerTest.java`
 
 **Interfaces:**
 - Adds `List<HostBookingRow> pendingRequestRowsFor(UUID hostId)`.
 - Adds `List<HostBookingRow> historyRowsFor(UUID hostId)`.
-- Keeps `Booking decide(UUID bookingId, boolean approve, UUID hostId)` and `Money previewHostEarnings(UUID bookingId)` as the command/read boundaries.
+- Adds `Booking decide(UUID bookingId, boolean approve, UUID hostId, String hostDecisionMessage)`; keep the existing three-argument overload delegating with null for compatibility.
+- Persists nullable `Booking.hostDecisionMessage`; `Money previewHostEarnings(UUID bookingId)` remains the read boundary.
 
-- [ ] **Step 1: Write failing service tests** for row assembly, gross/net amounts, one-decimal average ratings, `No ratings yet` data, host ownership, approve-without-second-hold, and reject-refund/block-removal behavior.
+- [ ] **Step 1: Write failing service tests** for row assembly, gross/net amounts, one-decimal average ratings, `No ratings yet` data, host ownership, approve-without-second-hold, reject-refund/block-removal behavior, trimmed rejection messages, blank-to-null storage, and persistence round-trip.
 - [ ] **Step 2: Run `./gradlew test --tests com.snoozeshare.service.BookingServiceTest`** and verify the new row/earnings tests fail.
 - [ ] **Step 3: Inject the required read dependencies** (`UserRepository`, `ReviewRepository`) into `BookingServiceImpl`, assemble `HostBookingRow` values from bookings/properties/users/reviews, and preserve the existing oldest-first pending query.
 - [ ] **Step 4: Implement `previewHostEarnings(UUID)`** as gross × 0.97 with `BigDecimal` scale/rounding for display, without writing a ledger row.
-- [ ] **Step 5: Harden `decide`** so it revalidates `PENDING` state and host ownership inside the existing transaction boundary, preserves one escrow hold, refunds/removes the block only on reject, and publishes the existing events after commit.
-- [ ] **Step 6: Update `AppContext` wiring** for the expanded `BookingServiceImpl` constructor.
-- [ ] **Step 7: Run the focused service tests** and verify they pass.
-- [ ] **Step 8: Commit** with `feat: complete host request decisions and earnings preview`.
+- [ ] **Step 5: Extend the Booking record/schema/migration** with nullable `hostDecisionMessage`, update JDBC mapping and save logic, and add migration-runner test coverage so fresh and existing databases both receive the column.
+- [ ] **Step 6: Harden `decide`** so it revalidates `PENDING` state and host ownership inside the existing transaction boundary, preserves one escrow hold, refunds/removes the block only on reject, trims/stores the optional rejection message, and publishes the existing events after commit.
+- [ ] **Step 7: Update `AppContext` wiring** for the expanded `BookingServiceImpl` constructor and any guest-trip read path needed to display the saved message.
+- [ ] **Step 8: Run the focused service/schema tests** and verify they pass.
+- [ ] **Step 9: Commit** with `feat: complete host request decisions and earnings preview`.
 
 ### Task 3: Implement guarded normal completion and payout settlement
 
@@ -140,14 +153,14 @@
 - Create: `src/test/java/com/snoozeshare/ui/HostBookingsControllerTest.java`
 
 **Interfaces:**
-- Controller consumes `AppContext.bookingService()`, `pendingRequestRowsFor(UUID)`, `historyRowsFor(UUID)`, `decide(UUID, boolean, UUID)`, and the current session user.
+- Controller consumes `AppContext.bookingService()`, `pendingRequestRowsFor(UUID)`, `historyRowsFor(UUID)`, `decide(UUID, boolean, UUID, String)`, and the current session user.
 - FXML exposes `pendingCountLabel`, `pendingTable`, `pastTable`, `feedbackLabel`, and approve/reject action callbacks.
-- `HostBookingDecisionDialogController` exposes a reusable `show(HostBookingRow, boolean approving, Runnable onConfirm)` flow backed by `AgentModal`; the reject message field is visual-only in W8 and is not passed to a service command.
+- `HostBookingDecisionDialogController` exposes a reusable `show(HostBookingRow, boolean approving, Consumer<String> onConfirm)` flow backed by `AgentModal`; the reject field passes its text to the W8 decision command.
 
 - [ ] **Step 1: Write failing structural/UI tests** for title/count pill, active and past tables, exact screenshot columns/copy, modal titles/summary labels/notices, empty states, action callbacks, and agent-table/action style classes.
 - [ ] **Step 2: Run `./gradlew test --tests com.snoozeshare.ui.HostBookingsControllerTest`** and verify the page tests fail because the controller/FXML are still placeholders.
 - [ ] **Step 3: Create the page controller** with `setContext(AppContext)`, `reload()`, host-scoped row loading, cell factories for money/date/rating/status formatting, and action handlers that open the decision modal rather than calling the service immediately.
-- [ ] **Step 4: Create the decision dialog controller/FXML** with approve/reject configuration, exact titles/copy, green/red summary panels, optional visual-only reject message field, outlined Cancel, contained confirm action, and `AgentModal` scrim/close behavior.
+- [ ] **Step 4: Create the decision dialog controller/FXML** with approve/reject configuration, exact titles/copy, green/red summary panels, optional reject message field, outlined Cancel, contained confirm action, and `AgentModal` scrim/close behavior; pass trimmed message text only for reject.
 - [ ] **Step 5: Replace the placeholder page FXML** with the page title, pending pill, active `TableView`, explanatory note, Past requests heading, past `TableView`, and empty/error labels; keep the existing shell navigation contract.
 - [ ] **Step 6: Add narrowly scoped booking action and modal CSS** for green contained Approve/Confirm approve, red outlined Reject/Confirm reject, white rounded cards, summary panels, and equal-height modal actions while reusing `.agent-table`, count-pill, and status-pill tokens.
 - [ ] **Step 7: Run focused UI tests and XML validation** with `xmllint --noout src/main/resources/com/snoozeshare/ui/host/bookings/host-bookings.fxml src/main/resources/com/snoozeshare/ui/host/bookings/host-booking-decision-dialog.fxml`.

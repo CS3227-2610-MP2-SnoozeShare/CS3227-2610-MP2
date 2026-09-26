@@ -14,8 +14,9 @@ Implement the host-facing reservation workflow for F7:
 - settle eligible confirmed bookings after checkout plus the seven-day dispute window;
 - keep escrow held when an open dispute exists, so W10 can settle it later.
 
-F7.2.2 (formal host response notes and evidence text) is explicitly deferred to W13 Messaging
-per decision C29. W8 must not add ticket response fields or use chat as a substitute.
+F7.2.2's broader formal host response notes/evidence flow is deferred to W13 Messaging per
+decision C29. W8 includes only the optional message attached to a host rejection, as confirmed by
+C31; W8 must not add ticket response fields or use chat as a substitute.
 
 ## 2. Existing constraints and decisions
 
@@ -33,6 +34,9 @@ per decision C29. W8 must not add ticket response fields or use chat as a substi
   `DisputeSettlementService`.
 - Wallet writes must remain atomic and publish `WalletTransactionRecordedEvent` only after the
   database transaction commits.
+- A rejection message is a nullable `Booking.hostDecisionMessage` persisted with the booking;
+  approvals store it as null. Guest booking/trip views may display the message, while W13 owns
+  future dispute-response notes/evidence and chat.
 - The application has no server scheduler. Automatic completion is therefore an idempotent
   service sweep invoked during booking-related page loads and application bootstrap, not a new
   background thread.
@@ -83,12 +87,11 @@ can act on a row.
 - The Reject modal is titled **Reject booking request?** and contains a red summary card with the
   listing title, guest/date/nights line, and the gross amount labelled `to be refunded`; below it
   is the notice `The guest will be notified and the held funds fully refunded (ESCROW_REFUND) —
-  no fee is charged for a host rejection.` It also shows a `Message to guest (optional)` field
-  for visual parity with the approved mockup. W8 does not persist or send this field; W13 owns
-  its eventual message behavior. The footer has outlined `Cancel` and contained red
-  `Confirm reject` buttons.
-- Confirm approve calls `BookingService.decide(bookingId, true, currentHostId)`; confirm reject
-  calls `BookingService.decide(bookingId, false, currentHostId)`.
+  no fee is charged for a host rejection.` It also shows a `Message to guest (optional)` field.
+  Confirm reject persists the trimmed field value as `Booking.hostDecisionMessage`; blank input
+  is stored as null. The footer has outlined `Cancel` and contained red `Confirm reject` buttons.
+- Confirm approve calls `BookingService.decide(bookingId, true, currentHostId, null)`; confirm
+  reject calls `BookingService.decide(bookingId, false, currentHostId, hostDecisionMessage)`.
 - On success, the row leaves the active table, the pending count decrements, and the past table
   reloads. The booking event and wallet event update other views through the existing event bus.
 - On failure, the row remains visible and a page-level error is shown; the action is not silently
@@ -123,9 +126,10 @@ not through JavaFX controllers. A guest with no reviews returns an empty rating,
 ### 4.3 Request decisions
 
 Keep `BookingService.decide` as the authorization and state-transition boundary. It must continue
-to verify that the acting host owns the listing and that the booking is pending. Approval confirms
-the booking without a second escrow debit. Rejection refunds the existing escrow and removes the
-booking availability block in one transaction.
+to verify that the acting host owns the listing and that the booking is pending. Add an optional
+`hostDecisionMessage` argument; approve ignores it and stores null, while reject trims and stores
+it. Approval confirms the booking without a second escrow debit. Rejection refunds the existing
+escrow, removes the booking availability block, and stores the optional message in one transaction.
 
 `previewHostEarnings` returns gross × 0.97 using currency-safe `BigDecimal` arithmetic, rounded
 to two decimal places for display. It does not write a wallet transaction.
@@ -207,7 +211,8 @@ error for a booking that is correctly held. Unexpected persistence failures rema
 
 ## 8. Out of scope
 
-- F7.2.2 structured host response notes/evidence — deferred to W13 by C29;
+- F7.2.2 broader structured host response notes/evidence — deferred to W13 by C29; W8's optional
+  rejection message is the explicitly approved exception;
 - guest/host/agent chat threads — W13 Messaging;
 - new payout rails or real payment integration;
 - agent ticket resolution behavior — implemented by W10;
