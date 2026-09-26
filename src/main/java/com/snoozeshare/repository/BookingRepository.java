@@ -14,6 +14,9 @@ public interface BookingRepository {
 
     List<Booking> findByGuest(UUID guestId);
 
+    /** Every booking of one property, any status, oldest first. */
+    List<Booking> findByListing(UUID propertyId);
+
     List<Booking> findByHostPending(UUID hostId);
 
     Booking save(Booking booking);

@@ -82,6 +82,11 @@ class TicketServiceTest {
             }
 
             @Override
+            public List<Booking> findByListing(UUID propertyId) {
+                return List.of();
+            }
+
+            @Override
             public List<Booking> findByHostPending(UUID hostId) {
                 return List.of();
             }
