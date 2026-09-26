@@ -72,15 +72,29 @@ can act on a row.
 
 ### 3.2 Interaction behavior
 
-- Approve calls `BookingService.decide(bookingId, true, currentHostId)`.
-- Reject calls `BookingService.decide(bookingId, false, currentHostId)`.
+- Clicking Approve or Reject opens a confirmation modal; the service command is not called until
+  the modal's confirm action is pressed.
+- Reuse the existing `AgentModal` infrastructure so the owner window receives the 50% grey scrim,
+  the modal is centered, Escape closes it, and the original scene root is restored afterward.
+- The Approve modal is titled **Approve booking request?** and contains a green summary card with
+  the listing title, guest/date/nights line, and the gross amount labelled `earning`; below it is
+  the notice `The booking moves to CONFIRMED and the guest is notified. Funds stay held in escrow
+  until check-in.` The footer has outlined `Cancel` and contained green `Confirm approve` buttons.
+- The Reject modal is titled **Reject booking request?** and contains a red summary card with the
+  listing title, guest/date/nights line, and the gross amount labelled `to be refunded`; below it
+  is the notice `The guest will be notified and the held funds fully refunded (ESCROW_REFUND) —
+  no fee is charged for a host rejection.` It also shows a `Message to guest (optional)` field
+  for visual parity with the approved mockup. W8 does not persist or send this field; W13 owns
+  its eventual message behavior. The footer has outlined `Cancel` and contained red
+  `Confirm reject` buttons.
+- Confirm approve calls `BookingService.decide(bookingId, true, currentHostId)`; confirm reject
+  calls `BookingService.decide(bookingId, false, currentHostId)`.
 - On success, the row leaves the active table, the pending count decrements, and the past table
   reloads. The booking event and wallet event update other views through the existing event bus.
 - On failure, the row remains visible and a page-level error is shown; the action is not silently
   retried.
-- The page reloads on navigation and after a decision. It does not require a modal for the
-  approve/reject action because the existing service validation and the clear destructive styling
-  are sufficient for this MVP.
+- Closing or cancelling a modal leaves the row unchanged. The page reloads on navigation and after
+  a confirmed decision.
 
 ## 4. Service and repository design
 
@@ -159,6 +173,9 @@ error for a booking that is correctly held. Unexpected persistence failures rema
   add narrowly scoped booking-request action classes for the green Approve and red Reject buttons.
 - Use green contained Approve buttons and red outlined Reject buttons; do not introduce a second
   color palette.
+- Modal cards are white with rounded corners and a light drop shadow; approve/reject summary
+  panels use the existing success/danger palette and white text, matching the supplied mockups.
+- Modal action buttons are right-aligned, with equal-height Cancel/Confirm controls.
 - Use accessible text on action buttons, including the guest/listing context where useful.
 - Keep action columns wide enough for both buttons so row content does not shift between rows.
 - Preserve full-width behavior and scrolling at the existing 1280×800 minimum window.

@@ -20,6 +20,7 @@
 - Completion must be idempotent and publish `WalletTransactionRecordedEvent` only after commit.
 - Use existing service/repository boundaries and no new dependencies, scheduler thread, payout rail, or chat implementation.
 - The Host page must match the screenshot’s agent-style table treatment, title/count pill, active/past sections, and contained/outlined actions.
+- Approve/reject actions must use centered `AgentModal` confirmation cards with the supplied titles, summary panels, notices, scrim, and modal-specific confirm/cancel actions.
 
 ## Review Focus
 
@@ -133,20 +134,24 @@
 - Create: `src/main/java/com/snoozeshare/ui/host/bookings/HostBookingsController.java`
 - Modify: `src/main/resources/com/snoozeshare/ui/host/bookings/host-bookings.fxml`
 - Modify: `src/main/resources/com/snoozeshare/ui/admin/agent-theme.css`
-- Modify: `src/main/resources/com/snoozeshare/ui/host/HostShellController.java`
+- Modify: `src/main/java/com/snoozeshare/ui/host/HostShellController.java`
+- Create: `src/main/java/com/snoozeshare/ui/host/bookings/HostBookingDecisionDialogController.java`
+- Create: `src/main/resources/com/snoozeshare/ui/host/bookings/host-booking-decision-dialog.fxml`
 - Create: `src/test/java/com/snoozeshare/ui/HostBookingsControllerTest.java`
 
 **Interfaces:**
 - Controller consumes `AppContext.bookingService()`, `pendingRequestRowsFor(UUID)`, `historyRowsFor(UUID)`, `decide(UUID, boolean, UUID)`, and the current session user.
 - FXML exposes `pendingCountLabel`, `pendingTable`, `pastTable`, `feedbackLabel`, and approve/reject action callbacks.
+- `HostBookingDecisionDialogController` exposes a reusable `show(HostBookingRow, boolean approving, Runnable onConfirm)` flow backed by `AgentModal`; the reject message field is visual-only in W8 and is not passed to a service command.
 
-- [ ] **Step 1: Write failing structural/UI tests** for title/count pill, active and past tables, exact screenshot columns/copy, empty states, action callbacks, and agent-table/action style classes.
+- [ ] **Step 1: Write failing structural/UI tests** for title/count pill, active and past tables, exact screenshot columns/copy, modal titles/summary labels/notices, empty states, action callbacks, and agent-table/action style classes.
 - [ ] **Step 2: Run `./gradlew test --tests com.snoozeshare.ui.HostBookingsControllerTest`** and verify the page tests fail because the controller/FXML are still placeholders.
-- [ ] **Step 3: Create the controller** with `setContext(AppContext)`, `reload()`, host-scoped row loading, cell factories for money/date/rating/status formatting, and approve/reject handlers that reload on success and show errors on failure.
-- [ ] **Step 4: Replace the placeholder FXML** with the page title, pending pill, active `TableView`, explanatory note, Past requests heading, past `TableView`, and empty/error labels; keep the existing shell navigation contract.
-- [ ] **Step 5: Add narrowly scoped booking action CSS** for green contained Approve and red outlined Reject buttons while reusing `.agent-table`, count-pill, and status-pill tokens.
-- [ ] **Step 6: Run focused UI tests and XML validation** with `xmllint --noout src/main/resources/com/snoozeshare/ui/host/bookings/host-bookings.fxml`.
-- [ ] **Step 7: Commit** with `feat: add host booking requests page`.
+- [ ] **Step 3: Create the page controller** with `setContext(AppContext)`, `reload()`, host-scoped row loading, cell factories for money/date/rating/status formatting, and action handlers that open the decision modal rather than calling the service immediately.
+- [ ] **Step 4: Create the decision dialog controller/FXML** with approve/reject configuration, exact titles/copy, green/red summary panels, optional visual-only reject message field, outlined Cancel, contained confirm action, and `AgentModal` scrim/close behavior.
+- [ ] **Step 5: Replace the placeholder page FXML** with the page title, pending pill, active `TableView`, explanatory note, Past requests heading, past `TableView`, and empty/error labels; keep the existing shell navigation contract.
+- [ ] **Step 6: Add narrowly scoped booking action and modal CSS** for green contained Approve/Confirm approve, red outlined Reject/Confirm reject, white rounded cards, summary panels, and equal-height modal actions while reusing `.agent-table`, count-pill, and status-pill tokens.
+- [ ] **Step 7: Run focused UI tests and XML validation** with `xmllint --noout src/main/resources/com/snoozeshare/ui/host/bookings/host-bookings.fxml src/main/resources/com/snoozeshare/ui/host/bookings/host-booking-decision-dialog.fxml`.
+- [ ] **Step 8: Commit** with `feat: add host booking requests page`.
 
 ### Task 6: Full verification and documentation handoff
 

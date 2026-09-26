@@ -8,7 +8,7 @@ every boundary, not at the end of the session.
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `w8`
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-26 by Codex — W8 scope narrowed to defer host dispute responses to W13
+- **Last updated:** 2026-09-27 by Codex — W8 booking decisions updated with approved confirmation modal designs
 - **Last verified against repo:** 2026-09-26
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
 
@@ -67,7 +67,7 @@ three iterations).
 | S7 | 2026-09-25 | Codex | w7 | W7 scope assessment | Paused | `w7` created from `w6`; booking display maps to W8/F7.1, while W7 remains calendar/date overrides | 2026-09-25 |
 | S8 | 2026-09-26 | Codex | w7 | W7 | Paused | W7 complete: host calendar, inclusive manual blocks, removal, validation, and layout delivered; full tests/build pass | 2026-09-26 |
 | S9 | 2026-09-26 | Codex | w8 | Host portal UI refinement | Paused | Completed wallet/listing layout, copy, metrics, action sizing, and status-control spacing; focused tests, XML validation, Checkstyle, and diff checks pass; full suite retains two unrelated UI failures | 2026-09-26 |
-| S14 | 2026-09-26 | Codex | w8 | W8 — Host Request Queue, Earnings & Disputes | Active | W8 spec and implementation plan written and self-reviewed; awaiting execution-method selection, with F7.2.2 deferred to W13 | 2026-09-26 |
+| S14 | 2026-09-26 | Codex | w8 | W8 — Host Request Queue, Earnings & Disputes | Active | W8 spec/plan updated with approved approve/reject modal designs; awaiting execution-method selection, with F7.2.2 deferred to W13 | 2026-09-27 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -436,6 +436,7 @@ architecture area remain recorded in that area's table.
 | C15 | 2026-09-23 | Execute W1 natively in the existing `w1` checkout rather than creating a separate worktree | Operator explicitly selected the current checkout for execution | Operator conversation, 2026-09-23 |
 | C28 | 2026-09-26 | Proceed with Host Listings Dashboard & Copy Refinement without a new design spec or implementation plan | Operator explicitly requested the earlier spec be undone and then asked to carry on; implementation records this waiver | Operator conversation, 2026-09-26 |
 | C29 | 2026-09-26 | Defer F7.2.2 structured host dispute response notes/evidence from W8 to W13 Messaging | Operator chose to defer the formal host response path to W13; W8 will not add ticket response fields or conflate the flow with chat | Operator conversation, 2026-09-26 |
+| C30 | 2026-09-27 | Host booking approve/reject actions require confirmation modals matching the supplied mockups | Operator requested centered AgentModal-style dialogs with scrim, booking summary cards, explanatory notices, and modal-specific confirm/cancel actions | Operator conversation, 2026-09-27 |
 
 ---
 
