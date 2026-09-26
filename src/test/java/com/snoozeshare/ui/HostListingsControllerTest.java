@@ -8,10 +8,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalTime;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
+import javafx.application.Platform;
+
 class HostListingsControllerTest {
+
+    @BeforeAll
+    static void startToolkit() {
+        try {
+            Platform.startup(() -> { });
+        } catch (IllegalStateException alreadyStarted) {
+            // Another JavaFX test owns the toolkit in this Gradle worker.
+        }
+    }
 
     @Test
     void listingsPageExposesCreateStatusAndEditFlow() throws Exception {
@@ -167,6 +179,46 @@ class HostListingsControllerTest {
         assertTrue(fxml.contains("fx:id=\"descriptionLabel\""));
         assertTrue(fxml.contains("fx:id=\"amenitiesPane\""));
         assertTrue(fxml.contains("fx:id=\"statusLabel\""));
+    }
+
+    @Test
+    void hostListingDetailMatchesMockupActionsAndLayout() throws Exception {
+        String source = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/listings/HostListingDetailController.java"));
+        String fxml = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
+        String css = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.css"));
+
+        assertTrue(source.contains("setOnEdit"));
+        assertTrue(source.contains("setOnOpenCalendar"));
+        assertTrue(source.contains("capacityLabel.setText(Integer.toString(property.maxGuests()))"));
+        assertTrue(source.contains("bedroomsLabel.setText(Integer.toString(property.bedrooms()))"));
+        assertTrue(source.contains("bathroomsLabel.setText(formatNumber(property.bathrooms()))"));
+        assertTrue(source.contains("rateLabel.setText(\"$\""));
+        assertTrue(!source.contains(" + \" guests\""));
+        assertTrue(!source.contains(" + \" bedrooms\""));
+        assertTrue(!source.contains(" + \" bathrooms\""));
+        assertTrue(fxml.contains("onAction=\"#handleEdit\""));
+        assertTrue(fxml.contains("onAction=\"#handleOpenCalendar\""));
+        assertTrue(fxml.contains("listing-detail-image-placeholder"));
+        assertTrue(fxml.contains("listing-detail-stats"));
+        assertTrue(fxml.contains("listing-detail-performance"));
+        assertTrue(fxml.contains("text=\"Open booking calendar\""));
+        assertTrue(fxml.contains("text=\"Edit\""));
+        assertTrue(css.contains("linear-gradient"));
+        assertTrue(css.contains(".listing-detail-action-edit"));
+        assertTrue(css.contains(".listing-detail-performance"));
+        assertTrue(!source.contains("Check-in: "));
+        assertTrue(!source.contains("Check-out: "));
+        assertTrue(source.contains("\"$\" + property.baseNightlyRate()"));
+        assertTrue(!source.contains(" / night"));
+    }
+
+    @Test
+    void hostListingDetailFxmlLoads() throws Exception {
+        javafx.fxml.FXMLLoader.load(getClass().getResource(
+                "/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
     }
 
     @Test

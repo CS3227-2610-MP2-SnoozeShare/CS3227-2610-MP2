@@ -71,7 +71,10 @@ public final class HostShellController extends NavShellController {
             Node detailView = loader.load();
             HostListingDetailController controller = loader.getController();
             controller.setProperty(property);
+            controller.setMetrics(getContext().listingMetricsService().metricsFor(property.propertyId()));
             controller.setOnBack(this::showListings);
+            controller.setOnEdit(this::showEditListing);
+            controller.setOnOpenCalendar(this::showCalendar);
             shellRoot.setCenter(detailView);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load host listing detail view", exception);
