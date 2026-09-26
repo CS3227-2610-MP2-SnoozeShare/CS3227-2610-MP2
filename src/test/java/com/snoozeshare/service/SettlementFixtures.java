@@ -27,10 +27,17 @@ final class SettlementFixtures {
     static DisputeSettlementServiceImpl settlement(MockDbFixture db, EventBus bus,
                                                     WalletTransactionRepository transactions) {
         var connection = db.connection();
+        return settlement(db, bus, transactions, new AuditServiceImpl(new JdbcAuditLogRepository(connection),
+                new JdbcUserRepository(connection), CLOCK));
+    }
+
+    static DisputeSettlementServiceImpl settlement(MockDbFixture db, EventBus bus,
+                                                    WalletTransactionRepository transactions,
+                                                    AuditService audit) {
+        var connection = db.connection();
         return new DisputeSettlementServiceImpl(connection, new JdbcTicketRepository(connection),
                 new JdbcBookingRepository(connection), new JdbcPropertyRepository(connection),
                 new JdbcUserRepository(connection), new JdbcWalletRepository(connection),
-                transactions, new AuditServiceImpl(new JdbcAuditLogRepository(connection),
-                        new JdbcUserRepository(connection), CLOCK), bus, CLOCK);
+                transactions, audit, bus, CLOCK);
     }
 }

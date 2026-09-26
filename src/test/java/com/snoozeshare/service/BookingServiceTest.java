@@ -45,6 +45,7 @@ import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
 import com.snoozeshare.service.impl.AuditServiceImpl;
 import com.snoozeshare.service.impl.BookingServiceImpl;
+import com.snoozeshare.testsupport.FailingAuditService;
 
 class BookingServiceTest {
 
@@ -549,6 +550,58 @@ class BookingServiceTest {
         }
     }
 
+    @Test
+    void aFailingAuditWriteRollsBackTheWholeSubmit() throws Exception {
+        // submitRequest writes two audit rows: the request (call 1) and the escrow hold (call 2).
+        for (int failingCall = 1; failingCall <= 2; failingCall++) {
+            try (Connection connection = migratedConnection()) {
+                var ctx = seedContext(connection, new BigDecimal("500.00"));
+                var realAudit = new AuditServiceImpl(new JdbcAuditLogRepository(connection),
+                        new JdbcUserRepository(connection), Clock.systemUTC());
+                BookingService service = createService(connection, null,
+                        new FailingAuditService(realAudit, failingCall));
+                String label = "failing audit call " + failingCall;
+
+                assertThrows(RuntimeException.class, () -> service.submitRequest(ctx.guestId,
+                        ctx.propertyId, LocalDate.now().plusDays(10), LocalDate.now().plusDays(13)), label);
+
+                assertEquals(0, count(connection, "bookings"), label);
+                assertEquals(0, count(connection, "availability_blocks"), label);
+                assertEquals(0, count(connection, "wallet_transactions"), label);
+                assertEquals(0, count(connection, "audit_log"), label);
+                assertEquals(0, new BigDecimal("500.00").compareTo(new JdbcWalletRepository(connection)
+                        .findByUserId(ctx.guestId).orElseThrow().balance()), label);
+            }
+        }
+    }
+
+    @Test
+    void cancelConfirmedBookingWithin48hAuditsAFiftyPercentRefund() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            BookingService service = createService(connection);
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(1), LocalDate.now().plusDays(4));
+            new JdbcBookingRepository(connection).save(new Booking(
+                    booking.bookingId(), booking.listingId(), booking.guestId(),
+                    booking.startDate(), booking.endDate(), BookingStatus.CONFIRMED,
+                    booking.nightlyRateSnapshot(), booking.totalAmount(),
+                    booking.createdAt(), Instant.now(), null));
+
+            service.cancel(booking.bookingId(), ctx.guestId);
+
+            List<AuditLogEntry> rows = auditRows(connection);
+            AuditLogEntry cancelled = row(rows, "BOOKING_CANCELLED_BY_GUEST");
+            assertEquals("CONFIRMED", cancelled.beforeState());
+            assertEquals("CANCELLED_BY_GUEST", cancelled.afterState());
+            assertEquals("50% refund (within 48h of check-in)", cancelled.reason());
+            AuditLogEntry refund = row(rows, "ESCROW_REFUND");
+            assertEquals(0, new BigDecimal("150.00").compareTo(refund.walletAdjustment()));
+            assertEquals(ctx.guestId, refund.subjectUserId());
+            assertEquals(booking.bookingId(), refund.bookingId());
+        }
+    }
+
     // --- helpers ---
 
     private record TestContext(UUID guestId, UUID hostId, UUID propertyId) {
@@ -587,15 +640,27 @@ class BookingServiceTest {
     }
 
     static BookingService createService(Connection connection, InProcessEventBus eventBus) {
+        return createService(connection, eventBus, new AuditServiceImpl(new JdbcAuditLogRepository(connection),
+                new JdbcUserRepository(connection), Clock.systemUTC()));
+    }
+
+    static BookingService createService(Connection connection, InProcessEventBus eventBus,
+                                        AuditService audit) {
         return new BookingServiceImpl(connection,
                 new JdbcBookingRepository(connection),
                 new JdbcPropertyRepository(connection),
                 new JdbcAvailabilityBlockRepository(connection),
                 new JdbcWalletRepository(connection),
                 new JdbcWalletTransactionRepository(connection),
-                eventBus,
-                new AuditServiceImpl(new JdbcAuditLogRepository(connection),
-                        new JdbcUserRepository(connection), Clock.systemUTC()));
+                eventBus, audit);
+    }
+
+    private static long count(Connection connection, String table) throws Exception {
+        try (var statement = connection.createStatement();
+             var result = statement.executeQuery("SELECT COUNT(*) FROM " + table)) {
+            result.next();
+            return result.getLong(1);
+        }
     }
 
     static Connection migratedConnection() throws Exception {

@@ -25,6 +25,7 @@ import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
 import com.snoozeshare.service.impl.AuditServiceImpl;
 import com.snoozeshare.service.impl.UserServiceImpl;
 import com.snoozeshare.service.impl.WalletServiceImpl;
+import com.snoozeshare.testsupport.FailingAuditService;
 
 class WalletLedgerAuditTest {
 
@@ -82,6 +83,28 @@ class WalletLedgerAuditTest {
 
             assertThrows(IllegalArgumentException.class, () -> service.withdraw(user, new BigDecimal("5.00")));
 
+            assertEquals(0, rows(connection).size());
+        }
+    }
+
+    @Test
+    void aFailingAuditWriteRollsBackTheTopUp() throws Exception {
+        try (Connection connection = ConnectionFactory.open("jdbc:sqlite::memory:")) {
+            MigrationRunner.migrate(connection);
+            UUID user = guest(connection);
+            var realAudit = new AuditServiceImpl(new JdbcAuditLogRepository(connection),
+                    new JdbcUserRepository(connection), Clock.systemUTC());
+            WalletService service = new WalletServiceImpl(connection, new JdbcWalletRepository(connection),
+                    new JdbcWalletTransactionRepository(connection), null,
+                    new FailingAuditService(realAudit, 1));
+
+            assertThrows(RuntimeException.class, () -> service.topUp(user, new BigDecimal("50.00")));
+
+            assertEquals(0, BigDecimal.ZERO.compareTo(new JdbcWalletRepository(connection)
+                    .findByUserId(user).orElseThrow().balance()));
+            assertEquals(0, new JdbcWalletTransactionRepository(connection)
+                    .findByWalletId(new JdbcWalletRepository(connection).findByUserId(user).orElseThrow()
+                            .walletId()).size());
             assertEquals(0, rows(connection).size());
         }
     }
