@@ -6,9 +6,9 @@ every boundary, not at the end of the session.
 
 - **Phase:** W7 Host Calendar & Date Overrides — complete
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `w8`
+- **Branch:** `w9`
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-27 by Codex — W8 pushed and PR #11 opened for review
+- **Last updated:** 2026-09-27 by Codex — created and switched to `w9` from `w8`
 - **Last verified against repo:** 2026-09-27
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
 
@@ -64,10 +64,7 @@ three iterations).
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
-| S7 | 2026-09-25 | Codex | w7 | W7 scope assessment | Paused | `w7` created from `w6`; booking display maps to W8/F7.1, while W7 remains calendar/date overrides | 2026-09-25 |
-| S8 | 2026-09-26 | Codex | w7 | W7 | Paused | W7 complete: host calendar, inclusive manual blocks, removal, validation, and layout delivered; full tests/build pass | 2026-09-26 |
-| S9 | 2026-09-26 | Codex | w8 | Host portal UI refinement | Paused | Completed wallet/listing layout, copy, metrics, action sizing, and status-control spacing; focused tests, XML validation, Checkstyle, and diff checks pass; full suite retains two unrelated UI failures | 2026-09-26 |
-| S14 | 2026-09-26 | Codex | w8 | W8 — Host Request Queue, Earnings & Disputes | Paused | PR #11 open against main; W8 implementation, review fixes, and Developer Guide handoff complete | 2026-09-27 |
+| S7 | 2026-09-27 | Codex | w9 | W9 — Host Wallet Management | Active | W9 design spec written; awaiting operator review before planning | 2026-09-27 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -91,7 +88,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W6 | F5 — Host Listing Management & Publishing | Done | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md) | [listing-management plan](docs/superpowers/plans/2026-09-25-w6-listing-management.md) | Implementation complete: listing CRUD/status/detail flows, host wallet/navigation refinements, wallet refresh fix, and clean build verification | Documented 2026-09-27 |
 | W7 | F6 — Host Calendar & Date Overrides | Done | [host-calendar design](docs/superpowers/specs/2026-09-26-w7-host-calendar-design.md) | [host-calendar plan](docs/superpowers/plans/2026-09-26-w7-host-calendar.md) | Complete: listing calendar, month navigation, colors, all-month overrides, inclusive/single-date blocking, removal, validation, and layout; full tests/build pass | Documented 2026-09-27 |
 | W8 | F7 — Host Request Queue, Earnings & Disputes | In review | [host requests/earnings design](docs/superpowers/specs/2026-09-26-w8-host-requests-earnings-design.md) | [host requests/earnings plan](docs/superpowers/plans/2026-09-26-w8-host-requests-earnings.md) | PR #11 open against main; review fixes complete; broader F7.2.2 deferred to W13 | Documented 2026-09-27 |
-| W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
+| W9 | F8 — Host Wallet Management | Spec'd | [host wallet management design](docs/superpowers/specs/2026-09-27-w9-host-wallet-management-design.md) | — | Design spec written and self-reviewed; awaiting operator approval before implementation planning | — |
 | W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
 | W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
 | W12 | F11 — Platform Audit Trail & Analytics | Not started | — | — | Backlog only: §5 | — |
@@ -445,6 +442,8 @@ architecture area remain recorded in that area's table.
 | C29 | 2026-09-26 | Defer F7.2.2 structured host dispute response notes/evidence from W8 to W13 Messaging | Operator chose to defer the formal host response path to W13; W8 will not add ticket response fields or conflate the flow with chat | Operator conversation, 2026-09-26 |
 | C30 | 2026-09-27 | Host booking approve/reject actions require confirmation modals matching the supplied mockups | Operator requested centered AgentModal-style dialogs with scrim, booking summary cards, explanatory notices, and modal-specific confirm/cancel actions | Operator conversation, 2026-09-27 |
 | C31 | 2026-09-27 | W8 persists the optional host rejection message on the booking and exposes it to guest booking/trip views; broader F7.2.2 response notes/evidence remains deferred to W13 | Operator confirmed the proposed nullable `hostDecisionMessage` behavior | Operator conversation, 2026-09-27 |
+| C32 | 2026-09-27 | W9 host wallet statements show every wallet transaction type (`TOP_UP`, `WITHDRAWAL`, escrow rows, payouts, ticket remedies, and agent overrides); payout creation remains W8/W10-owned | Operator confirmed “Yes, all types” when choosing the W9 statement scope | Operator conversation, 2026-09-27 |
+| C33 | 2026-09-27 | W9 uses one common Guest/Host wallet page and action-dialog flow matching the supplied mockups; top-up presets populate the amount field and withdrawal's full-balance link populates the current balance | Operator approved the common-wallet direction and supplied the UI interaction requirements | Operator conversation, 2026-09-27; [W9 design](docs/superpowers/specs/2026-09-27-w9-host-wallet-management-design.md) |
 
 ---
 
