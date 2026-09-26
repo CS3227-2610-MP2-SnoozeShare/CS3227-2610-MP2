@@ -24,6 +24,8 @@ class HostBookingsControllerTest {
         assertTrue(fxml.contains("Past requests"));
         assertTrue(fxml.contains("host-bookings-table"));
         assertTrue(fxml.contains("host-bookings-table-card"));
+        assertTrue(fxml.contains("@host-bookings.css"));
+        assertTrue(!fxml.contains("agent-theme.css"));
         assertTrue(!fxml.contains("agent-table"));
         assertTrue(!fxml.contains("agent-card"));
         assertTrue(fxml.contains("pendingGuestColumn\" text=\"Guest\" prefWidth=\"150\""));
