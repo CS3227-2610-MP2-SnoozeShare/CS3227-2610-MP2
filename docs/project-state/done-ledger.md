@@ -5,6 +5,7 @@ why, with a commit, plan or artifact as the reference. Not a copy of `git log`.
 
 | Date | What changed | Workstream | Ref |
 |---|---|---|---|
+| 2026-09-27 | Styled past booking statuses as uppercase host-owned badges: green for confirmed and red for rejected/cancelled, matching the pending-count badge treatment. Added focused regression assertions; FXML validation, tests, and Checkstyle pass | W8 | `HostBookingsController.java`, `agent-theme.css`, `HostBookingsControllerTest.java` |
 | 2026-09-27 | Matched the first five pending booking-request column widths to the past-requests table (150, 190, 130, 90, 130) and added structural regression assertions. FXML validation, focused tests, and Checkstyle pass | W8 | `host-bookings.fxml`, `HostBookingsControllerTest.java` |
 | 2026-09-27 | Fixed the remaining Approve/Reject modal `Invalid path` failure by escaping the literal `$0.00` FXML placeholder; JavaFX treats unescaped values beginning with `$` as expression paths. Added a regression assertion. Focused booking tests and Checkstyle pass | W8 | `host-booking-decision-dialog.fxml`, `HostBookingsControllerTest.java` |
 | 2026-09-27 | Fixed Approve/Reject modal opening failures by resolving the decision-dialog FXML through its absolute classpath resource instead of a relative lookup; added a resource-path regression assertion. Focused booking tests and Checkstyle pass | W8 | `HostBookingDecisionDialogController.java`, `HostBookingsControllerTest.java` |

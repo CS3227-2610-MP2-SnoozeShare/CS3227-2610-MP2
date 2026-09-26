@@ -531,6 +531,20 @@
 .agent-root .host-bookings-note,
 .agent-root .host-bookings-feedback { -fx-font-size: 12px; -fx-text-fill: fg-subtle; }
 .agent-root .host-bookings-feedback { -fx-text-fill: danger; }
+.agent-root .host-bookings-status-badge {
+    -fx-background-radius: 999px;
+    -fx-padding: 3px 11px 3px 11px;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+.agent-root .host-bookings-status-confirmed {
+    -fx-background-color: success-subtle;
+    -fx-text-fill: success;
+}
+.agent-root .host-bookings-status-rejected {
+    -fx-background-color: danger-subtle;
+    -fx-text-fill: danger;
+}
 
 /* ---- Detail screen ---- */
 .agent-root .agent-scroll, .agent-root .agent-scroll > .viewport {

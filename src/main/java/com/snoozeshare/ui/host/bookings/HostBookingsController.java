@@ -3,6 +3,7 @@ package com.snoozeshare.ui.host.bookings;
 import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.enums.BookingStatus;
@@ -59,6 +60,7 @@ public final class HostBookingsController {
         configureTextColumns(pastNightsColumn, row -> Long.toString(row.nights()));
         configureTextColumns(pastTotalColumn, row -> money(row.grossAmount()));
         configureTextColumns(pastStatusColumn, row -> status(row.booking().status()));
+        pastStatusColumn.setCellFactory(column -> new StatusCell());
     }
 
     public void setContext(AppContext appContext) {
@@ -124,6 +126,26 @@ public final class HostBookingsController {
             case REJECTED, CANCELLED_BY_HOST, CANCELLED_BY_GUEST, FORCE_CANCELLED -> "REJECTED";
             default -> value.name();
         };
+    }
+
+    private final class StatusCell extends TableCell<HostBookingRow, String> {
+        private final Label badge = new Label();
+
+        @Override
+        protected void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null || item.isBlank()) {
+                setText(null);
+                setGraphic(null);
+                return;
+            }
+            badge.setText(item.toUpperCase(Locale.ROOT));
+            badge.getStyleClass().setAll("host-bookings-status-badge",
+                    "CONFIRMED".equals(item) ? "host-bookings-status-confirmed"
+                            : "host-bookings-status-rejected");
+            setText(null);
+            setGraphic(badge);
+        }
     }
 
     private final class ActionCell extends TableCell<HostBookingRow, String> {

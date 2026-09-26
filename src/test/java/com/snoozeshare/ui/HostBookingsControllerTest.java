@@ -35,6 +35,9 @@ class HostBookingsControllerTest {
                 "src/main/java/com/snoozeshare/ui/host/bookings/HostBookingsController.java"));
         assertTrue(controller.contains("Approve"));
         assertTrue(controller.contains("Reject"));
+        assertTrue(controller.contains("pastStatusColumn.setCellFactory"));
+        assertTrue(controller.contains("host-bookings-status-confirmed"));
+        assertTrue(controller.contains("host-bookings-status-rejected"));
     }
 
     @Test
