@@ -14,12 +14,18 @@ import com.snoozeshare.ui.host.listings.HostListingsController;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 
 public final class HostShellController extends NavShellController {
 
+    private static final String ACTIVE_TAB = "agent-tab-active";
+
     @FXML
     private BorderPane shellRoot;
+    @FXML private Label listingsTab;
+    @FXML private Label bookingsTab;
+    @FXML private Label walletTab;
 
     private WalletDashboardController walletController;
 
@@ -31,6 +37,7 @@ public final class HostShellController extends NavShellController {
 
     @FXML
     private void showListings() {
+        selectTab(listingsTab);
         cleanupWalletController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -103,6 +110,7 @@ public final class HostShellController extends NavShellController {
 
     @FXML
     private void showBookings() {
+        selectTab(bookingsTab);
         cleanupWalletController();
         try {
             Node bookingsView = FXMLLoader.load(getClass().getResource(
@@ -115,6 +123,7 @@ public final class HostShellController extends NavShellController {
 
     @FXML
     private void showWallet() {
+        selectTab(walletTab);
         cleanupWalletController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -135,4 +144,10 @@ public final class HostShellController extends NavShellController {
         }
     }
 
+    private void selectTab(Label selected) {
+        for (Label tab : new Label[] {listingsTab, bookingsTab, walletTab}) {
+            tab.getStyleClass().remove(ACTIVE_TAB);
+        }
+        selected.getStyleClass().add(ACTIVE_TAB);
+    }
 }

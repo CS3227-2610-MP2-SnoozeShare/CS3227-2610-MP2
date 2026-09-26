@@ -15,17 +15,30 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 
 public final class GuestShellController extends NavShellController {
 
+    private static final String ACTIVE_TAB = "agent-tab-active";
+
     @FXML
     private BorderPane shellRoot;
+    @FXML private Label searchTab;
+    @FXML private Label tripsTab;
+    @FXML private Label walletTab;
+    @FXML private Label supportTab;
 
     private GuestSearchController searchController;
     private TripDashboardController tripController;
     private WalletDashboardController walletController;
+    private Node defaultCenter;
+
+    @FXML
+    private void initialize() {
+        defaultCenter = shellRoot.getCenter();
+    }
 
     @Override
     public void setContext(AppContext appContext) {
@@ -35,6 +48,7 @@ public final class GuestShellController extends NavShellController {
 
     @FXML
     private void showExplore() {
+        selectTab(searchTab);
         cleanupTripController();
         cleanupWalletController();
         try {
@@ -82,6 +96,7 @@ public final class GuestShellController extends NavShellController {
 
     @FXML
     private void showMyTrips() {
+        selectTab(tripsTab);
         cleanupWalletController();
         cleanupTripController();
         try {
@@ -105,6 +120,7 @@ public final class GuestShellController extends NavShellController {
 
     @FXML
     private void showWallet() {
+        selectTab(walletTab);
         cleanupWalletController();
         cleanupTripController();
         try {
@@ -128,6 +144,17 @@ public final class GuestShellController extends NavShellController {
 
     @FXML
     private void showSupport() {
+        selectTab(supportTab);
+        cleanupTripController();
+        cleanupWalletController();
+        shellRoot.setCenter(defaultCenter);
         displayPage("Support", "Find help with bookings, payments, and stays.");
+    }
+
+    private void selectTab(Label selected) {
+        for (Label tab : new Label[] {searchTab, tripsTab, walletTab, supportTab}) {
+            tab.getStyleClass().remove(ACTIVE_TAB);
+        }
+        selected.getStyleClass().add(ACTIVE_TAB);
     }
 }

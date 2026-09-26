@@ -8,9 +8,13 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.VBox?>
 
+<?import java.net.URL?>
 <VBox xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.snoozeshare.ui.common.AuthController" alignment="CENTER"
-      spacing="12" styleClass="auth-page">
+      spacing="12" styleClass="auth-page, agent-root">
+    <stylesheets>
+        <URL value="@../admin/agent-theme.css"/>
+    </stylesheets>
     <padding><Insets top="48" right="48" bottom="48" left="48"/></padding>
     <Label text="SnoozeShare" styleClass="app-title"/>
     <Label fx:id="modeLabel" text="Welcome back" styleClass="page-title"/>
