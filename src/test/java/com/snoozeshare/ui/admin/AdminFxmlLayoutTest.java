@@ -91,4 +91,25 @@ class AdminFxmlLayoutTest {
         assertTrue(screen.contains("onAction=\"#handleAdd\""));
         assertTrue(screen.contains("+ Add category"));
     }
+
+    @Test
+    void auditLogScreenHasTheSearchActionDateFiltersAndTheTable() throws Exception {
+        String audit = read("audit/audit-log.fxml");
+
+        String[] ids = {"searchField", "actionSelect", "fromPicker", "toPicker", "applyButton", "clearButton",
+            "table", "loadMoreButton", "errorLabel", "emptyLabel"};
+        for (String id : ids) {
+            assertTrue(audit.contains("fx:id=\"" + id + "\""), id);
+        }
+        assertTrue(audit.contains("Audit log"));
+        assertTrue(audit.contains("<MultiSelectMenu fx:id=\"actionSelect\""), "action type is a multi-select");
+        assertFalse(audit.contains("ComboBox"), "no single-select action combo");
+        assertTrue(audit.contains("<Button fx:id=\"clearButton\""), "Clear is a real button");
+        assertTrue(audit.contains("agent-button-danger"), "Clear uses the red outline style");
+        assertFalse(audit.contains("ScrollPane"), "only the table rows scroll, the page is fixed");
+        assertTrue(audit.contains("<Button fx:id=\"applyButton\""), "Apply filters stays");
+        assertFalse(audit.contains("User ID"), "search replaces the board's separate User ID / Booking ID inputs");
+        assertFalse(audit.toLowerCase().contains("force"));
+        assertTrue(controller("AdminShellController.java").contains("audit-log.fxml"));
+    }
 }

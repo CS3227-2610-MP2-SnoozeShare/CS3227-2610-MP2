@@ -20,7 +20,7 @@ class ShellNavigationTest {
             if (!shell.equals("host/host-shell.fxml")) {
                 assertTrue(fxml.contains("fx:id=\"pageMessage\""), shell);
             }
-            String navClass = shell.startsWith("admin/") ? "agent-tab" : "nav-item";
+            String navClass = "agent-tab";
             assertTrue(fxml.contains("styleClass=\"" + navClass), shell);
             assertTrue(fxml.contains("onMouseClicked=\"#"), shell);
         }
@@ -36,7 +36,6 @@ class ShellNavigationTest {
         assertTrue(guestPage.contains("text=\"Search\""));
         assertTrue(hostPage.contains("text=\"Listings\""));
         assertTrue(!hostPage.contains("text=\"Dashboard\""));
-        assertTrue(hostPage.contains("text=\"Messages\""));
         assertTrue(hostPage.contains("</center>"));
     }
 

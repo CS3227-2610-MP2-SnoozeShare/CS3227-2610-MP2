@@ -4,13 +4,13 @@
 anything, then run `git log --oneline -20` to confirm it still matches reality. Update it at
 every boundary, not at the end of the session.
 
-- **Phase:** W7 Host Calendar & Date Overrides — complete
+- **Phase:** W12 Platform Audit Trail — in review
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `agent-dispute-resolution-and-state-overrides` (W10 — Agent Dispute Resolution & State Overrides; branched from `main` after W2 merge)
+- **Branch:** `agent-platform-audit-trail` (W12 — Platform Audit Trail; branched from `main` after the W10 merge)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-26 by Claude Opus 4.6 — Fall Light theme applied to all role shells and login page
+- **Last updated:** 2026-09-26 by Claude Sonnet 5 — W12 Done; Guide Documented 2026-09-26; merged origin/main (PR #8 Fall Light theme for guest/host/login)
 - **Last verified against repo:** 2026-09-26
-- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
+- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10, then W12, on 2026-09-26 (operator-approved checkpoints; W12 added § 4.9 Audit trail, two diagrams, the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented.
 
 Sections are ordered by how often they are needed: **1–3 say where we are, 4–5 say what the
 system is, 6–7 say what not to touch and what is stuck, 8–10 are the record.** Cite sections by
@@ -39,12 +39,12 @@ three iterations).
 | `docs/project-state/done-ledger.md` | The Done ledger — every change, newest first |
 | `docs/SnoozeShare-Architecture-Proposal.md` | The pre-existing architecture proposal — module boundaries, package layout, interface contracts, DB schema. Treated as the seed for § Architecture below, not a per-feature spec. |
 | `docs/ProductBacklog.md` | The formal product backlog / engineering spec — epics F0–F11, prioritized and sprint-mapped |
-| `docs/DeveloperGuide.md` | Handover brief for developers — currently an empty placeholder |
+| `docs/DeveloperGuide.md` | Handover brief for developers — covers W10 and W12 (see the Guide column in § Workstreams) |
 | `docs/UserGuide.md`, `docs/Reflections.md` | End-user guide; reflections on the agentic workflow (not read in full for this bootstrap — out of scope per bootstrapping bounds) |
 | `logs/` | Per-agent-session interaction logs named `YYYY-MM-DD_HH-mm-ss_<branch>.md` in SGT |
 | `src/main/java/com/snoozeshare/` | Application source — package skeleton only, see § Architecture |
 | `config/checkstyle/` | Checkstyle rules enforced on build |
-| `db/schema.sql`, `db/seed-mock-data.sql`, `db/snoozeshare-mock.db` | Shared team-reference SQLite DB — draft SQL + the built `.db` file, committed so everyone queries the same data. **Rebuild the `.db` from the two SQL files after any seed edit** (`sqlite3 x.db < schema.sql; sqlite3 x.db < seed-mock-data.sql`); corrected 2026-09-25 to follow C17/C20 (see D6). **Seed timestamps are UTC ISO-8601 ending in `Z`** (as the app writes them via `Instant.toString()`; `JdbcCodecs.instant` rejects zone-less values) — keep that format in any seed edit. **Seed IDs must be valid hex UUIDs** (mock prefixes: users `a`/`b`/`c`, tickets `d`, listings `1`, bookings `2`, wallets `3`, transactions `4`, availability `5`, audit `6`, categories `7`, reviews `8`); non-hex prefixes make `UUID.fromString` throw. Dev/reference artifact, not wired into app startup (see § 4.5) |
+| `db/schema.sql`, `db/seed-mock-data.sql`, `db/snoozeshare-mock.db` | Shared team-reference SQLite DB — draft SQL + the built `.db` file, committed so everyone queries the same data. **Rebuild the `.db` from the two SQL files after any seed edit** (`sqlite3 x.db < schema.sql; sqlite3 x.db < seed-mock-data.sql`); corrected 2026-09-25 to follow C17/C20 (see D6). **Seed timestamps are UTC ISO-8601 ending in `Z`** (as the app writes them via `Instant.toString()`; `JdbcCodecs.instant` rejects zone-less values) — keep that format in any seed edit. **Seed IDs must be valid hex UUIDs** (mock prefixes: users `a`/`b`/`c`, tickets `d`, listings `1`, bookings `2`, wallets `3`, transactions `4`, availability `5`, audit `6`, categories `7`, reviews `8`); non-hex prefixes make `UUID.fromString` throw. **The committed `.db` ships already migrated** (schema_history v1+v2, System user; `db/schema.sql` includes `CREATE TABLE IF NOT EXISTS schema_history`) and `CommittedMockDbTest` guards that. Dev/reference artifact, not wired into app startup (see § 4.5) |
 
 ---
 
@@ -92,7 +92,8 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
 | W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
 | W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
-| W12 | F11 — Platform Audit Trail & Analytics | Not started | — | — | Backlog only: §5 | — |
+| W12 | F11 — Platform Audit Trail (Analytics half of the epic has no items, out of scope; W11 emits the account-governance rows, C32) | Done | [W12 design](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) | [W12 plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md) | Done | Documented 2026-09-26 |
+| W14 | Unified ledger — fold `wallet_transactions` into `audit_log`, `users.balance`, System account with a real wallet (C30, C31) | Not started | — | — | Not spec'd; reverses Known Gaps entry, C3, C9; runs after W12; touches W1/W3/W5/W6/W10 money paths | — |
 | W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
 
 **Handoffs into W3 (raised by W10, 2026-09-25; W3 reached `main` 2026-09-25, W10 merged `main` 2026-09-26 and the
@@ -213,7 +214,7 @@ pieces (`WalletPanelController`, `NavShell`, formatting/validation helpers, shar
 constructed once per session and embedded into whichever role shell is active. Controllers are
 meant to depend only on `service.*` interfaces, never `repository.*` or `infra.db.*` directly.
 
-**W10 Agent screens (built):** `ui.admin` has the canvas-style agent shell (top bar + tab strip: Disputes / Accounts / Audit Log / Categories; Accounts and Audit Log are placeholders) in the "Fall Light" palette (`agent-theme.css`, agent scene only; C24). Screens: `DisputeQueueController` (oldest-first table, All/Unassigned/Mine chips, width-fitted status dropdown, unassigned badge), `DisputeDetailController` (summary card, resizable guest/host chat boxes, one persisted internal-notes field with Save, Assign/Unassign, Accept / Reject / Manual actions; C25), `ResolutionDialogController` and `CategoryDialogController` (modal cards built on `AgentModal` with a 50% grey scrim; live refund/payout preview, reason required; category Add/Edit/Delete; C26) and `CategoryAdminController`. To try it on a copy of the mock DB, set env `SNOOZESHARE_DB_URL` (e.g. `jdbc:sqlite:build/acceptance.db`); `Main` passes it to `AppContext.create(jdbcUrl)`. `AdminUiSmokeTest` and the snapshot tests exercise the screens on the FX toolkit and write `build/ui-snapshots/*.png`.
+**W10 Agent screens (built):** `ui.admin` has the canvas-style agent shell (top bar + tab strip: Disputes / Accounts / Audit Log / Categories; Accounts and Audit Log are placeholders) in the "Fall Light" palette (`agent-theme.css`, agent scene only; C24). Screens: `DisputeQueueController` (oldest-first table, All/Unassigned/Mine chips, width-fitted status dropdown, unassigned badge), `DisputeDetailController` (summary card, resizable guest/host chat boxes, one persisted internal-notes field with Save, Assign/Unassign, Accept / Reject / Manual actions; C25), `ResolutionDialogController` and `CategoryDialogController` (modal cards built on `AgentModal` with a 50% grey scrim; live refund/payout preview, reason required; category Add/Edit/Delete; C26) and `CategoryAdminController`. To try it on a copy of the mock DB, set env `SNOOZESHARE_DB_URL` (e.g. `jdbc:sqlite:build/acceptance.db`); `Main` passes it to `AppContext.create(jdbcUrl)`. **W12 adds the Audit Log tab** (`ui.admin.audit.AuditLogController`, read-only): one search box + action-type multi-select + separate From/To date pickers + Apply filters + a red-outline Clear button, a table with a `REF` column (`Booking #0009` / `Ticket #0004`), `Before → After` status cell and signed wallet-adjustment cell, and pagination via `AuditService.search` (C29, C32, C33). **Fixed table headers (C33):** in every agent table the header row stays put and only the rows scroll, with a slim scroll bar that starts below the header: the dispute-queue and audit `TableView`s size to their rows but shrink to the window and scroll internally (no outer `ScrollPane`), and the categories list scrolls inside a `ScrollPane` under its fixed header (`.agent-rows-scroll`). Audit rows share the queue's grey hover but keep the default cursor. The date pickers and the `MultiSelectMenu` popup are styled in `agent-theme.css` after the board's Date picker component. `AdminUiSmokeTest` and the snapshot tests exercise the screens on the FX toolkit and write `build/ui-snapshots/*.png`.
 
 **Visual design (S2, branch `ui-mockup`):** fully spec'd. The design spec is
 [`docs/superpowers/specs/2026-09-23-ui-design-system-design.md`](docs/superpowers/specs/2026-09-23-ui-design-system-design.md)
@@ -330,6 +331,14 @@ credential check), `logout()`. Every service method that needs an actor takes th
 id explicitly rather than reaching into a global, so services stay unit-testable without a live
 session.
 
+### 4.8 Audit trail
+
+**Now:** `audit_log` is one row per change (C28). Migration `V002__audit_trail.sql` adds 7 columns to the V001 table: `actorName`, `walletAdjustment` (signed, wallet rows only), `reason`, `ticketId`, `bookingId`, `subjectUserId`, `subjectName`, plus indexes on timestamp/actor/subject/booking/ticket and a seeded non-loginable **System user** (`AuditService.SYSTEM_ACTOR_ID`, role `AGENT`, `SUSPENDED`; C29, C32). `beforeState`/`afterState` hold status text only. Rows are written through `AuditRecord.builder(...)` and `AuditService.record(...)` **on the caller's connection**, so a state change and its money rows commit or roll back together (rollback tests exist). A ticket resolution writes 4 rows: ticket status, booking status, guest wallet adjustment, host wallet adjustment (net of fee; zero-amount sides skipped). `AuditService.search(AuditFilter, limit, offset)` returns newest first; a name in the search text is resolved to user ids first and the log queried by id. The Audit Log screen is described in § 4.2. **Dual-write until W14:** wallet movements still write `wallet_transactions` (the ledger) AND an `audit_log` money row in one transaction; W14 folds them together (C31).
+
+| ID | Date | Decision | Why / who asked | Source |
+|---|---|---|---|---|
+| C28–C32 | 2026-09-26 | Audit structure, filters, System user, platform fee as reason text only, W14 split, account-governance rows reserved for W11 — recorded in full in § Decisions | Operator | [W12 spec](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) |
+
 ---
 
 ## 5. Conventions
@@ -348,9 +357,7 @@ Durable rules, harvested from the architecture proposal. Enforcement is partial:
   transaction.
 - All state transitions (booking, ticket) go through the shared `*StateMachine`, never
   re-implemented per role/UI.
-- Every mutating service method has exactly one `AuditService.record(...)` call site (or,
-  alternatively, `AuditService` subscribes to domain events — pick one convention project-wide
-  once this is actually built; not yet decided in code).
+- One audit row per change: a state change and its money movements are separate rows written in the same DB transaction, via `AuditRecord.builder`. Audit rows are only ever written by services, on the caller's connection.
 - `wallets.balance` is a denormalized cache of "sum of this wallet's transactions" — it is only
   ever written in the same DB transaction as the triggering `wallet_transactions` row insert,
   never independently.
@@ -383,9 +390,13 @@ and the stated assumptions/constraints. **These are decisions, not a TODO list �
 - **Platform fees are informational only** (`feeAmount` column on `BOOKING_PAYOUT` rows) — no
   system-owned platform `Wallet`, no true double-entry transfer. Revisit only if the platform
   ever needs its own reportable balance.
+  *(Operator intends to reverse this in W14 — see C31. Do not implement a platform wallet in W12.)*
 - **Auth is fully mocked** — no real credential validation anywhere; role separation is enforced
   in service/domain code, not by real authentication. This is a stated project constraint, not
   an oversight.
+
+- **Audit timestamps are `Instant.toString()` strings (W12).** Variable-length fractional seconds can misorder rows within the same second under `ORDER BY timestamp DESC`. Accepted; do not "fix" without a decision.
+- **Audit Log UI polish left open (W12):** the `REF` column truncates when a row has both a booking and a ticket (the double-bordered date pickers were fixed by C33). The design board artifact is older than the spec (it has User ID / Booking ID inputs and no REF); the spec and C29 supersede it.
 
 **Explicitly out of scope:** microservices, message brokers, horizontal scaling, JPMS module
 boundaries, JPA/Hibernate, a separate DTO layer distinct from domain records.
@@ -423,6 +434,12 @@ architecture area remain recorded in that area's table.
 | C25 | 2026-09-25 | After the second visual check the operator changed three behaviours: (1) internal notes become ONE persisted free-text field per ticket (`Ticket.agentNotes`, replaced on Save, autopopulated on return; no history list; white background like the chat panes; "Add note" becomes a "Save" button in the Send-button colour); (2) "Assign to me" becomes "Unassign" once the ticket is assigned to the signed-in agent (`UNDER_REVIEW` -> `OPEN`, assignee cleared, persisted, audited `TICKET_UNASSIGNED`), so `TicketStateMachine` now allows `UNDER_REVIEW -> OPEN` for agents; (3) dialogs, summary card and status dropdown restyled to the canvas exactly (no shadows in dialogs, border around the whole modal). | Operator. Rejected: note history list; disabling the assign button after assign. |
 | C26 | 2026-09-25 | Third visual round, operator: dropdown text and options right-aligned; pointer cursor on ticket rows; chat boxes (resized together) and the notes box are user-resizable with minimum heights, notes Save button moves to the bottom-right of the field; every modal gets a light-grey 50% scrim over the window behind it (reverses the "no dimmed backdrop" exception in C24); Add/Edit category use the same modal card design, and the Edit modal gets a red Delete. **Scope decision:** category delete is a NEW capability beyond F9.3.1 (add/rename/toggle); a category still referenced by any ticket cannot be deleted (use the active toggle instead). | Operator. |
 | C27 | 2026-09-25 | Ticket status `UNDER_REVIEW` is renamed **`IN_REVIEW`** everywhere (enum, `tickets.status` CHECK in `db/schema.sql` and `V001__foundation.sql`, seed data, mock DB, tests, UI text "In review", messages, variable names) so code and UI use one term. Status filter labels are now All statuses / Open / In review / Approved / Rejected, the dropdown is as narrow as its widest option (selector and popup the same width) and text is left-aligned again (reverses the right-alignment in C26 item 1). **Cross-workstream impact:** any other branch that references `TicketStatus.UNDER_REVIEW` or the string `'UNDER_REVIEW'` must rename it at merge; the architecture proposal's status list is updated in the same change. | Operator (inconsistency between UI and code). Rejected: UI-only rename. |
+| C28 | 2026-09-26 | **Audit log structure (W12).** One row = one change. `beforeState`/`afterState` hold status text only; new typed columns `walletAdjustment` (signed, wallet rows only), `reason`, `ticketId`, `bookingId`, `subjectUserId`, plus name snapshots `actorName`/`subjectName`. A ticket resolution writes 4 rows: ticket status, booking status, guest wallet adjustment, host wallet adjustment (net of fee; zero-amount sides skipped). Supersedes D2 point 2 (no JSON-projection layer). | Operator: the single `afterState` blob was inappropriate. Operator confirmed the 4-row set (reading "host and guest side" as the two wallets, since a booking is one entity), real columns over JSON, and the extra id columns. Rejected: two per-side Booking rows; keeping JSON with fixed keys; keeping `entityId`-only lookups. | Operator conversation, 2026-09-26; [W12 spec § 3](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) |
+| C29 | 2026-09-26 | Audit Log screen filters are ONE search box + action-type filter (a single combo here; superseded by the multi-select in C33) + From/To date range (replaces the board's User ID and Booking ID inputs). Name text is resolved to user ids first and the log queried by id, so history survives renames (names are also snapshotted on each row). System-initiated rows are attributed to a seeded non-loginable System user (actorUserId stays NOT NULL). | Operator | Operator conversation, 2026-09-26; W12 spec § 5–6 |
+| C30 | 2026-09-26 | Platform fee stays **reason-text only** in W12; the § Known Gaps entry "no platform wallet" is KEPT for W12. Operator wants the fee eventually as a logged entry on a System account wallet, delivered by W14. | Operator; asked to keep-or-reverse the Known Gap per AGENTS.md § 4, chose to defer the reversal to W14 | Operator conversation, 2026-09-26 |
+| C31 | 2026-09-26 | **Planned reversal (W14, not yet executed):** fold `wallet_transactions` into `audit_log` (it already functions as a log), add a balance to `users`, and create a System account with a real wallet. Reverses the Known Gaps entry, C3 (WalletService/TransactionService split), C9 (single-sided rows) and the `wallets.balance` cache convention when W14 runs. Until then W12 dual-writes wallet rows (ledger + audit) in one transaction. Split from W12 because it touches 36 main / 18 test files and the open W3 merge handoffs. | Operator; recommended split accepted over doing it inside W12 | Operator conversation, 2026-09-26; W12 spec § 2, § 8 |
+| C32 | 2026-09-26 | W12 spec approved with its § 10 defaults: `REF` column added to the Audit Log table; System user is role `AGENT` + `SUSPENDED`; Status cell shows `Before → After`; W7 blocks not audited. **Account-governance actions must also be audit-logged: the W12 schema/`AuditAction` accommodate them (spec § 4a), implementation is reserved for W11.** The suspension reason is stored as `reason` on the `ACCOUNT_SUSPENDED` row, which resolves D2 point 1 without a `users.suspensionReason` column. | Operator | Operator conversation, 2026-09-26; W12 spec § 4a, § 10 |
+| C33 | 2026-09-26 | **Operator UI amendments to the W12 Audit Log (supersede C29's single action combo and parts of the spec § 5-6):** (1) the action type is a MULTI-select (`MultiSelectMenu`, empty = all actions) with the same 34px height as the other filter controls, so `AuditFilter.actions` / `AuditCriteria.actionTypes` are sets and the repository binds an `IN` clause; (2) From and To stay two separate date pickers (no range), one border each, popup styled after the board's *Date picker* component (artifact `PWBCxbfv9e9FGVvY6RKUwd`, `Main.dc.html` Date picker), no Clear/Apply inside the picker, click selects; (3) the master Clear is a real red-outline button (`agent-button-danger`); the **Apply filters button is kept** (the spec does not remove it, selecting does not auto-apply); (4) **fixed table headers apply to ALL agent tables**: only the rows scroll, scroll bar starts below the header; (5) audit rows get the ticket queue's grey hover with no hand cursor (rows are not clickable). | Operator, reviewing the built Audit Log screen. Rejected: an auto-applying filter; removing Apply; a range picker. | Operator conversation, 2026-09-26; [W12 spec § 5–6](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) |
 | C15 | 2026-09-23 | Execute W1 natively in the existing `w1` checkout rather than creating a separate worktree | Operator explicitly selected the current checkout for execution | Operator conversation, 2026-09-23 |
 
 ---
@@ -438,12 +455,24 @@ architecture area remain recorded in that area's table.
 - **D9** — `BookingStateMachine` gains `AGENT` on `CONFIRMED → COMPLETED` (C23); W3 must be told at merge.
 - **D10** — `MigrationRunner` adopts a pre-provisioned DB: the mock DB has tables but no `schema_history`, and the app could not open it otherwise. See the [W10 spec § 6](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md).
 - **D11 (SUPERSEDED by C24, 2026-09-25)** — The admin shell is sidebar-based and uses the current navy `theme.css`, not the canvas tabs / Fall Light palette. Accepted; alignment is a separate UI-design workstream. See the [W10 spec § 6](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md).
-- **D12** — Accepted minor findings from the W10 code review (not fixed; revisit if they matter): (a) `JdbcTicketRepository` orders by `createdAt` text, so sub-second ties can mis-order; (b) `MigrationRunner` adoption only checks for a `users` table; (c) settlement reads guest/host wallets once, so a self-booking (guest == host) would lose an update; (d) `AuditServiceImpl` stamps `Instant.now()`, not the injected clock; (e) settlement takes escrow from `booking.totalAmount()`, not the `ESCROW_HOLD` row; (f) `DisputeDetailController.load()` still calls `render()` outside the error handler.
+- **D12** — Accepted minor findings from the W10 code review (not fixed; revisit if they matter): (a) `JdbcTicketRepository` orders by `createdAt` text, so sub-second ties can mis-order; (b) `MigrationRunner` adoption only checks for a `users` table; (c) settlement reads guest/host wallets once, so a self-booking (guest == host) would lose an update; (d) [resolved by W12: `AuditServiceImpl` now uses the record's `at` or the injected clock]; (e) settlement takes escrow from `booking.totalAmount()`, not the `ESCROW_HOLD` row; (f) `DisputeDetailController.load()` still calls `render()` outside the error handler.
 - **Found during W10 execution (2026-09-25, all fixed, each in the ledger):** (a) mock seed timestamps lacked the trailing `Z`, so `JdbcCodecs.instant` rejected them; (b) mock seed IDs used non-hex prefixes, so `UUID.fromString` threw (rule now in § Orientation repo map); (c) the baseline build was red from 7 pre-existing W2 checkstyle violations.
 - **Backlog edits made 2026-09-25 (operator approved):** `docs/ProductBacklog.md` — F9.2.1 struck as dropped; F9.2.2 reworded to full-escrow settlement; F9.1.1 gains chat threads; F7.3.1 gains the open-ticket guard; new epic F12 Messaging (W13); changelog entry added.
 - **Cross-workstream requirements:** listed under § Workstreams → *Handoffs into W3*.
 
-### D2 — Two schema gaps found while grounding the UI mockups against `db/schema.sql` (OPEN 2026-09-23)
+### W12 deviations (2026-09-26) — see the [W12 spec](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) and [plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md)
+
+- **D13 — Wallet rows are dual-written until W14.** Every wallet movement writes `wallet_transactions` and an `audit_log` money row in one transaction (C31). Deliberate; W14 removes the duplication.
+- **D14 — RESOLVED 2026-09-26 (operator verified the real-app run).** Originally: real-app manual run not done. Plan Task 10 Step 3 (launch the app on a copy of the mock DB, log in as `amy.tanaka@snoozeshare.test`, exercise Audit Log) was not performed. FX smoke and snapshot tests cover the flows; this stays as operator acceptance. Open UI polish is listed in § Known Gaps.
+- **D15 — Mock DB now ships migrated.** `MockDbFixture` no longer migrates its copy; the committed `db/snoozeshare-mock.db` already has `schema_history` v1+v2 and the System user, `CommittedMockDbTest` guards it, and `db/schema.sql` now contains `CREATE TABLE IF NOT EXISTS schema_history`. Rebuild the `.db` from schema + seed after seed edits, as before.
+- **D16 — Seed `availability_blocks` ids remapped** to valid hex prefixes (`60…`/`10…`/`20…`) because the old seed did not rebuild cleanly.
+- **D17 — API changes from the plan:** `AuditService.query(...)` replaced by `search(...)`; `CATEGORY_DELETED` renamed `TICKET_CATEGORY_DELETED`. W11 emits account-governance rows (C32); the W14 unified ledger is unchanged by W12. W12 spec corrections (`actorName` snapshot, 7 `ALTER TABLE` columns, ≥4-char contains-match search, last-four-character REF labels) were applied to the spec.
+
+- **D18 — C33 styling limits (accepted).** The JavaFX calendar cannot be restructured by CSS: the popup keeps its two separate month/year spinners (the board has one title with two arrows), weekday names stay mixed-case (no text-transform in JavaFX CSS), and no unavailable-day state exists. On the categories screen the header columns sit about 5px left of the row columns while the scroll bar is showing. Revisit only with a custom `DatePickerSkin`.
+
+### D2 — Two schema gaps found while grounding the UI mockups against `db/schema.sql` (RESOLVED 2026-09-26 by W12: point 1 by C32, point 2 by C28)
+
+**Resolution (2026-09-26):** point 2 — audit status/reason/amount are now real columns (`walletAdjustment`, `reason`, ...; C28), so no JSON projection layer exists. Point 1 — the suspension reason is stored as `reason` on the `ACCOUNT_SUSPENDED` audit row (C32), no `users.suspensionReason` column; W11 emits that row. Original notes below kept for history.
 
 While extending the Design canvas (C11) to show every field the operator asked for, checking
 each field against `db/schema.sql` / the architecture proposal §4 turned up two things the
@@ -525,6 +554,6 @@ The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-st
 — every change, big or small, newest first.
 
 - **Latest entry:** 2026-09-26
-- **Entries:** 60 (4 backfilled coarsely from git history)
+- **Entries:** 76 (4 backfilled coarsely from git history)
 
 Deviations stay in § Deviations above: those are read every session.

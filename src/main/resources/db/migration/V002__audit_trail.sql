@@ -1,0 +1,13 @@
+ALTER TABLE audit_log ADD COLUMN actorName TEXT;
+ALTER TABLE audit_log ADD COLUMN walletAdjustment REAL;
+ALTER TABLE audit_log ADD COLUMN reason TEXT;
+ALTER TABLE audit_log ADD COLUMN subjectUserId TEXT REFERENCES users(userId);
+ALTER TABLE audit_log ADD COLUMN subjectName TEXT;
+ALTER TABLE audit_log ADD COLUMN bookingId TEXT REFERENCES bookings(bookingId);
+ALTER TABLE audit_log ADD COLUMN ticketId TEXT REFERENCES tickets(ticketId);
+CREATE INDEX idx_audit_timestamp ON audit_log(timestamp);
+CREATE INDEX idx_audit_actor ON audit_log(actorUserId);
+CREATE INDEX idx_audit_subject ON audit_log(subjectUserId);
+CREATE INDEX idx_audit_booking ON audit_log(bookingId);
+CREATE INDEX idx_audit_ticket ON audit_log(ticketId);
+INSERT OR IGNORE INTO users (userId, role, displayName, email, accountStatus, registrationCode, createdAt) VALUES ('a0000000-0000-0000-0000-0000000000ff', 'AGENT', 'SnoozeShare System', 'system@snoozeshare.invalid', 'SUSPENDED', NULL, '2026-01-01T00:00:00Z');

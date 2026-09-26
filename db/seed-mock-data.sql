@@ -32,6 +32,7 @@ INSERT INTO users (userId, role, displayName, email, accountStatus, registration
 ('a0000000-0000-0000-0000-000000000001','AGENT','Amy Tanaka','amy.tanaka@snoozeshare.test','ACTIVE','AGENT-2026-01','2026-01-10T09:00:00Z'),
 ('a0000000-0000-0000-0000-000000000002','AGENT','Ben Alvarez','ben.alvarez@snoozeshare.test','ACTIVE','AGENT-2026-02','2026-01-10T09:05:00Z'),
 ('a0000000-0000-0000-0000-000000000003','AGENT','Chen Wu','chen.wu@snoozeshare.test','ACTIVE','AGENT-2026-03','2026-01-10T09:10:00Z'),
+('a0000000-0000-0000-0000-0000000000ff','AGENT','SnoozeShare System','system@snoozeshare.invalid','SUSPENDED',NULL,'2026-01-01T00:00:00Z'),
 
 ('b0000000-0000-0000-0000-000000000001','HOST','Olivia Bennett','olivia.bennett@snoozeshare.test','ACTIVE','HOST-2026-01','2026-02-01T10:00:00Z'),
 ('b0000000-0000-0000-0000-000000000002','HOST','Marcus Lee','marcus.lee@snoozeshare.test','ACTIVE','HOST-2026-02','2026-02-02T10:00:00Z'),
@@ -90,16 +91,16 @@ INSERT INTO bookings (bookingId, listingId, guestId, startDate, endDate, status,
 -- as already released — see header note). BOOKING-sourced blocks cover confirmed/completed/
 -- force-completed/ongoing bookings; HOST_BLOCK rows are manual blackouts.
 INSERT INTO availability_blocks (blockId, propertyId, startDate, endDate, source, bookingId, reason) VALUES
-('v0000000-0000-0000-0000-000000000001','p0000000-0000-0000-0000-000000000003','2026-10-10','2026-10-14','BOOKING','k0000000-0000-0000-0000-000000000003',NULL),
-('v0000000-0000-0000-0000-000000000002','p0000000-0000-0000-0000-000000000006','2026-10-20','2026-10-25','BOOKING','k0000000-0000-0000-0000-000000000004',NULL),
-('v0000000-0000-0000-0000-000000000003','p0000000-0000-0000-0000-000000000005','2026-08-01','2026-08-06','BOOKING','k0000000-0000-0000-0000-000000000009',NULL),
-('v0000000-0000-0000-0000-000000000004','p0000000-0000-0000-0000-000000000001','2026-08-10','2026-08-14','BOOKING','k0000000-0000-0000-0000-000000000010',NULL),
-('v0000000-0000-0000-0000-000000000005','p0000000-0000-0000-0000-000000000007','2026-09-01','2026-09-04','BOOKING','k0000000-0000-0000-0000-000000000011',NULL),
-('v0000000-0000-0000-0000-000000000006','p0000000-0000-0000-0000-000000000010','2026-07-15','2026-07-18','BOOKING','k0000000-0000-0000-0000-000000000013',NULL),
-('v0000000-0000-0000-0000-000000000007','p0000000-0000-0000-0000-000000000006','2026-09-20','2026-09-25','BOOKING','k0000000-0000-0000-0000-000000000014',NULL),
-('v0000000-0000-0000-0000-000000000008','p0000000-0000-0000-0000-000000000001','2026-12-24','2026-12-26','HOST_BLOCK',NULL,NULL),
-('v0000000-0000-0000-0000-000000000009','p0000000-0000-0000-0000-000000000005','2026-10-06','2026-10-08','HOST_BLOCK',NULL,NULL),
-('v0000000-0000-0000-0000-000000000010','p0000000-0000-0000-0000-000000000008','2026-11-15','2026-11-20','HOST_BLOCK',NULL,NULL);
+('60000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000003','2026-10-10','2026-10-14','BOOKING','20000000-0000-0000-0000-000000000003',NULL),
+('60000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000006','2026-10-20','2026-10-25','BOOKING','20000000-0000-0000-0000-000000000004',NULL),
+('60000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000005','2026-08-01','2026-08-06','BOOKING','20000000-0000-0000-0000-000000000009',NULL),
+('60000000-0000-0000-0000-000000000004','10000000-0000-0000-0000-000000000001','2026-08-10','2026-08-14','BOOKING','20000000-0000-0000-0000-000000000010',NULL),
+('60000000-0000-0000-0000-000000000005','10000000-0000-0000-0000-000000000007','2026-09-01','2026-09-04','BOOKING','20000000-0000-0000-0000-000000000011',NULL),
+('60000000-0000-0000-0000-000000000006','10000000-0000-0000-0000-000000000010','2026-07-15','2026-07-18','BOOKING','20000000-0000-0000-0000-000000000013',NULL),
+('60000000-0000-0000-0000-000000000007','10000000-0000-0000-0000-000000000006','2026-09-20','2026-09-25','BOOKING','20000000-0000-0000-0000-000000000014',NULL),
+('60000000-0000-0000-0000-000000000008','10000000-0000-0000-0000-000000000001','2026-12-24','2026-12-26','HOST_BLOCK',NULL,NULL),
+('60000000-0000-0000-0000-000000000009','10000000-0000-0000-0000-000000000005','2026-10-06','2026-10-08','HOST_BLOCK',NULL,NULL),
+('60000000-0000-0000-0000-000000000010','10000000-0000-0000-0000-000000000008','2026-11-15','2026-11-20','HOST_BLOCK',NULL,NULL);
 
 -- ============================== ticket_categories ==============================
 INSERT INTO ticket_categories (categoryId, label, active) VALUES
@@ -193,23 +194,82 @@ INSERT INTO wallet_transactions (transactionId, walletId, type, amount, feeAmoun
 ('40000000-0000-0000-0000-000000000035','30000000-0000-0000-0000-000000000013','BOOKING_PAYOUT',160.05,4.95,160.05,'20000000-0000-0000-0000-000000000013','d0000000-0000-0000-0000-000000000004','a0000000-0000-0000-0000-000000000001','2026-07-25T16:00:00Z');
 
 -- ============================== audit_log ==============================
--- Representative sample (not exhaustive) covering booking transitions, cancellations, force
--- overrides, ticket resolutions, and account suspensions.
-INSERT INTO audit_log (logId, actorUserId, actionType, entityType, entityId, beforeState, afterState, timestamp) VALUES
-('50000000-0000-0000-0000-000000000001','c0000000-0000-0000-0000-000000000003','BOOKING_CREATED','Booking','20000000-0000-0000-0000-000000000003','{}','{"status":"PENDING"}','2026-09-15T11:00:00Z'),
-('50000000-0000-0000-0000-000000000002','b0000000-0000-0000-0000-000000000002','BOOKING_CONFIRMED','Booking','20000000-0000-0000-0000-000000000003','{"status":"PENDING"}','{"status":"CONFIRMED"}','2026-09-16T09:00:00Z'),
-('50000000-0000-0000-0000-000000000003','b0000000-0000-0000-0000-000000000005','BOOKING_REJECTED','Booking','20000000-0000-0000-0000-000000000005','{"status":"PENDING"}','{"status":"REJECTED"}','2026-09-11T08:00:00Z'),
-('50000000-0000-0000-0000-000000000004','c0000000-0000-0000-0000-000000000001','BOOKING_CANCELLED_BY_GUEST','Booking','20000000-0000-0000-0000-000000000007','{"status":"CONFIRMED"}','{"status":"CANCELLED_BY_GUEST","refundPct":50}','2026-08-24T09:00:00Z'),
-('50000000-0000-0000-0000-000000000005','b0000000-0000-0000-0000-000000000001','BOOKING_CANCELLED_BY_HOST','Booking','20000000-0000-0000-0000-000000000008','{"status":"CONFIRMED"}','{"status":"CANCELLED_BY_HOST","reason":"Plumbing emergency"}','2026-09-18T13:00:00Z'),
-('50000000-0000-0000-0000-000000000006','a0000000-0000-0000-0000-000000000002','ACCOUNT_SUSPENDED','User','c0000000-0000-0000-0000-000000000006','{"accountStatus":"ACTIVE"}','{"accountStatus":"SUSPENDED"}','2026-09-09T08:30:00Z'),
-('50000000-0000-0000-0000-000000000007','a0000000-0000-0000-0000-000000000002','BOOKING_FORCE_CANCEL','Booking','20000000-0000-0000-0000-000000000012','{"status":"CONFIRMED"}','{"status":"FORCE_CANCELLED","reason":"Guest account suspended — cascading cancellation"}','2026-09-09T09:00:00Z'),
-('50000000-0000-0000-0000-000000000008','a0000000-0000-0000-0000-000000000003','ACCOUNT_SUSPENDED','User','b0000000-0000-0000-0000-000000000006','{"accountStatus":"ACTIVE"}','{"accountStatus":"SUSPENDED"}','2026-07-20T10:00:00Z'),
-('50000000-0000-0000-0000-000000000009','a0000000-0000-0000-0000-000000000003','LISTING_STATUS_CASCADE','Property','10000000-0000-0000-0000-000000000010','{"status":"ACTIVE"}','{"status":"INACTIVE","reason":"Host suspended"}','2026-07-20T10:05:00Z'),
-('50000000-0000-0000-0000-000000000010','a0000000-0000-0000-0000-000000000001','TICKET_RESOLVED','Ticket','d0000000-0000-0000-0000-000000000004','{"status":"IN_REVIEW"}','{"status":"RESOLVED_APPROVED","mode":"MANUAL_ADJUSTMENT","guestRefund":165.00,"hostPayout":160.05,"fee":4.95,"reason":"Host account suspended post-stay; escrow settled 50/50"}','2026-07-25T16:00:00Z'),
-('50000000-0000-0000-0000-000000000011','a0000000-0000-0000-0000-000000000001','WALLET_TRANSACTION_OVERRIDE','WalletTransaction','40000000-0000-0000-0000-000000000035','{}','{"type":"BOOKING_PAYOUT","amount":160.05,"fee":4.95}','2026-07-25T16:00:00Z'),
-('50000000-0000-0000-0000-000000000012','a0000000-0000-0000-0000-000000000001','TICKET_RESOLVED','Ticket','d0000000-0000-0000-0000-000000000001','{"status":"IN_REVIEW"}','{"status":"RESOLVED_APPROVED","remedy":"PARTIAL_REFUND","guestRefund":100.00,"hostPayout":368.60,"fee":11.40}','2026-08-28T14:00:00Z'),
-('50000000-0000-0000-0000-000000000013','a0000000-0000-0000-0000-000000000003','TICKET_RESOLVED','Ticket','d0000000-0000-0000-0000-000000000005','{"status":"OPEN"}','{"status":"RESOLVED_REJECTED"}','2026-09-19T10:00:00Z'),
-('50000000-0000-0000-0000-000000000014','a0000000-0000-0000-0000-000000000003','TICKET_RESOLVED','Ticket','d0000000-0000-0000-0000-000000000006','{"status":"OPEN"}','{"status":"RESOLVED_REJECTED"}','2026-09-07T09:00:00Z'),
-('50000000-0000-0000-0000-000000000015','b0000000-0000-0000-0000-000000000004','BOOKING_CONFIRMED','Booking','20000000-0000-0000-0000-000000000014','{"status":"PENDING"}','{"status":"CONFIRMED"}','2026-09-06T09:00:00Z');
+-- One row per change (W12, C28). Booking, ticket and money rows are derived from the tables above so they
+-- can never disagree with them; account-governance rows are written by hand in the shape W11 will emit.
+INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp)
+SELECT '51' || substr(b.bookingId, 3), b.guestId, g.displayName, 'BOOKING_REQUESTED', 'Booking', b.bookingId,
+       NULL, 'PENDING', NULL, NULL, b.guestId, g.displayName, b.bookingId, NULL, b.createdAt
+FROM bookings b JOIN users g ON g.userId = b.guestId;
+
+INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp)
+SELECT '52' || substr(b.bookingId, 3), p.hostId, h.displayName, 'BOOKING_CONFIRMED', 'Booking', b.bookingId,
+       'PENDING', 'CONFIRMED', NULL, NULL, b.guestId, g.displayName, b.bookingId, NULL, b.decidedAt
+FROM bookings b JOIN properties p ON p.propertyId = b.listingId JOIN users h ON h.userId = p.hostId
+JOIN users g ON g.userId = b.guestId
+WHERE b.status IN ('CONFIRMED', 'COMPLETED', 'FORCE_CANCELLED') AND b.decidedAt IS NOT NULL;
+
+INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp)
+SELECT '53' || substr(b.bookingId, 3), p.hostId, h.displayName, 'BOOKING_REJECTED', 'Booking', b.bookingId,
+       'PENDING', 'REJECTED', NULL, NULL, b.guestId, g.displayName, b.bookingId, NULL, b.decidedAt
+FROM bookings b JOIN properties p ON p.propertyId = b.listingId JOIN users h ON h.userId = p.hostId
+JOIN users g ON g.userId = b.guestId
+WHERE b.status = 'REJECTED';
+
+INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp)
+SELECT '54' || substr(b.bookingId, 3), b.guestId, g.displayName, 'BOOKING_CANCELLED_BY_GUEST', 'Booking', b.bookingId,
+       'CONFIRMED', 'CANCELLED_BY_GUEST', NULL, NULL, b.guestId, g.displayName, b.bookingId, NULL, b.decidedAt
+FROM bookings b JOIN users g ON g.userId = b.guestId
+WHERE b.status = 'CANCELLED_BY_GUEST';
+
+INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp)
+SELECT '55' || substr(b.bookingId, 3), p.hostId, h.displayName, 'BOOKING_CANCELLED_BY_HOST', 'Booking', b.bookingId,
+       'CONFIRMED', 'CANCELLED_BY_HOST', NULL, NULL, b.guestId, g.displayName, b.bookingId, NULL, b.decidedAt
+FROM bookings b JOIN properties p ON p.propertyId = b.listingId JOIN users h ON h.userId = p.hostId
+JOIN users g ON g.userId = b.guestId
+WHERE b.status = 'CANCELLED_BY_HOST';
+
+INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp)
+SELECT '56' || substr(b.bookingId, 3), a.userId, a.displayName, 'BOOKING_COMPLETED', 'Booking', b.bookingId,
+       'CONFIRMED', 'COMPLETED', NULL, CASE WHEN t.ticketId IS NULL THEN NULL ELSE 'Escrow settled by ticket resolution' END,
+       b.guestId, g.displayName, b.bookingId, t.ticketId, b.completedAt
+FROM bookings b JOIN users g ON g.userId = b.guestId
+LEFT JOIN tickets t ON t.bookingId = b.bookingId AND t.status LIKE 'RESOLVED%'
+JOIN users a ON a.userId = COALESCE(t.assignedAgentId, 'a0000000-0000-0000-0000-0000000000ff')
+WHERE b.status = 'COMPLETED';
+
+INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp)
+SELECT '5b' || substr(t.ticketId, 3), t.raisedByUserId, u.displayName, 'TICKET_OPENED', 'Ticket', t.ticketId,
+       NULL, 'OPEN', NULL, t.title, t.raisedByUserId, u.displayName, t.bookingId, t.ticketId, t.createdAt
+FROM tickets t JOIN users u ON u.userId = t.raisedByUserId;
+
+INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp)
+SELECT '5c' || substr(t.ticketId, 3), t.assignedAgentId, a.displayName, 'TICKET_ASSIGNED', 'Ticket', t.ticketId,
+       'OPEN', 'IN_REVIEW', NULL, 'Assigned for review', t.raisedByUserId, u.displayName, t.bookingId, t.ticketId,
+       strftime('%Y-%m-%dT%H:%M:%SZ', t.createdAt, '+1 hour')
+FROM tickets t JOIN users a ON a.userId = t.assignedAgentId JOIN users u ON u.userId = t.raisedByUserId;
+
+INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp)
+SELECT '5d' || substr(t.ticketId, 3), t.assignedAgentId, a.displayName, 'TICKET_RESOLVED', 'Ticket', t.ticketId,
+       'IN_REVIEW', t.status, NULL, t.resolutionReason, t.raisedByUserId, u.displayName, t.bookingId, t.ticketId, t.resolvedAt
+FROM tickets t JOIN users a ON a.userId = t.assignedAgentId JOIN users u ON u.userId = t.raisedByUserId
+WHERE t.status LIKE 'RESOLVED%';
+
+INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp)
+SELECT '5a' || substr(t.transactionId, 3), actor.userId, actor.displayName, t.type, 'WalletTransaction', t.transactionId,
+       NULL, NULL, t.amount,
+       CASE WHEN t.feeAmount > 0 THEN 'Payout net of 3% platform fee (' || printf('%.2f', t.feeAmount) || ')' END,
+       w.userId, o.displayName, t.relatedBookingId, t.relatedTicketId, t.createdAt
+FROM wallet_transactions t JOIN wallets w ON w.walletId = t.walletId JOIN users o ON o.userId = w.userId
+JOIN users actor ON actor.userId = COALESCE(t.initiatedBy, w.userId);
+
+INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp) VALUES
+('50000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','Ben Alvarez','ACCOUNT_SUSPENDED','User','c0000000-0000-0000-0000-000000000006','ACTIVE','SUSPENDED',NULL,'Suspended by support agent pending review','c0000000-0000-0000-0000-000000000006','Kai Nakamura',NULL,NULL,'2026-09-09T08:30:00Z'),
+('50000000-0000-0000-0000-000000000002','a0000000-0000-0000-0000-000000000002','Ben Alvarez','BOOKING_FORCE_CANCELLED','Booking','20000000-0000-0000-0000-000000000012','CONFIRMED','FORCE_CANCELLED',NULL,'Account suspended — cascading cancellation','c0000000-0000-0000-0000-000000000006','Kai Nakamura','20000000-0000-0000-0000-000000000012',NULL,'2026-09-09T09:00:00Z'),
+('50000000-0000-0000-0000-000000000003','a0000000-0000-0000-0000-000000000003','Chen Wu','ACCOUNT_SUSPENDED','User','b0000000-0000-0000-0000-000000000006','ACTIVE','SUSPENDED',NULL,'Suspended by support agent pending review','b0000000-0000-0000-0000-000000000006','Sam O''Connor',NULL,NULL,'2026-07-20T10:00:00Z'),
+('50000000-0000-0000-0000-000000000004','a0000000-0000-0000-0000-000000000003','Chen Wu','LISTING_STATUS_CASCADE','Property','10000000-0000-0000-0000-000000000010','ACTIVE','INACTIVE',NULL,'Host suspended','b0000000-0000-0000-0000-000000000006','Sam O''Connor',NULL,NULL,'2026-07-20T10:05:00Z');
+
+-- ============================== schema_history ==============================
+-- The reference DB ships fully migrated (V001 + V002), so the app's MigrationRunner has nothing to apply.
+INSERT INTO schema_history (version, appliedAt) VALUES (1, '2026-09-26 00:00:00'), (2, '2026-09-26 00:00:00');
 
 PRAGMA foreign_keys = ON;
