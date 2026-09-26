@@ -1,7 +1,8 @@
-package com.snoozeshare.ui.guest.wallet;
+package com.snoozeshare.ui.common.wallet;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.UUID;
 
 import com.snoozeshare.app.AppContext;
 
@@ -10,13 +11,9 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
-/**
- * Shared modal controller for wallet top-up and withdraw operations.
- * Parameterized by {@link Mode} to switch between the two actions.
- */
+/** Shared modal controller for wallet top-up and withdrawal actions. */
 public final class WalletActionDialogController {
 
-    /** The action mode for this dialog. */
     public enum Mode { TOP_UP, WITHDRAW }
 
     @FXML private Label titleLabel;
@@ -27,35 +24,66 @@ public final class WalletActionDialogController {
 
     private AppContext context;
     private Mode mode;
+    private BigDecimal currentBalance;
     private Runnable onClose;
 
-    /**
-     * Configures the dialog for the specified mode.
-     *
-     * @param mode the action mode (TOP_UP or WITHDRAW)
-     * @param context the application context
-     * @param currentBalance the user's current wallet balance
-     * @param onClose callback to invoke when the dialog should close
-     */
     public void configure(Mode mode, AppContext context, BigDecimal currentBalance,
                           Runnable onClose) {
         this.context = context;
         this.mode = mode;
+        this.currentBalance = currentBalance.setScale(2, RoundingMode.HALF_UP);
         this.onClose = onClose;
 
-        BigDecimal display = currentBalance.setScale(2, RoundingMode.HALF_UP);
-        currentBalanceLabel.setText("Current balance: SGD " + display);
-
         if (mode == Mode.TOP_UP) {
-            titleLabel.setText("Top Up Wallet");
-            actionButton.setText("Top Up");
+            titleLabel.setText("Top up wallet");
+            actionButton.setText("Confirm top up");
+            currentBalanceLabel.setText("Current balance "
+                    + WalletTransactionFormatter.balanceLabel(this.currentBalance));
         } else {
-            titleLabel.setText("Withdraw Funds");
-            actionButton.setText("Withdraw");
+            titleLabel.setText("Withdraw funds");
+            actionButton.setText("Confirm withdraw");
+            currentBalanceLabel.setText("Available to withdraw "
+                    + WalletTransactionFormatter.balanceLabel(this.currentBalance)
+                    + " — non-escrowed balance only");
         }
 
         statusLabel.setVisible(false);
         statusLabel.setManaged(false);
+    }
+
+    public void setPresetAmount(BigDecimal amount) {
+        amountField.setText(amount.setScale(2, RoundingMode.HALF_UP).toPlainString());
+        amountField.requestFocus();
+        amountField.positionCaret(amountField.getText().length());
+    }
+
+    public void setFullAvailableBalance() {
+        setPresetAmount(currentBalance);
+    }
+
+    @FXML
+    private void handlePreset50() {
+        setPresetAmount(new BigDecimal("50"));
+    }
+
+    @FXML
+    private void handlePreset100() {
+        setPresetAmount(new BigDecimal("100"));
+    }
+
+    @FXML
+    private void handlePreset500() {
+        setPresetAmount(new BigDecimal("500"));
+    }
+
+    @FXML
+    private void handlePreset1000() {
+        setPresetAmount(new BigDecimal("1000"));
+    }
+
+    @FXML
+    private void handleFullAvailableBalance() {
+        setFullAvailableBalance();
     }
 
     @FXML
@@ -74,13 +102,13 @@ public final class WalletActionDialogController {
             return;
         }
 
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+        if (amount.signum() <= 0) {
             showError("Amount must be greater than zero.");
             return;
         }
 
         try {
-            java.util.UUID userId = context.session().currentUser().orElseThrow().userId();
+            UUID userId = context.session().currentUser().orElseThrow().userId();
             if (mode == Mode.TOP_UP) {
                 context.walletService().topUp(userId, amount);
             } else {

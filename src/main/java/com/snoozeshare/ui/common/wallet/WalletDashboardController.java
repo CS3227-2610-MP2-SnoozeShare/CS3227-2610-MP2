@@ -1,7 +1,8 @@
-package com.snoozeshare.ui.guest.wallet;
+package com.snoozeshare.ui.common.wallet;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,16 +20,14 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-/**
- * Controller for the Guest wallet dashboard screen.
- * Displays balance, transaction history, and provides top-up/withdraw actions.
- */
+/** Shared wallet dashboard for Guest and Host. */
 public final class WalletDashboardController {
 
     private static final DateTimeFormatter DATE_FORMAT =
@@ -43,17 +42,15 @@ public final class WalletDashboardController {
     private AppContext context;
     private final List<Subscription> subscriptions = new ArrayList<>();
 
-    /** Wires the controller to the application context and loads initial data. */
     public void setContext(AppContext context) {
         this.context = context;
         loadData();
         subscribeToEvents();
     }
 
-    /** Unsubscribes from events when navigating away. */
     public void cleanup() {
-        for (Subscription sub : subscriptions) {
-            sub.unsubscribe();
+        for (Subscription subscription : subscriptions) {
+            subscription.unsubscribe();
         }
         subscriptions.clear();
     }
@@ -72,66 +69,57 @@ public final class WalletDashboardController {
         java.util.UUID userId = context.session().currentUser().orElseThrow().userId();
         BigDecimal balance = context.walletService().balanceOf(userId)
                 .setScale(2, RoundingMode.HALF_UP);
-        balanceLabel.setText("SGD " + balance);
+        balanceLabel.setText(WalletTransactionFormatter.balanceLabel(balance));
 
         List<WalletTransaction> transactions = context.walletService().statementFor(userId);
         transactionContainer.getChildren().clear();
-
         if (transactions.isEmpty()) {
-            emptyLabel.setText("No transactions yet.");
             emptyLabel.setVisible(true);
             emptyLabel.setManaged(true);
-        } else {
-            emptyLabel.setVisible(false);
-            emptyLabel.setManaged(false);
-            List<WalletTransaction> reversed = new ArrayList<>(transactions);
-            java.util.Collections.reverse(reversed);
-            for (WalletTransaction txn : reversed) {
-                transactionContainer.getChildren().add(buildTransactionCard(txn));
-            }
+            return;
+        }
+
+        emptyLabel.setVisible(false);
+        emptyLabel.setManaged(false);
+        List<WalletTransaction> newestFirst = new ArrayList<>(transactions);
+        java.util.Collections.reverse(newestFirst);
+        for (WalletTransaction transaction : newestFirst) {
+            transactionContainer.getChildren().add(buildTransactionRow(transaction));
         }
     }
 
-    private Node buildTransactionCard(WalletTransaction txn) {
-        HBox card = new HBox(12);
-        card.setPadding(new Insets(12, 16, 12, 16));
-        card.getStyleClass().add("transaction-card");
-        card.setAlignment(Pos.CENTER_LEFT);
+    private Node buildTransactionRow(WalletTransaction transaction) {
+        GridPane row = new GridPane();
+        row.setHgap(12);
+        row.setVgap(4);
+        row.setPadding(new Insets(12, 16, 12, 16));
+        row.getStyleClass().add("transaction-row");
 
-        Label typeLabel = new Label(formatType(txn.type().name()));
-        typeLabel.getStyleClass().add("transaction-type");
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        BigDecimal amount = txn.amount().setScale(2, RoundingMode.HALF_UP);
-        boolean isCredit = amount.compareTo(BigDecimal.ZERO) > 0;
-        String amountText = (isCredit ? "+" : "") + "SGD " + amount;
-        Label amountLabel = new Label(amountText);
-        amountLabel.getStyleClass().add(
-                isCredit ? "transaction-amount-positive" : "transaction-amount-negative");
-
-        Label dateLabel = new Label(txn.createdAt()
-                .atZone(java.time.ZoneId.systemDefault())
+        Label date = new Label(transaction.createdAt().atZone(ZoneId.systemDefault())
                 .format(DATE_FORMAT));
-        dateLabel.getStyleClass().add("small");
-        dateLabel.setMinWidth(130);
+        Label type = new Label(WalletTransactionFormatter.typeLabel(transaction.type()));
+        Label related = new Label(WalletTransactionFormatter.relatedLabel(transaction));
+        Label amount = new Label(WalletTransactionFormatter.amountLabel(transaction.amount()));
+        Label balanceAfter = new Label(
+                WalletTransactionFormatter.balanceLabel(transaction.balanceAfter()));
 
-        card.getChildren().addAll(typeLabel, spacer, amountLabel, dateLabel);
-
-        if (txn.relatedBookingId() != null) {
-            Label bookingRef = new Label("Booking: "
-                    + txn.relatedBookingId().toString().substring(0, 8) + "...");
-            bookingRef.getStyleClass().add("small");
-            card.getChildren().add(bookingRef);
+        type.getStyleClass().add("transaction-type");
+        amount.getStyleClass().add(transaction.amount().signum() >= 0
+                ? "transaction-amount-positive" : "transaction-amount-negative");
+        String fee = WalletTransactionFormatter.feeLabel(transaction.feeAmount());
+        if (!fee.isEmpty()) {
+            Label feeLabel = new Label(fee);
+            feeLabel.getStyleClass().add("small");
+            row.add(feeLabel, 3, 1);
         }
 
-        return card;
-    }
-
-    private static String formatType(String typeName) {
-        return typeName.replace('_', ' ').substring(0, 1)
-                + typeName.replace('_', ' ').substring(1).toLowerCase();
+        row.add(date, 0, 0);
+        row.add(type, 1, 0);
+        row.add(related, 2, 0);
+        row.add(amount, 3, 0);
+        row.add(balanceAfter, 4, 0);
+        GridPane.setHgrow(related, Priority.ALWAYS);
+        return row;
     }
 
     private void showModal(WalletActionDialogController.Mode mode) {
@@ -140,11 +128,9 @@ public final class WalletDashboardController {
             Node dialogView = loader.load();
             WalletActionDialogController controller = loader.getController();
 
-            StackPane overlay = new StackPane();
+            StackPane overlay = new StackPane(dialogView);
             overlay.getStyleClass().add("modal-overlay");
-            overlay.getChildren().add(dialogView);
             StackPane.setAlignment(dialogView, Pos.CENTER);
-
             dashboardRoot.getChildren().add(overlay);
 
             java.util.UUID userId = context.session().currentUser().orElseThrow().userId();

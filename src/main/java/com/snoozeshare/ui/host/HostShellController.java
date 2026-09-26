@@ -5,7 +5,7 @@ import java.io.IOException;
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.ui.common.NavShellController;
-import com.snoozeshare.ui.guest.wallet.WalletDashboardController;
+import com.snoozeshare.ui.common.wallet.WalletDashboardController;
 import com.snoozeshare.ui.host.bookings.HostBookingsController;
 import com.snoozeshare.ui.host.calendar.HostCalendarController;
 import com.snoozeshare.ui.host.listings.HostListingDetailController;
