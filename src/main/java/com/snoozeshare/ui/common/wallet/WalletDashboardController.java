@@ -13,17 +13,16 @@ import com.snoozeshare.infra.events.Subscription;
 import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 
 /** Shared wallet dashboard for Guest and Host. */
 public final class WalletDashboardController {
@@ -33,12 +32,34 @@ public final class WalletDashboardController {
 
     @FXML private StackPane dashboardRoot;
     @FXML private Label balanceAmountLabel;
-    @FXML private VBox transactionContainer;
+    @FXML private TableView<WalletTransaction> transactionTable;
+    @FXML private TableColumn<WalletTransaction, String> dateColumn;
+    @FXML private TableColumn<WalletTransaction, String> typeColumn;
+    @FXML private TableColumn<WalletTransaction, String> relatedColumn;
+    @FXML private TableColumn<WalletTransaction, String> amountColumn;
+    @FXML private TableColumn<WalletTransaction, String> balanceAfterColumn;
     @FXML private Label emptyLabel;
-    @FXML private ScrollPane transactionScroll;
 
     private AppContext context;
     private final List<Subscription> subscriptions = new ArrayList<>();
+
+    @FXML
+    private void initialize() {
+        dateColumn.setCellValueFactory(cell -> new SimpleStringProperty(
+                cell.getValue().createdAt().atZone(ZoneId.systemDefault()).format(DATE_FORMAT)));
+        typeColumn.setCellValueFactory(cell -> new SimpleStringProperty(
+                WalletTransactionFormatter.typeLabel(cell.getValue().type())));
+        relatedColumn.setCellValueFactory(cell -> new SimpleStringProperty(
+                WalletTransactionFormatter.relatedLabel(cell.getValue())));
+        amountColumn.setCellValueFactory(cell -> new SimpleStringProperty(amountWithFee(
+                cell.getValue())));
+        balanceAfterColumn.setCellValueFactory(cell -> new SimpleStringProperty(
+                WalletTransactionFormatter.balanceLabel(cell.getValue().balanceAfter())));
+
+        typeColumn.setCellFactory(column -> styledCell("transaction-type"));
+        amountColumn.setCellFactory(column -> styledAmountCell());
+        transactionTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    }
 
     public void setContext(AppContext context) {
         this.context = context;
@@ -69,9 +90,11 @@ public final class WalletDashboardController {
                 .setScale(2, RoundingMode.HALF_UP);
         balanceAmountLabel.setText("$" + balance.toPlainString());
 
-        List<WalletTransaction> transactions = context.walletService().statementFor(userId);
-        transactionContainer.getChildren().clear();
-        if (transactions.isEmpty()) {
+        List<WalletTransaction> newestFirst = new ArrayList<>(
+                context.walletService().statementFor(userId));
+        java.util.Collections.reverse(newestFirst);
+        transactionTable.getItems().setAll(newestFirst);
+        if (newestFirst.isEmpty()) {
             emptyLabel.setVisible(true);
             emptyLabel.setManaged(true);
             return;
@@ -79,56 +102,43 @@ public final class WalletDashboardController {
 
         emptyLabel.setVisible(false);
         emptyLabel.setManaged(false);
-        List<WalletTransaction> newestFirst = new ArrayList<>(transactions);
-        java.util.Collections.reverse(newestFirst);
-        for (WalletTransaction transaction : newestFirst) {
-            transactionContainer.getChildren().add(buildTransactionRow(transaction));
-        }
     }
 
-    private Node buildTransactionRow(WalletTransaction transaction) {
-        GridPane row = new GridPane();
-        row.setHgap(0);
-        row.setVgap(4);
-        row.setMinHeight(47);
-        row.setPrefHeight(47);
-        row.setMaxWidth(Double.MAX_VALUE);
-        row.setPadding(new Insets(0, 18, 0, 18));
-        row.getStyleClass().add("transaction-row");
-        addWalletColumnConstraints(row);
-
-        Label date = new Label(transaction.createdAt().atZone(ZoneId.systemDefault())
-                .format(DATE_FORMAT));
-        Label type = new Label(WalletTransactionFormatter.typeLabel(transaction.type()));
-        Label related = new Label(WalletTransactionFormatter.relatedLabel(transaction));
-        Label amount = new Label(WalletTransactionFormatter.amountLabel(transaction.amount()));
-        Label balanceAfter = new Label(
-                WalletTransactionFormatter.balanceLabel(transaction.balanceAfter()));
-
-        type.getStyleClass().add("transaction-type");
-        amount.getStyleClass().add(transaction.amount().signum() >= 0
-                ? "transaction-amount-positive" : "transaction-amount-negative");
+    private static String amountWithFee(WalletTransaction transaction) {
         String fee = WalletTransactionFormatter.feeLabel(transaction.feeAmount());
-        if (!fee.isEmpty()) {
-            Label feeLabel = new Label(fee);
-            feeLabel.getStyleClass().add("small");
-            row.add(feeLabel, 3, 1);
-        }
-
-        row.add(date, 0, 0);
-        row.add(type, 1, 0);
-        row.add(related, 2, 0);
-        row.add(amount, 3, 0);
-        row.add(balanceAfter, 4, 0);
-        return row;
+        return fee.isEmpty() ? WalletTransactionFormatter.amountLabel(transaction.amount())
+                : WalletTransactionFormatter.amountLabel(transaction.amount()) + "\n" + fee;
     }
 
-    private static void addWalletColumnConstraints(GridPane grid) {
-        for (double width : new double[] {16, 18, 28, 18, 20}) {
-            ColumnConstraints constraints = new ColumnConstraints();
-            constraints.setPercentWidth(width);
-            grid.getColumnConstraints().add(constraints);
-        }
+    private static TableCell<WalletTransaction, String> styledCell(String styleClass) {
+        return new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty ? null : item);
+                getStyleClass().remove(styleClass);
+                if (!empty) {
+                    getStyleClass().add(styleClass);
+                }
+            }
+        };
+    }
+
+    private TableCell<WalletTransaction, String> styledAmountCell() {
+        return new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty ? null : item);
+                getStyleClass().removeAll("transaction-amount-positive",
+                        "transaction-amount-negative");
+                if (!empty) {
+                    WalletTransaction transaction = getTableView().getItems().get(getIndex());
+                    getStyleClass().add(transaction.amount().signum() >= 0
+                            ? "transaction-amount-positive" : "transaction-amount-negative");
+                }
+            }
+        };
     }
 
     private void showModal(WalletActionDialogController.Mode mode) {

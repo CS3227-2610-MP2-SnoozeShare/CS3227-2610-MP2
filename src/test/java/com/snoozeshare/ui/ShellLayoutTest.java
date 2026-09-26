@@ -56,7 +56,7 @@ class ShellLayoutTest {
         assertTrue(fxml.contains("com.snoozeshare.ui.common.wallet.WalletDashboardController"));
         assertTrue(fxml.contains("handleTopUp"));
         assertTrue(fxml.contains("handleWithdraw"));
-        assertTrue(fxml.contains("transactionContainer"));
+        assertTrue(fxml.contains("transactionTable"));
     }
 
     @Test

@@ -130,13 +130,13 @@ class HostListingsControllerTest {
     void walletActionsShareDimensionsAcrossGuestAndHost() throws Exception {
         String wallet = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
-        String theme = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/common/theme.css"));
+        String walletCss = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/common/wallet/wallet.css"));
 
         assertTrue(wallet.contains("text=\"Top up\""));
         assertTrue(wallet.contains("text=\"Withdraw\""));
-        assertTrue(theme.contains(".wallet-top-up-button"));
-        assertTrue(theme.contains(".wallet-withdraw-button"));
+        assertTrue(walletCss.contains(".wallet-top-up-button"));
+        assertTrue(walletCss.contains(".wallet-withdraw-button"));
     }
 
     @Test
