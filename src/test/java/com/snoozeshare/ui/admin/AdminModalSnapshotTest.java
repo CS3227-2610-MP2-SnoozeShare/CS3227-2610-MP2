@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -14,9 +15,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.snoozeshare.app.AppContext;
+import com.snoozeshare.domain.enums.AccountStatus;
 import com.snoozeshare.domain.enums.ResolutionMode;
+import com.snoozeshare.domain.enums.Role;
+import com.snoozeshare.service.AccountSummary;
 import com.snoozeshare.testsupport.MockDbFixture;
 import com.snoozeshare.testsupport.MockIds;
+import com.snoozeshare.ui.admin.accounts.SuspensionDialogController;
 import com.snoozeshare.ui.admin.categories.CategoryDialogController;
 import com.snoozeshare.ui.admin.tickets.ResolutionDialogController;
 
@@ -134,6 +139,28 @@ class AdminModalSnapshotTest {
                 assertTrue(Files.size(files[0]) > 0);
                 assertTrue(Files.size(files[1]) > 0);
             }
+        }
+    }
+
+    @Test
+    void writesSuspendAndReactivateModalSnapshots() throws Exception {
+        assumeTrue(toolkitAvailable, "JavaFX toolkit unavailable");
+        AccountSummary priya = new AccountSummary(UUID.randomUUID(), "Priya Nair", "priya.nair@snoozeshare.test",
+                Role.GUEST, Instant.parse("2026-03-05T08:00:00Z"), AccountStatus.ACTIVE, null);
+        for (SuspensionDialogController.Mode mode : SuspensionDialogController.Mode.values()) {
+            Path file = AdminUiSnapshotTest.onFx(() -> {
+                Stage stage = SuspensionDialogController.createDialog(mode, priya, reason -> { });
+                stage.show();
+                Parent card = stage.getScene().getRoot();
+                card.applyCss();
+                card.layout();
+                Path written = AdminUiSnapshotTest.writePngOver(stage.getScene().snapshot(null),
+                        "agent-" + mode.name().toLowerCase(java.util.Locale.ROOT) + "-modal",
+                        new java.awt.Color(0xb0, 0xc0, 0xff));
+                stage.close();
+                return written;
+            });
+            assertTrue(Files.size(file) > 0);
         }
     }
 }

@@ -211,6 +211,38 @@ class AdminTableLayoutTest {
         assertTrue(css.contains(".agent-button-danger"), "Clear reuses the danger outline");
     }
 
+    @Test
+    void accountListKeepsItsHeaderFixedAndRowsHighlightOnHoverWithoutAHandCursor(@TempDir Path directory)
+            throws Exception {
+        assumeTrue(toolkitAvailable, "JavaFX toolkit unavailable");
+        try (MockDbFixture db = MockDbFixture.open(directory);
+             AppContext context = AppContext.create(db.jdbcUrl())) {
+            context.session().loginAs(context.userService().authenticate("amy.tanaka@snoozeshare.test"));
+            onFx(() -> {
+                Parent root = show(context, "showAccounts");
+                ScrollPane scroll = (ScrollPane) root.lookup(".agent-rows-scroll");
+                Node header = root.lookup(".agent-grid-header");
+                ScrollBar vertical = scroll.lookupAll(".scroll-bar").stream().map(node -> (ScrollBar) node)
+                        .filter(bar -> bar.getOrientation() == Orientation.VERTICAL && bar.isVisible())
+                        .findFirst().orElseThrow(() -> new AssertionError("no vertical scroll bar"));
+                assertTrue(inScene(scroll).getMaxY() <= 800, "the list stays inside the window");
+                assertTrue(inScene(vertical).getMinY() >= inScene(header).getMaxY() - 0.5,
+                        "the scroll bar starts below the header row");
+
+                Node row = root.lookup(".agent-account-row");
+                row.pseudoClassStateChanged(HOVER, true);
+                root.applyCss();
+                Background background = ((Region) row).getBackground();
+                Paint fill = background.getFills().get(0).getFill();
+                assertTrue(fill instanceof Color color && color.getOpacity() > 0.2 && color.getOpacity() < 0.6,
+                        "translucent hover highlight, like the queue: " + fill);
+                assertEquals(null, row.getCursor() == Cursor.HAND ? Cursor.HAND : null, "no hand cursor on rows");
+                AdminUiSnapshotTest.writePng(root.getScene().snapshot(null), "agent-accounts");
+                return null;
+            });
+        }
+    }
+
     private static TableRow<?> firstFilledRow(Parent root, String selector) {
         TableView<?> table = (TableView<?>) root.lookup(selector);
         return (TableRow<?>) table.lookupAll(".table-row-cell").stream()
