@@ -19,6 +19,7 @@ import com.snoozeshare.domain.model.AuditLogEntry;
 import com.snoozeshare.domain.model.AvailabilityBlock;
 import com.snoozeshare.domain.model.Booking;
 import com.snoozeshare.domain.model.Property;
+import com.snoozeshare.domain.model.Review;
 import com.snoozeshare.domain.model.Ticket;
 import com.snoozeshare.domain.model.TicketCategory;
 import com.snoozeshare.domain.model.User;
@@ -172,5 +173,15 @@ public final class RowMappers {
                 JdbcCodecs.uuid(result.getString("categoryId")),
                 result.getString("label"),
                 result.getInt("active") != 0);
+    }
+
+    public static Review review(ResultSet result) throws SQLException {
+        return new Review(
+                JdbcCodecs.uuid(result.getString("reviewId")),
+                JdbcCodecs.uuid(result.getString("bookingId")),
+                JdbcCodecs.uuid(result.getString("guestId")),
+                result.getInt("rating"),
+                result.getString("comment"),
+                JdbcCodecs.instant(result.getString("createdAt")));
     }
 }

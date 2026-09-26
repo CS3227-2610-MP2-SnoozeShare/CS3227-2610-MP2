@@ -15,6 +15,9 @@ public interface TicketService {
     /** Owned by W4 (guest filing). */
     Ticket fileTicket(NewTicketRequest request, UUID raisedByUserId, Role raisedByRole);
 
+    /** Returns all tickets filed by the given user, newest first. */
+    List<Ticket> myTickets(UUID userId);
+
     /** Active categories only (what guests see when filing). */
     List<TicketCategory> listCategories();
 
