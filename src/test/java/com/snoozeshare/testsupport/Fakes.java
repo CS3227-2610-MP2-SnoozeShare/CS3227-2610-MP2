@@ -131,6 +131,13 @@ public final class Fakes {
         }
 
         @Override
+        public List<User> findAll() {
+            return store.values().stream()
+                    .sorted(java.util.Comparator.comparing(User::createdAt).thenComparing(User::userId))
+                    .toList();
+        }
+
+        @Override
         public User save(User user) {
             store.put(user.userId(), user);
             return user;

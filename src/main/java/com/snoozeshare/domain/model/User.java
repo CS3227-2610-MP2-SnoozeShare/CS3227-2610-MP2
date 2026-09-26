@@ -13,6 +13,12 @@ public record User(
         String email,
         AccountStatus accountStatus,
         String registrationCode,
-        Instant createdAt
+        Instant createdAt,
+        String suspensionReason
 ) {
+    /** A user with no suspension reason (every account that is not suspended by an agent). */
+    public User(UUID userId, Role role, String displayName, String email, AccountStatus accountStatus,
+                String registrationCode, Instant createdAt) {
+        this(userId, role, displayName, email, accountStatus, registrationCode, createdAt, null);
+    }
 }
