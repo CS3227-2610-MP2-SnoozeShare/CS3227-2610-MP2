@@ -8,7 +8,7 @@ every boundary, not at the end of the session.
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `w8`
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-26 by Codex — Host listing status control spacing stabilized
+- **Last updated:** 2026-09-26 by Codex — W8 scope narrowed to defer host dispute responses to W13
 - **Last verified against repo:** 2026-09-26
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
 
@@ -67,6 +67,7 @@ three iterations).
 | S7 | 2026-09-25 | Codex | w7 | W7 scope assessment | Paused | `w7` created from `w6`; booking display maps to W8/F7.1, while W7 remains calendar/date overrides | 2026-09-25 |
 | S8 | 2026-09-26 | Codex | w7 | W7 | Paused | W7 complete: host calendar, inclusive manual blocks, removal, validation, and layout delivered; full tests/build pass | 2026-09-26 |
 | S9 | 2026-09-26 | Codex | w8 | Host portal UI refinement | Paused | Completed wallet/listing layout, copy, metrics, action sizing, and status-control spacing; focused tests, XML validation, Checkstyle, and diff checks pass; full suite retains two unrelated UI failures | 2026-09-26 |
+| S14 | 2026-09-26 | Codex | w8 | W8 — Host Request Queue, Earnings & Disputes | Active | W8 design spec written and self-reviewed; awaiting operator review before implementation plan, with F7.2.2 deferred to W13 | 2026-09-26 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -89,7 +90,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W5 | F4 — Guest Wallet Management (top-up/withdraw) | Done | [wallet-management design](docs/superpowers/specs/2026-09-25-w5-wallet-management-design.md) | [wallet-management plan](docs/superpowers/plans/2026-09-25-w5-wallet-management.md) | All 6 tasks complete: dashboard, modal, navigation, CSS, sidebar refresh | Awaiting confirmation |
 | W6 | F5 — Host Listing Management & Publishing | Done | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md) | [listing-management plan](docs/superpowers/plans/2026-09-25-w6-listing-management.md) | Implementation complete: listing CRUD/status/detail flows, host wallet/navigation refinements, wallet refresh fix, and clean build verification | Awaiting confirmation |
 | W7 | F6 — Host Calendar & Date Overrides | Done | [host-calendar design](docs/superpowers/specs/2026-09-26-w7-host-calendar-design.md) | [host-calendar plan](docs/superpowers/plans/2026-09-26-w7-host-calendar.md) | Complete: listing calendar, month navigation, colors, all-month overrides, inclusive/single-date blocking, removal, validation, and layout; full tests/build pass | Awaiting confirmation |
-| W8 | F7 — Host Request Queue, Earnings & Disputes | Not started | — | — | Backlog only: §4 | — |
+| W8 | F7 — Host Request Queue, Earnings & Disputes | Spec'd | [host requests/earnings design](docs/superpowers/specs/2026-09-26-w8-host-requests-earnings-design.md) | — | Design spec written and awaiting operator review; F7.2.2 host dispute responses deferred to W13 | — |
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
 | W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
 | W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
@@ -434,6 +435,7 @@ architecture area remain recorded in that area's table.
 | C27 | 2026-09-25 | Ticket status `UNDER_REVIEW` is renamed **`IN_REVIEW`** everywhere (enum, `tickets.status` CHECK in `db/schema.sql` and `V001__foundation.sql`, seed data, mock DB, tests, UI text "In review", messages, variable names) so code and UI use one term. Status filter labels are now All statuses / Open / In review / Approved / Rejected, the dropdown is as narrow as its widest option (selector and popup the same width) and text is left-aligned again (reverses the right-alignment in C26 item 1). **Cross-workstream impact:** any other branch that references `TicketStatus.UNDER_REVIEW` or the string `'UNDER_REVIEW'` must rename it at merge; the architecture proposal's status list is updated in the same change. | Operator (inconsistency between UI and code). Rejected: UI-only rename. |
 | C15 | 2026-09-23 | Execute W1 natively in the existing `w1` checkout rather than creating a separate worktree | Operator explicitly selected the current checkout for execution | Operator conversation, 2026-09-23 |
 | C28 | 2026-09-26 | Proceed with Host Listings Dashboard & Copy Refinement without a new design spec or implementation plan | Operator explicitly requested the earlier spec be undone and then asked to carry on; implementation records this waiver | Operator conversation, 2026-09-26 |
+| C29 | 2026-09-26 | Defer F7.2.2 structured host dispute response notes/evidence from W8 to W13 Messaging | Operator chose to defer the formal host response path to W13; W8 will not add ticket response fields or conflate the flow with chat | Operator conversation, 2026-09-26 |
 
 ---
 
