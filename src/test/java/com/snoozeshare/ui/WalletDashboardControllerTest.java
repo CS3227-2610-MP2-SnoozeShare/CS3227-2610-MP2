@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -59,6 +60,21 @@ class WalletDashboardControllerTest {
     }
 
     @Test
+    void formatterSumsOnlyEscrowStillHeldForPendingBookings() {
+        UUID releasedBooking = UUID.fromString("20000000-0000-0000-0000-000000000002");
+        List<WalletTransaction> transactions = List.of(
+                transaction(WalletTransactionType.ESCROW_HOLD, BOOKING_ID, null, null,
+                        new BigDecimal("-480.00")),
+                transaction(WalletTransactionType.ESCROW_HOLD, releasedBooking, null, null,
+                        new BigDecimal("-210.00")),
+                transaction(WalletTransactionType.ESCROW_REFUND, releasedBooking, null, null,
+                        new BigDecimal("210.00")));
+
+        assertEquals(new BigDecimal("480.00"),
+                WalletTransactionFormatter.escrowHeldAmount(transactions));
+    }
+
+    @Test
     void commonDashboardControllerOwnsWalletLifecycle() throws Exception {
         Path source = Path.of(
                 "src/main/java/com/snoozeshare/ui/common/wallet/WalletDashboardController.java");
@@ -73,8 +89,14 @@ class WalletDashboardControllerTest {
 
     private static WalletTransaction transaction(WalletTransactionType type, UUID bookingId,
                                                  UUID ticketId, UUID initiatedBy) {
+        return transaction(type, bookingId, ticketId, initiatedBy, new BigDecimal("10.00"));
+    }
+
+    private static WalletTransaction transaction(WalletTransactionType type, UUID bookingId,
+                                                 UUID ticketId, UUID initiatedBy,
+                                                 BigDecimal amount) {
         return new WalletTransaction(UUID.randomUUID(), WALLET_ID, type,
-                new BigDecimal("10.00"), BigDecimal.ZERO, new BigDecimal("10.00"),
+                amount, BigDecimal.ZERO, new BigDecimal("10.00"),
                 bookingId, ticketId, initiatedBy, Instant.parse("2026-09-27T00:00:00Z"));
     }
 }

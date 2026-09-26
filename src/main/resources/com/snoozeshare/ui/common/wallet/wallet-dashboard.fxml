@@ -26,7 +26,8 @@
                     <Label fx:id="balanceAmountLabel" text="\$0.00" styleClass="wallet-balance-amount"/>
                     <Label text="SGD" styleClass="wallet-balance-currency"/>
                 </HBox>
-                <Label text="Includes $0.00 currently held in escrow for pending bookings"
+                <Label fx:id="escrowHeldLabel"
+                       text="Includes $0.00 currently held in escrow for pending bookings"
                        styleClass="wallet-balance-hint"/>
             </VBox>
             <VBox spacing="12" prefWidth="220" alignment="CENTER">

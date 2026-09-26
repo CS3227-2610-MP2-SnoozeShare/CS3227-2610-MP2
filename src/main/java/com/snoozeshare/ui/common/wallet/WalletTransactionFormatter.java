@@ -2,6 +2,12 @@ package com.snoozeshare.ui.common.wallet;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.snoozeshare.domain.enums.WalletTransactionType;
 import com.snoozeshare.domain.model.WalletTransaction;
@@ -49,6 +55,39 @@ public final class WalletTransactionFormatter {
             return "";
         }
         return "Fee: " + balanceLabel(feeAmount);
+    }
+
+    public static BigDecimal escrowHeldAmount(List<WalletTransaction> transactions) {
+        Map<UUID, List<WalletTransaction>> byBooking = transactions.stream()
+                .filter(transaction -> transaction.relatedBookingId() != null)
+                .collect(Collectors.groupingBy(WalletTransaction::relatedBookingId));
+        BigDecimal total = BigDecimal.ZERO;
+        for (List<WalletTransaction> bookingTransactions : byBooking.values()) {
+            BigDecimal held = BigDecimal.ZERO;
+            List<WalletTransaction> chronological = new ArrayList<>(bookingTransactions);
+            chronological.sort(Comparator.comparing(WalletTransaction::createdAt));
+            for (WalletTransaction transaction : chronological) {
+                if (transaction.type() == WalletTransactionType.ESCROW_HOLD) {
+                    held = held.add(transaction.amount().abs());
+                } else if (releasesEscrow(transaction.type())) {
+                    held = held.subtract(transaction.amount().abs()).max(BigDecimal.ZERO);
+                }
+            }
+            total = total.add(held);
+        }
+        return total.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public static String escrowHeldLabel(List<WalletTransaction> transactions) {
+        return "Includes $" + escrowHeldAmount(transactions).toPlainString()
+                + " currently held in escrow for pending bookings";
+    }
+
+    private static boolean releasesEscrow(WalletTransactionType type) {
+        return type == WalletTransactionType.ESCROW_REFUND
+                || type == WalletTransactionType.BOOKING_PAYOUT
+                || type == WalletTransactionType.TICKET_REMEDY
+                || type == WalletTransactionType.AGENT_OVERRIDE;
     }
 
     private static String shortId(java.util.UUID id) {

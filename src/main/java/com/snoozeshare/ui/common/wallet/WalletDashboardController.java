@@ -32,6 +32,7 @@ public final class WalletDashboardController {
 
     @FXML private StackPane dashboardRoot;
     @FXML private Label balanceAmountLabel;
+    @FXML private Label escrowHeldLabel;
     @FXML private TableView<WalletTransaction> transactionTable;
     @FXML private TableColumn<WalletTransaction, String> dateColumn;
     @FXML private TableColumn<WalletTransaction, String> typeColumn;
@@ -92,6 +93,7 @@ public final class WalletDashboardController {
         List<WalletTransaction> newestFirst = new ArrayList<>(
                 context.walletService().statementFor(userId));
         java.util.Collections.reverse(newestFirst);
+        escrowHeldLabel.setText(WalletTransactionFormatter.escrowHeldLabel(newestFirst));
         transactionTable.getItems().setAll(newestFirst);
         if (newestFirst.isEmpty()) {
             return;
