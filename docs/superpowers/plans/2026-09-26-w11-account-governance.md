@@ -2894,7 +2894,7 @@ Log in as `amy.tanaka@snoozeshare.test`, open Accounts, search `mar`, suspend a 
 - § Workstreams W11: Status `Done` only after the operator confirms; until then `In review`, Progress `All 14 tasks done; awaiting operator acceptance`, Guide `—`.
 - § Architecture 4.2 UI: add a **W11 Accounts screen (built)** paragraph (files, fixed-header table, modal, search) after the W10 agent screens paragraph. 4.3 Service: add `AccountGovernanceServiceImpl` (atomic suspend + cascade, C36) and the removed `UserService.suspend`. 4.5 Repository: `users.suspensionReason` (V003), `UserRepository.findAll`, `BookingRepository.findByListing`. 4.6 Events: `AccountStatusChangedEvent`.
 - § Deviations: mark D19 RESOLVED; add D20 — "the Accounts list hides the System user; `BookingServiceImpl` gained a `UserRepository` constructor parameter and a suspended-guest guard; `MigrationRunner` now handles V003".
-- Session row S7: Doing → `W11 implemented; awaiting operator review`; Last touched today.
+- Session row S9: Doing → `W11 implemented; awaiting operator review`; Last touched today.
 
 - [ ] **Step 4: Add the ledger entry** at the top of the table in `docs/project-state/done-ledger.md`:
 
