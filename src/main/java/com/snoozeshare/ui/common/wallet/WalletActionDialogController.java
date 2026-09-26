@@ -21,6 +21,11 @@ public final class WalletActionDialogController {
     @FXML private TextField amountField;
     @FXML private Button actionButton;
     @FXML private Label statusLabel;
+    @FXML private Button preset50;
+    @FXML private Button preset100;
+    @FXML private Button preset500;
+    @FXML private Button preset1000;
+    @FXML private Label fullBalanceLink;
 
     private AppContext context;
     private Mode mode;
@@ -39,16 +44,27 @@ public final class WalletActionDialogController {
             actionButton.setText("Confirm top up");
             currentBalanceLabel.setText("Current balance "
                     + WalletTransactionFormatter.balanceLabel(this.currentBalance));
+            setPresetVisibility(true);
         } else {
             titleLabel.setText("Withdraw funds");
             actionButton.setText("Confirm withdraw");
             currentBalanceLabel.setText("Available to withdraw "
                     + WalletTransactionFormatter.balanceLabel(this.currentBalance)
                     + " — non-escrowed balance only");
+            setPresetVisibility(false);
         }
 
         statusLabel.setVisible(false);
         statusLabel.setManaged(false);
+    }
+
+    private void setPresetVisibility(boolean topUp) {
+        for (Button preset : new Button[] {preset50, preset100, preset500, preset1000}) {
+            preset.setVisible(topUp);
+            preset.setManaged(topUp);
+        }
+        fullBalanceLink.setVisible(!topUp);
+        fullBalanceLink.setManaged(!topUp);
     }
 
     public void setPresetAmount(BigDecimal amount) {

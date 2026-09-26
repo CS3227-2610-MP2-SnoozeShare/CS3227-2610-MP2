@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="dashboardRoot" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.snoozeshare.ui.common.wallet.WalletDashboardController">
+    <VBox spacing="20" styleClass="wallet-page">
+        <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+        <HBox spacing="24" alignment="CENTER_LEFT">
+            <VBox styleClass="wallet-balance-section" spacing="5" HBox.hgrow="ALWAYS">
+                <padding><Insets top="22" right="28" bottom="22" left="28"/></padding>
+                <Label text="AVAILABLE BALANCE" styleClass="wallet-balance-caption"/>
+                <Label fx:id="balanceLabel" text="SGD 0.00" styleClass="wallet-amount"/>
+                <Label text="Funds available for wallet actions" styleClass="wallet-balance-hint"/>
+            </VBox>
+            <VBox spacing="12" prefWidth="220">
+                <Button text="Top up" maxWidth="Infinity" styleClass="wallet-top-up-button"
+                        onAction="#handleTopUp"/>
+                <Button text="Withdraw" maxWidth="Infinity" styleClass="wallet-withdraw-button"
+                        onAction="#handleWithdraw"/>
+            </VBox>
+        </HBox>
+
+        <Label text="Transaction statement" styleClass="wallet-statement-title"/>
+
+        <VBox styleClass="wallet-statement" VBox.vgrow="ALWAYS">
+            <GridPane styleClass="wallet-statement-header" hgap="12">
+                <Label text="DATE" GridPane.columnIndex="0"/>
+                <Label text="TYPE" GridPane.columnIndex="1"/>
+                <Label text="RELATED TO" GridPane.columnIndex="2"/>
+                <Label text="AMOUNT" GridPane.columnIndex="3"/>
+                <Label text="BALANCE AFTER" GridPane.columnIndex="4"/>
+            </GridPane>
+            <ScrollPane fx:id="transactionScroll" fitToWidth="true" VBox.vgrow="ALWAYS"
+                        styleClass="wallet-statement-scroll">
+                <VBox fx:id="transactionContainer" spacing="0"/>
+            </ScrollPane>
+            <Label fx:id="emptyLabel" text="No transactions yet." styleClass="small"
+                   visible="false" managed="false"/>
+        </VBox>
+    </VBox>
+</StackPane>
