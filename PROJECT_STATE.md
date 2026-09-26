@@ -8,7 +8,7 @@ every boundary, not at the end of the session.
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `agent-platform-audit-trail` (W12 — Platform Audit Trail; branched from `main` after the W10 merge)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-26 by Claude Sonnet 5 — W12 Done; Guide Documented 2026-09-26
+- **Last updated:** 2026-09-26 by Claude Sonnet 5 — W12 Done; Guide Documented 2026-09-26; merged origin/main (PR #8 Fall Light theme for guest/host/login)
 - **Last verified against repo:** 2026-09-26
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10, then W12, on 2026-09-26 (operator-approved checkpoints; W12 added § 4.9 Audit trail, two diagrams, the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented.
 
@@ -181,8 +181,10 @@ and a 1280×800 minimum window. `Launcher` remains the shaded-jar entry point.
 
 ### 4.2 UI (role-isolated)
 
-**Now:** W1 provides the combined auth/register screen, shared CSS, header/sidebar/content shells,
-role routing, validation helper, and shared wallet panel boundary. W2 adds the Guest search
+**Now:** W1 provides the combined auth/register screen, shared CSS, and role routing.
+All three role shells (Guest, Host, Agent) now use the Fall Light theme (`agent-theme.css`) with
+a topbar + horizontal tab strip layout; the login page also carries the warm palette. Guest/host-specific
+CSS classes are overridden under `.agent-root` in `agent-theme.css`. W2 adds the Guest search
 screen and property detail modal. W3 adds the Trip Hub dashboard
 (`ui.guest.trips.TripDashboardController` + `trip-dashboard.fxml`) with Pending/Upcoming/Active/
 Completed/Cancelled tabs, trip cards with cancel buttons, event bus subscriptions for real-time
@@ -552,6 +554,6 @@ The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-st
 — every change, big or small, newest first.
 
 - **Latest entry:** 2026-09-26
-- **Entries:** 74 (4 backfilled coarsely from git history)
+- **Entries:** 76 (4 backfilled coarsely from git history)
 
 Deviations stay in § Deviations above: those are read every session.
