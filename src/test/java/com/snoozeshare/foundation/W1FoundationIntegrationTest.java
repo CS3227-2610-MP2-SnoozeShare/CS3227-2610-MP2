@@ -14,7 +14,6 @@ import com.snoozeshare.domain.enums.AuditAction;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.service.AuditFilter;
-import com.snoozeshare.service.AuditRecord;
 
 class W1FoundationIntegrationTest {
 
@@ -41,11 +40,8 @@ class W1FoundationIntegrationTest {
                     context.sceneRouter().routeFor(context.session().currentRole()));
 
             AtomicInteger events = new AtomicInteger();
-            context.eventBus().subscribe(WalletTransactionRecordedEvent.class, event -> {
-                events.incrementAndGet();
-                context.auditService().record(AuditRecord.builder(guest.userId(), AuditAction.TOP_UP,
-                        "WalletTransaction", event.transactionId()).subject(guest.userId()).build());
-            });
+            context.eventBus().subscribe(WalletTransactionRecordedEvent.class,
+                    event -> events.incrementAndGet());
             var transaction = context.walletService().topUp(guest.userId(),
                     new BigDecimal("25.00"));
 
