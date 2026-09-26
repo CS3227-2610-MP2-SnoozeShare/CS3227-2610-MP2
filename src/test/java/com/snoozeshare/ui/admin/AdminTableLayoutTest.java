@@ -32,6 +32,7 @@ import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -238,6 +239,28 @@ class AdminTableLayoutTest {
                         "translucent hover highlight, like the queue: " + fill);
                 assertEquals(null, row.getCursor() == Cursor.HAND ? Cursor.HAND : null, "no hand cursor on rows");
                 AdminUiSnapshotTest.writePng(root.getScene().snapshot(null), "agent-accounts");
+                return null;
+            });
+        }
+    }
+
+    @Test
+    void aFilteredAccountListSizesToItsRowsInsteadOfSqueezingThem(@TempDir Path directory) throws Exception {
+        assumeTrue(toolkitAvailable, "JavaFX toolkit unavailable");
+        try (MockDbFixture db = MockDbFixture.open(directory);
+             AppContext context = AppContext.create(db.jdbcUrl())) {
+            context.session().loginAs(context.userService().authenticate("amy.tanaka@snoozeshare.test"));
+            onFx(() -> {
+                Parent root = show(context, "showAccounts");
+                TextField search = (TextField) root.lookup(".text-field");
+                search.setText("suspended");
+                root.applyCss();
+                root.layout();
+                ScrollPane scroll = (ScrollPane) root.lookup(".agent-rows-scroll");
+                Region rows = (Region) scroll.getContent();
+                assertTrue(scroll.getViewportBounds().getHeight() >= rows.getHeight() - 1,
+                        "every filtered row is visible without scrolling: viewport "
+                                + scroll.getViewportBounds().getHeight() + " rows " + rows.getHeight());
                 return null;
             });
         }

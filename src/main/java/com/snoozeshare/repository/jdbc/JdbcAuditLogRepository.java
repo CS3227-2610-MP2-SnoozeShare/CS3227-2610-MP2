@@ -90,7 +90,7 @@ public final class JdbcAuditLogRepository implements AuditLogRepository {
             sql.append(" AND substr(timestamp, 1, 19) < ?");
             values.add(JdbcCodecs.instant(criteria.toExclusive()).substring(0, 19));
         }
-        sql.append(" ORDER BY timestamp DESC, rowid ASC LIMIT ? OFFSET ?");
+        sql.append(" ORDER BY timestamp DESC, rowid DESC LIMIT ? OFFSET ?");
         values.add(limit);
         values.add(offset);
         try (var statement = connection.prepareStatement(sql.toString())) {

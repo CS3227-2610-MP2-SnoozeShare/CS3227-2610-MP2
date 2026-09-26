@@ -19,6 +19,7 @@ import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -31,6 +32,7 @@ public final class AccountGovernanceController {
     private static final String DASH = "—";
 
     @FXML private TextField searchField;
+    @FXML private ScrollPane rowsScroll;
     @FXML private VBox rows;
     @FXML private Label emptyLabel;
     @FXML private Label errorLabel;
@@ -44,6 +46,9 @@ public final class AccountGovernanceController {
         emptyLabel.visibleProperty().bind(emptyLabel.textProperty().isNotEmpty());
         emptyLabel.managedProperty().bind(emptyLabel.visibleProperty());
         errorLabel.managedProperty().bind(errorLabel.textProperty().isNotEmpty());
+        // Fit the scroll area to the laid-out rows (wrapped reasons included); the card still shrinks with the window.
+        rowsScroll.prefHeightProperty().bind(rows.heightProperty().add(2));
+        rowsScroll.setMinHeight(60);
         searchField.textProperty().addListener((observable, previous, text) -> render());
     }
 

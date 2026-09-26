@@ -40,7 +40,7 @@
             <Label text="STATUS" GridPane.columnIndex="4"/>
             <Label text="ACTION" GridPane.columnIndex="5"/>
         </GridPane>
-        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="agent-rows-scroll">
+        <ScrollPane fx:id="rowsScroll" fitToWidth="true" hbarPolicy="NEVER" styleClass="agent-rows-scroll">
             <VBox fx:id="rows"/>
         </ScrollPane>
         <Label fx:id="emptyLabel" text="No accounts match your search" styleClass="agent-empty"/>
