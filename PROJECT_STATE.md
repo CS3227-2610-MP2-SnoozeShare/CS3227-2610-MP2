@@ -9,7 +9,7 @@ every boundary, not at the end of the session.
 - **Branch:** `w8`
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
 - **Last updated:** 2026-09-27 by Codex — W8 implementation complete; awaiting operator confirmation
-- **Last verified against repo:** 2026-09-26
+- **Last verified against repo:** 2026-09-27
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
 
 Sections are ordered by how often they are needed: **1–3 say where we are, 4–5 say what the
