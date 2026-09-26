@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.function.Function;
 
 import com.snoozeshare.app.AppContext;
@@ -95,7 +96,8 @@ public final class AuditLogController {
         }
         int selected = actionCombo.getSelectionModel().getSelectedIndex();
         AuditAction action = selected <= 0 ? null : AuditAction.values()[selected - 1];
-        applied = new AuditFilter(searchField.getText(), action, fromPicker.getValue(), toPicker.getValue());
+        Set<AuditAction> actions = action == null ? Set.of() : Set.of(action);
+        applied = new AuditFilter(searchField.getText(), actions, fromPicker.getValue(), toPicker.getValue());
         load(true);
     }
 

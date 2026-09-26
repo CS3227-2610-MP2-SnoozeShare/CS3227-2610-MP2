@@ -137,12 +137,35 @@ class JdbcAuditLogRepositoryTest {
 
             var day = new AuditCriteria(false, Set.of(), null, null,
                     Instant.parse("2026-09-25T00:00:00Z"), Instant.parse("2026-09-26T00:00:00Z"));
-            var dayA = new AuditCriteria(false, Set.of(), null, "A",
+            var dayA = new AuditCriteria(false, Set.of(), null, Set.of("A"),
                     Instant.parse("2026-09-25T00:00:00Z"), Instant.parse("2026-09-26T00:00:00Z"));
 
             assertEquals(2, repository.search(day, 10, 0).size());
             assertEquals(1, repository.search(dayA, 10, 0).size());
         }
+    }
+
+    @Test
+    void multipleActionTypesUseAnInClauseAndEmptyMeansAll() throws Exception {
+        try (Connection connection = open()) {
+            UUID ann = user(connection, "Ann Actor");
+            var repository = new JdbcAuditLogRepository(connection);
+            for (String action : new String[] {"A", "B", "C", "A"}) {
+                repository.save(entry(ann, "Ann Actor", action, UUID.randomUUID(), null, null,
+                        "2026-09-25T12:00:00Z"));
+            }
+
+            assertEquals(3, repository.search(criteriaFor(Set.of("A", "B")), 10, 0).size());
+            assertEquals(1, repository.search(criteriaFor(Set.of("C")), 10, 0).size());
+            assertEquals(4, repository.search(criteriaFor(Set.of()), 10, 0).size());
+            assertEquals(4, repository.search(criteriaFor(null), 10, 0).size());
+            assertTrue(repository.search(criteriaFor(Set.of("A'; DROP TABLE audit_log; --")), 10, 0).isEmpty());
+            assertEquals(4, repository.search(AuditCriteria.all(), 10, 0).size());
+        }
+    }
+
+    private static AuditCriteria criteriaFor(Set<String> actions) {
+        return new AuditCriteria(false, Set.of(), null, actions, null, null);
     }
 
     @Test

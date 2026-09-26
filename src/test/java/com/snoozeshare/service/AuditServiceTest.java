@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -123,8 +124,27 @@ class AuditServiceTest {
 
             assertEquals(2, service.search(new AuditFilter(null, null, day, day), 10, 0).size());
             assertEquals(1, service.search(
-                    new AuditFilter(null, AuditAction.LISTING_CREATED, day, day), 10, 0).size());
+                    new AuditFilter(null, Set.of(AuditAction.LISTING_CREATED), day, day), 10, 0).size());
             assertEquals(3, service.search(new AuditFilter(null, null, day, null), 10, 0).size());
+        }
+    }
+
+    @Test
+    void severalActionsNarrowRowsAndEmptySetMeansAll() throws Exception {
+        try (Connection connection = open()) {
+            UUID agent = user(connection, Role.AGENT, "Amy Agent");
+            AuditService service = service(connection);
+            for (AuditAction action : new AuditAction[] {AuditAction.LISTING_CREATED,
+                AuditAction.LISTING_UPDATED, AuditAction.LISTING_STATUS_CHANGED, AuditAction.LISTING_CREATED}) {
+                service.record(AuditRecord.builder(agent, action, "Property", UUID.randomUUID()).build());
+            }
+
+            assertEquals(3, service.search(new AuditFilter(null,
+                    Set.of(AuditAction.LISTING_CREATED, AuditAction.LISTING_UPDATED), null, null), 10, 0).size());
+            assertEquals(1, service.search(new AuditFilter(null,
+                    Set.of(AuditAction.LISTING_STATUS_CHANGED), null, null), 10, 0).size());
+            assertEquals(4, service.search(new AuditFilter(null, Set.of(), null, null), 10, 0).size());
+            assertEquals(4, service.search(AuditFilter.none(), 10, 0).size());
         }
     }
 }

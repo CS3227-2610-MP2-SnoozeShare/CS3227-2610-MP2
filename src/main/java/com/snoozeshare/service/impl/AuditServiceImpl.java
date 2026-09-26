@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.snoozeshare.domain.model.AuditLogEntry;
 import com.snoozeshare.domain.model.User;
@@ -52,7 +53,7 @@ public final class AuditServiceImpl implements AuditService {
         Instant toExclusive = filter.to() == null ? null
                 : filter.to().plusDays(1).atStartOfDay(clock.getZone()).toInstant();
         AuditCriteria criteria = new AuditCriteria(textGiven, userIds, fragment,
-                filter.action() == null ? null : filter.action().name(), from, toExclusive);
+                filter.actions().stream().map(Enum::name).collect(Collectors.toSet()), from, toExclusive);
         return entries.search(criteria, limit, offset);
     }
 

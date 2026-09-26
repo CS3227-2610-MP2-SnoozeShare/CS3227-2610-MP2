@@ -48,7 +48,8 @@ class W1FoundationIntegrationTest {
             assertEquals(1, events.get());
             assertEquals(0, new BigDecimal("25.00").compareTo(transaction.balanceAfter()));
             assertEquals(1, context.auditService().search(
-                    new AuditFilter(guest.userId().toString(), AuditAction.TOP_UP, null, null), 50, 0).size());
+                    new AuditFilter(guest.userId().toString(), java.util.Set.of(AuditAction.TOP_UP), null, null),
+                    50, 0).size());
         }
     }
 }

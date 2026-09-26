@@ -77,9 +77,10 @@ public final class JdbcAuditLogRepository implements AuditLogRepository {
             }
             sql.append(terms.isEmpty() ? " AND 0" : " AND (" + String.join(" OR ", terms) + ")");
         }
-        if (criteria.actionType() != null) {
-            sql.append(" AND actionType = ?");
-            values.add(criteria.actionType());
+        if (!criteria.actionTypes().isEmpty()) {
+            String marks = String.join(", ", Collections.nCopies(criteria.actionTypes().size(), "?"));
+            sql.append(" AND actionType IN (").append(marks).append(")");
+            values.addAll(criteria.actionTypes());
         }
         if (criteria.from() != null) {
             sql.append(" AND substr(timestamp, 1, 19) >= ?");
