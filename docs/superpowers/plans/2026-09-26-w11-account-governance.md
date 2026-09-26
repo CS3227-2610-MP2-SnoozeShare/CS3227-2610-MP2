@@ -53,7 +53,7 @@
 
 - [ ] **Step 1: Record the plan in PROJECT_STATE.md**
 
-In the `W11` row of § Workstreams set the Plan cell to `[W11 plan](docs/superpowers/plans/2026-09-26-w11-account-governance.md)`, Status to `Planned`, Progress to `Plan written; Task 0/14`. Update session row S7 Doing to `Plan written; executing Task 1`.
+In the `W11` row of § Workstreams set the Plan cell to `[W11 plan](docs/superpowers/plans/2026-09-26-w11-account-governance.md)`, Status to `Planned`, Progress to `Plan written; Task 0/14`. Update session row S9 Doing to `Plan written; executing Task 1`.
 
 - [ ] **Step 2: Write the failing migration test**
 
