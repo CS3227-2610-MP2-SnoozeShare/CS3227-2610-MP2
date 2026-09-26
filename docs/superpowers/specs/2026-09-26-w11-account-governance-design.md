@@ -1,7 +1,7 @@
 # W11 — Agent Account Governance (F10) Design Spec
 
 **Workstream:** W11 · **Branch:** `agent-account-governance` · **Date:** 2026-09-26
-**Backlog:** F10.1.1 (suspend), F10.1.2 (auto-cancel pending bookings/listings). Reactivation is added by operator decision (§ 2, C28).
+**Backlog:** F10.1.1 (suspend), F10.1.2 (auto-cancel pending bookings/listings). Reactivation is added by operator decision (§ 2, C34).
 **Visual source of truth:** [design canvas](https://claude.ai/artifact/PWBCxbfv9e9FGVvY6RKUwd) — artboards `AgentAccounts`, `ConfirmSuspendAccount`, and the green banner of `ConfirmForceCompleteBooking` (for reactivation). Where § 2 differs from an artboard, § 2 wins.
 
 ## 1. Goal
@@ -14,8 +14,8 @@ app use and automatically unwinds the user's pending bookings and active listing
 
 | ID | Decision |
 |---|---|
-| C28 | Operator, 2026-09-26: (a) **Reactivate** is built although F10.1.1 only says suspend (new capability, like C26's category delete). (b) F10.1.2 cascade is **in W11**, not a later slice. (c) **Agent accounts are listed but have no action** (dash); only Guest and Host can be suspended, and an agent cannot suspend themself. (d) Suspension reason is stored in a nullable **`users.suspensionReason`** column (resolves D2 item 1); a `suspensions` table and audit-log derivation were rejected (overkill / slow, and coupled to W12). |
-| C29 | Operator, 2026-09-26, UI deltas from the canvas: the first column is **Display Name** (not "Username"); a new **Email** column follows it; **Joined** and every date in the two modals use **`DD MMM YYYY`** (e.g. `05 Mar 2026`); the Suspend modal shows the display name in the large banner font with the **full email** on a row below it; the Reactivate modal uses the success green **`#40680C`** from the Force Complete mock-up. |
+| C34 | Operator, 2026-09-26: (a) **Reactivate** is built although F10.1.1 only says suspend (new capability, like C26's category delete). (b) F10.1.2 cascade is **in W11**, not a later slice. (c) **Agent accounts are listed but have no action** (dash); only Guest and Host can be suspended, and an agent cannot suspend themself. (d) Suspension reason is stored in a nullable **`users.suspensionReason`** column (resolves D2 item 1); a `suspensions` table and audit-log derivation were rejected (overkill / slow, and coupled to W12). |
+| C35 | Operator, 2026-09-26, UI deltas from the canvas: the first column is **Display Name** (not "Username"); a new **Email** column follows it; **Joined** and every date in the two modals use **`DD MMM YYYY`** (e.g. `05 Mar 2026`); the Suspend modal shows the display name in the large banner font with the **full email** on a row below it; the Reactivate modal uses the success green **`#40680C`** from the Force Complete mock-up. |
 | C8 | Cancelled/rejected pending bookings refund 100% of escrow. Reused for the cascade (as `FORCE_CANCELLED`). |
 | C17 | Escrow on `CONFIRMED` stays is settled by agents via W10 tickets. The cascade never touches `CONFIRMED` bookings. |
 | C26 | Modals use `AgentModal` (50% grey scrim), not the canvas blur. |
@@ -41,12 +41,12 @@ app use and automatically unwinds the user's pending bookings and active listing
 
 | Not built | Owner / reason |
 |---|---|
-| Suspending Agents; self-suspend | C28(c) |
+| Suspending Agents; self-suspend | C34(c) |
 | Cancelling `CONFIRMED`/in-progress stays on suspend | Escrow/disputes belong to W10 (C17) |
 | Auto-restoring listings or bookings on reactivate | Deliberate; host re-lists |
 | Audit Log screen and audit projection layer | W12 |
 | Live session termination | Single-process app; no other live session to end |
-| Suspension history table | Audit log keeps history (C28(d)) |
+| Suspension history table | Audit log keeps history (C34(d)) |
 
 ## 4. Design
 
@@ -81,7 +81,7 @@ User reactivate(UUID userId, UUID agentId, String reason);
 - `AccountSummary(User user)`-style read model with display name, email, role, `createdAt`, status, reason.
 - Validation (all `IllegalArgumentException`/`IllegalStateException` with messages the dialog shows inline): actor must be an `AGENT` and `ACTIVE`; target must exist; target role must be `GUEST` or `HOST`; target must not be the actor; reason required (trimmed, non-blank); suspend requires `ACTIVE`, reactivate requires `SUSPENDED`.
 - `suspend` runs in one DB transaction: save user → cascade (§ 3.1.4) → audit. Cascaded refunds go through the existing booking/escrow code paths (`TransactionService.refundEscrow` via booking cancel/decide logic) so ledger invariants hold; if any step fails the whole suspension rolls back. After commit, publish `AccountStatusChangedEvent(userId, newStatus)` for UI refresh.
-- The existing stub `UserService.suspend(userId, agentId)` is removed (its behaviour is subsumed; D13).
+- The existing stub `UserService.suspend(userId, agentId)` is removed (its behaviour is subsumed; D19).
 - The cascade moves bookings `PENDING → FORCE_CANCELLED` through `BookingStateMachine` with `Role.AGENT` (already allowed; no state-machine change) and refunds escrow via `TransactionService.refundEscrow`, inside the governance transaction.
 
 ### 4.4 UI
@@ -107,5 +107,5 @@ Dialog shows service messages inline and stays open. A failed cascade rolls ever
 
 ## 6. Deviations and open items
 
-- **D13** — `UserService.suspend` removed in favour of `AccountGovernanceService.suspend` (adds reason, cascade, audit; the old stub set the status only and ignored the agent).
-- **D2 item 1** resolved by C28(d). D2 item 2 (audit projection) stays with W12.
+- **D19** — `UserService.suspend` removed in favour of `AccountGovernanceService.suspend` (adds reason, cascade, audit; the old stub set the status only and ignored the agent).
+- **D2 item 1** resolved by C34(d). D2 item 2 (audit projection) stays with W12.

@@ -35,12 +35,39 @@ class JdbcAvailabilityBlockRepositoryTest {
 
             AvailabilityBlock block = new AvailabilityBlock(UUID.randomUUID(), propertyId,
                     LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 5),
-                    "HOST_BLOCK", null);
+                    "HOST_BLOCK", null, "  maintenance  ");
             repo.save(block);
 
             var found = repo.findByPropertyId(propertyId);
             assertEquals(1, found.size());
             assertEquals(block.blockId(), found.get(0).blockId());
+            assertEquals("  maintenance  ", found.get(0).reason());
+        }
+    }
+
+    @Test
+    void bookingBlockReasonRoundTripsAsNullAndDeleteByIdKeepsOtherBlocks() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var users = new JdbcUserRepository(connection);
+            var properties = new JdbcPropertyRepository(connection);
+            var repo = new JdbcAvailabilityBlockRepository(connection);
+            UUID propertyId = seedProperty(users, properties);
+            AvailabilityBlock bookingBlock = new AvailabilityBlock(UUID.randomUUID(), propertyId,
+                    LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 5),
+                    "BOOKING", null, null);
+            AvailabilityBlock manualBlock = new AvailabilityBlock(UUID.randomUUID(), propertyId,
+                    LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 5),
+                    "HOST_BLOCK", null, "maintenance");
+            repo.save(bookingBlock);
+            repo.save(manualBlock);
+
+            assertTrue(repo.findById(bookingBlock.blockId()).isPresent());
+            assertEquals(null, repo.findById(bookingBlock.blockId()).orElseThrow().reason());
+
+            repo.deleteById(bookingBlock.blockId());
+
+            assertTrue(repo.findById(bookingBlock.blockId()).isEmpty());
+            assertTrue(repo.findById(manualBlock.blockId()).isPresent());
         }
     }
 
@@ -53,7 +80,7 @@ class JdbcAvailabilityBlockRepositoryTest {
             UUID propertyId = seedProperty(users, properties);
             repo.save(new AvailabilityBlock(UUID.randomUUID(), propertyId,
                     LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 5),
-                    "HOST_BLOCK", null));
+                    "HOST_BLOCK", null, null));
 
             var overlapping = repo.findOverlapping(propertyId,
                     LocalDate.of(2026, 10, 3), LocalDate.of(2026, 10, 8));
@@ -71,7 +98,7 @@ class JdbcAvailabilityBlockRepositoryTest {
             UUID propertyId = seedProperty(users, properties);
             repo.save(new AvailabilityBlock(UUID.randomUUID(), propertyId,
                     LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 5),
-                    "HOST_BLOCK", null));
+                    "HOST_BLOCK", null, null));
 
             var overlapping = repo.findOverlapping(propertyId,
                     LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 8));

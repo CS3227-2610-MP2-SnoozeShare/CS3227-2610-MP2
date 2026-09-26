@@ -6,6 +6,7 @@ import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.ui.common.NavShellController;
 import com.snoozeshare.ui.guest.wallet.WalletDashboardController;
+import com.snoozeshare.ui.host.calendar.HostCalendarController;
 import com.snoozeshare.ui.host.listings.HostListingDetailController;
 import com.snoozeshare.ui.host.listings.HostListingFormController;
 import com.snoozeshare.ui.host.listings.HostListingsController;
@@ -13,12 +14,18 @@ import com.snoozeshare.ui.host.listings.HostListingsController;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 
 public final class HostShellController extends NavShellController {
 
+    private static final String ACTIVE_TAB = "agent-tab-active";
+
     @FXML
     private BorderPane shellRoot;
+    @FXML private Label listingsTab;
+    @FXML private Label bookingsTab;
+    @FXML private Label walletTab;
 
     private WalletDashboardController walletController;
 
@@ -30,6 +37,7 @@ public final class HostShellController extends NavShellController {
 
     @FXML
     private void showListings() {
+        selectTab(listingsTab);
         cleanupWalletController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -40,6 +48,7 @@ public final class HostShellController extends NavShellController {
             controller.setOnCreateListing(this::showCreateListing);
             controller.setOnEditListing(this::showEditListing);
             controller.setOnViewListing(this::showListingDetail);
+            controller.setOnOpenCalendar(this::showCalendar);
             shellRoot.setCenter(listingsView);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load host listings view", exception);
@@ -84,8 +93,24 @@ public final class HostShellController extends NavShellController {
         }
     }
 
+    private void showCalendar(Property property) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/snoozeshare/ui/host/calendar/host-calendar.fxml"));
+            Node calendarView = loader.load();
+            HostCalendarController controller = loader.getController();
+            controller.setContext(getContext());
+            controller.setProperty(property);
+            controller.setOnBack(this::showListings);
+            shellRoot.setCenter(calendarView);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load host booking calendar", exception);
+        }
+    }
+
     @FXML
     private void showBookings() {
+        selectTab(bookingsTab);
         cleanupWalletController();
         try {
             Node bookingsView = FXMLLoader.load(getClass().getResource(
@@ -98,6 +123,7 @@ public final class HostShellController extends NavShellController {
 
     @FXML
     private void showWallet() {
+        selectTab(walletTab);
         cleanupWalletController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -118,4 +144,10 @@ public final class HostShellController extends NavShellController {
         }
     }
 
+    private void selectTab(Label selected) {
+        for (Label tab : new Label[] {listingsTab, bookingsTab, walletTab}) {
+            tab.getStyleClass().remove(ACTIVE_TAB);
+        }
+        selected.getStyleClass().add(ACTIVE_TAB);
+    }
 }

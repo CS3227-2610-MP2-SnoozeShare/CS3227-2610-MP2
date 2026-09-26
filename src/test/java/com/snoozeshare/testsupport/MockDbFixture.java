@@ -17,7 +17,8 @@ import com.snoozeshare.infra.db.ConnectionFactory;
 
 /**
  * A throw-away copy of the committed mock DB. The copy exists only so mutating tests never write to
- * the committed file; the data is used exactly as the team sees it.
+ * the committed file; the data is used exactly as the team sees it (no migration is applied, so a stale
+ * committed file fails the tests instead of being silently repaired).
  */
 public final class MockDbFixture implements AutoCloseable {
 

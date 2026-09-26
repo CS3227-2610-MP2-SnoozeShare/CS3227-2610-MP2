@@ -15,6 +15,7 @@ import com.snoozeshare.infra.events.EventBus;
 import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.repository.WalletRepository;
 import com.snoozeshare.repository.WalletTransactionRepository;
+import com.snoozeshare.service.AuditService;
 
 public final class WalletLedgerWriter {
 
@@ -22,21 +23,16 @@ public final class WalletLedgerWriter {
     private final WalletRepository wallets;
     private final WalletTransactionRepository transactions;
     private final EventBus eventBus;
+    private final AuditService audit;
 
     public WalletLedgerWriter(Connection connection, WalletRepository wallets,
-                               WalletTransactionRepository transactions) {
-        this.connection = connection;
-        this.wallets = wallets;
-        this.transactions = transactions;
-        this.eventBus = null;
-    }
-
-    public WalletLedgerWriter(Connection connection, WalletRepository wallets,
-                              WalletTransactionRepository transactions, EventBus eventBus) {
+                              WalletTransactionRepository transactions, EventBus eventBus,
+                              AuditService audit) {
         this.connection = connection;
         this.wallets = wallets;
         this.transactions = transactions;
         this.eventBus = eventBus;
+        this.audit = audit;
     }
 
     public WalletTransaction record(UUID walletId, WalletTransactionType type, BigDecimal amount,
@@ -64,7 +60,11 @@ public final class WalletLedgerWriter {
                 WalletTransaction entry = new WalletTransaction(UUID.randomUUID(), walletId,
                         type, amount, feeAmount, balanceAfter, relatedBookingId, relatedTicketId,
                         initiatedBy, now);
-                return transactions.save(entry);
+                WalletTransaction saved = transactions.save(entry);
+                UUID actor = initiatedBy == null ? wallet.userId() : initiatedBy;
+                String feeNote = feeAmount.signum() > 0 ? "Fee deducted: " + feeAmount.toPlainString() : null;
+                audit.recordWalletTransaction(actor, wallet.userId(), saved, amount.subtract(feeAmount), feeNote);
+                return saved;
             });
             if (eventBus != null) {
                 eventBus.publish(new WalletTransactionRecordedEvent(transaction.transactionId(),

@@ -9,7 +9,10 @@ import com.snoozeshare.domain.model.AvailabilityBlock;
 public interface AvailabilityService {
     boolean isRangeAvailable(UUID propertyId, LocalDate start, LocalDate end);
 
-    AvailabilityBlock createHostBlock(UUID propertyId, LocalDate start, LocalDate end, UUID hostId);
+    AvailabilityBlock createHostBlock(UUID propertyId, LocalDate start, LocalDate end,
+                                      UUID hostId, String reason);
+
+    void removeHostBlock(UUID blockId, UUID hostId);
 
     List<AvailabilityBlock> blocksFor(UUID propertyId);
 }

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import com.snoozeshare.ui.admin.audit.MultiSelectMenu?>
+
+<VBox spacing="16" styleClass="agent-content" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.snoozeshare.ui.admin.audit.AuditLogController">
+    <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
+
+    <Label text="Audit log" styleClass="page-title"/>
+
+    <HBox spacing="12" alignment="BOTTOM_LEFT" styleClass="agent-card, agent-filter-card">
+        <VBox spacing="4" prefWidth="280">
+            <Label text="SEARCH" styleClass="agent-dialog-field-label"/>
+            <TextField fx:id="searchField" promptText="User name, or booking / ticket / user id"/>
+        </VBox>
+        <VBox spacing="4" prefWidth="200">
+            <Label text="ACTION TYPE" styleClass="agent-dialog-field-label"/>
+            <MultiSelectMenu fx:id="actionSelect" allLabel="All action types" maxWidth="Infinity"/>
+        </VBox>
+        <VBox spacing="4" prefWidth="150">
+            <Label text="FROM" styleClass="agent-dialog-field-label"/>
+            <DatePicker fx:id="fromPicker" maxWidth="Infinity"/>
+        </VBox>
+        <VBox spacing="4" prefWidth="150">
+            <Label text="TO" styleClass="agent-dialog-field-label"/>
+            <DatePicker fx:id="toPicker" maxWidth="Infinity"/>
+        </VBox>
+        <Button fx:id="applyButton" text="Apply filters" styleClass="button" onAction="#handleApply"/>
+        <Button fx:id="clearButton" text="Clear" styleClass="agent-button-danger" onAction="#handleClear"/>
+    </HBox>
+    <Label fx:id="errorLabel" styleClass="error-message"/>
+
+    <VBox styleClass="agent-card">
+        <TableView fx:id="table"/>
+    </VBox>
+    <Label fx:id="emptyLabel" styleClass="small"/>
+    <Button fx:id="loadMoreButton" text="Load more" styleClass="outline-button"
+            onAction="#handleLoadMore" visible="false" managed="false"/>
+</VBox>

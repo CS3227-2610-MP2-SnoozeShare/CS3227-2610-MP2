@@ -35,7 +35,9 @@ public final class DisputeQueueController {
     private static final double ROW_HEIGHT = 47;
     private static final double HEADER_HEIGHT = 34;
     private static final double TOTAL_SHARE = 5.8;
-    private static final double WIDTH_FACTOR = 0.995;
+    private static final double MIN_ROWS = 3;
+    /** Room kept at the right of the columns for the vertical scroll bar. */
+    private static final double SCROLL_BAR_ALLOWANCE = 14;
     private static final String[] STATUS_LABELS = {
         "All statuses", "Open", "In review", "Approved", "Rejected"
     };
@@ -87,7 +89,7 @@ public final class DisputeQueueController {
         table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         table.prefHeightProperty().bind(Bindings.max(1, Bindings.size(table.getItems()))
                 .multiply(ROW_HEIGHT).add(HEADER_HEIGHT));
-        table.minHeightProperty().bind(table.prefHeightProperty());
+        table.minHeightProperty().set(MIN_ROWS * ROW_HEIGHT + HEADER_HEIGHT);
         table.maxHeightProperty().bind(table.prefHeightProperty());
         table.getColumns().add(column("TICKET", 0.6, DisputeSummary::ticketLabel, "cell-id"));
         table.getColumns().add(column("SUBJECT", 1.4, DisputeSummary::title, "cell-strong"));
@@ -212,7 +214,8 @@ public final class DisputeQueueController {
         column.setResizable(false);
         column.setReorderable(false);
         column.setSortable(false);
-        DoubleBinding width = table.widthProperty().multiply(share * WIDTH_FACTOR / TOTAL_SHARE);
+        DoubleBinding width = Bindings.max(0.0, table.widthProperty().subtract(SCROLL_BAR_ALLOWANCE))
+                .multiply(share / TOTAL_SHARE);
         column.prefWidthProperty().bind(width);
         column.minWidthProperty().bind(width);
         column.maxWidthProperty().bind(width);

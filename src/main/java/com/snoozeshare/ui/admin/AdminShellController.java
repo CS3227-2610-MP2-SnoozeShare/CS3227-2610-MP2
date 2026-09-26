@@ -5,6 +5,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 import com.snoozeshare.app.AppContext;
+import com.snoozeshare.ui.admin.audit.AuditLogController;
 import com.snoozeshare.ui.admin.categories.CategoryAdminController;
 import com.snoozeshare.ui.admin.tickets.DisputeDetailController;
 import com.snoozeshare.ui.admin.tickets.DisputeQueueController;
@@ -79,8 +80,17 @@ public final class AdminShellController extends NavShellController {
     @FXML
     private void showAuditLog() {
         selectTab(auditTab);
-        restoreDefaultCenter();
-        displayPage("Audit log", "The platform audit trail is coming soon.");
+        disposeQueue();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/snoozeshare/ui/admin/audit/audit-log.fxml"));
+            Node view = loader.load();
+            AuditLogController controller = loader.getController();
+            controller.setContext(getContext());
+            shellRoot.setCenter(view);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load the audit log", exception);
+        }
     }
 
     @FXML

@@ -1,13 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.scene.control.Label?>
+<?import java.net.URL?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
-<BorderPane fx:id="shellRoot" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+<?import javafx.geometry.Insets?>
+<BorderPane fx:id="shellRoot" styleClass="agent-root" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.snoozeshare.ui.host.HostShellController" minWidth="1280" minHeight="800">
-    <top><HBox styleClass="header" spacing="24" alignment="CENTER_LEFT"><Label text="SnoozeShare" styleClass="app-title"/><Region HBox.hgrow="ALWAYS"/><Label fx:id="walletAmount" text="SGD 0.00" styleClass="wallet-amount"/><Label fx:id="roleLabel" text="Host"/></HBox></top>
-    <left><VBox styleClass="sidebar" spacing="12"><Label text="Listings" styleClass="nav-item" onMouseClicked="#showListings"/><Label text="Bookings" styleClass="nav-item" onMouseClicked="#showBookings"/><Label text="Messages" styleClass="nav-item"/><Label text="Wallet" styleClass="nav-item" onMouseClicked="#showWallet"/><Button text="Log out" styleClass="outline-button" onAction="#logout"/></VBox></left>
-    <center><VBox styleClass="content" spacing="16"/></center>
+    <stylesheets>
+        <URL value="@../admin/agent-theme.css"/>
+    </stylesheets>
+    <top>
+        <VBox>
+            <HBox styleClass="agent-topbar" spacing="24" alignment="CENTER_LEFT">
+                <Label text="SnoozeShare" styleClass="agent-brand"/>
+                <Label fx:id="roleLabel" text="Host Portal" styleClass="agent-workspace-pill"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="walletAmount" text="SGD 0.00" styleClass="wallet-amount"/>
+                <Button text="Log out" styleClass="outline-button" onAction="#logout"/>
+                <Label fx:id="avatarLabel" text="H" styleClass="agent-avatar"/>
+            </HBox>
+            <HBox styleClass="agent-tabstrip" spacing="4" alignment="CENTER_LEFT">
+                <Label fx:id="listingsTab" text="Listings" styleClass="agent-tab, agent-tab-active" onMouseClicked="#showListings"/>
+                <Label fx:id="bookingsTab" text="Bookings" styleClass="agent-tab" onMouseClicked="#showBookings"/>
+                <Label fx:id="walletTab" text="Wallet" styleClass="agent-tab" onMouseClicked="#showWallet"/>
+            </HBox>
+        </VBox>
+    </top>
+    <center>
+        <VBox fx:id="placeholder" styleClass="agent-content" spacing="16">
+            <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
+        </VBox>
+    </center>
 </BorderPane>

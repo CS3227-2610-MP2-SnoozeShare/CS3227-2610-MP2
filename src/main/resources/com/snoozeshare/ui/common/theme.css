@@ -196,3 +196,24 @@
 .chat-bubble { -fx-background-color: #e8edf5; -fx-background-radius: 8px; -fx-padding: 8px 12px; }
 .chat-bubble-agent { -fx-background-color: #d9e2f3; -fx-background-radius: 8px; -fx-padding: 8px 12px; }
 .small { -fx-font-size: 11px; }
+/* Host booking calendar */
+.host-calendar-page { -fx-background-color: #f7f8fb; }
+.calendar-main { -fx-pref-width: 900px; }
+.calendar-month-label { -fx-font-size: 16px; -fx-font-weight: bold; -fx-min-width: 130px; }
+.calendar-legend { -fx-alignment: center-right; }
+.calendar-legend .label { -fx-padding: 4 8 4 8; -fx-background-radius: 4; }
+.legend-available { -fx-background-color: white; -fx-border-color: #d4dbe7; }
+.legend-booked { -fx-background-color: #d1fae5; -fx-text-fill: #067647; }
+.legend-blocked { -fx-background-color: #fee2e2; -fx-text-fill: #b42318; }
+.legend-other-month { -fx-background-color: #eaecf0; -fx-text-fill: #667085; }
+.calendar-grid { -fx-background-color: #d4dbe7; -fx-hgap: 1; -fx-vgap: 1; }
+.calendar-cell { -fx-background-color: white; -fx-padding: 12; -fx-alignment: top-left; }
+.calendar-cell-available { -fx-background-color: white; }
+.calendar-cell-booked { -fx-background-color: #d1fae5; -fx-text-fill: #067647; }
+.calendar-cell-blocked { -fx-background-color: #fee2e2; -fx-text-fill: #b42318; }
+.calendar-cell-other-month { -fx-background-color: #eaecf0; -fx-text-fill: #667085; }
+.calendar-side-panel { -fx-background-color: white; -fx-border-color: #d4dbe7; -fx-padding: 16; }
+.override-row { -fx-alignment: center-left; -fx-padding: 6 0 6 0; }
+.override-row .button { -fx-background-color: transparent; -fx-padding: 2 0 2 8; -fx-text-fill: #b42318; -fx-font-weight: normal; }
+.override-row .button:hover { -fx-underline: true; }
+.text-button { -fx-cursor: hand; }

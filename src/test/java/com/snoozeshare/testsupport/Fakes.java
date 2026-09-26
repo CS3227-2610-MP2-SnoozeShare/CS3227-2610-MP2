@@ -20,6 +20,8 @@ import com.snoozeshare.domain.model.User;
 import com.snoozeshare.repository.TicketCategoryRepository;
 import com.snoozeshare.repository.TicketRepository;
 import com.snoozeshare.repository.UserRepository;
+import com.snoozeshare.service.AuditFilter;
+import com.snoozeshare.service.AuditRecord;
 import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.DisputeSettlementService;
 import com.snoozeshare.service.Settlement;
@@ -136,20 +138,23 @@ public final class Fakes {
     }
 
     public static final class RecordingAudit implements AuditService {
-        private final List<String> actions = new ArrayList<>();
+        private final List<AuditRecord> records = new ArrayList<>();
 
         public List<String> actions() {
-            return actions;
+            return records.stream().map(record -> record.action().name()).toList();
+        }
+
+        public List<AuditRecord> records() {
+            return records;
         }
 
         @Override
-        public void record(UUID actorId, String actionType, String entityType, UUID entityId,
-                           Object before, Object after) {
-            actions.add(actionType);
+        public void record(AuditRecord record) {
+            records.add(record);
         }
 
         @Override
-        public List<AuditLogEntry> query(UUID userId, UUID bookingId, String actionType) {
+        public List<AuditLogEntry> search(AuditFilter filter, int limit, int offset) {
             return List.of();
         }
     }
