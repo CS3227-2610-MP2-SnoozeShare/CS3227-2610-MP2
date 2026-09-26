@@ -36,8 +36,13 @@ class WalletUiStructureTest {
             assertTrue(fxml.contains(heading), heading);
         }
         assertTrue(fxml.contains("AVAILABLE BALANCE"));
+        assertTrue(fxml.contains("fx:id=\"balanceAmountLabel\""));
+        assertTrue(fxml.contains("styleClass=\"wallet-balance-currency\""));
+        assertTrue(fxml.contains("ColumnConstraints"));
         assertTrue(fxml.contains("text=\"Top up\""));
         assertTrue(fxml.contains("text=\"Withdraw\""));
+        assertTrue(fxml.contains("wallet-top-up-button"));
+        assertTrue(fxml.contains("wallet-withdraw-button"));
     }
 
     @Test
@@ -50,6 +55,8 @@ class WalletUiStructureTest {
             assertTrue(fxml.contains(preset), preset);
         }
         assertTrue(fxml.contains("Withdraw full available balance"));
+        assertTrue(fxml.contains("wallet-modal-cancel"));
+        assertTrue(fxml.contains("wallet-modal-confirm"));
     }
 
     @Test

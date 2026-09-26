@@ -8,7 +8,7 @@ every boundary, not at the end of the session.
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `w9`
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-27 by Codex — W9 implementation and whole-branch review complete
+- **Last updated:** 2026-09-27 by Codex — W9 wallet visual refinement implemented and verified
 - **Last verified against repo:** 2026-09-27
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
 
@@ -64,7 +64,7 @@ three iterations).
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
-| S7 | 2026-09-27 | Codex | w9 | W9 — Host Wallet Management | Paused | W9 implementation and self-review complete; full suite retains two unrelated baseline UI failures; ready for operator confirmation | 2026-09-27 |
+| S7 | 2026-09-27 | Codex | w9 | W9 — Host Wallet Management | Paused | Wallet visual refinement committed; focused UI tests and Checkstyle pass; full suite retains two unrelated baseline UI failures | 2026-09-27 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -87,8 +87,8 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W5 | F4 — Guest Wallet Management (top-up/withdraw) | Done | [wallet-management design](docs/superpowers/specs/2026-09-25-w5-wallet-management-design.md) | [wallet-management plan](docs/superpowers/plans/2026-09-25-w5-wallet-management.md) | All 6 tasks complete: dashboard, modal, navigation, CSS, sidebar refresh | Awaiting confirmation |
 | W6 | F5 — Host Listing Management & Publishing | Done | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md) | [listing-management plan](docs/superpowers/plans/2026-09-25-w6-listing-management.md) | Implementation complete: listing CRUD/status/detail flows, host wallet/navigation refinements, wallet refresh fix, and clean build verification | Documented 2026-09-27 |
 | W7 | F6 — Host Calendar & Date Overrides | Done | [host-calendar design](docs/superpowers/specs/2026-09-26-w7-host-calendar-design.md) | [host-calendar plan](docs/superpowers/plans/2026-09-26-w7-host-calendar.md) | Complete: listing calendar, month navigation, colors, all-month overrides, inclusive/single-date blocking, removal, validation, and layout; full tests/build pass | Documented 2026-09-27 |
-| W8 | F7 — Host Request Queue, Earnings & Disputes | In review | [host requests/earnings design](docs/superpowers/specs/2026-09-26-w8-host-requests-earnings-design.md) | [host requests/earnings plan](docs/superpowers/plans/2026-09-26-w8-host-requests-earnings.md) | PR #11 open against main; review fixes complete; broader F7.2.2 deferred to W13 | Documented 2026-09-27 |
-| W9 | F8 — Host Wallet Management | Done | [host wallet management design](docs/superpowers/specs/2026-09-27-w9-host-wallet-management-design.md) | [host wallet management plan](docs/superpowers/plans/2026-09-27-w9-host-wallet-management.md) | Complete: common mockup wallet, all transaction types, top-up presets, full-balance withdrawal, host ledger coverage, FXML load regression, Checkstyle; full suite retains two unrelated baseline UI failures | Awaiting confirmation |
+| W8 | F7 — Host Request Queue, Earnings & Disputes | Done | [host requests/earnings design](docs/superpowers/specs/2026-09-26-w8-host-requests-earnings-design.md) | [host requests/earnings plan](docs/superpowers/plans/2026-09-26-w8-host-requests-earnings.md) | PR #11 open against main; review fixes complete; broader F7.2.2 deferred to W13 | Documented 2026-09-27 |
+| W9 | F8 — Host Wallet Management | Done | [host wallet management design](docs/superpowers/specs/2026-09-27-w9-host-wallet-management-design.md) | [host wallet management plan](docs/superpowers/plans/2026-09-27-w9-host-wallet-management.md) | Visual refinement committed: table matches Host/Agent styling; balance and action/modal button treatments updated; focused UI tests and Checkstyle pass | Awaiting confirmation |
 | W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
 | W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
 | W12 | F11 — Platform Audit Trail & Analytics | Not started | — | — | Backlog only: §5 | — |
@@ -217,7 +217,10 @@ navigation; Host Wallet actions use equal-width `Top up` and `Withdraw` buttons.
 Host shell FXML is well-formed and loads successfully through `SceneRouter` after authentication.
 W9 moves the Guest/Host wallet dashboard and action-dialog controllers and FXML into
 `ui.common.wallet`, renders the complete wallet statement in a mockup-based table, and
-supports top-up presets plus full-balance withdrawal selection for both roles.
+supports top-up presets plus full-balance withdrawal selection for both roles. The wallet table
+uses the Host Booking/Agent table rhythm; its balance separates large black dollar amount from
+smaller grey `SGD`, and wallet action/modals use contained green confirmations with outlined
+secondary actions.
 Per the proposal,
 each role gets its own FXML+Controller tree under `ui.<role>`, and `ui.common` holds shared
 pieces (`WalletPanelController`, `NavShell`, formatting/validation helpers, shared components)

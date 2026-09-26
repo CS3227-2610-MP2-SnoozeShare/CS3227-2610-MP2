@@ -20,6 +20,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -32,7 +33,7 @@ public final class WalletDashboardController {
             DateTimeFormatter.ofPattern("MMM d, yyyy HH:mm");
 
     @FXML private StackPane dashboardRoot;
-    @FXML private Label balanceLabel;
+    @FXML private Label balanceAmountLabel;
     @FXML private VBox transactionContainer;
     @FXML private Label emptyLabel;
     @FXML private ScrollPane transactionScroll;
@@ -67,7 +68,7 @@ public final class WalletDashboardController {
         java.util.UUID userId = context.session().currentUser().orElseThrow().userId();
         BigDecimal balance = context.walletService().balanceOf(userId)
                 .setScale(2, RoundingMode.HALF_UP);
-        balanceLabel.setText(WalletTransactionFormatter.balanceLabel(balance));
+        balanceAmountLabel.setText("$" + balance.toPlainString());
 
         List<WalletTransaction> transactions = context.walletService().statementFor(userId);
         transactionContainer.getChildren().clear();
@@ -90,8 +91,11 @@ public final class WalletDashboardController {
         GridPane row = new GridPane();
         row.setHgap(12);
         row.setVgap(4);
-        row.setPadding(new Insets(12, 16, 12, 16));
+        row.setMinHeight(47);
+        row.setPrefHeight(47);
+        row.setPadding(new Insets(0, 18, 0, 18));
         row.getStyleClass().add("transaction-row");
+        addWalletColumnConstraints(row);
 
         Label date = new Label(transaction.createdAt().atZone(ZoneId.systemDefault())
                 .format(DATE_FORMAT));
@@ -118,6 +122,14 @@ public final class WalletDashboardController {
         row.add(balanceAfter, 4, 0);
         GridPane.setHgrow(related, Priority.ALWAYS);
         return row;
+    }
+
+    private static void addWalletColumnConstraints(GridPane grid) {
+        for (double width : new double[] {16, 18, 28, 18, 20}) {
+            ColumnConstraints constraints = new ColumnConstraints();
+            constraints.setPercentWidth(width);
+            grid.getColumnConstraints().add(constraints);
+        }
     }
 
     private void showModal(WalletActionDialogController.Mode mode) {
