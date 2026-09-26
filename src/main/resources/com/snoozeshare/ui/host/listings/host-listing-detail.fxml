@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane fitToWidth="true" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.snoozeshare.ui.host.listings.HostListingDetailController">
+    <VBox spacing="16" styleClass="detail-modal">
+        <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <Button text="Back" onAction="#handleBack" styleClass="outline-button"/>
+            <Label fx:id="titleLabel" styleClass="page-title"/>
+        </HBox>
+
+        <Label fx:id="typeLabel" styleClass="small"/>
+        <Label fx:id="addressLabel"/>
+        <Label fx:id="descriptionLabel" wrapText="true"/>
+
+        <GridPane hgap="24" vgap="10">
+            <Label text="Capacity" styleClass="card-title" GridPane.columnIndex="0"/>
+            <Label fx:id="capacityLabel" GridPane.columnIndex="1"/>
+            <Label text="Bedrooms" styleClass="card-title" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+            <Label fx:id="bedroomsLabel" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            <Label text="Bathrooms" styleClass="card-title" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+            <Label fx:id="bathroomsLabel" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+            <Label text="Status" styleClass="card-title" GridPane.columnIndex="2"/>
+            <Label fx:id="statusLabel" GridPane.columnIndex="3"/>
+            <Label text="Nightly rate" styleClass="card-title" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+            <Label fx:id="rateLabel" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+            <Label fx:id="checkInLabel" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+            <Label fx:id="checkOutLabel" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+        </GridPane>
+
+        <Label text="Amenities" styleClass="card-title"/>
+        <FlowPane fx:id="amenitiesPane" hgap="8" vgap="8"/>
+    </VBox>
+</ScrollPane>

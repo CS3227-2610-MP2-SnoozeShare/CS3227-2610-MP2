@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<VBox xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.snoozeshare.ui.host.listings.HostListingFormController" spacing="12">
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+    <HBox spacing="10">
+        <Button text="Back" onAction="#handleBack" styleClass="outline-button"/>
+        <Label fx:id="formTitle" text="Create Listing" styleClass="page-title"/>
+    </HBox>
+    <GridPane hgap="10" vgap="8" styleClass="listing-form">
+        <Label text="Title" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+        <TextField fx:id="titleField" promptText="e.g. Bright city apartment" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+        <Label text="Description" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+        <TextArea fx:id="descriptionField" styleClass="listing-description" promptText="Describe the space" prefRowCount="4" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+        <Label text="Address" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+        <TextField fx:id="streetAddressField" promptText="Street address" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+        <Label text="City" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+        <TextField fx:id="cityField" promptText="City" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+        <Label text="Region" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+        <TextField fx:id="regionField" promptText="Region" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+        <Label text="Postal code" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+        <TextField fx:id="postalCodeField" promptText="Postal code" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+        <Label text="Property type" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+        <ComboBox fx:id="propertyTypeCombo" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+        <Label text="Max guests" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+        <Spinner fx:id="maxGuestsSpinner" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+        <Label text="Bedrooms" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+        <TextField fx:id="bedroomsField" promptText="e.g. 2" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+        <Label text="Bathrooms" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
+        <TextField fx:id="bathroomsField" promptText="e.g. 1.5" GridPane.columnIndex="3" GridPane.rowIndex="3"/>
+        <Label text="Nightly rate" GridPane.columnIndex="2" GridPane.rowIndex="4"/>
+        <TextField fx:id="rateField" promptText="SGD" GridPane.columnIndex="3" GridPane.rowIndex="4"/>
+        <Label text="Check-in" GridPane.columnIndex="2" GridPane.rowIndex="5"/>
+        <TextField fx:id="checkInField" promptText="HH:mm" GridPane.columnIndex="3" GridPane.rowIndex="5"/>
+        <Label text="Check-out" GridPane.columnIndex="2" GridPane.rowIndex="6"/>
+        <TextField fx:id="checkOutField" promptText="HH:mm" GridPane.columnIndex="3" GridPane.rowIndex="6"/>
+    </GridPane>
+    <HBox spacing="10">
+        <Label text="Amenities"/>
+        <CheckBox fx:id="wifiBox" text="Wi-Fi"/>
+        <CheckBox fx:id="parkingBox" text="Parking"/>
+        <CheckBox fx:id="airConditioningBox" text="Air conditioning"/>
+        <CheckBox fx:id="kitchenBox" text="Kitchen"/>
+        <CheckBox fx:id="washerBox" text="Washer"/>
+        <CheckBox fx:id="workDeskBox" text="Work desk"/>
+    </HBox>
+    <Label fx:id="errorLabel" styleClass="form-error"/>
+    <Button fx:id="saveButton" text="Create Listing" onAction="#handleSave"/>
+</VBox>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="dashboardRoot" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.snoozeshare.ui.guest.wallet.WalletDashboardController">
+
+    <VBox spacing="20">
+        <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+        <Label text="Wallet" styleClass="page-title"/>
+
+        <VBox styleClass="wallet-balance-section" spacing="4">
+            <padding><Insets top="16" right="20" bottom="16" left="20"/></padding>
+            <Label text="Current Balance" styleClass="small"/>
+            <Label fx:id="balanceLabel" text="SGD 0.00" styleClass="wallet-amount"/>
+        </VBox>
+
+        <HBox spacing="12">
+            <Button text="Top Up" styleClass="button" onAction="#handleTopUp"/>
+            <Button text="Withdraw" styleClass="outline-button" onAction="#handleWithdraw"/>
+        </HBox>
+
+        <Label text="Transaction History" styleClass="card-title"/>
+
+        <ScrollPane fx:id="transactionScroll" fitToWidth="true" VBox.vgrow="ALWAYS">
+            <VBox fx:id="transactionContainer" spacing="8">
+                <padding><Insets top="4" right="4" bottom="4" left="4"/></padding>
+            </VBox>
+        </ScrollPane>
+
+        <Label fx:id="emptyLabel" text="No transactions yet." styleClass="small"
+               visible="false" managed="false"/>
+    </VBox>
+</StackPane>

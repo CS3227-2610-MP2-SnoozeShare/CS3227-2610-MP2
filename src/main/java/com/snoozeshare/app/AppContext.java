@@ -19,20 +19,24 @@ import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
 import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.AvailabilityService;
+import com.snoozeshare.service.BookingService;
 import com.snoozeshare.service.DisputeQueryService;
 import com.snoozeshare.service.DisputeSettlementService;
 import com.snoozeshare.service.ListingService;
 import com.snoozeshare.service.MessageService;
 import com.snoozeshare.service.TicketService;
+import com.snoozeshare.service.TransactionService;
 import com.snoozeshare.service.UserService;
 import com.snoozeshare.service.WalletService;
 import com.snoozeshare.service.impl.AuditServiceImpl;
 import com.snoozeshare.service.impl.AvailabilityServiceImpl;
+import com.snoozeshare.service.impl.BookingServiceImpl;
 import com.snoozeshare.service.impl.DisputeQueryServiceImpl;
 import com.snoozeshare.service.impl.DisputeSettlementServiceImpl;
 import com.snoozeshare.service.impl.InMemoryMessageService;
 import com.snoozeshare.service.impl.ListingServiceImpl;
 import com.snoozeshare.service.impl.TicketServiceImpl;
+import com.snoozeshare.service.impl.TransactionServiceImpl;
 import com.snoozeshare.service.impl.UserServiceImpl;
 import com.snoozeshare.service.impl.WalletServiceImpl;
 import com.snoozeshare.session.MockSessionContext;
@@ -47,6 +51,8 @@ public final class AppContext implements AutoCloseable {
     private final AuditService auditService;
     private final ListingService listingService;
     private final AvailabilityService availabilityService;
+    private final BookingService bookingService;
+    private final TransactionService transactionService;
     private final EventBus eventBus;
     private final TicketService ticketService;
     private final DisputeQueryService disputeQueryService;
@@ -68,18 +74,23 @@ public final class AppContext implements AutoCloseable {
         JdbcAvailabilityBlockRepository blockRepo = new JdbcAvailabilityBlockRepository(connection);
         JdbcBookingRepository bookingRepo = new JdbcBookingRepository(connection);
         this.availabilityService = new AvailabilityServiceImpl(blockRepo, bookingRepo);
-        this.listingService = new ListingServiceImpl(propertyRepo, availabilityService);
+        this.listingService = new ListingServiceImpl(propertyRepo, availabilityService,
+                userService, auditService);
+        JdbcWalletTransactionRepository txnRepo = new JdbcWalletTransactionRepository(connection);
+        this.transactionService = new TransactionServiceImpl(connection, bookingRepo,
+                wallets, txnRepo, eventBus);
+        this.bookingService = new BookingServiceImpl(connection, bookingRepo, propertyRepo,
+                blockRepo, wallets, txnRepo, eventBus);
         JdbcTicketRepository ticketRepo = new JdbcTicketRepository(connection);
         JdbcTicketCategoryRepository categoryRepo = new JdbcTicketCategoryRepository(connection);
-        JdbcWalletTransactionRepository transactionRepo = new JdbcWalletTransactionRepository(connection);
         Clock clock = Clock.systemUTC();
         DisputeSettlementService settlementService = new DisputeSettlementServiceImpl(connection,
-                ticketRepo, bookingRepo, propertyRepo, users, wallets, transactionRepo, auditService,
+                ticketRepo, bookingRepo, propertyRepo, users, wallets, txnRepo, auditService,
                 eventBus, clock);
         this.ticketService = new TicketServiceImpl(ticketRepo, categoryRepo, bookingRepo, users,
                 settlementService, auditService, clock);
         this.disputeQueryService = new DisputeQueryServiceImpl(ticketRepo, bookingRepo, propertyRepo,
-                users, transactionRepo, clock);
+                users, txnRepo, clock);
         this.messageService = new InMemoryMessageService(clock);
         this.sceneRouter = new SceneRouter();
     }
@@ -126,6 +137,14 @@ public final class AppContext implements AutoCloseable {
 
     public AvailabilityService availabilityService() {
         return availabilityService;
+    }
+
+    public BookingService bookingService() {
+        return bookingService;
+    }
+
+    public TransactionService transactionService() {
+        return transactionService;
     }
 
     public EventBus eventBus() {

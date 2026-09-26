@@ -15,4 +15,6 @@ public interface AvailabilityBlockRepository {
     List<AvailabilityBlock> findOverlapping(UUID propertyId, LocalDate start, LocalDate end);
 
     AvailabilityBlock save(AvailabilityBlock block);
+
+    void deleteByBookingId(UUID bookingId);
 }

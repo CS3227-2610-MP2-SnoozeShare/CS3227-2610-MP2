@@ -4,9 +4,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.function.Consumer;
 
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.enums.AmenityType;
+import com.snoozeshare.domain.model.Booking;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.service.PriceBreakdown;
@@ -21,6 +23,9 @@ public final class ListingDetailController {
     private static final DateTimeFormatter TIME_FORMAT =
             DateTimeFormatter.ofPattern("h:mm a");
 
+
+    private static final DateTimeFormatter TIME_FORMAT =
+            DateTimeFormatter.ofPattern("h:mm a");
 
     @FXML private Label titleLabel;
     @FXML private Label typeLabel;
@@ -38,9 +43,14 @@ public final class ListingDetailController {
     @FXML private Label nightsLabel;
     @FXML private Label totalLabel;
     @FXML private Button bookButton;
+    @FXML private Label bookingStatusLabel;
 
     private AppContext context;
     private Runnable onClose;
+    private Consumer<Booking> onBookingComplete;
+    private Property property;
+    private LocalDate checkIn;
+    private LocalDate checkOut;
 
     public void setContext(AppContext context) {
         this.context = context;
@@ -50,7 +60,15 @@ public final class ListingDetailController {
         this.onClose = onClose;
     }
 
+    public void setOnBookingComplete(Consumer<Booking> onBookingComplete) {
+        this.onBookingComplete = onBookingComplete;
+    }
+
     public void populate(Property property, LocalDate checkIn, LocalDate checkOut) {
+        this.property = property;
+        this.checkIn = checkIn;
+        this.checkOut = checkOut;
+        bookButton.setDisable(checkIn == null || checkOut == null);
         titleLabel.setText(property.title());
         typeLabel.setText(property.propertyType().name().replace('_', ' '));
         addressLabel.setText(String.join(", ", property.streetAddress(),
@@ -101,6 +119,34 @@ public final class ListingDetailController {
         } catch (Exception exception) {
             return null;
         }
+    }
+
+    @FXML
+    private void handleBook() {
+        try {
+            User currentUser = context.session().currentUser().orElse(null);
+            if (currentUser == null) {
+                showBookingStatus("Please log in to book.", true);
+                return;
+            }
+            Booking booking = context.bookingService().submitRequest(
+                    currentUser.userId(), property.propertyId(), checkIn, checkOut);
+            showBookingStatus("Booking submitted!", false);
+            bookButton.setDisable(true);
+            if (onBookingComplete != null) {
+                onBookingComplete.accept(booking);
+            }
+        } catch (Exception exception) {
+            showBookingStatus(exception.getMessage(), true);
+        }
+    }
+
+    private void showBookingStatus(String message, boolean isError) {
+        bookingStatusLabel.setText(message);
+        bookingStatusLabel.getStyleClass().removeAll("error-message", "success-message");
+        bookingStatusLabel.getStyleClass().add(isError ? "error-message" : "success-message");
+        bookingStatusLabel.setVisible(true);
+        bookingStatusLabel.setManaged(true);
     }
 
     @FXML
