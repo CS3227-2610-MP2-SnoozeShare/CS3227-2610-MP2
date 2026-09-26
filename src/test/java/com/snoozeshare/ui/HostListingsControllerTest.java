@@ -55,6 +55,17 @@ class HostListingsControllerTest {
     }
 
     @Test
+    void listingCardsExposeCalendarEntryWithoutHijackingDetails() throws Exception {
+        String source = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java"));
+
+        assertTrue(source.contains("setOnOpenCalendar"));
+        assertTrue(source.contains("Open booking calendar"));
+        assertTrue(source.contains("onOpenCalendar.accept"));
+        assertTrue(source.contains("event.consume()"));
+    }
+
+    @Test
     void hostListingDetailPageDisplaysFullListingAndBackNavigation() throws Exception {
         String source = Files.readString(Path.of(
                 "src/main/java/com/snoozeshare/ui/host/listings/HostListingDetailController.java"));

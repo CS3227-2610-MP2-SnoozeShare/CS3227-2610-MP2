@@ -402,7 +402,7 @@ class ListingServiceTest {
         var properties = new JdbcPropertyRepository(connection);
         var blocks = new JdbcAvailabilityBlockRepository(connection);
         var bookings = new JdbcBookingRepository(connection);
-        var availability = new AvailabilityServiceImpl(blocks, bookings);
+        var availability = new AvailabilityServiceImpl(properties, blocks, bookings);
         var users = new JdbcUserRepository(connection);
         var userService = new UserServiceImpl(connection, users,
                 new JdbcWalletRepository(connection));

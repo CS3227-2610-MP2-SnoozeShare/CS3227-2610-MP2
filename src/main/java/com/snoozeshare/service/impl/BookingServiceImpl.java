@@ -87,7 +87,7 @@ public final class BookingServiceImpl implements BookingService {
                 bookings.save(newBooking);
 
                 blocks.save(new AvailabilityBlock(UUID.randomUUID(), propertyId,
-                        start, end, "BOOKING", bookingId));
+                        start, end, "BOOKING", bookingId, null));
 
                 // Inline wallet write — cannot use WalletLedgerWriter here because
                 // it opens its own transaction which would cause premature commit
