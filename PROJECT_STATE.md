@@ -4,7 +4,7 @@
 anything, then run `git log --oneline -20` to confirm it still matches reality. Update it at
 every boundary, not at the end of the session.
 
-- **Phase:** W12 Platform Audit Trail done (merged in); W11 Account Governance spec'd
+- **Phase:** W12 Platform Audit Trail done (merged in); W11 Account Governance planned
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `agent-account-governance` (W11 — Agent Account Governance; branched 2026-09-26 from the W10 branch tip, which already contains `main`)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
@@ -63,7 +63,7 @@ three iterations).
 | S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Paused | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
-| S7 | 2026-09-26 | Claude Sonnet 5 | agent-account-governance | W11 | Active | Wrote the W11 spec; merged W12 branch (`f846676`); spec amended for W12 precedents, V003 column, wider cascade (C36), operator search edits. Next: operator reviews spec, then `writing-plans`. No code yet | 2026-09-26 |
+| S7 | 2026-09-26 | Claude Sonnet 5 | agent-account-governance | W11 | Active | Wrote the W11 spec; merged W12 branch (`f846676`); spec amended for W12 precedents, V003 column, wider cascade (C36), operator search edits. Spec approved; plan written (14 tasks). Next: operator picks execution mode, then Task 1. No code yet | 2026-09-26 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 | S7 | 2026-09-25 | Codex | w7 | W7 scope assessment | Paused | `w7` created from `w6`; booking display maps to W8/F7.1, while W7 remains calendar/date overrides | 2026-09-25 |
 | S8 | 2026-09-26 | Codex | w7 | W7 | Paused | W7 complete: host calendar, inclusive manual blocks, removal, validation, and layout delivered; full tests/build pass | 2026-09-26 |
@@ -92,7 +92,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W8 | F7 — Host Request Queue, Earnings & Disputes | Not started | — | — | Backlog only: §4 | — |
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
 | W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
-| W11 | F10 — Agent Account Governance (F10.1.1 suspend, F10.1.2 cascade; Reactivate added, C34) | Spec'd | [W11 design](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) | — | Spec awaiting operator review; plan not started | — |
+| W11 | F10 — Agent Account Governance (F10.1.1 suspend, F10.1.2 cascade; Reactivate added, C34) | Planned | [W11 design](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) | [W11 plan](docs/superpowers/plans/2026-09-26-w11-account-governance.md) | Spec approved 2026-09-26; plan written, Task 0/14 | — |
 | W12 | F11 — Platform Audit Trail (Analytics half of the epic has no items, out of scope; W11 emits the account-governance rows, C32) | Done | [W12 design](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) | [W12 plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md) | Done | Documented 2026-09-26 |
 | W14 | Unified ledger — fold `wallet_transactions` into `audit_log`, `users.balance`, System account with a real wallet (C30, C31) | Not started | — | — | Not spec'd; reverses Known Gaps entry, C3, C9; runs after W12; touches W1/W3/W5/W6/W10 money paths | — |
 | W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
