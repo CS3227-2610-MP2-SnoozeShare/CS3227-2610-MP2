@@ -22,7 +22,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -89,10 +88,11 @@ public final class WalletDashboardController {
 
     private Node buildTransactionRow(WalletTransaction transaction) {
         GridPane row = new GridPane();
-        row.setHgap(12);
+        row.setHgap(0);
         row.setVgap(4);
         row.setMinHeight(47);
         row.setPrefHeight(47);
+        row.setMaxWidth(Double.MAX_VALUE);
         row.setPadding(new Insets(0, 18, 0, 18));
         row.getStyleClass().add("transaction-row");
         addWalletColumnConstraints(row);
@@ -120,7 +120,6 @@ public final class WalletDashboardController {
         row.add(related, 2, 0);
         row.add(amount, 3, 0);
         row.add(balanceAfter, 4, 0);
-        GridPane.setHgrow(related, Priority.ALWAYS);
         return row;
     }
 

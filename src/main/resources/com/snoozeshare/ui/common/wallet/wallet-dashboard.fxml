@@ -37,7 +37,7 @@
         <Label text="Transaction statement" styleClass="wallet-statement-title"/>
 
         <VBox styleClass="wallet-statement" VBox.vgrow="ALWAYS">
-            <GridPane styleClass="wallet-statement-header" hgap="12">
+            <GridPane styleClass="wallet-statement-header" hgap="0">
                 <columnConstraints>
                     <ColumnConstraints percentWidth="16"/>
                     <ColumnConstraints percentWidth="18"/>

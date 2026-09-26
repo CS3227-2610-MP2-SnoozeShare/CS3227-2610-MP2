@@ -171,9 +171,9 @@
 .wallet-statement { -fx-background-color: white; -fx-border-color: #d9b98f;
     -fx-border-radius: 14; -fx-background-radius: 14; }
 .wallet-statement-header { -fx-background-color: #f0e8d8; -fx-background-radius: 11 11 0 0;
-    -fx-padding: 0; -fx-min-height: 34px; -fx-pref-height: 34px; }
+    -fx-padding: 0 18px 0 18px; -fx-min-height: 34px; -fx-pref-height: 34px; }
 .wallet-statement-header > .label { -fx-font-size: 11px; -fx-font-weight: bold;
-    -fx-text-fill: #6c4434; -fx-alignment: CENTER_LEFT; -fx-padding: 0 0 0 18px; }
+    -fx-text-fill: #6c4434; -fx-alignment: CENTER_LEFT; -fx-padding: 0; }
 .wallet-statement-scroll { -fx-background-color: transparent; }
 .transaction-row { -fx-border-color: transparent transparent #ead8c0 transparent;
     -fx-border-width: 0 0 1 0; -fx-background-color: white; -fx-background-insets: 0; }
@@ -181,7 +181,8 @@
 .transaction-row > .label { -fx-padding: 0; -fx-font-size: 13px; -fx-text-fill: #381a10;
     -fx-alignment: CENTER_LEFT; }
 .transaction-row .transaction-type { -fx-background-color: #fce3d3; -fx-text-fill: #a53916; }
-.wallet-top-up-button { -fx-background-color: #3f7008; -fx-text-fill: white;
+.wallet-top-up-button { -fx-background-color: #3f7008; -fx-background-radius: 8;
+    -fx-text-fill: white;
     -fx-font-size: 15px; -fx-font-weight: bold; -fx-padding: 14px 24px; }
 .wallet-withdraw-button { -fx-background-color: white; -fx-border-color: #d9b98f;
     -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: #553a2d;
@@ -204,6 +205,22 @@
     -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 9px 18px; }
 .wallet-modal-cancel:hover { -fx-background-color: #e8f8d0; }
 .wallet-modal-confirm:hover { -fx-background-color: #315208; }
+
+/* Wallet controls live inside the agent-root shell, whose generic button rules are more
+   specific than the common wallet classes. Keep these variants explicit at that boundary. */
+.agent-root .wallet-top-up-button { -fx-background-color: #3f7008; -fx-background-radius: 8;
+    -fx-text-fill: white; -fx-font-size: 15px; -fx-font-weight: bold; -fx-padding: 14px 24px; }
+.agent-root .wallet-withdraw-button { -fx-background-color: transparent; -fx-background-radius: 8;
+    -fx-border-color: #3f7008; -fx-border-radius: 8; -fx-border-width: 1px;
+    -fx-text-fill: #3f7008; -fx-font-size: 15px; -fx-font-weight: bold;
+    -fx-padding: 12px 24px; }
+.agent-root .wallet-action-modal { -fx-background-color: white; -fx-background-radius: 12;
+    -fx-border-color: #d9b98f; -fx-border-radius: 12; }
+.agent-root .wallet-modal-cancel { -fx-background-color: transparent; -fx-background-radius: 8;
+    -fx-border-color: #3f7008; -fx-border-radius: 8; -fx-border-width: 1px;
+    -fx-text-fill: #3f7008; -fx-font-weight: bold; -fx-padding: 9px 18px; }
+.agent-root .wallet-modal-confirm { -fx-background-color: #3f7008; -fx-background-radius: 8;
+    -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 9px 18px; }
 
 .transaction-card {
     -fx-background-color: white;
