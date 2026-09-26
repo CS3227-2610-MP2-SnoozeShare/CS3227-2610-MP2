@@ -8,7 +8,7 @@ every boundary, not at the end of the session.
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `w9`
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-27 by Codex — W9 Tasks 1–2 complete; Task 3 shell rewiring in flight
+- **Last updated:** 2026-09-27 by Codex — W9 implementation complete; whole-branch review in progress
 - **Last verified against repo:** 2026-09-27
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
 
@@ -64,7 +64,7 @@ three iterations).
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
-| S7 | 2026-09-27 | Codex | w9 | W9 — Host Wallet Management | Active | Task 3/4 in flight: Guest and Host shell paths being rewired to common wallet; Tasks 1–2 committed | 2026-09-27 |
+| S7 | 2026-09-27 | Codex | w9 | W9 — Host Wallet Management | Active | Implementation and focused verification complete; whole-branch review in progress; full suite retains two unrelated baseline UI failures | 2026-09-27 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -88,7 +88,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W6 | F5 — Host Listing Management & Publishing | Done | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md) | [listing-management plan](docs/superpowers/plans/2026-09-25-w6-listing-management.md) | Implementation complete: listing CRUD/status/detail flows, host wallet/navigation refinements, wallet refresh fix, and clean build verification | Documented 2026-09-27 |
 | W7 | F6 — Host Calendar & Date Overrides | Done | [host-calendar design](docs/superpowers/specs/2026-09-26-w7-host-calendar-design.md) | [host-calendar plan](docs/superpowers/plans/2026-09-26-w7-host-calendar.md) | Complete: listing calendar, month navigation, colors, all-month overrides, inclusive/single-date blocking, removal, validation, and layout; full tests/build pass | Documented 2026-09-27 |
 | W8 | F7 — Host Request Queue, Earnings & Disputes | In review | [host requests/earnings design](docs/superpowers/specs/2026-09-26-w8-host-requests-earnings-design.md) | [host requests/earnings plan](docs/superpowers/plans/2026-09-26-w8-host-requests-earnings.md) | PR #11 open against main; review fixes complete; broader F7.2.2 deferred to W13 | Documented 2026-09-27 |
-| W9 | F8 — Host Wallet Management | Building | [host wallet management design](docs/superpowers/specs/2026-09-27-w9-host-wallet-management-design.md) | [host wallet management plan](docs/superpowers/plans/2026-09-27-w9-host-wallet-management.md) | Tasks 1–2/4 complete; Task 3 in flight: common wallet shell wiring and duplicate resource removal | — |
+| W9 | F8 — Host Wallet Management | In review | [host wallet management design](docs/superpowers/specs/2026-09-27-w9-host-wallet-management-design.md) | [host wallet management plan](docs/superpowers/plans/2026-09-27-w9-host-wallet-management.md) | Implementation complete; focused suite and Checkstyle pass; full suite retains two unrelated baseline UI failures; whole-branch review in progress | Awaiting confirmation |
 | W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
 | W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
 | W12 | F11 — Platform Audit Trail & Analytics | Not started | — | — | Backlog only: §5 | — |
@@ -215,6 +215,9 @@ and create/edit-specific action labels.
 The Host Listings page uses a `My listings` heading, wide metric/action cards, and `Requests`
 navigation; Host Wallet actions use equal-width `Top up` and `Withdraw` buttons.
 Host shell FXML is well-formed and loads successfully through `SceneRouter` after authentication.
+W9 moves the Guest/Host wallet dashboard and action-dialog controllers and FXML into
+`ui.common.wallet`, renders the complete wallet statement in a mockup-based table, and
+supports top-up presets plus full-balance withdrawal selection for both roles.
 Per the proposal,
 each role gets its own FXML+Controller tree under `ui.<role>`, and `ui.common` holds shared
 pieces (`WalletPanelController`, `NavShell`, formatting/validation helpers, shared components)
@@ -549,7 +552,7 @@ unchanged.
 The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-state/done-ledger.md)**
 — every change, big or small, newest first.
 
-- **Latest entry:** 2026-09-26
-- **Entries:** 60 (4 backfilled coarsely from git history)
+- **Latest entry:** 2026-09-27
+- **Entries:** 61 (4 backfilled coarsely from git history)
 
 Deviations stay in § Deviations above: those are read every session.

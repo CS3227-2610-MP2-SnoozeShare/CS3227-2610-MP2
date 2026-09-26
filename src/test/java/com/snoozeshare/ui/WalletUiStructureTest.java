@@ -18,8 +18,8 @@ class WalletUiStructureTest {
 
         assertTrue(fxml.contains(
                 "com.snoozeshare.ui.common.wallet.WalletDashboardController"));
-        for (String heading : new String[] {"DATE", "TYPE", "RELATED TO", "AMOUNT",
-                "BALANCE AFTER"}) {
+        for (String heading : new String[] {
+            "DATE", "TYPE", "RELATED TO", "AMOUNT", "BALANCE AFTER"}) {
             assertTrue(fxml.contains(heading), heading);
         }
         assertTrue(fxml.contains("AVAILABLE BALANCE"));

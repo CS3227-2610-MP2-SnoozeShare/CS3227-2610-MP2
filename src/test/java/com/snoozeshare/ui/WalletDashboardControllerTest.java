@@ -67,6 +67,8 @@ class WalletDashboardControllerTest {
         assertTrue(controller.contains("void setContext(AppContext"));
         assertTrue(controller.contains("void cleanup()"));
         assertTrue(controller.contains("WalletTransactionRecordedEvent"));
+        assertTrue(controller.contains("Platform.runLater(this::loadData)"));
+        assertTrue(controller.contains("subscription.unsubscribe()"));
     }
 
     private static WalletTransaction transaction(WalletTransactionType type, UUID bookingId,
