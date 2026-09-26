@@ -22,6 +22,7 @@ import com.snoozeshare.service.AvailabilityService;
 import com.snoozeshare.service.BookingService;
 import com.snoozeshare.service.DisputeQueryService;
 import com.snoozeshare.service.DisputeSettlementService;
+import com.snoozeshare.service.ListingMetricsService;
 import com.snoozeshare.service.ListingService;
 import com.snoozeshare.service.MessageService;
 import com.snoozeshare.service.TicketService;
@@ -34,6 +35,7 @@ import com.snoozeshare.service.impl.BookingServiceImpl;
 import com.snoozeshare.service.impl.DisputeQueryServiceImpl;
 import com.snoozeshare.service.impl.DisputeSettlementServiceImpl;
 import com.snoozeshare.service.impl.InMemoryMessageService;
+import com.snoozeshare.service.impl.ListingMetricsServiceImpl;
 import com.snoozeshare.service.impl.ListingServiceImpl;
 import com.snoozeshare.service.impl.TicketServiceImpl;
 import com.snoozeshare.service.impl.TransactionServiceImpl;
@@ -50,6 +52,7 @@ public final class AppContext implements AutoCloseable {
     private final WalletService walletService;
     private final AuditService auditService;
     private final ListingService listingService;
+    private final ListingMetricsService listingMetricsService;
     private final AvailabilityService availabilityService;
     private final BookingService bookingService;
     private final TransactionService transactionService;
@@ -76,6 +79,7 @@ public final class AppContext implements AutoCloseable {
         this.availabilityService = new AvailabilityServiceImpl(propertyRepo, blockRepo, bookingRepo);
         this.listingService = new ListingServiceImpl(propertyRepo, availabilityService,
                 userService, auditService);
+        this.listingMetricsService = new ListingMetricsServiceImpl(connection);
         JdbcWalletTransactionRepository txnRepo = new JdbcWalletTransactionRepository(connection);
         this.transactionService = new TransactionServiceImpl(connection, bookingRepo,
                 wallets, txnRepo, eventBus);
@@ -133,6 +137,10 @@ public final class AppContext implements AutoCloseable {
 
     public ListingService listingService() {
         return listingService;
+    }
+
+    public ListingMetricsService listingMetricsService() {
+        return listingMetricsService;
     }
 
     public AvailabilityService availabilityService() {

@@ -6,9 +6,9 @@ every boundary, not at the end of the session.
 
 - **Phase:** W7 Host Calendar & Date Overrides — complete
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `agent-dispute-resolution-and-state-overrides` (W10 — Agent Dispute Resolution & State Overrides; branched from `main` after W2 merge)
+- **Branch:** `w8`
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-26 by Claude Opus 4.6 — Fall Light theme applied to all role shells and login page
+- **Last updated:** 2026-09-26 by Codex — Host listing status control spacing stabilized
 - **Last verified against repo:** 2026-09-26
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
 
@@ -66,6 +66,7 @@ three iterations).
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 | S7 | 2026-09-25 | Codex | w7 | W7 scope assessment | Paused | `w7` created from `w6`; booking display maps to W8/F7.1, while W7 remains calendar/date overrides | 2026-09-25 |
 | S8 | 2026-09-26 | Codex | w7 | W7 | Paused | W7 complete: host calendar, inclusive manual blocks, removal, validation, and layout delivered; full tests/build pass | 2026-09-26 |
+| S9 | 2026-09-26 | Codex | w8 | Host portal UI refinement | Paused | Completed wallet/listing layout, copy, metrics, action sizing, and status-control spacing; focused tests, XML validation, Checkstyle, and diff checks pass; full suite retains two unrelated UI failures | 2026-09-26 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -94,6 +95,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
 | W12 | F11 — Platform Audit Trail & Analytics | Not started | — | — | Backlog only: §5 | — |
 | W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
+| W14 | Host Listings Dashboard & Copy Refinement | Done | — | — | Live listing metrics, listing-card redesign, Requests/wallet copy, and layout updates complete; operator explicitly waived new spec/plan | — |
 
 **Handoffs into W3 (raised by W10, 2026-09-25; W3 reached `main` 2026-09-25, W10 merged `main` 2026-09-26 and the
 stubs below are still open)** — honour or reconcile these:
@@ -206,6 +208,11 @@ Booking escrow publishes `WalletTransactionRecordedEvent` after its transaction 
 wallet headers and wallet dashboards synchronized with the persisted balance.
 Host Listings, Bookings, listing details, and listing forms now also replace the shell center
 directly; their page titles and descriptions are defined inside each page view.
+The Host listing create/edit form uses a responsive two-column, four-card layout with
+human-readable property/status dropdowns, text-field capacity inputs, two-column amenity tiles,
+and create/edit-specific action labels.
+The Host Listings page uses a `My listings` heading, wide metric/action cards, and `Requests`
+navigation; Host Wallet actions use equal-width `Top up` and `Withdraw` buttons.
 Host shell FXML is well-formed and loads successfully through `SceneRouter` after authentication.
 Per the proposal,
 each role gets its own FXML+Controller tree under `ui.<role>`, and `ui.common` holds shared
@@ -245,6 +252,8 @@ signatures — see [architecture proposal §3.1](docs/SnoozeShare-Architecture-P
 exact contracts, including which backlog item (F-number) each method backs.
 W6 extends `ListingServiceImpl` with host-authorized listing creation, detail updates, and
 status changes, with validation and audit records.
+`ListingMetricsService` supplies host dashboard booking counts and average review ratings with
+zero-value fallbacks for listings without activity.
 
 **W10 adds:** `TicketServiceImpl` (queue, assign, notes, resolve, category admin),
 `DisputeSettlementServiceImpl` (atomic full-escrow two-sided settlement, C20),
@@ -424,6 +433,7 @@ architecture area remain recorded in that area's table.
 | C26 | 2026-09-25 | Third visual round, operator: dropdown text and options right-aligned; pointer cursor on ticket rows; chat boxes (resized together) and the notes box are user-resizable with minimum heights, notes Save button moves to the bottom-right of the field; every modal gets a light-grey 50% scrim over the window behind it (reverses the "no dimmed backdrop" exception in C24); Add/Edit category use the same modal card design, and the Edit modal gets a red Delete. **Scope decision:** category delete is a NEW capability beyond F9.3.1 (add/rename/toggle); a category still referenced by any ticket cannot be deleted (use the active toggle instead). | Operator. |
 | C27 | 2026-09-25 | Ticket status `UNDER_REVIEW` is renamed **`IN_REVIEW`** everywhere (enum, `tickets.status` CHECK in `db/schema.sql` and `V001__foundation.sql`, seed data, mock DB, tests, UI text "In review", messages, variable names) so code and UI use one term. Status filter labels are now All statuses / Open / In review / Approved / Rejected, the dropdown is as narrow as its widest option (selector and popup the same width) and text is left-aligned again (reverses the right-alignment in C26 item 1). **Cross-workstream impact:** any other branch that references `TicketStatus.UNDER_REVIEW` or the string `'UNDER_REVIEW'` must rename it at merge; the architecture proposal's status list is updated in the same change. | Operator (inconsistency between UI and code). Rejected: UI-only rename. |
 | C15 | 2026-09-23 | Execute W1 natively in the existing `w1` checkout rather than creating a separate worktree | Operator explicitly selected the current checkout for execution | Operator conversation, 2026-09-23 |
+| C28 | 2026-09-26 | Proceed with Host Listings Dashboard & Copy Refinement without a new design spec or implementation plan | Operator explicitly requested the earlier spec be undone and then asked to carry on; implementation records this waiver | Operator conversation, 2026-09-26 |
 
 ---
 

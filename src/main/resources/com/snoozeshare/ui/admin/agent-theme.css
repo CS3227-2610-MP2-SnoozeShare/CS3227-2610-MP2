@@ -579,9 +579,43 @@
     -fx-background-radius: 8px;
     -fx-border-color: border;
     -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.08), 10, 0, 0, 2);
     -fx-padding: 14px;
     -fx-max-width: infinity;
+    -fx-alignment: center-left;
 }
+.agent-root .listing-image-placeholder {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 8px;
+    -fx-border-color: border-muted;
+    -fx-border-radius: 8px;
+}
+.agent-root .listing-card .card-title { -fx-font-size: 15px; -fx-font-weight: bold; }
+.agent-root .listing-card .card-price { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: accent; }
+.agent-root .listing-metric-value { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: fg; }
+.agent-root .listing-metric-caption { -fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: fg-subtle; }
+.agent-root .listing-rating-star { -fx-text-fill: accent; -fx-font-size: 14px; }
+.agent-root .listing-status-toggle {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 999px;
+    -fx-border-color: border-muted;
+    -fx-border-radius: 999px;
+    -fx-min-width: 30px;
+    -fx-min-height: 18px;
+    -fx-pref-width: 30px;
+    -fx-pref-height: 18px;
+    -fx-padding: 0;
+}
+.agent-root .listing-status-toggle:selected { -fx-background-color: success; }
+.agent-root .status-active-text { -fx-text-fill: success; -fx-font-size: 11px; -fx-font-weight: bold; }
+.agent-root .status-inactive-text { -fx-text-fill: fg-subtle; -fx-font-size: 11px; -fx-font-weight: bold; }
+.agent-root .listing-status-control {
+    -fx-min-width: 100px;
+    -fx-pref-width: 100px;
+    -fx-max-width: 100px;
+}
+.agent-root .listing-card .outline-button { -fx-min-width: 110px; }
+.agent-root .listing-card .outline-button:last-child { -fx-min-width: 76px; }
 .agent-root .listing-status {
     -fx-font-size: 12px;
     -fx-font-weight: bold;
@@ -596,6 +630,70 @@
 .agent-root .form-error { -fx-text-fill: danger; }
 .agent-root .section-title { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: fg; }
 .agent-root .empty-state { -fx-text-fill: fg-subtle; -fx-font-style: italic; }
+
+/* ---- Host listing create/edit form ---- */
+.agent-root .listing-form-scroll,
+.agent-root .listing-form-scroll > .viewport,
+.agent-root .listing-form-page { -fx-background-color: bg; }
+.agent-root .listing-form-card {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 10px;
+    -fx-border-color: border;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.08), 10, 0, 0, 2);
+    -fx-padding: 18px;
+}
+.agent-root .listing-form-card-title {
+    -fx-text-fill: accent;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+.agent-root .listing-form-label {
+    -fx-text-fill: fg-muted;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+.agent-root .listing-form-card .text-field,
+.agent-root .listing-form-card .combo-box-base {
+    -fx-background-color: bg;
+    -fx-border-color: border;
+    -fx-border-radius: 7px;
+    -fx-background-radius: 7px;
+    -fx-padding: 8px 10px;
+}
+.agent-root .listing-form-card .text-field:focused,
+.agent-root .listing-form-card .combo-box-base:focused {
+    -fx-border-color: accent;
+}
+.agent-root .listing-form-card .combo-box-base > .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: fg;
+}
+.agent-root .amenity-option {
+    -fx-background-color: bg;
+    -fx-background-radius: 7px;
+    -fx-border-color: border;
+    -fx-border-radius: 7px;
+    -fx-padding: 8px 10px;
+}
+.agent-root .amenity-option .check-box { -fx-text-fill: fg; }
+.agent-root .listing-form-action {
+    -fx-min-width: 132px;
+    -fx-pref-width: 132px;
+    -fx-max-width: 132px;
+    -fx-min-height: 40px;
+    -fx-pref-height: 40px;
+    -fx-max-height: 40px;
+}
+.agent-root .wallet-action-button {
+    -fx-min-width: 118px;
+    -fx-pref-width: 118px;
+    -fx-max-width: 118px;
+    -fx-min-height: 40px;
+    -fx-pref-height: 40px;
+    -fx-max-height: 40px;
+}
 
 /* ---- Detail modal (shared Guest & Host) ---- */
 .agent-root .detail-modal {

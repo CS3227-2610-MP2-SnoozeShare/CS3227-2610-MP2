@@ -6,6 +6,6 @@
 
 <VBox spacing="12" xmlns:fx="http://javafx.com/fxml/1">
     <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
-    <Label text="Bookings" styleClass="page-title"/>
+    <Label text="Booking requests" styleClass="page-title"/>
     <Label text="Review booking requests and upcoming stays." styleClass="small"/>
 </VBox>

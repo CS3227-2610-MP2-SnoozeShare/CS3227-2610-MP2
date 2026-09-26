@@ -20,21 +20,20 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.Spinner;
-import javafx.scene.control.SpinnerValueFactory;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.util.StringConverter;
 
 public final class HostListingFormController {
 
     @FXML private TextField titleField;
-    @FXML private TextArea descriptionField;
+    @FXML private TextField descriptionField;
     @FXML private TextField streetAddressField;
     @FXML private TextField cityField;
     @FXML private TextField regionField;
     @FXML private TextField postalCodeField;
     @FXML private ComboBox<PropertyType> propertyTypeCombo;
-    @FXML private Spinner<Integer> maxGuestsSpinner;
+    @FXML private ComboBox<ListingStatus> statusCombo;
+    @FXML private TextField maxGuestsField;
     @FXML private TextField bedroomsField;
     @FXML private TextField bathroomsField;
     @FXML private TextField rateField;
@@ -58,8 +57,11 @@ public final class HostListingFormController {
     @FXML
     private void initialize() {
         propertyTypeCombo.getItems().addAll(PropertyType.values());
+        propertyTypeCombo.setConverter(enumConverter());
         propertyTypeCombo.getSelectionModel().select(PropertyType.APARTMENT);
-        maxGuestsSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 50, 1));
+        statusCombo.getItems().addAll(ListingStatus.values());
+        statusCombo.setConverter(enumConverter());
+        statusCombo.getSelectionModel().select(ListingStatus.ACTIVE);
     }
 
     public void setContext(AppContext appContext) {
@@ -69,11 +71,11 @@ public final class HostListingFormController {
     public void setProperty(Property listing) {
         property = listing;
         if (listing == null) {
-            formTitle.setText("Create Listing");
-            saveButton.setText("Create Listing");
+            formTitle.setText("Create listing");
+            saveButton.setText("Create listing");
         } else {
-            formTitle.setText("Edit Listing");
-            saveButton.setText("Save Changes");
+            formTitle.setText("Edit listing");
+            saveButton.setText("Save listing");
             populate(listing);
         }
     }
@@ -105,6 +107,9 @@ public final class HostListingFormController {
                         draft.maxGuests(), draft.bedrooms(), draft.bathrooms(),
                         draft.baseNightlyRate(), draft.checkInTime(), draft.checkOutTime(),
                         draft.amenities(), property.createdAt()), hostId);
+                if (draft.status() != property.status()) {
+                    context.listingService().updateStatus(property.propertyId(), draft.status(), hostId);
+                }
             }
             onSaved.run();
         } catch (IllegalArgumentException | IllegalStateException exception) {
@@ -117,13 +122,17 @@ public final class HostListingFormController {
     }
 
     private Property readForm() {
+        LocalTime checkIn = parseTime(checkInField.getText());
+        LocalTime checkOut = parseTime(checkOutField.getText());
+        validateTimeRange(checkIn, checkOut);
         return new Property(property == null ? null : property.propertyId(), null,
-                property == null ? ListingStatus.ACTIVE : property.status(), titleField.getText(),
+                statusCombo.getValue(), titleField.getText(),
                 descriptionField.getText(), propertyTypeCombo.getValue(), streetAddressField.getText(),
                 cityField.getText(), regionField.getText(), postalCodeField.getText(),
-                maxGuestsSpinner.getValue(), Integer.parseInt(bedroomsField.getText()),
+                parseInteger(maxGuestsField.getText(), "Max guests", 1),
+                parseInteger(bedroomsField.getText(), "Bedrooms", 0),
                 Double.parseDouble(bathroomsField.getText()), new BigDecimal(rateField.getText()),
-                parseTime(checkInField.getText()), parseTime(checkOutField.getText()),
+                checkIn, checkOut,
                 selectedAmenities(), property == null ? Instant.now() : property.createdAt());
     }
 
@@ -135,7 +144,8 @@ public final class HostListingFormController {
         regionField.setText(listing.region());
         postalCodeField.setText(listing.postalCode());
         propertyTypeCombo.getSelectionModel().select(listing.propertyType());
-        maxGuestsSpinner.getValueFactory().setValue(listing.maxGuests());
+        statusCombo.getSelectionModel().select(listing.status());
+        maxGuestsField.setText(String.valueOf(listing.maxGuests()));
         bedroomsField.setText(String.valueOf(listing.bedrooms()));
         bathroomsField.setText(String.valueOf(listing.bathrooms()));
         rateField.setText(listing.baseNightlyRate().toPlainString());
@@ -178,5 +188,46 @@ public final class HostListingFormController {
         } catch (DateTimeParseException exception) {
             throw new IllegalArgumentException("Time must use HH:mm format");
         }
+    }
+
+    private static int parseInteger(String value, String fieldName, int minimum) {
+        try {
+            int parsed = Integer.parseInt(value);
+            if (parsed < minimum) {
+                throw new IllegalArgumentException(fieldName + " must be at least " + minimum);
+            }
+            return parsed;
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(fieldName + " must be a whole number");
+        }
+    }
+
+    private static void validateTimeRange(LocalTime checkIn, LocalTime checkOut) {
+        if (checkOut.isAfter(checkIn)) {
+            throw new IllegalArgumentException("Check-out time must not be after check-in time");
+        }
+    }
+
+    private static <E extends Enum<E>> StringConverter<E> enumConverter() {
+        return new StringConverter<>() {
+            @Override
+            public String toString(E value) {
+                if (value == null) {
+                    return "";
+                }
+                String[] words = value.name().toLowerCase().split("_");
+                StringBuilder display = new StringBuilder(words[0]);
+                display.setCharAt(0, Character.toUpperCase(display.charAt(0)));
+                for (int i = 1; i < words.length; i++) {
+                    display.append(' ').append(words[i]);
+                }
+                return display.toString();
+            }
+
+            @Override
+            public E fromString(String value) {
+                return null;
+            }
+        };
     }
 }

@@ -24,7 +24,7 @@
             </HBox>
             <HBox styleClass="agent-tabstrip" spacing="4" alignment="CENTER_LEFT">
                 <Label fx:id="listingsTab" text="Listings" styleClass="agent-tab, agent-tab-active" onMouseClicked="#showListings"/>
-                <Label fx:id="bookingsTab" text="Bookings" styleClass="agent-tab" onMouseClicked="#showBookings"/>
+                <Label fx:id="bookingsTab" text="Requests" styleClass="agent-tab" onMouseClicked="#showBookings"/>
                 <Label fx:id="walletTab" text="Wallet" styleClass="agent-tab" onMouseClicked="#showWallet"/>
             </HBox>
         </VBox>
