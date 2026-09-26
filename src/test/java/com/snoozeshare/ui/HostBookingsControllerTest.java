@@ -26,6 +26,11 @@ class HostBookingsControllerTest {
         assertTrue(fxml.contains("host-bookings-table-card"));
         assertTrue(!fxml.contains("agent-table"));
         assertTrue(!fxml.contains("agent-card"));
+        assertTrue(fxml.contains("pendingGuestColumn\" text=\"Guest\" prefWidth=\"150\""));
+        assertTrue(fxml.contains("pendingListingColumn\" text=\"Listing\" prefWidth=\"190\""));
+        assertTrue(fxml.contains("pendingDatesColumn\" text=\"Dates\" prefWidth=\"130\""));
+        assertTrue(fxml.contains("pendingNightsColumn\" text=\"Nights\" prefWidth=\"90\""));
+        assertTrue(fxml.contains("pendingGrossColumn\" text=\"Gross\" prefWidth=\"130\""));
         String controller = Files.readString(Path.of(
                 "src/main/java/com/snoozeshare/ui/host/bookings/HostBookingsController.java"));
         assertTrue(controller.contains("Approve"));

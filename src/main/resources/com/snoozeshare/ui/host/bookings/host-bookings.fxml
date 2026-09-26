@@ -19,11 +19,11 @@
     <VBox styleClass="host-bookings-table-card">
         <TableView fx:id="pendingTable" styleClass="host-bookings-table" prefHeight="220">
             <columns>
-                <TableColumn fx:id="pendingGuestColumn" text="Guest" prefWidth="125"/>
-                <TableColumn fx:id="pendingListingColumn" text="Listing" prefWidth="150"/>
-                <TableColumn fx:id="pendingDatesColumn" text="Dates" prefWidth="110"/>
-                <TableColumn fx:id="pendingNightsColumn" text="Nights" prefWidth="70"/>
-                <TableColumn fx:id="pendingGrossColumn" text="Gross" prefWidth="105"/>
+                <TableColumn fx:id="pendingGuestColumn" text="Guest" prefWidth="150"/>
+                <TableColumn fx:id="pendingListingColumn" text="Listing" prefWidth="190"/>
+                <TableColumn fx:id="pendingDatesColumn" text="Dates" prefWidth="130"/>
+                <TableColumn fx:id="pendingNightsColumn" text="Nights" prefWidth="90"/>
+                <TableColumn fx:id="pendingGrossColumn" text="Gross" prefWidth="130"/>
                 <TableColumn fx:id="pendingNetColumn" text="Net earning" prefWidth="120"/>
                 <TableColumn fx:id="pendingRatingColumn" text="Guest rating" prefWidth="125"/>
                 <TableColumn fx:id="pendingActionColumn" text="Action" prefWidth="190"/>
