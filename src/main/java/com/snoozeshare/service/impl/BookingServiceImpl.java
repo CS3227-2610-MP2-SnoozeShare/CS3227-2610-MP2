@@ -9,6 +9,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
+import com.snoozeshare.domain.enums.AccountStatus;
 import com.snoozeshare.domain.enums.AuditAction;
 import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.domain.enums.Role;
@@ -16,6 +17,7 @@ import com.snoozeshare.domain.enums.WalletTransactionType;
 import com.snoozeshare.domain.model.AvailabilityBlock;
 import com.snoozeshare.domain.model.Booking;
 import com.snoozeshare.domain.model.Property;
+import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.domain.model.WalletTransaction;
 import com.snoozeshare.domain.statemachine.BookingStateMachine;
@@ -28,6 +30,7 @@ import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.repository.AvailabilityBlockRepository;
 import com.snoozeshare.repository.BookingRepository;
 import com.snoozeshare.repository.PropertyRepository;
+import com.snoozeshare.repository.UserRepository;
 import com.snoozeshare.repository.WalletRepository;
 import com.snoozeshare.repository.WalletTransactionRepository;
 import com.snoozeshare.service.AuditRecord;
@@ -40,6 +43,7 @@ public final class BookingServiceImpl implements BookingService {
 
     private final Connection connection;
     private final BookingRepository bookings;
+    private final UserRepository users;
     private final PropertyRepository properties;
     private final AvailabilityBlockRepository blocks;
     private final WalletRepository wallets;
@@ -48,6 +52,7 @@ public final class BookingServiceImpl implements BookingService {
     private final AuditService audit;
 
     public BookingServiceImpl(Connection connection, BookingRepository bookings,
+                               UserRepository users,
                                PropertyRepository properties,
                                AvailabilityBlockRepository blocks,
                                WalletRepository wallets,
@@ -55,6 +60,7 @@ public final class BookingServiceImpl implements BookingService {
                                EventBus eventBus, AuditService audit) {
         this.connection = connection;
         this.bookings = bookings;
+        this.users = users;
         this.properties = properties;
         this.blocks = blocks;
         this.wallets = wallets;
@@ -67,6 +73,11 @@ public final class BookingServiceImpl implements BookingService {
     public Booking submitRequest(UUID guestId, UUID propertyId,
                                   LocalDate start, LocalDate end) {
         DomainValidation.requireDateRange(start, end);
+        User guest = users.findById(guestId)
+                .orElseThrow(() -> new IllegalArgumentException("Guest does not exist"));
+        if (guest.accountStatus() != AccountStatus.ACTIVE) {
+            throw new IllegalStateException("Account is not active");
+        }
         try {
             Booking booking = new TransactionManager(connection).inTransaction(conn -> {
                 Property property = properties.findById(propertyId)

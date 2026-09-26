@@ -17,6 +17,7 @@ import com.snoozeshare.repository.jdbc.JdbcTicketRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
+import com.snoozeshare.service.AccountGovernanceService;
 import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.AvailabilityService;
 import com.snoozeshare.service.BookingService;
@@ -28,6 +29,7 @@ import com.snoozeshare.service.TicketService;
 import com.snoozeshare.service.TransactionService;
 import com.snoozeshare.service.UserService;
 import com.snoozeshare.service.WalletService;
+import com.snoozeshare.service.impl.AccountGovernanceServiceImpl;
 import com.snoozeshare.service.impl.AuditServiceImpl;
 import com.snoozeshare.service.impl.AvailabilityServiceImpl;
 import com.snoozeshare.service.impl.BookingServiceImpl;
@@ -52,6 +54,7 @@ public final class AppContext implements AutoCloseable {
     private final ListingService listingService;
     private final AvailabilityService availabilityService;
     private final BookingService bookingService;
+    private final AccountGovernanceService accountGovernanceService;
     private final TransactionService transactionService;
     private final EventBus eventBus;
     private final TicketService ticketService;
@@ -80,8 +83,10 @@ public final class AppContext implements AutoCloseable {
         JdbcWalletTransactionRepository txnRepo = new JdbcWalletTransactionRepository(connection);
         this.transactionService = new TransactionServiceImpl(connection, bookingRepo,
                 wallets, txnRepo, eventBus, auditService);
-        this.bookingService = new BookingServiceImpl(connection, bookingRepo, propertyRepo,
+        this.bookingService = new BookingServiceImpl(connection, bookingRepo, users, propertyRepo,
                 blockRepo, wallets, txnRepo, eventBus, auditService);
+        this.accountGovernanceService = new AccountGovernanceServiceImpl(connection, users, bookingRepo,
+                propertyRepo, blockRepo, wallets, txnRepo, eventBus, auditService, Clock.systemDefaultZone());
         JdbcTicketRepository ticketRepo = new JdbcTicketRepository(connection);
         JdbcTicketCategoryRepository categoryRepo = new JdbcTicketCategoryRepository(connection);
         Clock clock = Clock.systemUTC();
@@ -142,6 +147,10 @@ public final class AppContext implements AutoCloseable {
 
     public BookingService bookingService() {
         return bookingService;
+    }
+
+    public AccountGovernanceService accountGovernanceService() {
+        return accountGovernanceService;
     }
 
     public TransactionService transactionService() {
