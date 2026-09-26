@@ -2,15 +2,13 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
-<?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import com.snoozeshare.ui.admin.audit.MultiSelectMenu?>
 
 <VBox spacing="16" styleClass="agent-content" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.snoozeshare.ui.admin.audit.AuditLogController">
@@ -25,7 +23,7 @@
         </VBox>
         <VBox spacing="4" prefWidth="200">
             <Label text="ACTION TYPE" styleClass="agent-dialog-field-label"/>
-            <ComboBox fx:id="actionCombo" styleClass="agent-combo" maxWidth="Infinity"/>
+            <MultiSelectMenu fx:id="actionSelect" allLabel="All action types" maxWidth="Infinity"/>
         </VBox>
         <VBox spacing="4" prefWidth="150">
             <Label text="FROM" styleClass="agent-dialog-field-label"/>
@@ -36,18 +34,14 @@
             <DatePicker fx:id="toPicker" maxWidth="Infinity"/>
         </VBox>
         <Button fx:id="applyButton" text="Apply filters" styleClass="button" onAction="#handleApply"/>
-        <Hyperlink fx:id="clearLink" text="Clear" styleClass="agent-crumb-link" onAction="#handleClear"/>
+        <Button fx:id="clearButton" text="Clear" styleClass="agent-button-danger" onAction="#handleClear"/>
     </HBox>
     <Label fx:id="errorLabel" styleClass="error-message"/>
 
-    <ScrollPane fitToWidth="true" styleClass="agent-scroll" VBox.vgrow="ALWAYS">
-        <VBox spacing="12">
-            <VBox styleClass="agent-card">
-                <TableView fx:id="table"/>
-            </VBox>
-            <Label fx:id="emptyLabel" styleClass="small"/>
-            <Button fx:id="loadMoreButton" text="Load more" styleClass="outline-button"
-                    onAction="#handleLoadMore" visible="false" managed="false"/>
-        </VBox>
-    </ScrollPane>
+    <VBox styleClass="agent-card">
+        <TableView fx:id="table"/>
+    </VBox>
+    <Label fx:id="emptyLabel" styleClass="small"/>
+    <Button fx:id="loadMoreButton" text="Load more" styleClass="outline-button"
+            onAction="#handleLoadMore" visible="false" managed="false"/>
 </VBox>

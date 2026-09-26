@@ -5,10 +5,13 @@ import java.math.RoundingMode;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.enums.AuditAction;
@@ -21,7 +24,6 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
@@ -33,16 +35,17 @@ import javafx.scene.control.Tooltip;
 public final class AuditLogController {
 
     static final int PAGE_SIZE = 200;
-    private static final String ALL_ACTIONS = "All action types";
     private static final String DASH = "\u2014";
     private static final double ROW_HEIGHT = 47;
     private static final double HEADER_HEIGHT = 34;
+    private static final double MIN_ROWS = 3;
     private static final double TOTAL_SHARE = 9.4;
-    private static final double WIDTH_FACTOR = 0.995;
+    /** Room kept at the right of the columns for the vertical scroll bar. */
+    private static final double SCROLL_BAR_ALLOWANCE = 14;
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("MMM d, h:mm a", Locale.ENGLISH);
 
     @FXML private TextField searchField;
-    @FXML private ComboBox<String> actionCombo;
+    @FXML private MultiSelectMenu actionSelect;
     @FXML private DatePicker fromPicker;
     @FXML private DatePicker toPicker;
     @FXML private TableView<AuditLogEntry> table;
@@ -55,12 +58,10 @@ public final class AuditLogController {
 
     @FXML
     private void initialize() {
-        actionCombo.getItems().add(ALL_ACTIONS);
-        for (AuditAction action : AuditAction.values()) {
-            actionCombo.getItems().add(action.name());
-        }
-        actionCombo.getSelectionModel().selectFirst();
+        actionSelect.setOptions(Arrays.stream(AuditAction.values()).map(Enum::name).toList());
         searchField.setOnAction(event -> handleApply());
+        errorLabel.managedProperty().bind(errorLabel.textProperty().isNotEmpty());
+        emptyLabel.managedProperty().bind(emptyLabel.textProperty().isNotEmpty());
 
         table.getStyleClass().addAll("agent-table", "agent-audit-table");
         table.setFixedCellSize(ROW_HEIGHT);
@@ -68,7 +69,7 @@ public final class AuditLogController {
         table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         table.prefHeightProperty().bind(Bindings.max(1, Bindings.size(table.getItems()))
                 .multiply(ROW_HEIGHT).add(HEADER_HEIGHT));
-        table.minHeightProperty().bind(table.prefHeightProperty());
+        table.minHeightProperty().set(MIN_ROWS * ROW_HEIGHT + HEADER_HEIGHT);
         table.maxHeightProperty().bind(table.prefHeightProperty());
         table.getColumns().add(textColumn("TIMESTAMP", 1.1,
                 entry -> TIME.format(entry.timestamp().atZone(ZoneId.systemDefault())), null));
@@ -94,9 +95,8 @@ public final class AuditLogController {
             errorLabel.setText("The From date must not be after the To date.");
             return;
         }
-        int selected = actionCombo.getSelectionModel().getSelectedIndex();
-        AuditAction action = selected <= 0 ? null : AuditAction.values()[selected - 1];
-        Set<AuditAction> actions = action == null ? Set.of() : Set.of(action);
+        Set<AuditAction> actions = actionSelect.selectedValues().stream().map(AuditAction::valueOf)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(AuditAction.class)));
         applied = new AuditFilter(searchField.getText(), actions, fromPicker.getValue(), toPicker.getValue());
         load(true);
     }
@@ -104,7 +104,7 @@ public final class AuditLogController {
     @FXML
     private void handleClear() {
         searchField.clear();
-        actionCombo.getSelectionModel().selectFirst();
+        actionSelect.clearSelection();
         fromPicker.setValue(null);
         toPicker.setValue(null);
         applied = AuditFilter.none();
@@ -190,7 +190,8 @@ public final class AuditLogController {
         column.setResizable(false);
         column.setReorderable(false);
         column.setSortable(false);
-        DoubleBinding width = table.widthProperty().multiply(share * WIDTH_FACTOR / TOTAL_SHARE);
+        DoubleBinding width = Bindings.max(0.0, table.widthProperty().subtract(SCROLL_BAR_ALLOWANCE))
+                .multiply(share / TOTAL_SHARE);
         column.prefWidthProperty().bind(width);
         column.minWidthProperty().bind(width);
         column.maxWidthProperty().bind(width);

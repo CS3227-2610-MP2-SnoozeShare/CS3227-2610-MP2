@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +25,7 @@ import com.snoozeshare.service.DisputeSummary;
 import com.snoozeshare.testsupport.MockDbFixture;
 import com.snoozeshare.testsupport.MockIds;
 import com.snoozeshare.ui.admin.audit.AuditLogController;
+import com.snoozeshare.ui.admin.audit.MultiSelectMenu;
 import com.snoozeshare.ui.admin.tickets.DisputeDetailController;
 import com.snoozeshare.ui.admin.tickets.DisputeQueueController;
 
@@ -32,9 +34,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
-import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
@@ -279,21 +279,26 @@ class AdminUiSmokeTest {
                 AdminUiSmokeTest.<Button>node(ns, "applyButton").fire();
                 var byName = List.copyOf(table.getItems());
 
-                AdminUiSmokeTest.<Hyperlink>node(ns, "clearLink").fire();
+                AdminUiSmokeTest.<Button>node(ns, "clearButton").fire();
                 int afterClear = table.getItems().size();
 
-                @SuppressWarnings("unchecked")
-                ComboBox<String> combo = (ComboBox<String>) ns.get("actionCombo");
-                combo.getSelectionModel().select("AGENT_OVERRIDE");
+                MultiSelectMenu select = node(ns, "actionSelect");
+                select.setSelected(Set.of("AGENT_OVERRIDE"));
                 AdminUiSmokeTest.<Button>node(ns, "applyButton").fire();
                 var byAction = List.copyOf(table.getItems());
 
-                AdminUiSmokeTest.<Hyperlink>node(ns, "clearLink").fire();
+                select.setSelected(Set.of("AGENT_OVERRIDE", "ESCROW_HOLD"));
+                AdminUiSmokeTest.<Button>node(ns, "applyButton").fire();
+                var byTwoActions = List.copyOf(table.getItems());
+
+                AdminUiSmokeTest.<Button>node(ns, "clearButton").fire();
+                boolean selectCleared = select.selectedValues().isEmpty();
                 AdminUiSmokeTest.<DatePicker>node(ns, "fromPicker").setValue(LocalDate.of(2026, 8, 27));
                 AdminUiSmokeTest.<DatePicker>node(ns, "toPicker").setValue(LocalDate.of(2026, 8, 29));
                 AdminUiSmokeTest.<Button>node(ns, "applyButton").fire();
                 var byDate = List.copyOf(table.getItems());
-                return new Object[] {all, newestFirst, byName, afterClear, byAction, byDate};
+                return new Object[] {all, newestFirst, byName, afterClear, byAction, byDate, byTwoActions,
+                    selectCleared};
             });
 
             assertEquals((int) seeded, result[0]);
@@ -308,6 +313,14 @@ class AdminUiSmokeTest {
             List<AuditLogEntry> byAction = (List<AuditLogEntry>) result[4];
             assertFalse(byAction.isEmpty());
             assertTrue(byAction.stream().allMatch(row -> row.actionType().equals("AGENT_OVERRIDE")));
+            @SuppressWarnings("unchecked")
+            List<AuditLogEntry> byTwo = (List<AuditLogEntry>) result[6];
+            assertTrue(byTwo.size() > byAction.size(), "a second action widens the rows");
+            assertTrue(byTwo.stream().anyMatch(row -> row.actionType().equals("AGENT_OVERRIDE")));
+            assertTrue(byTwo.stream().anyMatch(row -> row.actionType().equals("ESCROW_HOLD")));
+            assertTrue(byTwo.stream().allMatch(row -> Set.of("AGENT_OVERRIDE", "ESCROW_HOLD")
+                    .contains(row.actionType())));
+            assertTrue((Boolean) result[7], "Clear empties the multi-select");
             @SuppressWarnings("unchecked")
             List<AuditLogEntry> byDate = (List<AuditLogEntry>) result[5];
             assertFalse(byDate.isEmpty());

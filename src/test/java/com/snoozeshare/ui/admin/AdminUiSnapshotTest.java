@@ -24,6 +24,7 @@ import com.snoozeshare.testsupport.MockDbFixture;
 
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
@@ -248,6 +249,92 @@ class AdminUiSnapshotTest {
             });
 
             assertTrue(Files.size(audit) > 0);
+        }
+    }
+
+    /** Opens the Audit Log's date picker and action multi-select in a real stage and snapshots both popups. */
+    @Test
+    void writesAuditPopupSnapshots(@TempDir Path directory) throws Exception {
+        assumeTrue(toolkitAvailable, "JavaFX toolkit unavailable");
+        try (MockDbFixture db = MockDbFixture.open(directory);
+             AppContext context = AppContext.create(db.jdbcUrl())) {
+            context.session().loginAs(context.userService().authenticate("amy.tanaka@snoozeshare.test"));
+            Stage[] stage = new Stage[1];
+            onFx(() -> {
+                Shell shell = loadShell(context);
+                shell.show("showAuditLog");
+                stage[0] = new Stage();
+                stage[0].setScene(new Scene(shell.root(), 1280, 800));
+                stage[0].setX(20);
+                stage[0].setY(20);
+                stage[0].show();
+                shell.root().applyCss();
+                shell.root().layout();
+                stage[0].toFront();
+                stage[0].requestFocus();
+                return null;
+            });
+            Thread.sleep(500);
+            Path calendar = null;
+            Path actions = null;
+            for (int attempt = 0; attempt < 4 && (calendar == null || actions == null); attempt++) {
+                onFx(() -> {
+                    Parent root = stage[0].getScene().getRoot();
+                    javafx.scene.control.DatePicker from = (javafx.scene.control.DatePicker) root.lookup("#fromPicker");
+                    from.setValue(java.time.LocalDate.of(2026, 9, 24));
+                    from.hide();
+                    from.show();
+                    return null;
+                });
+                Thread.sleep(700);
+                calendar = onFx(() -> snapshotPopup(".date-picker-popup", "agent-audit-calendar"));
+                onFx(() -> {
+                    Parent root = stage[0].getScene().getRoot();
+                    var fromPicker = (javafx.scene.control.DatePicker) root.lookup("#fromPicker");
+                    fromPicker.hide();
+                    var select = (com.snoozeshare.ui.admin.audit.MultiSelectMenu) root.lookup("#actionSelect");
+                    select.setSelected(java.util.Set.of("BOOKING_REQUESTED", "BOOKING_REJECTED"));
+                    select.hide();
+                    select.show();
+                    return null;
+                });
+                Thread.sleep(700);
+                actions = onFx(() -> snapshotPopup(".agent-multi-list", "agent-audit-action-select"));
+                onFx(() -> writePng(stage[0].getScene().snapshot(null), "agent-audit-filters-selected"));
+            }
+            onFx(() -> {
+                stage[0].close();
+                return null;
+            });
+
+            assumeTrue(calendar != null && actions != null, "popups did not open (window not focused)");
+            assertTrue(Files.size(calendar) > 0);
+            assertTrue(Files.size(actions) > 0);
+        }
+    }
+
+    private Path snapshotPopup(String marker, String name) throws IOException {
+        Window popup = Window.getWindows().stream().filter(w -> w instanceof PopupWindow && w.getWidth() > 10
+                && w.getScene().getRoot().lookup(marker) != null).findFirst().orElse(null);
+        if (popup == null) {
+            return null;
+        }
+        popup.getScene().getRoot().applyCss();
+        popup.getScene().getRoot().layout();
+        SnapshotParameters params = new SnapshotParameters();
+        params.setFill(Color.web("#b0c0ff"));
+        Path file = writePng(popup.getScene().getRoot().snapshot(params, null), name);
+        if (System.getenv("DUMP_POPUP") != null) {
+            dump(popup.getScene().getRoot(), 0);
+        }
+        return file;
+    }
+
+    private static void dump(Node node, int depth) {
+        System.out.println("  ".repeat(depth) + node.getClass().getSimpleName() + " " + node.getStyleClass() + " "
+                + (int) node.getLayoutBounds().getWidth() + "x" + (int) node.getLayoutBounds().getHeight());
+        if (node instanceof Parent parent) {
+            parent.getChildrenUnmodifiable().forEach(child -> dump(child, depth + 1));
         }
     }
 }

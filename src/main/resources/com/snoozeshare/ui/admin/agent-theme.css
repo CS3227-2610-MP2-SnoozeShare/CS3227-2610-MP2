@@ -392,8 +392,9 @@
     -fx-cell-size: 47px;
     -fx-padding: 0;
 }
+.agent-root .agent-table .table-row-cell:empty { -fx-border-color: transparent; }
 .agent-root .agent-table .table-row-cell:filled { -fx-cursor: hand; }
-.agent-root .agent-table .table-row-cell:hover { -fx-background-color: rgba(240, 232, 216, 0.4); }
+.agent-root .agent-table .table-row-cell:filled:hover { -fx-background-color: rgba(240, 232, 216, 0.4); }
 .agent-root .agent-table .table-row-cell:selected { -fx-background-color: transparent; }
 .agent-root .agent-table .table-cell {
     -fx-background-color: transparent;
@@ -405,7 +406,38 @@
 }
 .agent-root .agent-table .table-cell:selected { -fx-text-fill: fg-muted; }
 .agent-root .agent-table .placeholder { -fx-background-color: transparent; }
-.agent-root .agent-table .scroll-bar { -fx-opacity: 0; -fx-pref-width: 0; -fx-pref-height: 0; }
+/* Header row stays put; only the rows scroll, with a slim scroll bar that starts below the header. */
+.agent-root .agent-table .scroll-bar:horizontal { -fx-opacity: 0; -fx-pref-height: 0; -fx-max-height: 0; }
+.agent-root .agent-table .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-pref-width: 10px;
+    -fx-min-width: 10px;
+    -fx-max-width: 10px;
+}
+.agent-root .agent-table .scroll-bar:vertical > .track,
+.agent-root .agent-table .scroll-bar:vertical > .track-background {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+}
+.agent-root .agent-table .scroll-bar:vertical > .thumb {
+    -fx-background-color: border;
+    -fx-background-insets: 2px;
+    -fx-background-radius: 999px;
+}
+.agent-root .agent-table .scroll-bar:vertical > .thumb:hover { -fx-background-color: fg-subtle; }
+.agent-root .agent-table .scroll-bar > .increment-button,
+.agent-root .agent-table .scroll-bar > .decrement-button {
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-background-color: transparent;
+}
+.agent-root .agent-table .scroll-bar > .increment-button > .increment-arrow,
+.agent-root .agent-table .scroll-bar > .decrement-button > .decrement-arrow { -fx-padding: 0; -fx-shape: null; }
 .agent-root .agent-table .cell-id { -fx-text-fill: fg-subtle; }
 .agent-root .agent-table .cell-strong { -fx-font-weight: bold; -fx-text-fill: fg; }
 
@@ -548,28 +580,256 @@
 /* ---- Audit log screen (W12) ---- */
 .agent-root .agent-filter-card { -fx-padding: 14px 16px 14px 16px; }
 .agent-root .agent-pill-neutral { -fx-background-color: bg-inset; -fx-text-fill: fg-muted; }
+/* Audit rows are not clickable: same grey hover as the ticket queue, but the default cursor. */
 .agent-root .agent-audit-table .table-row-cell:filled { -fx-cursor: default; }
-.agent-root .agent-audit-table .table-row-cell:hover { -fx-background-color: transparent; }
-.agent-root .date-picker { -fx-background-color: transparent; -fx-padding: 0; }
-.agent-root .date-picker > .text-field {
+
+/* Filter row: every control shares one 34px height. */
+.agent-root .agent-filter-card .text-field,
+.agent-root .agent-filter-card .agent-multi-select,
+.agent-root .agent-filter-card .date-picker,
+.agent-root .agent-filter-card .button,
+.agent-root .agent-filter-card .agent-button-danger {
+    -fx-min-height: 34px;
+    -fx-pref-height: 34px;
+    -fx-max-height: 34px;
+}
+.agent-root .agent-filter-card .button,
+.agent-root .agent-filter-card .agent-button-danger { -fx-padding: 0 18px 0 18px; -fx-font-size: 12px; }
+.agent-root .agent-filter-card .text-field { -fx-padding: 0 12px 0 12px; }
+
+/* Date picker trigger: one border around field + icon (the board's closed date picker). */
+.agent-root .date-picker {
     -fx-background-color: bg-overlay;
-    -fx-background-radius: 8px 0 0 8px;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
     -fx-border-color: border;
-    -fx-border-radius: 8px 0 0 8px;
-    -fx-border-width: 1px 0 1px 1px;
-    -fx-padding: 8px 12px 8px 12px;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 0;
+}
+.agent-root .date-picker > .text-field {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 0 0 12px;
     -fx-font-size: 12px;
 }
 .agent-root .date-picker > .arrow-button {
-    -fx-background-color: bg-overlay;
-    -fx-background-radius: 0 8px 8px 0;
-    -fx-border-color: border;
-    -fx-border-radius: 0 8px 8px 0;
-    -fx-border-width: 1px;
-    -fx-padding: 0 10px 0 6px;
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 12px 0 6px;
 }
 .agent-root .date-picker > .arrow-button > .arrow { -fx-background-color: fg-subtle; }
-.agent-root .date-picker:focused > .text-field,
-.agent-root .date-picker:showing > .text-field { -fx-border-color: accent; }
-.agent-root .date-picker:focused > .arrow-button,
-.agent-root .date-picker:showing > .arrow-button { -fx-border-color: accent; }
+.agent-root .date-picker:focused, .agent-root .date-picker:showing { -fx-border-color: accent; }
+.agent-root .date-picker:showing > .arrow-button > .arrow { -fx-background-color: accent; }
+
+/* Multi-select (action types): a menu button styled like the other inputs, check-box list in the popup. */
+.agent-root .agent-multi-select {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 0 0 0 12px;
+    -fx-font-size: 12px;
+    -fx-text-fill: fg;
+    -fx-alignment: CENTER_LEFT;
+    -fx-cursor: hand;
+}
+.agent-root .agent-multi-select:hover { -fx-background-color: bg-overlay; }
+.agent-root .agent-multi-select:focused, .agent-root .agent-multi-select:showing { -fx-border-color: accent; }
+.agent-root .agent-multi-select > .label {
+    -fx-text-fill: fg;
+    -fx-font-size: 12px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0;
+}
+.agent-root .agent-multi-select > .arrow-button { -fx-padding: 0 12px 0 6px; -fx-background-color: transparent; }
+.agent-root .agent-multi-select > .arrow-button > .arrow { -fx-background-color: fg-subtle; }
+.agent-root .context-menu {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 4px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.08), 14, 0, 0, 4);
+}
+.agent-root .context-menu .agent-multi-item { -fx-padding: 0; -fx-background-color: transparent; }
+.agent-root .agent-multi-scroll .scroll-bar:horizontal { -fx-opacity: 0; -fx-pref-height: 0; -fx-max-height: 0; }
+.agent-root .agent-multi-scroll .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-pref-width: 10px;
+    -fx-min-width: 10px;
+    -fx-max-width: 10px;
+}
+.agent-root .agent-multi-scroll .scroll-bar:vertical > .track,
+.agent-root .agent-multi-scroll .scroll-bar:vertical > .track-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+.agent-root .agent-multi-scroll .scroll-bar:vertical > .thumb {
+    -fx-background-color: border;
+    -fx-background-insets: 2px;
+    -fx-background-radius: 999px;
+}
+.agent-root .agent-multi-scroll .scroll-bar > .increment-button,
+.agent-root .agent-multi-scroll .scroll-bar > .decrement-button {
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-background-color: transparent;
+}
+.agent-root .agent-multi-scroll .scroll-bar > .increment-button > .increment-arrow,
+.agent-root .agent-multi-scroll .scroll-bar > .decrement-button > .decrement-arrow { -fx-padding: 0; -fx-shape: null; }
+.agent-root .agent-multi-scroll, .agent-root .agent-multi-scroll > .viewport,
+.agent-root .agent-rows-scroll, .agent-root .agent-rows-scroll > .viewport {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+.agent-root .agent-multi-scroll, .agent-root .agent-rows-scroll { -fx-border-color: transparent; }
+.agent-root .agent-multi-list { -fx-background-color: transparent; }
+.agent-root .agent-multi-option {
+    -fx-background-radius: 6px;
+    -fx-padding: 7px 10px 7px 10px;
+    -fx-font-size: 12px;
+    -fx-text-fill: fg;
+    -fx-cursor: hand;
+}
+.agent-root .agent-multi-option:hover { -fx-background-color: accent-subtle; -fx-text-fill: accent; }
+.agent-root .agent-multi-option > .box {
+    -fx-background-color: bg-overlay;
+    -fx-background-insets: 0;
+    -fx-background-radius: 4px;
+    -fx-border-color: border;
+    -fx-border-radius: 4px;
+    -fx-border-width: 1px;
+    -fx-padding: 3px;
+}
+.agent-root .agent-multi-option:selected > .box { -fx-background-color: accent; -fx-border-color: accent; }
+.agent-root .agent-multi-option > .box > .mark { -fx-background-color: #fdf8f0; }
+.agent-root .agent-multi-option:selected { -fx-font-weight: bold; }
+
+.agent-root .agent-rows-scroll .scroll-bar:horizontal { -fx-opacity: 0; -fx-pref-height: 0; -fx-max-height: 0; }
+.agent-root .agent-rows-scroll .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-pref-width: 10px;
+    -fx-min-width: 10px;
+    -fx-max-width: 10px;
+}
+.agent-root .agent-rows-scroll .scroll-bar:vertical > .track,
+.agent-root .agent-rows-scroll .scroll-bar:vertical > .track-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+.agent-root .agent-rows-scroll .scroll-bar:vertical > .thumb {
+    -fx-background-color: border;
+    -fx-background-insets: 2px;
+    -fx-background-radius: 999px;
+}
+.agent-root .agent-rows-scroll .scroll-bar > .increment-button,
+.agent-root .agent-rows-scroll .scroll-bar > .decrement-button {
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-background-color: transparent;
+}
+.agent-root .agent-rows-scroll .scroll-bar > .increment-button > .increment-arrow,
+.agent-root .agent-rows-scroll .scroll-bar > .decrement-button > .decrement-arrow { -fx-padding: 0; -fx-shape: null; }
+/* Calendar popup (board component "Date picker"): 12px card, accent border, 34px day cells, accent selected day,
+   ringed today, muted other-month days. No Clear / Apply row: a click on a day selects it. */
+.agent-root .date-picker-popup {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 12px;
+    -fx-background-insets: 0;
+    -fx-border-color: accent;
+    -fx-border-radius: 12px;
+    -fx-border-width: 1px;
+    -fx-padding: 14px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.08), 14, 0, 0, 4);
+}
+.agent-root .date-picker-popup .month-year-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0 0 10px 0;
+}
+.agent-root .date-picker-popup .spinner { -fx-background-color: transparent; -fx-spacing: 4px; -fx-alignment: CENTER; }
+.agent-root .date-picker-popup .spinner .button {
+    -fx-background-color: bg-overlay;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8px;
+    -fx-border-color: border-muted;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 0;
+    -fx-min-width: 28px;
+    -fx-pref-width: 28px;
+    -fx-max-width: 28px;
+    -fx-min-height: 28px;
+    -fx-pref-height: 28px;
+    -fx-max-height: 28px;
+    -fx-cursor: hand;
+}
+.agent-root .date-picker-popup .spinner .button:hover { -fx-background-color: bg-inset; }
+.agent-root .date-picker-popup .spinner .button .left-arrow,
+.agent-root .date-picker-popup .spinner .button .right-arrow { -fx-background-color: fg-muted; }
+.agent-root .date-picker-popup .spinner-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: fg;
+    -fx-alignment: CENTER;
+    -fx-padding: 0 6px 0 6px;
+}
+.agent-root .date-picker-popup .calendar-grid {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-hgap: 2px;
+    -fx-vgap: 2px;
+}
+.agent-root .date-picker-popup .date-cell {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 0;
+    -fx-alignment: CENTER;
+    -fx-text-fill: fg;
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-cursor: hand;
+}
+.agent-root .date-picker-popup .day-name-cell {
+    -fx-text-fill: fg-subtle;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-min-height: 24px;
+    -fx-pref-height: 24px;
+    -fx-cursor: default;
+}
+.agent-root .date-picker-popup .day-cell { -fx-min-height: 34px; -fx-pref-height: 34px; -fx-max-height: 34px; }
+.agent-root .date-picker-popup .day-cell:hover { -fx-background-color: bg-inset; }
+.agent-root .date-picker-popup .day-cell:focused { -fx-border-color: border-muted; }
+.agent-root .date-picker-popup .day-cell.previous-month,
+.agent-root .date-picker-popup .day-cell.next-month { -fx-text-fill: fg-subtle; -fx-opacity: 0.45; }
+.agent-root .date-picker-popup .day-cell.today { -fx-border-color: accent; -fx-font-weight: bold; }
+.agent-root .date-picker-popup .day-cell.selected,
+.agent-root .date-picker-popup .day-cell.selected:hover {
+    -fx-background-color: accent;
+    -fx-border-color: accent;
+    -fx-text-fill: #fdf8f0;
+    -fx-font-weight: bold;
+}
