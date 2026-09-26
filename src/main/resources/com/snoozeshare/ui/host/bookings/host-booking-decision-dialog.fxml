@@ -16,7 +16,7 @@
         <Label fx:id="listingLabel" text="Listing" styleClass="booking-summary-title"/>
         <Label fx:id="bookingLabel" text="Guest · dates (nights)" styleClass="booking-summary-detail"/>
         <HBox spacing="6" alignment="BASELINE_LEFT">
-            <Label fx:id="amountLabel" text="$0.00" styleClass="booking-summary-amount"/>
+            <Label fx:id="amountLabel" text="\$0.00" styleClass="booking-summary-amount"/>
             <Label fx:id="amountCaptionLabel" text="earning" styleClass="booking-summary-detail"/>
         </HBox>
     </VBox>

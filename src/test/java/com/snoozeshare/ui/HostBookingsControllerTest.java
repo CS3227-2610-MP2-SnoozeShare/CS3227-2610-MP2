@@ -41,6 +41,7 @@ class HostBookingsControllerTest {
         assertTrue(fxml.contains("Confirm approve"));
         assertTrue(fxml.contains("Message to guest (optional)"));
         assertTrue(fxml.contains("agent-booking-summary"));
+        assertTrue(fxml.contains("text=\"\\$0.00\""));
         String controller = Files.readString(Path.of(
                 "src/main/java/com/snoozeshare/ui/host/bookings/"
                         + "HostBookingDecisionDialogController.java"));
