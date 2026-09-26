@@ -9,6 +9,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
+import com.snoozeshare.domain.enums.AuditAction;
 import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.WalletTransactionType;
@@ -29,6 +30,8 @@ import com.snoozeshare.repository.BookingRepository;
 import com.snoozeshare.repository.PropertyRepository;
 import com.snoozeshare.repository.WalletRepository;
 import com.snoozeshare.repository.WalletTransactionRepository;
+import com.snoozeshare.service.AuditRecord;
+import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.BookingService;
 import com.snoozeshare.service.Money;
 import com.snoozeshare.service.TripFilter;
@@ -42,13 +45,14 @@ public final class BookingServiceImpl implements BookingService {
     private final WalletRepository wallets;
     private final WalletTransactionRepository transactions;
     private final EventBus eventBus;
+    private final AuditService audit;
 
     public BookingServiceImpl(Connection connection, BookingRepository bookings,
                                PropertyRepository properties,
                                AvailabilityBlockRepository blocks,
                                WalletRepository wallets,
                                WalletTransactionRepository transactions,
-                               EventBus eventBus) {
+                               EventBus eventBus, AuditService audit) {
         this.connection = connection;
         this.bookings = bookings;
         this.properties = properties;
@@ -56,6 +60,7 @@ public final class BookingServiceImpl implements BookingService {
         this.wallets = wallets;
         this.transactions = transactions;
         this.eventBus = eventBus;
+        this.audit = audit;
     }
 
     @Override
@@ -102,9 +107,12 @@ public final class BookingServiceImpl implements BookingService {
                 }
                 wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter,
                         wallet.currency(), now));
-                transactions.save(new WalletTransaction(UUID.randomUUID(), wallet.walletId(),
-                        WalletTransactionType.ESCROW_HOLD, totalAmount.negate(),
+                WalletTransaction hold = transactions.save(new WalletTransaction(UUID.randomUUID(),
+                        wallet.walletId(), WalletTransactionType.ESCROW_HOLD, totalAmount.negate(),
                         BigDecimal.ZERO, balanceAfter, bookingId, null, guestId, now));
+                audit.record(AuditRecord.builder(guestId, AuditAction.BOOKING_REQUESTED, "Booking", bookingId)
+                        .status(null, BookingStatus.PENDING).subject(guestId).booking(bookingId).at(now).build());
+                audit.recordWalletTransaction(guestId, guestId, hold, hold.amount(), null);
 
                 return newBooking;
             });
@@ -166,6 +174,11 @@ public final class BookingServiceImpl implements BookingService {
                         target, booking.nightlyRateSnapshot(), booking.totalAmount(),
                         booking.createdAt(), now, null);
                 bookings.save(updated);
+                audit.record(AuditRecord.builder(hostId,
+                                approve ? AuditAction.BOOKING_CONFIRMED : AuditAction.BOOKING_REJECTED,
+                                "Booking", bookingId)
+                        .status(booking.status(), target).subject(booking.guestId()).booking(bookingId)
+                        .at(now).build());
 
                 if (!approve) {
                     // Reject: 100% refund (decision C8) + remove block
@@ -176,10 +189,11 @@ public final class BookingServiceImpl implements BookingService {
                     BigDecimal balanceAfter = wallet.balance().add(booking.totalAmount());
                     wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter,
                             wallet.currency(), now));
-                    transactions.save(new WalletTransaction(UUID.randomUUID(),
+                    WalletTransaction refund = transactions.save(new WalletTransaction(UUID.randomUUID(),
                             wallet.walletId(), WalletTransactionType.ESCROW_REFUND,
                             booking.totalAmount(), BigDecimal.ZERO, balanceAfter,
                             bookingId, null, hostId, now));
+                    audit.recordWalletTransaction(hostId, booking.guestId(), refund, refund.amount(), null);
                 }
 
                 return updated;
@@ -220,6 +234,13 @@ public final class BookingServiceImpl implements BookingService {
                         BookingStatus.CANCELLED_BY_GUEST, booking.nightlyRateSnapshot(),
                         booking.totalAmount(), booking.createdAt(), now, null);
                 bookings.save(updated);
+                audit.record(AuditRecord.builder(actingGuestId, AuditAction.BOOKING_CANCELLED_BY_GUEST,
+                                "Booking", bookingId)
+                        .status(booking.status(), BookingStatus.CANCELLED_BY_GUEST).subject(actingGuestId)
+                        .booking(bookingId)
+                        .reason(refundAmount.compareTo(booking.totalAmount()) == 0
+                                ? "Full refund" : "50% refund (within 48h of check-in)")
+                        .at(now).build());
 
                 blocks.deleteByBookingId(bookingId);
 
@@ -230,9 +251,10 @@ public final class BookingServiceImpl implements BookingService {
                 BigDecimal balanceAfter = wallet.balance().add(refundAmount);
                 wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter,
                         wallet.currency(), now));
-                transactions.save(new WalletTransaction(UUID.randomUUID(), wallet.walletId(),
-                        WalletTransactionType.ESCROW_REFUND, refundAmount,
+                WalletTransaction refund = transactions.save(new WalletTransaction(UUID.randomUUID(),
+                        wallet.walletId(), WalletTransactionType.ESCROW_REFUND, refundAmount,
                         BigDecimal.ZERO, balanceAfter, bookingId, null, actingGuestId, now));
+                audit.recordWalletTransaction(actingGuestId, actingGuestId, refund, refund.amount(), null);
 
                 return updated;
             });
