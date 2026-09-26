@@ -233,4 +233,21 @@ class AdminUiSnapshotTest {
         ImageIO.write(toBuffered(image), "png", file.toFile());
         return file;
     }
+
+    @Test
+    void writesTheAuditLogSnapshot(@TempDir Path directory) throws Exception {
+        assumeTrue(toolkitAvailable, "JavaFX toolkit unavailable");
+        try (MockDbFixture db = MockDbFixture.open(directory);
+             AppContext context = AppContext.create(db.jdbcUrl())) {
+            context.session().loginAs(context.userService().authenticate("amy.tanaka@snoozeshare.test"));
+
+            Path audit = onFx(() -> {
+                Shell shell = loadShell(context);
+                shell.show("showAuditLog");
+                return snapshot(shell.root(), "agent-audit-log", 1280, 800);
+            });
+
+            assertTrue(Files.size(audit) > 0);
+        }
+    }
 }

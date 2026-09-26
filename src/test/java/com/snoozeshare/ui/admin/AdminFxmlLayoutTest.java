@@ -91,4 +91,19 @@ class AdminFxmlLayoutTest {
         assertTrue(screen.contains("onAction=\"#handleAdd\""));
         assertTrue(screen.contains("+ Add category"));
     }
+
+    @Test
+    void auditLogScreenHasTheSearchActionDateFiltersAndTheTable() throws Exception {
+        String audit = read("audit/audit-log.fxml");
+
+        String[] ids = {"searchField", "actionCombo", "fromPicker", "toPicker", "applyButton", "clearLink",
+            "table", "loadMoreButton", "errorLabel", "emptyLabel"};
+        for (String id : ids) {
+            assertTrue(audit.contains("fx:id=\"" + id + "\""), id);
+        }
+        assertTrue(audit.contains("Audit log"));
+        assertFalse(audit.contains("User ID"), "search replaces the board's separate User ID / Booking ID inputs");
+        assertFalse(audit.toLowerCase().contains("force"));
+        assertTrue(controller("AdminShellController.java").contains("audit-log.fxml"));
+    }
 }
