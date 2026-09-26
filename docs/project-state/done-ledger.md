@@ -5,6 +5,7 @@ why, with a commit, plan or artifact as the reference. Not a copy of `git log`.
 
 | Date | What changed | Workstream | Ref |
 |---|---|---|---|
+| 2026-09-26 | Developer Guide checkpoint for W12 (operator-approved): F11 added to scope; audit-in-transaction note and key decisions in section 3; new 4.9 Audit trail (column layout, `AuditRecord` builder, search, which actions write rows, dual-write, dispute-resolution sequence diagram, whole-schema ER diagram); Audit Log screen and fixed headers in 4.8; F11 requirements, limitations, glossary and tests; W10 audit-row wording corrected; W12 Guide set to Documented | W12 | `docs/DeveloperGuide.md`, `PROJECT_STATE.md` § Workstreams |
 | 2026-09-26 | W12 Platform Audit Trail marked Done on operator confirmation; Guide set to Pending | W12 | `PROJECT_STATE.md` § Workstreams |
 | 2026-09-26 | Recorded C33 (operator UI amendments), fixed spec § 5-6 (multi-select, date pickers, Clear button, fixed headers), added D18 and cleared the double-border Known Gap | W12 | `PROJECT_STATE.md` C33; W12 spec |
 | 2026-09-26 | Audit Log UI amendments (C33): `MultiSelectMenu` action filter at the same height as the other inputs, board-styled single-border date pickers and calendar popup (no range, no Clear/Apply), red-outline Clear, fixed headers with only rows scrolling in the queue, audit and categories screens, grey audit row hover with default cursor; new layout/multi-select tests and popup snapshots | W12 | commit `4882c0c`; `build/ui-snapshots/agent-audit-*.png` |
