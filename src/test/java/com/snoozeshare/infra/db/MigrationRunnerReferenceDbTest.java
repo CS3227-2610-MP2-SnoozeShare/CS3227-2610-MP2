@@ -20,7 +20,8 @@ class MigrationRunnerReferenceDbTest {
             MigrationRunner.migrate(db.connection());
 
             assertEquals(1L, db.scalarLong("SELECT COUNT(*) FROM schema_history WHERE version = 1"));
-            assertEquals(16L, db.scalarLong("SELECT COUNT(*) FROM users"));
+            assertEquals(1L, db.scalarLong("SELECT COUNT(*) FROM schema_history WHERE version = 2"));
+            assertEquals(17L, db.scalarLong("SELECT COUNT(*) FROM users"));
         }
     }
 }
