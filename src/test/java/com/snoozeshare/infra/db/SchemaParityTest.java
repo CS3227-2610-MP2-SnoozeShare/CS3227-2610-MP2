@@ -23,6 +23,7 @@ class SchemaParityTest {
         try (Connection migration = DatabaseTestSupport.openIsolatedDatabase();
              Connection reference = DatabaseTestSupport.openIsolatedDatabase()) {
             apply(migration, "src/main/resources/db/migration/V001__foundation.sql");
+            apply(migration, "src/main/resources/db/migration/V002__booking_decision_message.sql");
             apply(reference, "db/schema.sql");
 
             for (String table : TABLES) {

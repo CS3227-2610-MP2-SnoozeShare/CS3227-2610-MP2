@@ -12,6 +12,7 @@ import com.snoozeshare.repository.jdbc.JdbcAuditLogRepository;
 import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
+import com.snoozeshare.repository.jdbc.JdbcReviewRepository;
 import com.snoozeshare.repository.jdbc.JdbcTicketCategoryRepository;
 import com.snoozeshare.repository.jdbc.JdbcTicketRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
@@ -76,6 +77,7 @@ public final class AppContext implements AutoCloseable {
         JdbcPropertyRepository propertyRepo = new JdbcPropertyRepository(connection);
         JdbcAvailabilityBlockRepository blockRepo = new JdbcAvailabilityBlockRepository(connection);
         JdbcBookingRepository bookingRepo = new JdbcBookingRepository(connection);
+        JdbcReviewRepository reviewRepo = new JdbcReviewRepository(connection);
         this.availabilityService = new AvailabilityServiceImpl(propertyRepo, blockRepo, bookingRepo);
         this.listingService = new ListingServiceImpl(propertyRepo, availabilityService,
                 userService, auditService);
@@ -84,7 +86,7 @@ public final class AppContext implements AutoCloseable {
         this.transactionService = new TransactionServiceImpl(connection, bookingRepo,
                 wallets, txnRepo, eventBus);
         this.bookingService = new BookingServiceImpl(connection, bookingRepo, propertyRepo,
-                blockRepo, wallets, txnRepo, eventBus);
+                blockRepo, wallets, txnRepo, users, reviewRepo, eventBus);
         JdbcTicketRepository ticketRepo = new JdbcTicketRepository(connection);
         JdbcTicketCategoryRepository categoryRepo = new JdbcTicketCategoryRepository(connection);
         Clock clock = Clock.systemUTC();

@@ -115,9 +115,10 @@ public final class JdbcBookingRepository implements BookingRepository {
         try (var statement = connection.prepareStatement(
                 "INSERT INTO bookings (bookingId, listingId, guestId, startDate, endDate, "
                         + "status, nightlyRateSnapshot, totalAmount, createdAt, decidedAt, "
-                        + "completedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                        + "completedAt, hostDecisionMessage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
                         + "ON CONFLICT(bookingId) DO UPDATE SET status = excluded.status, "
-                        + "decidedAt = excluded.decidedAt, completedAt = excluded.completedAt")) {
+                        + "decidedAt = excluded.decidedAt, completedAt = excluded.completedAt, "
+                        + "hostDecisionMessage = excluded.hostDecisionMessage")) {
             statement.setString(1, JdbcCodecs.uuid(booking.bookingId()));
             statement.setString(2, JdbcCodecs.uuid(booking.listingId()));
             statement.setString(3, JdbcCodecs.uuid(booking.guestId()));
@@ -129,6 +130,7 @@ public final class JdbcBookingRepository implements BookingRepository {
             statement.setString(9, JdbcCodecs.instant(booking.createdAt()));
             statement.setString(10, JdbcCodecs.instant(booking.decidedAt()));
             statement.setString(11, JdbcCodecs.instant(booking.completedAt()));
+            statement.setString(12, booking.hostDecisionMessage());
             statement.executeUpdate();
             return booking;
         } catch (SQLException exception) {

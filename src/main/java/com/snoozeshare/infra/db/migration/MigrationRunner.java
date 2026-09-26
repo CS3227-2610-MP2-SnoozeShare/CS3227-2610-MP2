@@ -10,6 +10,7 @@ import java.sql.Statement;
 public final class MigrationRunner {
 
     private static final int FOUNDATION_VERSION = 1;
+    private static final int BOOKING_DECISION_MESSAGE_VERSION = 2;
 
     private MigrationRunner() {
     }
@@ -25,6 +26,10 @@ public final class MigrationRunner {
                 }
                 // else: a pre-provisioned reference database (db/snoozeshare-mock.db) already has the schema.
                 recordMigration(connection, FOUNDATION_VERSION);
+            }
+            if (!migrationApplied(connection, BOOKING_DECISION_MESSAGE_VERSION)) {
+                applySqlMigration(connection, "/db/migration/V002__booking_decision_message.sql");
+                recordMigration(connection, BOOKING_DECISION_MESSAGE_VERSION);
             }
             connection.commit();
         } catch (SQLException | RuntimeException exception) {
@@ -64,11 +69,15 @@ public final class MigrationRunner {
     }
 
     private static void applyFoundationMigration(Connection connection) throws SQLException {
+        applySqlMigration(connection, "/db/migration/V001__foundation.sql");
+    }
+
+    private static void applySqlMigration(Connection connection, String resource) throws SQLException {
         String sql;
         try (InputStream input = MigrationRunner.class.getResourceAsStream(
-                "/db/migration/V001__foundation.sql")) {
+                resource)) {
             if (input == null) {
-                throw new SQLException("Foundation migration resource is missing");
+                throw new SQLException("Migration resource is missing: " + resource);
             }
             sql = new String(input.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException exception) {

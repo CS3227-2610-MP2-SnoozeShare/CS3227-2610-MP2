@@ -143,6 +143,12 @@ public final class TripDashboardController {
 
         card.getChildren().addAll(title, dates, status, amount);
 
+        if (booking.hostDecisionMessage() != null && !booking.hostDecisionMessage().isBlank()) {
+            Label hostMessage = new Label("Host message: " + booking.hostDecisionMessage());
+            hostMessage.getStyleClass().add("small");
+            card.getChildren().add(hostMessage);
+        }
+
         if (canCancel(booking)) {
             Button cancelButton = new Button("Cancel Booking");
             cancelButton.getStyleClass().add("outline-button");

@@ -110,7 +110,8 @@ public final class RowMappers {
                 JdbcCodecs.decimal(result.getString("totalAmount")),
                 JdbcCodecs.instant(result.getString("createdAt")),
                 JdbcCodecs.instant(result.getString("decidedAt")),
-                JdbcCodecs.instant(result.getString("completedAt")));
+                JdbcCodecs.instant(result.getString("completedAt")),
+                result.getString("hostDecisionMessage"));
     }
 
     private static Set<AmenityType> parseAmenities(String value) {

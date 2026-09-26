@@ -35,6 +35,7 @@ import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
+import com.snoozeshare.repository.jdbc.JdbcReviewRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
@@ -428,6 +429,69 @@ class BookingServiceTest {
         }
     }
 
+    @Test
+    void pendingRequestRowsIncludeGrossNetNightsAndGuestRating() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            BookingService service = createService(connection);
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
+            new JdbcReviewRepository(connection).save(new com.snoozeshare.domain.model.Review(
+                    UUID.randomUUID(), booking.bookingId(), ctx.guestId, 5, "great", Instant.now()));
+
+            HostBookingRow row = service.pendingRequestRowsFor(ctx.hostId).get(0);
+
+            assertEquals(3, row.nights());
+            assertEquals(0, new BigDecimal("300.00").compareTo(row.grossAmount()));
+            assertEquals(0, new BigDecimal("291.00").compareTo(row.projectedNetAmount()));
+            assertTrue(row.guestAverageRating().isPresent());
+            assertEquals(5.0, row.guestAverageRating().getAsDouble());
+        }
+    }
+
+    @Test
+    void pendingRequestRowsUseEmptyRatingWhenGuestHasNoReviews() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            BookingService service = createService(connection);
+            service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
+
+            assertTrue(service.pendingRequestRowsFor(ctx.hostId).get(0)
+                    .guestAverageRating().isEmpty());
+        }
+    }
+
+    @Test
+    void rejectTrimsAndPersistsOptionalHostMessage() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            BookingService service = createService(connection);
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
+
+            Booking rejected = service.decide(booking.bookingId(), false, ctx.hostId,
+                    "  Dates unavailable  ");
+
+            assertEquals("Dates unavailable", rejected.hostDecisionMessage());
+            assertEquals("Dates unavailable", new JdbcBookingRepository(connection)
+                    .findById(booking.bookingId()).orElseThrow().hostDecisionMessage());
+        }
+    }
+
+    @Test
+    void blankRejectMessageIsStoredAsNull() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            BookingService service = createService(connection);
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
+
+            assertEquals(null, service.decide(booking.bookingId(), false, ctx.hostId,
+                    "   ").hostDecisionMessage());
+        }
+    }
+
     // --- helpers ---
 
     private record TestContext(UUID guestId, UUID hostId, UUID propertyId) {
@@ -472,6 +536,8 @@ class BookingServiceTest {
                 new JdbcAvailabilityBlockRepository(connection),
                 new JdbcWalletRepository(connection),
                 new JdbcWalletTransactionRepository(connection),
+                new JdbcUserRepository(connection),
+                new JdbcReviewRepository(connection),
                 eventBus);
     }
 

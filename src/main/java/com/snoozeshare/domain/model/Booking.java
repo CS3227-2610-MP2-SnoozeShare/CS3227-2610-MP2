@@ -18,6 +18,14 @@ public record Booking(
         BigDecimal totalAmount,
         Instant createdAt,
         Instant decidedAt,
-        Instant completedAt
+        Instant completedAt,
+        String hostDecisionMessage
 ) {
+    public Booking(UUID bookingId, UUID listingId, UUID guestId, LocalDate startDate,
+                   LocalDate endDate, BookingStatus status, BigDecimal nightlyRateSnapshot,
+                   BigDecimal totalAmount, Instant createdAt, Instant decidedAt,
+                   Instant completedAt) {
+        this(bookingId, listingId, guestId, startDate, endDate, status, nightlyRateSnapshot,
+                totalAmount, createdAt, decidedAt, completedAt, null);
+    }
 }

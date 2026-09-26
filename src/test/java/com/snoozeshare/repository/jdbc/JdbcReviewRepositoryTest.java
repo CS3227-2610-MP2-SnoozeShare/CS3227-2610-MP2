@@ -2,8 +2,8 @@ package com.snoozeshare.repository.jdbc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.sql.Connection;
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -12,7 +12,6 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
-import com.snoozeshare.domain.model.Review;
 import com.snoozeshare.domain.enums.AccountStatus;
 import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.domain.enums.ListingStatus;
@@ -20,6 +19,7 @@ import com.snoozeshare.domain.enums.PropertyType;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.model.Booking;
 import com.snoozeshare.domain.model.Property;
+import com.snoozeshare.domain.model.Review;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.infra.db.ConnectionFactory;
 import com.snoozeshare.infra.db.migration.MigrationRunner;

@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.OptionalDouble;
 import java.util.UUID;
 
 import com.snoozeshare.domain.enums.BookingStatus;
@@ -27,9 +28,12 @@ import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.repository.AvailabilityBlockRepository;
 import com.snoozeshare.repository.BookingRepository;
 import com.snoozeshare.repository.PropertyRepository;
+import com.snoozeshare.repository.ReviewRepository;
+import com.snoozeshare.repository.UserRepository;
 import com.snoozeshare.repository.WalletRepository;
 import com.snoozeshare.repository.WalletTransactionRepository;
 import com.snoozeshare.service.BookingService;
+import com.snoozeshare.service.HostBookingRow;
 import com.snoozeshare.service.Money;
 import com.snoozeshare.service.TripFilter;
 
@@ -41,6 +45,8 @@ public final class BookingServiceImpl implements BookingService {
     private final AvailabilityBlockRepository blocks;
     private final WalletRepository wallets;
     private final WalletTransactionRepository transactions;
+    private final UserRepository users;
+    private final ReviewRepository reviews;
     private final EventBus eventBus;
 
     public BookingServiceImpl(Connection connection, BookingRepository bookings,
@@ -48,6 +54,8 @@ public final class BookingServiceImpl implements BookingService {
                                AvailabilityBlockRepository blocks,
                                WalletRepository wallets,
                                WalletTransactionRepository transactions,
+                               UserRepository users,
+                               ReviewRepository reviews,
                                EventBus eventBus) {
         this.connection = connection;
         this.bookings = bookings;
@@ -55,6 +63,8 @@ public final class BookingServiceImpl implements BookingService {
         this.blocks = blocks;
         this.wallets = wallets;
         this.transactions = transactions;
+        this.users = users;
+        this.reviews = reviews;
         this.eventBus = eventBus;
     }
 
@@ -145,26 +155,67 @@ public final class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public List<HostBookingRow> pendingRequestRowsFor(UUID hostId) {
+        return toHostRows(bookings.findByHostPending(hostId));
+    }
+
+    @Override
+    public List<HostBookingRow> historyRowsFor(UUID hostId) {
+        return toHostRows(bookings.findByHost(hostId));
+    }
+
+    private List<HostBookingRow> toHostRows(List<Booking> source) {
+        return source.stream().map(booking -> {
+            Property property = properties.findById(booking.listingId())
+                    .orElseThrow(() -> new IllegalArgumentException("Property does not exist"));
+            String guestName = users.findById(booking.guestId())
+                    .orElseThrow(() -> new IllegalArgumentException("Guest does not exist"))
+                    .displayName();
+            List<com.snoozeshare.domain.model.Review> guestReviews =
+                    reviews.findByGuestId(booking.guestId());
+            OptionalDouble rating = guestReviews.isEmpty() ? OptionalDouble.empty()
+                    : OptionalDouble.of(guestReviews.stream().mapToInt(
+                            com.snoozeshare.domain.model.Review::rating).average().orElse(0));
+            long nights = ChronoUnit.DAYS.between(booking.startDate(), booking.endDate());
+            BigDecimal net = booking.totalAmount().multiply(new BigDecimal("0.97"))
+                    .setScale(2, java.math.RoundingMode.HALF_UP);
+            return new HostBookingRow(booking, guestName, property.title(), nights,
+                    booking.totalAmount(), net, rating);
+        }).toList();
+    }
+
+    @Override
     public Booking decide(UUID bookingId, boolean approve, UUID hostId) {
-        Booking booking = bookings.findById(bookingId)
-                .orElseThrow(() -> new IllegalArgumentException("Booking does not exist"));
-        Property property = properties.findById(booking.listingId())
-                .orElseThrow(() -> new IllegalArgumentException("Property does not exist"));
-        if (!property.hostId().equals(hostId)) {
-            throw new IllegalArgumentException("Only the property host can decide");
-        }
-        BookingStatus target = approve ? BookingStatus.CONFIRMED : BookingStatus.REJECTED;
-        if (!BookingStateMachine.canTransition(booking.status(), target, Role.HOST)) {
-            throw new IllegalStateException("Cannot transition from " + booking.status()
-                    + " to " + target);
-        }
+        return decide(bookingId, approve, hostId, null);
+    }
+
+    @Override
+    public Booking decide(UUID bookingId, boolean approve, UUID hostId,
+                          String hostDecisionMessage) {
         try {
             Booking decided = new TransactionManager(connection).inTransaction(conn -> {
+                Booking booking = bookings.findById(bookingId)
+                        .orElseThrow(() -> new IllegalArgumentException("Booking does not exist"));
+                Property property = properties.findById(booking.listingId())
+                        .orElseThrow(() -> new IllegalArgumentException("Property does not exist"));
+                if (!property.hostId().equals(hostId)) {
+                    throw new IllegalArgumentException("Only the property host can decide");
+                }
+                BookingStatus target = approve ? BookingStatus.CONFIRMED : BookingStatus.REJECTED;
+                if (!BookingStateMachine.canTransition(booking.status(), target, Role.HOST)) {
+                    throw new IllegalStateException("Cannot transition from " + booking.status()
+                            + " to " + target);
+                }
                 Instant now = Instant.now();
+                String message = approve || hostDecisionMessage == null
+                        ? null : hostDecisionMessage.trim();
+                if (message != null && message.isEmpty()) {
+                    message = null;
+                }
                 Booking updated = new Booking(booking.bookingId(), booking.listingId(),
                         booking.guestId(), booking.startDate(), booking.endDate(),
                         target, booking.nightlyRateSnapshot(), booking.totalAmount(),
-                        booking.createdAt(), now, null);
+                        booking.createdAt(), now, null, message);
                 bookings.save(updated);
 
                 if (!approve) {
@@ -272,6 +323,9 @@ public final class BookingServiceImpl implements BookingService {
 
     @Override
     public Money previewHostEarnings(UUID bookingId) {
-        throw new UnsupportedOperationException("Owned by W8");
+        Booking booking = bookings.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking does not exist"));
+        return new Money(booking.totalAmount().multiply(new BigDecimal("0.97"))
+                .setScale(2, java.math.RoundingMode.HALF_UP), "SGD");
     }
 }
