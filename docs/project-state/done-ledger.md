@@ -5,6 +5,7 @@ why, with a commit, plan or artifact as the reference. Not a copy of `git log`.
 
 | Date | What changed | Workstream | Ref |
 |---|---|---|---|
+| 2026-09-26 | Seeded `docs/DeveloperGuide.md` (first write: overview, requirements, glossary, setup) and documented W10 (architecture, components, testing) at the operator-approved checkpoint; W10 Guide -> Documented; corrected stale § Architecture agent-screens paragraph and the § Conventions enforcement note | W10 | `docs/DeveloperGuide.md`, commit `1d152fd` |
 | 2026-09-26 | W10 Agent Dispute Resolution confirmed Done by the operator after visual acceptance (backlog F9.1.1, F9.1.2, F9.2.2, F9.3.1; F9.2.1 dropped, C22); Guide column set to Pending | W10 | `PROJECT_STATE.md` W10 row |
 | 2026-09-25 | Renamed ticket status `UNDER_REVIEW` to `IN_REVIEW` across enum, schema, V001, seed, rebuilt mock DB, tests, UI text and docs (C27; other branches must rename at merge); status dropdown now sized to its widest option, popup same width, left-aligned again; 191 tests | W10 | commits `d339709`..`438c574` |
 | 2026-09-25 | Visual round 3 (C26): right-aligned status dropdown, pointer cursor on ticket rows, resizable chat/notes boxes with Save bottom-right, shared `AgentModal` with 50% grey scrim, Add/Edit category modals, new category delete (`deleteCategory`, refused when a ticket uses the label, audit `CATEGORY_DELETED`); 191 tests | W10 | commits `14c3e25`..`6b129b3` |
