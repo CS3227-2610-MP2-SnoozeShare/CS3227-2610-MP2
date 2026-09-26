@@ -4,9 +4,9 @@ Handover brief for developers taking over this project. It describes **confirmed
 is updated at checkpoints, so it can lag behind the code. For current status, work in flight, and
 what to build next, read [`PROJECT_STATE.md`](../PROJECT_STATE.md) — that is the source of truth.
 
-**Last updated:** 2026-09-27 — covers W6–W8 (Host Listings, Calendar, and Booking Requests),
-W10 (Agent Dispute Resolution), and W12 (Platform Audit Trail), plus the scope, setup,
-requirements and glossary they rely on
+**Last updated:** 2026-09-27 — covers W1 (Shared Foundation), W6–W9 (Host Listings, Calendar,
+Booking Requests, and Host Wallet), W10 (Agent Dispute Resolution), and W12 (Platform Audit Trail),
+plus the scope, setup, requirements and glossary they rely on
 
 ## Contents
 
@@ -36,11 +36,13 @@ platform audit trail that records every change to bookings, tickets, listings an
 
 | Feature | What it is | Section |
 |---|---|---|
+| F0 (W1) | Shared foundation: mocked auth/registration, role shells, SQLite persistence, wallet ledger, events, audit and session boundaries | [3.1](#31-shared-foundation) |
 | F5 (W6) | Host listing management: create/edit, publish, status controls, listing details and metrics | [4.9](#49-host-listing-management-uihostlistings) |
 | F6 (W7) | Host calendar: monthly availability, inclusive manual date blocks and removal | [4.10](#410-host-calendar-and-date-overrides-uihostcalendar) |
 | F7 (W8) | Host booking requests, approval/rejection messages, earnings previews and guarded completion | [4.11](#411-host-booking-requests-uihostbookings) |
+| F8 (W9) | Host wallet management: shared wallet page, transaction statement, escrow summary, top-up and withdrawal modals | [4.12](#412-host-wallet-management-uihostwallet) |
 | F9 (W10) | Agent dispute resolution: ticket queue, assign / unassign / notes, settlement of held escrow, ticket categories | [4.1](#41-settlement-domain)–[4.8](#48-agent-ui-uiadmin) |
-| F11 (W12) | **Platform Audit Trail:** every change is logged as one typed row, and agents search the log on the Audit Log screen | [4.12](#412-audit-trail) |
+| F11 (W12) | **Platform Audit Trail:** every change is logged as one typed row, and agents search the log on the Audit Log screen | [4.13](#413-audit-trail) |
 
 **Value proposition:** a support agent can take a dispute ticket, read both parties' evidence and
 chat, and settle the booking's held escrow between guest and host in one atomic, audited action.
@@ -140,6 +142,30 @@ SnoozeShare is a layered modular monolith in one Gradle module. Dependencies run
 `ui` → `service` → `domain` and `repository` → `infra.db`. The diagram shows the dispute-resolution
 slice only; `AppContext` wires every box and hands the services to the UI.
 
+### 3.1 Shared foundation
+
+W1 establishes the application boundaries used by every later workstream:
+
+- `Main`/`Launcher` start the native JavaFX application; `SceneRouter` selects the Guest, Host or
+  Support Agent shell after authentication.
+- `AuthController` provides the combined Login/Register screen. Authentication is intentionally
+  mocked by email; registration codes gate Host and Agent registration, while role checks remain in
+  the service layer.
+- `AppContext` owns the SQLite connection and wires repositories, services, the in-process event bus,
+  `SessionContext`, and the role-aware scene router. Controllers receive services through this context
+  and do not access JDBC directly.
+- `ConnectionFactory`, `MigrationRunner` and `TransactionManager` define the embedded SQLite
+  persistence boundary. Repository interfaces isolate domain/service code from `repository.jdbc`.
+- `WalletService` and the append-only `wallet_transactions` ledger provide atomic top-up, withdrawal,
+  balance and statement operations. Wallet balances are updated in the same transaction as their
+  ledger rows; later workstreams add escrow, payout and audit integrations.
+- `EventBus`/`InProcessEventBus` publish committed domain events after successful transactions, and
+  the shared audit contracts provide typed audit records for mutating services.
+
+The foundation is a single-process desktop boundary: there is no server, external authentication,
+message broker or distributed transaction coordinator. Package dependency tests protect the key
+domain/UI and repository/JDBC boundaries.
+
 ```mermaid
 flowchart TB
   subgraph UI["ui.admin (JavaFX)"]
@@ -188,7 +214,7 @@ services as well as settlement) also calls `AuditService`; the Audit Log screen 
 `AuditService.record(...)` while its `TransactionManager.inTransaction` block is open. The audit
 repository shares the transaction's connection, so the audit rows commit with the change they describe
 and roll back with it: a failed change leaves no audit row, and an audit write that fails rolls the
-change back. See [4.12](#412-audit-trail).
+change back. See [4.13](#413-audit-trail).
 
 **One request: an agent resolves a ticket**
 
@@ -223,7 +249,7 @@ change back. See [4.12](#412-audit-trail).
 - **`domain`** is pure Java (no JavaFX, no JDBC): the settlement maths, the escrow-held test and the
   state machines.
 - **`AuditService`** (with `AuditServiceImpl` and `JdbcAuditLogRepository`) owns the audit log: services
-  write rows through it, and only the Audit Log screen reads them ([4.12](#412-audit-trail)).
+  write rows through it, and only the Audit Log screen reads them ([4.13](#413-audit-trail)).
 - **`repository.jdbc`** is the only place that touches `java.sql`. **`infra.db`** owns the connection,
   the transaction boundary and migrations.
 
@@ -413,7 +439,7 @@ sequenceDiagram
   R-->>TM: current state
   Note over DS: EscrowPolicy.isHeld, SettlementCalculator.split, state machine checks
   TM->>R: save wallets, ledger rows, ticket, booking
-  TM->>AU: record audit rows (4.12)
+  TM->>AU: record audit rows (4.13)
   TM-->>DS: commit (or rollback and rethrow)
   DS->>EB: TicketResolvedEvent, WalletTransactionRecordedEvent
   DS-->>TS: Settlement
@@ -423,7 +449,7 @@ sequenceDiagram
 2. `settle` validates the reason and the `AGENT` role, then hands the work to `TransactionManager`.
 3. Inside the transaction the service loads the current ticket, booking, both wallets and the booking's ledger rows.
 4. It applies the preconditions and the split (shown as a note; the domain classes are pure).
-5. It writes wallets, ledger rows, ticket and booking, then the audit rows (ticket, booking and the wallet sides; see [4.12](#412-audit-trail)), all on the same connection.
+5. It writes wallets, ledger rows, ticket and booking, then the audit rows (ticket, booking and the wallet sides; see [4.13](#413-audit-trail)), all on the same connection.
 6. Commit makes everything visible at once; any exception rolls back all of it.
 7. Only after commit are events published, then the `Settlement` is returned.
 
@@ -509,7 +535,7 @@ sequenceDiagram
 | [`HeightGrip`](../src/main/java/com/snoozeshare/ui/admin/HeightGrip.java) | Drag handle that resizes chat panes together and the notes box, within min and max heights. |
 | [`agent-theme.css`](../src/main/resources/com/snoozeshare/ui/admin/agent-theme.css) | The "Fall Light" palette, loaded on the agent scene root only. |
 
-**Audit Log screen (W12).** A read-only table over `AuditService.search` ([4.12](#412-audit-trail)).
+**Audit Log screen (W12).** A read-only table over `AuditService.search` ([4.13](#413-audit-trail)).
 
 - **Filters:** one **Search** box (user name, or booking / ticket / user id; Enter applies it), an **Action type** multi-select (empty means all actions), separate **From** and **To** date pickers, an **Apply filters** button and a red-outline **Clear** button. Filters take effect only on Apply (selecting does not auto-apply); Apply refuses a From date after the To date. The date pickers and the multi-select popup are styled after the design board's Date picker component in `agent-theme.css` (C33).
 - **Table:** TIMESTAMP, ACTOR, ACTION TYPE (a coloured pill), REF (`Booking #0009 · Ticket #0004`, the last four characters of each id), STATUS (`Before → After`, or one status, or a dash), REASON and AMOUNT (signed, for example `+SGD 175.00`), 200 rows at a time with a Load more button. Rows are not clickable: they get the queue's grey hover but keep the default cursor.
@@ -568,7 +594,33 @@ receive capabilities through `AppContext` and do not access repositories directl
 settles eligible completion payouts, while `DisputeSettlementService` owns agent-directed two-sided
 settlement of held escrow.
 
-### 4.12 Audit trail
+### 4.12 Host wallet management (`ui.host.wallet`)
+
+**Purpose:** provide hosts with the same native wallet capability and visual language as the guest wallet,
+while keeping the presentation owned by the common wallet module.
+
+The shared [`WalletDashboardController`](../src/main/java/com/snoozeshare/ui/common/wallet/WalletDashboardController.java)
+and `wallet-dashboard.fxml` are loaded by both Guest and Host shells. The page includes the available
+balance, the amount currently held in escrow for pending bookings, top-up and withdrawal actions, and a
+five-column transaction statement. The statement uses compact type badges, aligned date/related/amount/
+balance columns, dollar-formatted values, and green/red directional styling for credits and deductions.
+
+`WalletActionDialogController` and `WalletModal` provide native application modals for top-up and
+withdrawal. Preset top-up amounts fill the input, the withdrawal link fills the full available balance,
+and both dialogs use full-window scrims with content-sized modal cards, outlined Cancel actions, and
+contained confirmation actions. Wallet-specific presentation lives in `wallet.css`; it does not depend on
+agent styling.
+
+**Escrow display.** The balance hint is computed from wallet transactions: escrow holds are grouped by
+booking and reduced by releasing transactions, so the displayed amount reflects currently held escrow
+rather than a fixed placeholder. The wallet ledger remains the source of balance truth; W14 is still the
+planned unified-ledger workstream.
+
+**Tests:** `WalletDashboardControllerTest`, `WalletUiStructureTest`, `WalletLedgerTest` and the wallet
+modal tests cover the statement layout, dynamic escrow copy, all wallet transaction types, preset/full-
+balance actions, and FXML/CSS wiring.
+
+### 4.13 Audit trail
 
 **Purpose:** record every change to bookings, tickets, listings, ticket categories and wallet balances as typed, searchable rows, and let a support agent search them.
 
@@ -808,9 +860,9 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 - **F9.2.1** *Dropped.* Force Cancel / Force Complete was removed as redundant with ticket accept and reject (C22).
 - **F9.2.2** Agents resolve a dispute by settling the booking's full held escrow: accept the requested remedy, reject the ticket (host paid in full net of the 3% fee), or apply a manual adjustment (Full refund, Full payout, or a custom split). Guest refunds carry no fee. Resolution completes the booking (`CONFIRMED → COMPLETED`).
 - **F9.3.1** Agents can create, rename, activate/deactivate and delete the ticket categories guests choose from. Delete is beyond the backlog wording (C26): it is refused when any ticket was filed under the label, in which case the category must be deactivated instead.
-- **F11.1.1** The system provides an audit logging service and table and logs every booking state transition. Built as one typed row per change (4.12). Booking cancellation by a host and force cancellation are not written yet (see Known Limitations).
+- **F11.1.1** The system provides an audit logging service and table and logs every booking state transition. Built as one typed row per change (4.13). Booking cancellation by a host and force cancellation are not written yet (see Known Limitations).
 - **F11.1.2** Audit logging covers wallet transactions (hold, refund, payout, remedy, override, top-up, withdrawal) and ticket resolutions.
-- **F11.1.3** Agents filter the audit log with one search (user name, or user / booking / ticket id), a set of action types, and a From and To date (4.8, 4.12).
+- **F11.1.3** Agents filter the audit log with one search (user name, or user / booking / ticket id), a set of action types, and a From and To date (4.8, 4.13).
 - **F12.1.1** A `MessageService` gives each dispute ticket a guest-to-agent and a host-to-agent thread. *(planned)*
 - **F12.1.2** Messages persist, each party reads only its own thread, and the agent reads both. *(planned)*
 
@@ -818,7 +870,7 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 
 - **NFR1** Settlement is atomic: wallet balances, ledger rows, ticket, booking and audit rows commit together or not at all, and no event is published on failure.
 - **NFR2** Money is `BigDecimal` at scale 2 with `HALF_UP` rounding. The platform fee is 3% of the host share, rounded once, and no fee is taken from guest money.
-- **NFR3** Every mutating agent action makes an audit record; each change is one row, so a ticket resolution writes several (4.12).
+- **NFR3** Every mutating agent action makes an audit record; each change is one row, so a ticket resolution writes several (4.13).
 - **NFR4** Layering: `ui.*` imports no `repository.*` and no `java.sql`; only `repository.jdbc.*` imports `java.sql`; `domain` imports no JavaFX or `java.sql`.
 - **NFR5** Ticket and booking status changes go through `TicketStateMachine` and `BookingStateMachine`; a resolved ticket cannot be settled again.
 - **NFR6** Ledger integrity: for each wallet, `balance` equals the sum of its transactions, and each row's `balanceAfter` equals the running sum in time order.
@@ -898,6 +950,7 @@ measured for this guide.
 
 | Suite | Covers |
 |---|---|
+| Foundation and architecture: `W1FoundationIntegrationTest`, `DatabaseBootstrapTest`, `LayerDependencyTest`, `UiDependencyTest` | SQLite bootstrap/migrations, repository and service wiring, wallet provisioning, role routing and the enforced package boundaries. |
 | Unit: `SettlementCalculatorTest`, `EscrowPolicyTest`, `StateMachineTest`, `AgentCompletionTest`, `ResolutionPreviewTest`, `HeightGripTest` | Split maths and fee rounding, the escrow-held rule, every legal and illegal transition per role, live preview text, drag-height bounds. |
 | Service, fakes: `TicketServiceTest`, `TicketServiceCategoryTest`, `InMemoryMessageServiceTest` | Queue order and filters, assign / unassign / notes rules, category rules including delete-when-used, chat posting rules. |
 | Mock-DB integration: `DisputeSettlementServiceTest`, `TicketServiceIntegrationTest`, `DisputeQueryServiceTest`, `JdbcTicketRepositoryTest`, `JdbcTicketCategoryRepositoryTest` | Exact ledger rows, wallet balances, ticket and booking end states, audit content, precondition rejections that leave the database unchanged, repository round trips, read models. Built on [`MockDbFixture`](../src/test/java/com/snoozeshare/testsupport/MockDbFixture.java) with `MockIds` and `SettlementFixtures`. |
@@ -943,4 +996,4 @@ measured for this guide.
   4. Press Clear: every filter resets and all rows return.
   5. Resolve a ticket on the Disputes tab, return to Audit Log and Apply: the resolution's rows appear together, in order.
   6. Scroll the table: the header stays fixed; check the same on the Disputes and Categories tabs, and that hovering a row shows a grey background without a hand cursor.
-- **Expected:** filters combine as described in [4.12](#412-audit-trail); the red Clear button resets them; the ticket resolution appears as its ticket, booking and wallet rows; table headers stay put while rows scroll.
+- **Expected:** filters combine as described in [4.13](#413-audit-trail); the red Clear button resets them; the ticket resolution appears as its ticket, booking and wallet rows; table headers stay put while rows scroll.
