@@ -114,4 +114,48 @@ class AccountGovernanceCascadeTest {
             }
         }
     }
+
+    @Test
+    void suspendingAHostDeactivatesActiveListingsAndReactivationLeavesThemInactive() throws Exception {
+        try (AccountFixture fixture = new AccountFixture()) {
+            User host = fixture.user(Role.HOST, "Marcus", "marcus@test.com", "2026-02-02T10:00:00Z");
+            Property active = fixture.property(host, ListingStatus.ACTIVE);
+            Property alreadyInactive = fixture.property(host, ListingStatus.INACTIVE);
+
+            fixture.service().suspend(host.userId(), fixture.agent.userId(), "fraud");
+
+            assertEquals(ListingStatus.INACTIVE, fixture.properties.findById(active.propertyId()).orElseThrow()
+                    .status());
+            List<AuditLogEntry> rows = audit(fixture, AuditAction.LISTING_STATUS_CASCADE);
+            assertEquals(1, rows.size(), "only the ACTIVE listing changes, so only it is audited");
+            assertEquals(active.propertyId(), rows.get(0).entityId());
+            assertEquals("Property", rows.get(0).entityType());
+            assertEquals("ACTIVE", rows.get(0).beforeState());
+            assertEquals("INACTIVE", rows.get(0).afterState());
+            assertEquals("Host suspended", rows.get(0).reason());
+            assertEquals(host.userId(), rows.get(0).subjectUserId());
+
+            fixture.service().reactivate(host.userId(), fixture.agent.userId(), "cleared");
+
+            assertEquals(ListingStatus.INACTIVE, fixture.properties.findById(active.propertyId()).orElseThrow()
+                    .status(), "the host re-lists manually");
+            assertEquals(ListingStatus.INACTIVE, fixture.properties.findById(alreadyInactive.propertyId())
+                    .orElseThrow().status());
+        }
+    }
+
+    @Test
+    void suspendingAGuestLeavesListingsAndOtherAccountsAlone() throws Exception {
+        try (AccountFixture fixture = new AccountFixture()) {
+            User guest = fixture.user(Role.GUEST, "Priya", "priya@test.com", "2026-03-05T08:00:00Z");
+            User host = fixture.user(Role.HOST, "Marcus", "marcus@test.com", "2026-02-02T10:00:00Z");
+            Property loft = fixture.property(host, ListingStatus.ACTIVE);
+
+            fixture.service().suspend(guest.userId(), fixture.agent.userId(), "policy breach");
+
+            assertEquals(ListingStatus.ACTIVE, fixture.properties.findById(loft.propertyId()).orElseThrow()
+                    .status());
+            assertEquals(0, audit(fixture, AuditAction.LISTING_STATUS_CASCADE).size());
+        }
+    }
 }

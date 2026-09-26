@@ -13,6 +13,7 @@ import java.util.UUID;
 import com.snoozeshare.domain.enums.AccountStatus;
 import com.snoozeshare.domain.enums.AuditAction;
 import com.snoozeshare.domain.enums.BookingStatus;
+import com.snoozeshare.domain.enums.ListingStatus;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.WalletTransactionType;
 import com.snoozeshare.domain.model.Booking;
@@ -130,6 +131,9 @@ public final class AccountGovernanceServiceImpl implements AccountGovernanceServ
         } else {
             for (Property property : properties.findByHostId(target.userId())) {
                 affected.addAll(bookings.findByListing(property.propertyId()));
+                if (property.status() == ListingStatus.ACTIVE) {
+                    deactivate(property, target, agentId, now);
+                }
             }
         }
         for (Booking booking : affected) {
@@ -137,6 +141,18 @@ public final class AccountGovernanceServiceImpl implements AccountGovernanceServ
                 forceCancel(booking, target, agentId, now, events);
             }
         }
+    }
+
+    private void deactivate(Property property, User host, UUID agentId, Instant now) {
+        properties.save(new Property(property.propertyId(), property.hostId(), ListingStatus.INACTIVE,
+                property.title(), property.description(), property.propertyType(), property.streetAddress(),
+                property.city(), property.region(), property.postalCode(), property.maxGuests(),
+                property.bedrooms(), property.bathrooms(), property.baseNightlyRate(), property.checkInTime(),
+                property.checkOutTime(), property.amenities(), property.createdAt()));
+        audit.record(AuditRecord.builder(agentId, AuditAction.LISTING_STATUS_CASCADE, "Property",
+                        property.propertyId())
+                .status(ListingStatus.ACTIVE, ListingStatus.INACTIVE).reason(CASCADE_LISTING_REASON)
+                .subject(host.userId()).at(now).build());
     }
 
     /** PENDING, or CONFIRMED with a check-in date after today. Started and ended stays belong to W10 (C36). */
