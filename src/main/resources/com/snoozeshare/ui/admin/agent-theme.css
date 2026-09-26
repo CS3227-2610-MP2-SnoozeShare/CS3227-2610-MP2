@@ -543,6 +543,15 @@
 .agent-root .agent-banner-danger { -fx-background-color: danger; }
 .agent-root .agent-banner-caption { -fx-font-size: 13px; -fx-text-fill: #fdf8f0; -fx-opacity: 0.9; }
 .agent-root .agent-banner-remedy { -fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #fdf8f0; }
+.agent-root .agent-banner-name { -fx-font-size: 24px; -fx-font-weight: 800; -fx-text-fill: #fdf8f0; }
+.agent-root .agent-banner-sub { -fx-font-size: 13px; -fx-text-fill: #fdf8f0; -fx-opacity: 0.9; }
+.agent-root .agent-dialog-info {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px 12px 10px 12px;
+    -fx-font-size: 12px;
+    -fx-text-fill: fg-muted;
+}
 .agent-root .agent-dialog-area, .agent-root .agent-dialog-area .content { -fx-font-size: 13px; }
 .agent-root .agent-dialog-area .content { -fx-padding: 9px 10px 9px 10px; }
 .agent-root .agent-dialog-field { -fx-font-size: 13px; -fx-padding: 9px 10px 9px 10px; }
