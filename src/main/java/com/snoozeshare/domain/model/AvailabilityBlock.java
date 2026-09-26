@@ -9,6 +9,7 @@ public record AvailabilityBlock(
         LocalDate startDate,
         LocalDate endDate,
         String source,
-        UUID bookingId
+        UUID bookingId,
+        String reason
 ) {
 }

@@ -89,7 +89,8 @@ public final class RowMappers {
                 JdbcCodecs.localDate(result.getString("startDate")),
                 JdbcCodecs.localDate(result.getString("endDate")),
                 result.getString("source"),
-                JdbcCodecs.uuid(result.getString("bookingId")));
+                JdbcCodecs.uuid(result.getString("bookingId")),
+                result.getString("reason"));
     }
 
     public static Booking booking(ResultSet result) throws SQLException {

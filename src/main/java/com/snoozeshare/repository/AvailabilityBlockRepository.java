@@ -16,5 +16,7 @@ public interface AvailabilityBlockRepository {
 
     AvailabilityBlock save(AvailabilityBlock block);
 
+    void deleteById(UUID blockId);
+
     void deleteByBookingId(UUID bookingId);
 }

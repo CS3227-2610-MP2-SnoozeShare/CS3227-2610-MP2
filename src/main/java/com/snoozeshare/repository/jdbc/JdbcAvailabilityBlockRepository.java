@@ -89,16 +89,28 @@ public final class JdbcAvailabilityBlockRepository implements AvailabilityBlockR
     }
 
     @Override
+    public void deleteById(UUID blockId) {
+        try (var statement = connection.prepareStatement(
+                "DELETE FROM availability_blocks WHERE blockId = ?")) {
+            statement.setString(1, JdbcCodecs.uuid(blockId));
+            statement.executeUpdate();
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to delete availability block", exception);
+        }
+    }
+
+    @Override
     public AvailabilityBlock save(AvailabilityBlock block) {
         try (var statement = connection.prepareStatement(
                 "INSERT INTO availability_blocks (blockId, propertyId, startDate, endDate, "
-                        + "source, bookingId) VALUES (?, ?, ?, ?, ?, ?)")) {
+                        + "source, bookingId, reason) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
             statement.setString(1, JdbcCodecs.uuid(block.blockId()));
             statement.setString(2, JdbcCodecs.uuid(block.propertyId()));
             statement.setString(3, JdbcCodecs.localDate(block.startDate()));
             statement.setString(4, JdbcCodecs.localDate(block.endDate()));
             statement.setString(5, block.source());
             statement.setString(6, JdbcCodecs.uuid(block.bookingId()));
+            statement.setString(7, block.reason());
             statement.executeUpdate();
             return block;
         } catch (SQLException exception) {

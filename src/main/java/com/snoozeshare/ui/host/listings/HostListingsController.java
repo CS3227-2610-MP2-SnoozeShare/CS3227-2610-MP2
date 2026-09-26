@@ -28,6 +28,7 @@ public final class HostListingsController {
     private Runnable onCreateListing = () -> { };
     private Consumer<Property> onEditListing = property -> { };
     private Consumer<Property> onViewListing = property -> { };
+    private Consumer<Property> onOpenCalendar = property -> { };
 
     public void setContext(AppContext appContext) {
         context = appContext;
@@ -44,6 +45,10 @@ public final class HostListingsController {
 
     public void setOnViewListing(Consumer<Property> callback) {
         onViewListing = callback == null ? property -> { } : callback;
+    }
+
+    public void setOnOpenCalendar(Consumer<Property> callback) {
+        onOpenCalendar = callback == null ? property -> { } : callback;
     }
 
     @FXML
@@ -90,7 +95,11 @@ public final class HostListingsController {
         editButton.setAccessibleText("Edit listing " + property.title());
         editButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> event.consume());
         editButton.setOnAction(event -> onEditListing.accept(property));
-        HBox actions = new HBox(8, statusToggle, editButton);
+        Button calendarButton = new Button("Open booking calendar");
+        calendarButton.setAccessibleText("Open booking calendar for " + property.title());
+        calendarButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> event.consume());
+        calendarButton.setOnAction(event -> onOpenCalendar.accept(property));
+        HBox actions = new HBox(8, statusToggle, editButton, calendarButton);
         card.getChildren().addAll(title, details, rate, actions);
         return card;
     }

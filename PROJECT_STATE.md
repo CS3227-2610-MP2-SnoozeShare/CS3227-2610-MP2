@@ -4,12 +4,12 @@
 anything, then run `git log --oneline -20` to confirm it still matches reality. Update it at
 every boundary, not at the end of the session.
 
-- **Phase:** W6 Host Listing Management & Publishing — complete, awaiting guide confirmation
+- **Phase:** W7 Host Calendar & Date Overrides — complete
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `w6` (Host features — Listing Management & Publishing)
+- **Branch:** `w7` (branched from `w6`; scope assessment for Host Calendar & Date Overrides)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-25 by Codex — marked W6 complete after final verification
-- **Last verified against repo:** 2026-09-25
+- **Last updated:** 2026-09-26 by Codex — marked W7 complete after final scope review and full verification
+- **Last verified against repo:** 2026-09-26
 - **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
 
 Sections are ordered by how often they are needed: **1–3 say where we are, 4–5 say what the
@@ -64,6 +64,8 @@ three iterations).
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
+| S7 | 2026-09-25 | Codex | w7 | W7 scope assessment | Paused | `w7` created from `w6`; booking display maps to W8/F7.1, while W7 remains calendar/date overrides | 2026-09-25 |
+| S8 | 2026-09-26 | Codex | w7 | W7 | Paused | W7 complete: host calendar, inclusive manual blocks, removal, validation, and layout delivered; full tests/build pass | 2026-09-26 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -85,7 +87,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Not started | — | — | Backlog only: §3 | — |
 | W5 | F4 — Guest Wallet Management (top-up/withdraw) | Done | [wallet-management design](docs/superpowers/specs/2026-09-25-w5-wallet-management-design.md) | [wallet-management plan](docs/superpowers/plans/2026-09-25-w5-wallet-management.md) | All 6 tasks complete: dashboard, modal, navigation, CSS, sidebar refresh | Awaiting confirmation |
 | W6 | F5 — Host Listing Management & Publishing | Done | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md) | [listing-management plan](docs/superpowers/plans/2026-09-25-w6-listing-management.md) | Implementation complete: listing CRUD/status/detail flows, host wallet/navigation refinements, wallet refresh fix, and clean build verification | Awaiting confirmation |
-| W7 | F6 — Host Calendar & Date Overrides | Not started | — | — | Backlog only: §4 | — |
+| W7 | F6 — Host Calendar & Date Overrides | Done | [host-calendar design](docs/superpowers/specs/2026-09-26-w7-host-calendar-design.md) | [host-calendar plan](docs/superpowers/plans/2026-09-26-w7-host-calendar.md) | Complete: listing calendar, month navigation, colors, all-month overrides, inclusive/single-date blocking, removal, validation, and layout; full tests/build pass | Awaiting confirmation |
 | W8 | F7 — Host Request Queue, Earnings & Disputes | Not started | — | — | Backlog only: §4 | — |
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
 | W10 | F9 — Agent Dispute Resolution & State Overrides | Not started | — | — | Backlog only: §5 | — |
@@ -433,6 +435,15 @@ must use `compareTo`, not `equals`.
 The full suite passes, but SQLite emits Java 25's warning that native access should be enabled for
 the JDBC loader. It is non-fatal in the current runtime and does not change W1 behavior.
 
+### D5 — Manual host blocks use inclusive end dates (W7, RESOLVED 2026-09-26)
+
+The approved W7 spec originally described the shared half-open date convention, but the operator
+later requested that manual host blocks include the entered end date and allow a single-date
+block. The service preserves the repository's half-open storage/overlap representation by
+normalizing a manual block's persisted end to the day after the entered end; the calendar and
+override list present the operator-entered inclusive end date. Booking date semantics remain
+unchanged.
+
 ---
 
 ## 10. Record
@@ -440,7 +451,7 @@ the JDBC loader. It is non-fatal in the current runtime and does not change W1 b
 The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-state/done-ledger.md)**
 — every change, big or small, newest first.
 
-- **Latest entry:** 2026-09-25
-- **Entries:** 17 (4 backfilled coarsely from git history, 13 current/history entries)
+- **Latest entry:** 2026-09-26
+- **Entries:** 46 (including W7 completion and follow-up fixes)
 
 Deviations stay in § Deviations above: those are read every session.
