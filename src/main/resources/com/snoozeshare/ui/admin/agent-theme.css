@@ -204,6 +204,54 @@
     -fx-cursor: hand;
 }
 .agent-root .agent-button-danger:hover { -fx-background-color: danger-subtle; }
+.agent-root .booking-approve-button, .agent-root .booking-confirm-approve {
+    -fx-background-color: success;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 14px 8px 14px;
+}
+.agent-root .booking-approve-button:hover, .agent-root .booking-confirm-approve:hover {
+    -fx-background-color: #315208;
+}
+.agent-root .booking-reject-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+    -fx-border-color: danger;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-text-fill: danger;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 14px 8px 14px;
+}
+.agent-root .booking-reject-button:hover { -fx-background-color: danger-subtle; }
+.agent-root .booking-confirm-reject {
+    -fx-background-color: danger;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-padding: 9px 18px 9px 18px;
+}
+.agent-root .booking-confirm-reject:hover { -fx-background-color: #7d0716; }
+.agent-root .agent-booking-summary {
+    -fx-background-color: success;
+    -fx-background-radius: 12px;
+    -fx-padding: 18px 20px 18px 20px;
+}
+.agent-root .agent-booking-summary .booking-summary-title,
+.agent-root .agent-booking-summary .booking-summary-detail,
+.agent-root .agent-booking-summary .booking-summary-amount { -fx-text-fill: #ffffff; }
+.agent-root .booking-summary-title { -fx-font-size: 17px; -fx-font-weight: bold; }
+.agent-root .booking-summary-detail { -fx-font-size: 13px; }
+.agent-root .booking-summary-amount { -fx-font-size: 24px; -fx-font-weight: bold; }
+.agent-root .agent-booking-notice {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 10px;
+    -fx-padding: 12px 14px 12px 14px;
+    -fx-text-fill: fg-muted;
+}
+.agent-root .booking-message-label { -fx-font-weight: bold; }
+.agent-root .agent-booking-summary.booking-reject-summary { -fx-background-color: danger; }
 .agent-root #logoutButton {
     -fx-background-color: transparent;
     -fx-border-color: transparent;

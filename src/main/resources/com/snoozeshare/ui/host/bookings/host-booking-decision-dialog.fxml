@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox prefWidth="650" spacing="16" styleClass="agent-root, agent-modal, agent-dialog-card"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.snoozeshare.ui.host.bookings.HostBookingDecisionDialogController">
+    <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+    <Label fx:id="titleLabel" text="Approve booking request?" styleClass="page-title"/>
+    <VBox fx:id="summaryPane" styleClass="agent-booking-summary" spacing="6">
+        <Label fx:id="listingLabel" text="Listing" styleClass="booking-summary-title"/>
+        <Label fx:id="bookingLabel" text="Guest · dates (nights)" styleClass="booking-summary-detail"/>
+        <HBox spacing="6" alignment="BASELINE_LEFT">
+            <Label fx:id="amountLabel" text="$0.00" styleClass="booking-summary-amount"/>
+            <Label fx:id="amountCaptionLabel" text="earning" styleClass="booking-summary-detail"/>
+        </HBox>
+    </VBox>
+    <Label fx:id="noticeLabel" text="Notice" styleClass="agent-booking-notice" wrapText="true"/>
+    <Label fx:id="messageLabel" text="Message to guest (optional)" styleClass="booking-message-label"/>
+    <TextArea fx:id="messageArea" promptText="e.g. dates unavailable due to maintenance"
+              prefRowCount="3" wrapText="true"/>
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button fx:id="cancelButton" text="Cancel" styleClass="outline-button, agent-dialog-button"/>
+        <Button fx:id="confirmButton" text="Confirm approve" styleClass="agent-dialog-button"/>
+    </HBox>
+</VBox>
