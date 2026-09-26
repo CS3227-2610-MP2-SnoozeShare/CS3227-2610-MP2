@@ -25,10 +25,6 @@ import com.snoozeshare.testsupport.Fakes;
 
 class TicketServiceCategoryTest {
 
-    private final UUID agent = UUID.randomUUID();
-    private final UUID guest = UUID.randomUUID();
-    private final Fakes.RecordingAudit audit = new Fakes.RecordingAudit();
-    private final Fakes.InMemoryTickets tickets = new Fakes.InMemoryTickets();
     private static final com.snoozeshare.infra.events.EventBus NOOP_BUS =
             new com.snoozeshare.infra.events.EventBus() {
                 @Override
@@ -40,6 +36,10 @@ class TicketServiceCategoryTest {
                 @Override
                 public void publish(com.snoozeshare.infra.events.DomainEvent event) {}
             };
+    private final UUID agent = UUID.randomUUID();
+    private final UUID guest = UUID.randomUUID();
+    private final Fakes.RecordingAudit audit = new Fakes.RecordingAudit();
+    private final Fakes.InMemoryTickets tickets = new Fakes.InMemoryTickets();
     private final TicketService service = new TicketServiceImpl(tickets,
             new Fakes.InMemoryCategories(), null,
             new Fakes.StubUsers()

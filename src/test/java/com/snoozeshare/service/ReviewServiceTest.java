@@ -74,14 +74,14 @@ class ReviewServiceTest {
 
     @Test
     void rejectsBookingNotFound() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.submit(UUID.randomUUID(), guestId, 4, "Nice"));
+        assertThrows(IllegalArgumentException.class, () ->
+                service.submit(UUID.randomUUID(), guestId, 4, "Nice"));
     }
 
     @Test
     void rejectsWhenGuestDoesNotOwnBooking() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.submit(completedBooking.bookingId(), UUID.randomUUID(), 4, "Nice"));
+        assertThrows(IllegalArgumentException.class, () ->
+                service.submit(completedBooking.bookingId(), UUID.randomUUID(), 4, "Nice"));
     }
 
     @Test
@@ -92,8 +92,8 @@ class ReviewServiceTest {
                 new BigDecimal("400.00"), Instant.parse("2026-08-20T00:00:00Z"),
                 Instant.parse("2026-08-21T00:00:00Z"), null);
         service = new ReviewServiceImpl(stubBookings(confirmed), reviews, audit, clock);
-        assertThrows(IllegalStateException.class,
-                () -> service.submit(confirmed.bookingId(), guestId, 4, "Nice"));
+        assertThrows(IllegalStateException.class, () ->
+                service.submit(confirmed.bookingId(), guestId, 4, "Nice"));
     }
 
     @Test
@@ -105,27 +105,27 @@ class ReviewServiceTest {
                 Instant.parse("2026-08-21T00:00:00Z"),
                 Instant.parse("2026-09-12T00:00:00Z"));
         service = new ReviewServiceImpl(stubBookings(forceCompleted), reviews, audit, clock);
-        assertThrows(IllegalStateException.class,
-                () -> service.submit(forceCompleted.bookingId(), guestId, 4, "Nice"));
+        assertThrows(IllegalStateException.class, () ->
+                service.submit(forceCompleted.bookingId(), guestId, 4, "Nice"));
     }
 
     @Test
     void rejectsRatingBelow1() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.submit(completedBooking.bookingId(), guestId, 0, "Bad"));
+        assertThrows(IllegalArgumentException.class, () ->
+                service.submit(completedBooking.bookingId(), guestId, 0, "Bad"));
     }
 
     @Test
     void rejectsRatingAbove5() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.submit(completedBooking.bookingId(), guestId, 6, "Good"));
+        assertThrows(IllegalArgumentException.class, () ->
+                service.submit(completedBooking.bookingId(), guestId, 6, "Good"));
     }
 
     @Test
     void rejectsDuplicateReview() {
         service.submit(completedBooking.bookingId(), guestId, 4, "First review");
-        assertThrows(IllegalStateException.class,
-                () -> service.submit(completedBooking.bookingId(), guestId, 5, "Second review"));
+        assertThrows(IllegalStateException.class, () ->
+                service.submit(completedBooking.bookingId(), guestId, 5, "Second review"));
     }
 
     private static BookingRepository stubBookings(Booking booking) {

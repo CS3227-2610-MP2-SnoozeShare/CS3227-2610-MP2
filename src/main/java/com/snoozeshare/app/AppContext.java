@@ -12,6 +12,7 @@ import com.snoozeshare.repository.jdbc.JdbcAuditLogRepository;
 import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
+import com.snoozeshare.repository.jdbc.JdbcReviewRepository;
 import com.snoozeshare.repository.jdbc.JdbcTicketCategoryRepository;
 import com.snoozeshare.repository.jdbc.JdbcTicketRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
@@ -24,6 +25,7 @@ import com.snoozeshare.service.DisputeQueryService;
 import com.snoozeshare.service.DisputeSettlementService;
 import com.snoozeshare.service.ListingService;
 import com.snoozeshare.service.MessageService;
+import com.snoozeshare.service.ReviewService;
 import com.snoozeshare.service.TicketService;
 import com.snoozeshare.service.TransactionService;
 import com.snoozeshare.service.UserService;
@@ -35,6 +37,7 @@ import com.snoozeshare.service.impl.DisputeQueryServiceImpl;
 import com.snoozeshare.service.impl.DisputeSettlementServiceImpl;
 import com.snoozeshare.service.impl.InMemoryMessageService;
 import com.snoozeshare.service.impl.ListingServiceImpl;
+import com.snoozeshare.service.impl.ReviewServiceImpl;
 import com.snoozeshare.service.impl.TicketServiceImpl;
 import com.snoozeshare.service.impl.TransactionServiceImpl;
 import com.snoozeshare.service.impl.UserServiceImpl;
@@ -57,6 +60,7 @@ public final class AppContext implements AutoCloseable {
     private final TicketService ticketService;
     private final DisputeQueryService disputeQueryService;
     private final MessageService messageService;
+    private final ReviewService reviewService;
     private final SceneRouter sceneRouter;
 
     private AppContext(Connection connection) throws SQLException {
@@ -92,6 +96,8 @@ public final class AppContext implements AutoCloseable {
         this.disputeQueryService = new DisputeQueryServiceImpl(ticketRepo, bookingRepo, propertyRepo,
                 users, txnRepo, clock);
         this.messageService = new InMemoryMessageService(clock);
+        JdbcReviewRepository reviewRepo = new JdbcReviewRepository(connection);
+        this.reviewService = new ReviewServiceImpl(bookingRepo, reviewRepo, auditService, clock);
         this.sceneRouter = new SceneRouter();
     }
 
@@ -113,6 +119,10 @@ public final class AppContext implements AutoCloseable {
 
     public MessageService messageService() {
         return messageService;
+    }
+
+    public ReviewService reviewService() {
+        return reviewService;
     }
 
     public SessionContext session() {
