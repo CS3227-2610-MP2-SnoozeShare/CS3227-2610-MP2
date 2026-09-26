@@ -14,11 +14,11 @@ import java.sql.Statement;
 import java.util.UUID;
 
 import com.snoozeshare.infra.db.ConnectionFactory;
-import com.snoozeshare.infra.db.migration.MigrationRunner;
 
 /**
  * A throw-away copy of the committed mock DB. The copy exists only so mutating tests never write to
- * the committed file; the data is used exactly as the team sees it.
+ * the committed file; the data is used exactly as the team sees it (no migration is applied, so a stale
+ * committed file fails the tests instead of being silently repaired).
  */
 public final class MockDbFixture implements AutoCloseable {
 
@@ -30,8 +30,6 @@ public final class MockDbFixture implements AutoCloseable {
     private MockDbFixture(Path copy) throws SQLException {
         this.copy = copy;
         this.connection = ConnectionFactory.open(urlFor(copy));
-        // Like AppContext at start-up: bring the committed reference DB up to the current schema.
-        MigrationRunner.migrate(connection);
     }
 
     public static MockDbFixture open(Path directory) throws IOException, SQLException {

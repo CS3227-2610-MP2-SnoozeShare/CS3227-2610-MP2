@@ -146,3 +146,9 @@ CREATE INDEX idx_audit_actor ON audit_log(actorUserId);
 CREATE INDEX idx_audit_subject ON audit_log(subjectUserId);
 CREATE INDEX idx_audit_booking ON audit_log(bookingId);
 CREATE INDEX idx_audit_ticket ON audit_log(ticketId);
+
+-- Migration bookkeeping, identical to what MigrationRunner creates. The seed records V001 and V002 as applied.
+CREATE TABLE IF NOT EXISTS schema_history (
+    version   INTEGER PRIMARY KEY,
+    appliedAt TEXT NOT NULL
+);
