@@ -55,6 +55,11 @@ public final class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    public List<Ticket> myTickets(UUID userId) {
+        return tickets.findByRaisedByUserId(userId);
+    }
+
+    @Override
     public Ticket fileTicket(NewTicketRequest request, UUID raisedByUserId, Role raisedByRole) {
         Booking booking = bookings.findById(request.bookingId())
                 .orElseThrow(() -> new IllegalArgumentException("Booking does not exist"));
