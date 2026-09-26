@@ -457,6 +457,81 @@
 .agent-root .agent-table .cell-id { -fx-text-fill: fg-subtle; }
 .agent-root .agent-table .cell-strong { -fx-font-weight: bold; -fx-text-fill: fg; }
 
+/* ---- Host booking requests tables: same visual language, host-owned selectors ---- */
+.agent-root .host-bookings-page { -fx-background-color: bg; }
+.agent-root .host-bookings-count-pill {
+    -fx-background-color: warning-subtle;
+    -fx-background-radius: 999px;
+    -fx-padding: 3px 11px 3px 11px;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: warning;
+}
+.agent-root .host-bookings-table-card {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 12px;
+    -fx-border-color: border;
+    -fx-border-radius: 12px;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.08), 14, 0, 0, 4);
+}
+.agent-root .host-bookings-table {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-table-cell-border-color: transparent;
+}
+.agent-root .host-bookings-table .column-header-background {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 11px 11px 0 0;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+.agent-root .host-bookings-table .column-header {
+    -fx-background-color: transparent;
+    -fx-size: 34px;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+.agent-root .host-bookings-table .column-header .label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: fg-subtle;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 18px;
+}
+.agent-root .host-bookings-table .column-drag-header,
+.agent-root .host-bookings-table .filler { -fx-background-color: transparent; }
+.agent-root .host-bookings-table .column-resize-line { -fx-background-color: transparent; -fx-pref-width: 0; }
+.agent-root .host-bookings-table .table-row-cell {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: border-muted transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-cell-size: 47px;
+    -fx-padding: 0;
+}
+.agent-root .host-bookings-table .table-row-cell:filled { -fx-cursor: hand; }
+.agent-root .host-bookings-table .table-row-cell:hover { -fx-background-color: rgba(240, 232, 216, 0.4); }
+.agent-root .host-bookings-table .table-row-cell:selected { -fx-background-color: transparent; }
+.agent-root .host-bookings-table .table-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0 0 0 18px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-font-size: 13px;
+    -fx-text-fill: fg-muted;
+}
+.agent-root .host-bookings-table .table-cell:selected { -fx-text-fill: fg-muted; }
+.agent-root .host-bookings-table .placeholder { -fx-background-color: transparent; }
+.agent-root .host-bookings-table .scroll-bar { -fx-opacity: 0; -fx-pref-width: 0; -fx-pref-height: 0; }
+.agent-root .host-bookings-table .cell-id { -fx-text-fill: fg-subtle; }
+.agent-root .host-bookings-table .cell-strong { -fx-font-weight: bold; -fx-text-fill: fg; }
+.agent-root .host-bookings-section-title { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: fg; }
+.agent-root .host-bookings-note,
+.agent-root .host-bookings-feedback { -fx-font-size: 12px; -fx-text-fill: fg-subtle; }
+.agent-root .host-bookings-feedback { -fx-text-fill: danger; }
+
 /* ---- Detail screen ---- */
 .agent-root .agent-scroll, .agent-root .agent-scroll > .viewport {
     -fx-background-color: bg;

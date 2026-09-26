@@ -21,7 +21,10 @@ class HostBookingsControllerTest {
         assertTrue(fxml.contains("Listing"));
         assertTrue(fxml.contains("Net earning"));
         assertTrue(fxml.contains("Past requests"));
-        assertTrue(fxml.contains("agent-table"));
+        assertTrue(fxml.contains("host-bookings-table"));
+        assertTrue(fxml.contains("host-bookings-table-card"));
+        assertTrue(!fxml.contains("agent-table"));
+        assertTrue(!fxml.contains("agent-card"));
         String controller = Files.readString(Path.of(
                 "src/main/java/com/snoozeshare/ui/host/bookings/HostBookingsController.java"));
         assertTrue(controller.contains("Approve"));
@@ -52,5 +55,13 @@ class HostBookingsControllerTest {
         assertTrue(source.contains("historyRowsFor"));
         assertTrue(source.contains("HostBookingDecisionDialogController"));
         assertTrue(source.contains("feedbackLabel"));
+    }
+
+    @Test
+    void hostShellPassesContextToBookingRequestsController() throws Exception {
+        String source = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/HostShellController.java"));
+        assertTrue(source.contains("HostBookingsController controller = loader.getController();"));
+        assertTrue(source.contains("controller.setContext(getContext());"));
     }
 }

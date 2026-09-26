@@ -8,16 +8,16 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="16" styleClass="agent-content" xmlns:fx="http://javafx.com/fxml/1"
+<VBox spacing="16" styleClass="host-bookings-page" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.snoozeshare.ui.host.bookings.HostBookingsController">
     <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
     <HBox spacing="10" alignment="CENTER_LEFT">
         <Label text="Booking requests" styleClass="page-title"/>
-        <Label fx:id="pendingCountLabel" text="0 pending" styleClass="badge-warning, agent-count-pill"/>
+        <Label fx:id="pendingCountLabel" text="0 pending" styleClass="host-bookings-count-pill"/>
         <Region HBox.hgrow="ALWAYS"/>
     </HBox>
-    <VBox styleClass="agent-card">
-        <TableView fx:id="pendingTable" styleClass="agent-table" prefHeight="220">
+    <VBox styleClass="host-bookings-table-card">
+        <TableView fx:id="pendingTable" styleClass="host-bookings-table" prefHeight="220">
             <columns>
                 <TableColumn fx:id="pendingGuestColumn" text="Guest" prefWidth="125"/>
                 <TableColumn fx:id="pendingListingColumn" text="Listing" prefWidth="150"/>
@@ -30,12 +30,12 @@
             </columns>
         </TableView>
     </VBox>
-    <Label fx:id="feedbackLabel" styleClass="small"/>
+    <Label fx:id="feedbackLabel" styleClass="host-bookings-feedback"/>
     <Label text="Net earning = gross - 3% platform fee. Guest rating is their average review score, or No ratings yet."
-           styleClass="small" wrapText="true"/>
-    <Label text="Past requests" styleClass="section-title"/>
-    <VBox styleClass="agent-card">
-        <TableView fx:id="pastTable" styleClass="agent-table" prefHeight="180">
+           styleClass="host-bookings-note" wrapText="true"/>
+    <Label text="Past requests" styleClass="host-bookings-section-title"/>
+    <VBox styleClass="host-bookings-table-card">
+        <TableView fx:id="pastTable" styleClass="host-bookings-table" prefHeight="180">
             <columns>
                 <TableColumn fx:id="pastGuestColumn" text="Guest" prefWidth="150"/>
                 <TableColumn fx:id="pastListingColumn" text="Listing" prefWidth="190"/>
