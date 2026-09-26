@@ -8,5 +8,7 @@ import com.snoozeshare.domain.model.Review;
 public interface ReviewRepository {
     List<Review> findByBookingId(UUID bookingId);
 
+    List<Review> findByGuestId(UUID guestId);
+
     Review save(Review review);
 }

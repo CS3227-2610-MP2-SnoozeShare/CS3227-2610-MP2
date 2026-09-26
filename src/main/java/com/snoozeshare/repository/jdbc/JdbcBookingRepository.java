@@ -93,6 +93,24 @@ public final class JdbcBookingRepository implements BookingRepository {
     }
 
     @Override
+    public List<Booking> findByHost(UUID hostId) {
+        try (var statement = connection.prepareStatement(
+                "SELECT b.* FROM bookings b JOIN properties p ON b.listingId = p.propertyId "
+                        + "WHERE p.hostId = ? ORDER BY b.createdAt DESC, b.bookingId")) {
+            statement.setString(1, JdbcCodecs.uuid(hostId));
+            try (var result = statement.executeQuery()) {
+                List<Booking> bookings = new ArrayList<>();
+                while (result.next()) {
+                    bookings.add(RowMappers.booking(result));
+                }
+                return bookings;
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to query bookings by host", exception);
+        }
+    }
+
+    @Override
     public Booking save(Booking booking) {
         try (var statement = connection.prepareStatement(
                 "INSERT INTO bookings (bookingId, listingId, guestId, startDate, endDate, "

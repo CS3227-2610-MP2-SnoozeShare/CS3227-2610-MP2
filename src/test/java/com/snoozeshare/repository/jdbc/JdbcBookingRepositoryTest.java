@@ -63,6 +63,30 @@ class JdbcBookingRepositoryTest {
         }
     }
 
+    @Test
+    void findByHostScopesHistoryAndPendingRequestsOldestFirst() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection);
+            var other = seedContext(connection);
+            var repo = new JdbcBookingRepository(connection);
+            var first = makeBooking(ctx.propertyId, ctx.guestId,
+                    LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 3), BookingStatus.PENDING);
+            var second = makeBooking(ctx.propertyId, ctx.guestId,
+                    LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 3), BookingStatus.PENDING);
+            var history = makeBooking(ctx.propertyId, ctx.guestId,
+                    LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 3), BookingStatus.CONFIRMED);
+            repo.save(first);
+            repo.save(second);
+            repo.save(history);
+            repo.save(makeBooking(other.propertyId, other.guestId,
+                    LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 3), BookingStatus.PENDING));
+
+            assertEquals(3, repo.findByHost(ctx.hostId).size());
+            assertEquals(first.bookingId(), repo.findByHostPending(ctx.hostId).get(0).bookingId());
+            assertEquals(second.bookingId(), repo.findByHostPending(ctx.hostId).get(1).bookingId());
+        }
+    }
+
     private static Booking makeBooking(UUID propertyId, UUID guestId,
                                         LocalDate start, LocalDate end,
                                         BookingStatus status) {
@@ -71,7 +95,7 @@ class JdbcBookingRepositoryTest {
                 Instant.now(), null, null);
     }
 
-    private record TestContext(UUID propertyId, UUID guestId) {
+    private record TestContext(UUID hostId, UUID propertyId, UUID guestId) {
     }
 
     private static TestContext seedContext(Connection connection) {
@@ -91,7 +115,7 @@ class JdbcBookingRepositoryTest {
                 new BigDecimal("100.00"), LocalTime.of(14, 0), LocalTime.of(11, 0),
                 Set.of(), Instant.now());
         properties.save(property);
-        return new TestContext(property.propertyId(), guest.userId());
+        return new TestContext(host.userId(), property.propertyId(), guest.userId());
     }
 
     private static Connection migratedConnection() throws Exception {

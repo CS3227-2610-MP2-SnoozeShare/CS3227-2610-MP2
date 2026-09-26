@@ -16,5 +16,9 @@ public interface BookingRepository {
 
     List<Booking> findByHostPending(UUID hostId);
 
+    default List<Booking> findByHost(UUID hostId) {
+        return List.of();
+    }
+
     Booking save(Booking booking);
 }
