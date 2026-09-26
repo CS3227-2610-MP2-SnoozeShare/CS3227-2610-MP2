@@ -84,10 +84,11 @@ public final class AppContext implements AutoCloseable {
         this.listingMetricsService = new ListingMetricsServiceImpl(connection);
         JdbcWalletTransactionRepository txnRepo = new JdbcWalletTransactionRepository(connection);
         this.transactionService = new TransactionServiceImpl(connection, bookingRepo,
-                wallets, txnRepo, eventBus);
-        this.bookingService = new BookingServiceImpl(connection, bookingRepo, propertyRepo,
-                blockRepo, wallets, txnRepo, users, reviewRepo, eventBus);
+                propertyRepo, wallets, txnRepo, eventBus);
         JdbcTicketRepository ticketRepo = new JdbcTicketRepository(connection);
+        this.bookingService = new BookingServiceImpl(connection, bookingRepo, propertyRepo,
+                blockRepo, wallets, txnRepo, users, reviewRepo, eventBus, transactionService,
+                ticketRepo);
         JdbcTicketCategoryRepository categoryRepo = new JdbcTicketCategoryRepository(connection);
         Clock clock = Clock.systemUTC();
         DisputeSettlementService settlementService = new DisputeSettlementServiceImpl(connection,

@@ -54,6 +54,23 @@ public final class JdbcTicketRepository implements TicketRepository {
     }
 
     @Override
+    public List<Ticket> findByBookingId(UUID bookingId) {
+        try (var statement = connection.prepareStatement(
+                "SELECT * FROM tickets WHERE bookingId = ? ORDER BY createdAt, ticketId")) {
+            statement.setString(1, JdbcCodecs.uuid(bookingId));
+            try (var result = statement.executeQuery()) {
+                List<Ticket> tickets = new ArrayList<>();
+                while (result.next()) {
+                    tickets.add(RowMappers.ticket(result));
+                }
+                return tickets;
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to query tickets by booking", exception);
+        }
+    }
+
+    @Override
     public List<Ticket> findQueue(TicketStatus status, AssigneeFilter assignee, UUID agentId) {
         AssigneeFilter filter = assignee == null ? AssigneeFilter.ALL : assignee;
         if (filter == AssigneeFilter.MINE && agentId == null) {

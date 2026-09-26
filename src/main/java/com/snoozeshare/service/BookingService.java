@@ -26,6 +26,8 @@ public interface BookingService {
 
     Booking complete(UUID bookingId);
 
+    int completeEligibleBookings();
+
     Booking forceTransition(UUID bookingId, BookingStatus target, UUID agentId, String reason);
 
     Money previewHostEarnings(UUID bookingId);

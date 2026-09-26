@@ -29,6 +29,7 @@ import com.snoozeshare.repository.AvailabilityBlockRepository;
 import com.snoozeshare.repository.BookingRepository;
 import com.snoozeshare.repository.PropertyRepository;
 import com.snoozeshare.repository.ReviewRepository;
+import com.snoozeshare.repository.TicketRepository;
 import com.snoozeshare.repository.UserRepository;
 import com.snoozeshare.repository.WalletRepository;
 import com.snoozeshare.repository.WalletTransactionRepository;
@@ -47,6 +48,8 @@ public final class BookingServiceImpl implements BookingService {
     private final WalletTransactionRepository transactions;
     private final UserRepository users;
     private final ReviewRepository reviews;
+    private final com.snoozeshare.service.TransactionService transactionService;
+    private final TicketRepository tickets;
     private final EventBus eventBus;
 
     public BookingServiceImpl(Connection connection, BookingRepository bookings,
@@ -56,7 +59,9 @@ public final class BookingServiceImpl implements BookingService {
                                WalletTransactionRepository transactions,
                                UserRepository users,
                                ReviewRepository reviews,
-                               EventBus eventBus) {
+                               EventBus eventBus,
+                               com.snoozeshare.service.TransactionService transactionService,
+                               TicketRepository tickets) {
         this.connection = connection;
         this.bookings = bookings;
         this.properties = properties;
@@ -66,6 +71,8 @@ public final class BookingServiceImpl implements BookingService {
         this.users = users;
         this.reviews = reviews;
         this.eventBus = eventBus;
+        this.transactionService = transactionService;
+        this.tickets = tickets;
     }
 
     @Override
@@ -312,7 +319,40 @@ public final class BookingServiceImpl implements BookingService {
 
     @Override
     public Booking complete(UUID bookingId) {
-        throw new UnsupportedOperationException("Owned by W8");
+        Booking booking = bookings.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking does not exist"));
+        if (booking.status() == BookingStatus.COMPLETED) {
+            return booking;
+        }
+        if (booking.status() != BookingStatus.CONFIRMED) {
+            throw new IllegalStateException("Only confirmed bookings can be completed");
+        }
+        if (booking.endDate().isAfter(LocalDate.now().minusDays(7))) {
+            throw new IllegalStateException("Booking is not eligible for completion");
+        }
+        boolean blocked = tickets.findByBookingId(bookingId).stream()
+                .anyMatch(ticket -> ticket.status() == com.snoozeshare.domain.enums.TicketStatus.OPEN
+                        || ticket.status() == com.snoozeshare.domain.enums.TicketStatus.IN_REVIEW);
+        if (blocked) {
+            throw new IllegalStateException("Open dispute blocks booking completion");
+        }
+        transactionService.settleBookingCompletion(bookingId);
+        return bookings.findById(bookingId).orElseThrow();
+    }
+
+    @Override
+    public int completeEligibleBookings() {
+        int completed = 0;
+        LocalDate cutoff = LocalDate.now().minusDays(7);
+        for (Booking booking : bookings.findConfirmedEndingOnOrBefore(cutoff)) {
+            try {
+                complete(booking.bookingId());
+                completed++;
+            } catch (IllegalStateException ignored) {
+                // Open disputes and transiently ineligible rows remain held for a later sweep.
+            }
+        }
+        return completed;
     }
 
     @Override

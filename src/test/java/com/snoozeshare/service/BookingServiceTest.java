@@ -36,10 +36,12 @@ import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
 import com.snoozeshare.repository.jdbc.JdbcReviewRepository;
+import com.snoozeshare.repository.jdbc.JdbcTicketRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
 import com.snoozeshare.service.impl.BookingServiceImpl;
+import com.snoozeshare.service.impl.TransactionServiceImpl;
 
 class BookingServiceTest {
 
@@ -492,6 +494,73 @@ class BookingServiceTest {
         }
     }
 
+    @Test
+    void completeRejectsBookingBeforeCheckoutWindow() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            BookingService service = createService(connection);
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
+            service.decide(booking.bookingId(), true, ctx.hostId);
+
+            assertThrows(IllegalStateException.class, () -> service.complete(booking.bookingId()));
+        }
+    }
+
+    @Test
+    void completeSettlesNetHostPayoutAndIsIdempotent() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            var events = new InProcessEventBus();
+            List<WalletTransactionRecordedEvent> payoutEvents = new ArrayList<>();
+            events.subscribe(WalletTransactionRecordedEvent.class, payoutEvents::add);
+            BookingService service = createService(connection, events);
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().minusDays(10), LocalDate.now().minusDays(7));
+            new JdbcBookingRepository(connection).save(new Booking(booking.bookingId(),
+                    booking.listingId(), booking.guestId(), booking.startDate(), booking.endDate(),
+                    BookingStatus.CONFIRMED, booking.nightlyRateSnapshot(), booking.totalAmount(),
+                    booking.createdAt(), Instant.now(), null));
+
+            Booking completed = service.complete(booking.bookingId());
+            Booking repeated = service.complete(booking.bookingId());
+            var transactions = new JdbcWalletTransactionRepository(connection)
+                    .findByBookingId(booking.bookingId()).stream()
+                    .filter(txn -> txn.type() == WalletTransactionType.BOOKING_PAYOUT).toList();
+
+            assertEquals(BookingStatus.COMPLETED, completed.status());
+            assertEquals(completed, repeated);
+            assertEquals(1, transactions.size());
+            assertEquals(0, new BigDecimal("291.00").compareTo(transactions.get(0).amount()));
+            assertEquals(0, new BigDecimal("9.00").compareTo(transactions.get(0).feeAmount()));
+            assertEquals(1, payoutEvents.stream().filter(event -> event.transactionId()
+                    .equals(transactions.get(0).transactionId())).count());
+        }
+    }
+
+    @Test
+    void completeBlocksBookingWithOpenTicket() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            BookingService service = createService(connection);
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().minusDays(10), LocalDate.now().minusDays(7));
+            new JdbcBookingRepository(connection).save(new Booking(booking.bookingId(),
+                    booking.listingId(), booking.guestId(), booking.startDate(), booking.endDate(),
+                    BookingStatus.CONFIRMED, booking.nightlyRateSnapshot(), booking.totalAmount(),
+                    booking.createdAt(), Instant.now(), null));
+            new JdbcTicketRepository(connection).save(new com.snoozeshare.domain.model.Ticket(
+                    UUID.randomUUID(), booking.bookingId(), ctx.guestId, Role.GUEST, "Other",
+                    "Issue", "Details", com.snoozeshare.domain.enums.RemedyType.OTHER,
+                    null, com.snoozeshare.domain.enums.TicketStatus.OPEN, null, null, null,
+                    Instant.now(), null));
+
+            assertThrows(IllegalStateException.class, () -> service.complete(booking.bookingId()));
+            assertEquals(BookingStatus.CONFIRMED, new JdbcBookingRepository(connection)
+                    .findById(booking.bookingId()).orElseThrow().status());
+        }
+    }
+
     // --- helpers ---
 
     private record TestContext(UUID guestId, UUID hostId, UUID propertyId) {
@@ -514,6 +583,7 @@ class BookingServiceTest {
         users.save(guest);
 
         walletRepo.save(new Wallet(UUID.randomUUID(), guest.userId(), walletBalance, "SGD", now));
+        walletRepo.save(new Wallet(UUID.randomUUID(), host.userId(), BigDecimal.ZERO, "SGD", now));
 
         Property property = new Property(UUID.randomUUID(), host.userId(), ListingStatus.ACTIVE,
                 "Test Property", "A nice place", PropertyType.APARTMENT,
@@ -538,7 +608,11 @@ class BookingServiceTest {
                 new JdbcWalletTransactionRepository(connection),
                 new JdbcUserRepository(connection),
                 new JdbcReviewRepository(connection),
-                eventBus);
+                eventBus,
+                new TransactionServiceImpl(connection, new JdbcBookingRepository(connection),
+                        new JdbcPropertyRepository(connection), new JdbcWalletRepository(connection),
+                        new JdbcWalletTransactionRepository(connection), eventBus),
+                new JdbcTicketRepository(connection));
     }
 
     static Connection migratedConnection() throws Exception {

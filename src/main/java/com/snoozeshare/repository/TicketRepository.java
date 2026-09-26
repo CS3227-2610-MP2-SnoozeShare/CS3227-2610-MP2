@@ -13,6 +13,10 @@ public interface TicketRepository {
 
     List<Ticket> findByStatus(TicketStatus status);
 
+    default List<Ticket> findByBookingId(UUID bookingId) {
+        return List.of();
+    }
+
     /**
      * Tickets oldest first. A null status means every status; MINE requires a non-null agentId.
      */

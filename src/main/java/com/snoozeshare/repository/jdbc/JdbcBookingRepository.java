@@ -111,6 +111,24 @@ public final class JdbcBookingRepository implements BookingRepository {
     }
 
     @Override
+    public List<Booking> findConfirmedEndingOnOrBefore(LocalDate checkoutCutoff) {
+        try (var statement = connection.prepareStatement(
+                "SELECT * FROM bookings WHERE status = 'CONFIRMED' AND endDate <= ? "
+                        + "ORDER BY endDate, bookingId")) {
+            statement.setString(1, JdbcCodecs.localDate(checkoutCutoff));
+            try (var result = statement.executeQuery()) {
+                List<Booking> bookings = new ArrayList<>();
+                while (result.next()) {
+                    bookings.add(RowMappers.booking(result));
+                }
+                return bookings;
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to query eligible bookings", exception);
+        }
+    }
+
+    @Override
     public Booking save(Booking booking) {
         try (var statement = connection.prepareStatement(
                 "INSERT INTO bookings (bookingId, listingId, guestId, startDate, endDate, "

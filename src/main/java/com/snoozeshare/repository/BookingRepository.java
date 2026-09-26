@@ -20,5 +20,9 @@ public interface BookingRepository {
         return List.of();
     }
 
+    default List<Booking> findConfirmedEndingOnOrBefore(LocalDate checkoutCutoff) {
+        return List.of();
+    }
+
     Booking save(Booking booking);
 }
