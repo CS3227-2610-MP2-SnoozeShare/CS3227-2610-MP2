@@ -22,6 +22,16 @@ public final class WalletServiceImpl implements WalletService {
     private final WalletLedgerWriter ledger;
 
     public WalletServiceImpl(Connection connection, WalletRepository wallets,
+                             WalletTransactionRepository transactions) {
+        this(connection, wallets, transactions, null, new NoOpAuditService());
+    }
+
+    public WalletServiceImpl(Connection connection, WalletRepository wallets,
+                             WalletTransactionRepository transactions, EventBus eventBus) {
+        this(connection, wallets, transactions, eventBus, new NoOpAuditService());
+    }
+
+    public WalletServiceImpl(Connection connection, WalletRepository wallets,
                              WalletTransactionRepository transactions, EventBus eventBus,
                              AuditService audit) {
         this.wallets = wallets;

@@ -5,7 +5,7 @@ import java.io.IOException;
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.ui.common.NavShellController;
-import com.snoozeshare.ui.guest.wallet.WalletDashboardController;
+import com.snoozeshare.ui.common.wallet.WalletDashboardController;
 import com.snoozeshare.ui.host.bookings.HostBookingsController;
 import com.snoozeshare.ui.host.calendar.HostCalendarController;
 import com.snoozeshare.ui.host.listings.HostListingDetailController;
@@ -71,7 +71,10 @@ public final class HostShellController extends NavShellController {
             Node detailView = loader.load();
             HostListingDetailController controller = loader.getController();
             controller.setProperty(property);
+            controller.setMetrics(getContext().listingMetricsService().metricsFor(property.propertyId()));
             controller.setOnBack(this::showListings);
+            controller.setOnEdit(this::showEditListing);
+            controller.setOnOpenCalendar(this::showCalendar);
             shellRoot.setCenter(detailView);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load host listing detail view", exception);
@@ -132,7 +135,7 @@ public final class HostShellController extends NavShellController {
         cleanupWalletController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                    "/com/snoozeshare/ui/host/wallet/host-wallet-dashboard.fxml"));
+                    "/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
             Node walletView = loader.load();
             walletController = loader.getController();
             walletController.setContext(getContext());

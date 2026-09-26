@@ -26,6 +26,16 @@ public final class WalletLedgerWriter {
     private final AuditService audit;
 
     public WalletLedgerWriter(Connection connection, WalletRepository wallets,
+                              WalletTransactionRepository transactions) {
+        this(connection, wallets, transactions, null, new NoOpAuditService());
+    }
+
+    public WalletLedgerWriter(Connection connection, WalletRepository wallets,
+                              WalletTransactionRepository transactions, EventBus eventBus) {
+        this(connection, wallets, transactions, eventBus, new NoOpAuditService());
+    }
+
+    public WalletLedgerWriter(Connection connection, WalletRepository wallets,
                               WalletTransactionRepository transactions, EventBus eventBus,
                               AuditService audit) {
         this.connection = connection;

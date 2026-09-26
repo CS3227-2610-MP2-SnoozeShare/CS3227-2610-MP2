@@ -150,14 +150,6 @@
 .status-completed { -fx-text-fill: #263a5b; -fx-background-color: #e8edf5; }
 .status-cancelled { -fx-text-fill: #b42318; -fx-background-color: #fee2e2; }
 
-/* Wallet dashboard */
-.wallet-balance-section {
-    -fx-background-color: white;
-    -fx-background-radius: 8;
-    -fx-border-color: #d4dbe7;
-    -fx-border-radius: 8;
-}
-
 .transaction-card {
     -fx-background-color: white;
     -fx-background-radius: 8;

@@ -1,0 +1,110 @@
+.host-listing-detail-page {
+    -fx-background-color: #fdf8f0;
+}
+
+.listing-detail-actions .button {
+    -fx-min-height: 40px;
+    -fx-pref-height: 40px;
+}
+
+.host-listing-detail-page .button.listing-detail-action-edit {
+    -fx-background-color: #98300c;
+    -fx-background-radius: 7px;
+    -fx-background-insets: 0;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 18px 10px 18px;
+}
+
+.host-listing-detail-page .button.listing-detail-action-edit:hover {
+    -fx-background-color: #7e270a;
+}
+
+.listing-detail-image-placeholder {
+    -fx-background-color: linear-gradient(to right, #e86d2f, #b89a78);
+    -fx-background-radius: 16px;
+    -fx-min-height: 300px;
+    -fx-pref-height: 300px;
+    -fx-max-height: 300px;
+}
+
+.host-listing-detail-page .page-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #100604;
+}
+
+.listing-detail-type-badge,
+.listing-detail-status-badge {
+    -fx-background-radius: 999px;
+    -fx-padding: 4px 12px 4px 12px;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.listing-detail-type-badge {
+    -fx-background-color: #f0e8d8;
+    -fx-text-fill: #381a10;
+}
+
+.listing-detail-status-badge {
+    -fx-background-color: #e8f8d0;
+    -fx-text-fill: #40680c;
+}
+
+.listing-detail-address {
+    -fx-font-size: 16px;
+    -fx-text-fill: #6c4434;
+}
+
+.listing-detail-stats {
+    -fx-background-color: #f0e8d8;
+    -fx-background-radius: 12px;
+    -fx-padding: 16px 24px 16px 24px;
+}
+
+.listing-detail-stat {
+    -fx-min-width: 76px;
+}
+
+.listing-detail-stat-value {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #100604;
+}
+
+.listing-detail-stat-caption {
+    -fx-font-size: 10px;
+    -fx-text-fill: #6c4434;
+}
+
+.listing-detail-description {
+    -fx-font-size: 16px;
+    -fx-text-fill: #381a10;
+}
+
+.listing-detail-section-title,
+.listing-detail-performance-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #381a10;
+}
+
+.listing-detail-performance {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12px;
+    -fx-border-color: #c0a080;
+    -fx-border-radius: 12px;
+    -fx-padding: 24px;
+}
+
+.listing-detail-performance-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #6c4434;
+}
+
+.listing-detail-performance-value {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #100604;
+}

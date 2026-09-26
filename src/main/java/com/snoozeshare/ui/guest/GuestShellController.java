@@ -6,11 +6,11 @@ import java.time.LocalDate;
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.ui.common.NavShellController;
+import com.snoozeshare.ui.common.wallet.WalletDashboardController;
 import com.snoozeshare.ui.guest.listing.ListingDetailController;
 import com.snoozeshare.ui.guest.search.GuestSearchController;
 import com.snoozeshare.ui.guest.tickets.TicketHistoryController;
 import com.snoozeshare.ui.guest.trips.TripDashboardController;
-import com.snoozeshare.ui.guest.wallet.WalletDashboardController;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -130,7 +130,7 @@ public final class GuestShellController extends NavShellController {
         cleanupTicketController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                    "/com/snoozeshare/ui/guest/wallet/wallet-dashboard.fxml"));
+                    "/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
             Node walletView = loader.load();
             walletController = loader.getController();
             walletController.setContext(getContext());

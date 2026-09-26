@@ -110,7 +110,7 @@ class FileTicketTest {
         assertEquals(TicketStatus.OPEN, filed.status());
         assertNotNull(filed.createdAt());
 
-        assertTrue(audit.actions().contains("TICKET_FILED"));
+        assertTrue(audit.actions().contains("TICKET_OPENED"));
         assertEquals(1, publishedEvents.size());
         assertTrue(publishedEvents.get(0) instanceof TicketOpenedEvent);
     }
