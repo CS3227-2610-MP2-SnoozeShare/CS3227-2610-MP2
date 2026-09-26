@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="14" prefWidth="500" minWidth="500" maxWidth="500" maxHeight="-Infinity" styleClass="agent-root, agent-modal, agent-dialog-card"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.snoozeshare.ui.admin.tickets.ResolutionDialogController">
+    <stylesheets>
+        <URL value="@../agent-theme.css"/>
+    </stylesheets>
+
+    <VBox spacing="6">
+        <Label fx:id="titleLabel" styleClass="agent-dialog-title"/>
+        <Label fx:id="subtitleLabel" styleClass="small"/>
+    </VBox>
+
+    <VBox fx:id="bannerBox" spacing="2" styleClass="agent-banner">
+        <Label text="Requested remedy" styleClass="agent-banner-caption"/>
+        <Label fx:id="remedyLabel" wrapText="true" styleClass="agent-banner-remedy"/>
+    </VBox>
+
+    <VBox fx:id="modeBox" spacing="6">
+        <Label text="Override type" styleClass="agent-dialog-field-label"/>
+        <HBox fx:id="modeChips" spacing="6">
+            <ToggleButton fx:id="fullRefundChip" text="Full refund to guest" styleClass="agent-segment"
+                          HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            <ToggleButton fx:id="fullPayoutChip" text="Full payout to host" styleClass="agent-segment"
+                          HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            <ToggleButton fx:id="customChip" text="Custom" styleClass="agent-segment"
+                          HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        </HBox>
+    </VBox>
+
+    <VBox spacing="4">
+        <VBox fx:id="amountBox" spacing="4">
+            <Label text="Guest refund (SGD)" styleClass="agent-dialog-field-label"/>
+            <TextField fx:id="amountField" styleClass="agent-input, agent-dialog-field"/>
+        </VBox>
+        <Label fx:id="previewLabel" wrapText="true" styleClass="agent-note"/>
+    </VBox>
+
+    <VBox spacing="4">
+        <Label text="Reason (required, written to the audit log)" styleClass="agent-dialog-field-label"/>
+        <TextArea fx:id="reasonArea" wrapText="true" styleClass="agent-input, agent-dialog-area"
+                  minHeight="64" prefHeight="64" maxHeight="64"/>
+    </VBox>
+
+    <Label fx:id="errorLabel" wrapText="true" styleClass="error-message"/>
+
+    <HBox spacing="8" alignment="CENTER_RIGHT">
+        <Button fx:id="cancelButton" text="Cancel" onAction="#handleCancel"
+                styleClass="outline-button, agent-dialog-button"/>
+        <Button fx:id="confirmButton" text="Confirm" mnemonicParsing="false" onAction="#handleConfirm"
+                styleClass="button, agent-dialog-button"/>
+    </HBox>
+</VBox>

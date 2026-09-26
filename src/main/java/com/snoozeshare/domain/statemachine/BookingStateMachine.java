@@ -22,7 +22,7 @@ public final class BookingStateMachine {
             case CONFIRMED -> switch (to) {
                 case CANCELLED_BY_GUEST -> actingRole == Role.GUEST;
                 case CANCELLED_BY_HOST -> actingRole == Role.HOST;
-                case COMPLETED -> actingRole == Role.HOST;
+                case COMPLETED -> actingRole == Role.HOST || actingRole == Role.AGENT;
                 case FORCE_CANCELLED, FORCE_COMPLETED -> actingRole == Role.AGENT;
                 default -> false;
             };

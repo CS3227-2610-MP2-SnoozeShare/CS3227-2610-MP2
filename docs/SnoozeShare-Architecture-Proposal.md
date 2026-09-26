@@ -401,7 +401,7 @@ category (String — user-customizable per spec, so store as String + a separate
 title (String), description (Text)
 requestedRemedy (Enum: FULL_REFUND, PARTIAL_REFUND, HOST_PAYOUT, OTHER)
 supportingText (Text)
-status (Enum: OPEN, UNDER_REVIEW, RESOLVED_APPROVED, RESOLVED_REJECTED)
+status (Enum: OPEN, IN_REVIEW, RESOLVED_APPROVED, RESOLVED_REJECTED)
 assignedAgentId (FK, nullable)
 agentNotes (Text, nullable)
 resolutionReason (Text, nullable)

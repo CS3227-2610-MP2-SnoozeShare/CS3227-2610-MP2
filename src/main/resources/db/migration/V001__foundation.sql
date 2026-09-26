@@ -82,7 +82,7 @@ CREATE TABLE tickets (
         requestedRemedy IN ('FULL_REFUND', 'PARTIAL_REFUND', 'HOST_PAYOUT', 'OTHER')),
     supportingText TEXT,
     status TEXT NOT NULL CHECK (
-        status IN ('OPEN', 'UNDER_REVIEW', 'RESOLVED_APPROVED', 'RESOLVED_REJECTED')),
+        status IN ('OPEN', 'IN_REVIEW', 'RESOLVED_APPROVED', 'RESOLVED_REJECTED')),
     assignedAgentId TEXT REFERENCES users(userId),
     agentNotes TEXT,
     resolutionReason TEXT,

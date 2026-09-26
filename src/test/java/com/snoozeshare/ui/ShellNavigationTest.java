@@ -20,7 +20,8 @@ class ShellNavigationTest {
             if (!shell.equals("host/host-shell.fxml")) {
                 assertTrue(fxml.contains("fx:id=\"pageMessage\""), shell);
             }
-            assertTrue(fxml.contains("styleClass=\"nav-item\""), shell);
+            String navClass = shell.startsWith("admin/") ? "agent-tab" : "nav-item";
+            assertTrue(fxml.contains("styleClass=\"" + navClass), shell);
             assertTrue(fxml.contains("onMouseClicked=\"#"), shell);
         }
     }

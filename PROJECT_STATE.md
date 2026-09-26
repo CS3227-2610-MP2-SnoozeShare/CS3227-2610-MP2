@@ -6,11 +6,11 @@ every boundary, not at the end of the session.
 
 - **Phase:** W7 Host Calendar & Date Overrides — complete
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `w7` (branched from `w6`; scope assessment for Host Calendar & Date Overrides)
+- **Branch:** `agent-dispute-resolution-and-state-overrides` (W10 — Agent Dispute Resolution & State Overrides; branched from `main` after W2 merge)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-26 by Codex — marked W7 complete after final scope review and full verification
+- **Last updated:** 2026-09-26 by Claude Sonnet 5 — W10 Done; developer guide seeded with W10
 - **Last verified against repo:** 2026-09-26
-- **Developer guide:** `docs/DeveloperGuide.md` exists but is a one-line placeholder ("To be completed as the project develops") — not yet seeded. See § 5 of AGENTS.md: first-write is due once the first spec is approved.
+- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
 
 Sections are ordered by how often they are needed: **1–3 say where we are, 4–5 say what the
 system is, 6–7 say what not to touch and what is stuck, 8–10 are the record.** Cite sections by
@@ -44,7 +44,7 @@ three iterations).
 | `logs/` | Per-agent-session interaction logs named `YYYY-MM-DD_HH-mm-ss_<branch>.md` in SGT |
 | `src/main/java/com/snoozeshare/` | Application source — package skeleton only, see § Architecture |
 | `config/checkstyle/` | Checkstyle rules enforced on build |
-| `db/schema.sql`, `db/seed-mock-data.sql`, `db/snoozeshare-mock.db` | Shared team-reference SQLite DB — draft SQL + the built `.db` file, committed so everyone queries the same data. Dev/reference artifact, not wired into app startup (see § 4.5) |
+| `db/schema.sql`, `db/seed-mock-data.sql`, `db/snoozeshare-mock.db` | Shared team-reference SQLite DB — draft SQL + the built `.db` file, committed so everyone queries the same data. **Rebuild the `.db` from the two SQL files after any seed edit** (`sqlite3 x.db < schema.sql; sqlite3 x.db < seed-mock-data.sql`); corrected 2026-09-25 to follow C17/C20 (see D6). **Seed timestamps are UTC ISO-8601 ending in `Z`** (as the app writes them via `Instant.toString()`; `JdbcCodecs.instant` rejects zone-less values) — keep that format in any seed edit. **Seed IDs must be valid hex UUIDs** (mock prefixes: users `a`/`b`/`c`, tickets `d`, listings `1`, bookings `2`, wallets `3`, transactions `4`, availability `5`, audit `6`, categories `7`, reviews `8`); non-hex prefixes make `UUID.fromString` throw. Dev/reference artifact, not wired into app startup (see § 4.5) |
 
 ---
 
@@ -90,9 +90,38 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W7 | F6 — Host Calendar & Date Overrides | Done | [host-calendar design](docs/superpowers/specs/2026-09-26-w7-host-calendar-design.md) | [host-calendar plan](docs/superpowers/plans/2026-09-26-w7-host-calendar.md) | Complete: listing calendar, month navigation, colors, all-month overrides, inclusive/single-date blocking, removal, validation, and layout; full tests/build pass | Awaiting confirmation |
 | W8 | F7 — Host Request Queue, Earnings & Disputes | Not started | — | — | Backlog only: §4 | — |
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
-| W10 | F9 — Agent Dispute Resolution & State Overrides | Not started | — | — | Backlog only: §5 | — |
+| W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
 | W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
 | W12 | F11 — Platform Audit Trail & Analytics | Not started | — | — | Backlog only: §5 | — |
+| W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
+
+**Handoffs into W3 (raised by W10, 2026-09-25; W3 reached `main` 2026-09-25, W10 merged `main` 2026-09-26 and the
+stubs below are still open)** — honour or reconcile these:
+
+1. **Auto-complete must skip bookings with an open ticket** (C17, backlog F7.3.1 updated). Any
+   scheduler or service that moves `CONFIRMED → COMPLETED` after checkout + 7 days must leave a
+   booking alone while a dispute ticket on it is `OPEN` or `IN_REVIEW`; its escrow stays held
+   until an agent resolves the ticket.
+2. **Reconcile the settlement service** (D5). W10 adds `DisputeSettlementService` for two-sided,
+   full-escrow agent settlement (C20). `TransactionService.applyTicketRemedy` / `manualOverride`
+   (single-sided) are not implemented or called by W10; decide at merge whether to fold `settle`
+   into `TransactionServiceImpl` or keep both. On `origin/w3` those two methods are stubbed
+   `throw new UnsupportedOperationException("Owned by W10")` and `settleBookingCompletion` as
+   `"Owned by W8"` — W10 never edits `TransactionServiceImpl`, so at merge either delegate the two
+   W10 stubs (`applyTicketRemedy`, `manualOverride`) to `DisputeSettlementService` or leave them
+   unsupported.
+   Also note: `WalletLedgerWriter` opens its own transaction and subtracts `feeAmount` from the
+   balance, whereas the architecture doc and mock DB treat `feeAmount` on `BOOKING_PAYOUT` rows as
+   informational (`amount` already net). W10 therefore writes wallet + ledger rows itself; whoever
+   builds W8's payout settlement must not pass a fee through `WalletLedgerWriter` unchanged.
+   **Merge finding (2026-09-26):** `BookingServiceImpl.forceTransition(...)` on `main` is stubbed `"Owned by W10"`, but force actions were dropped (C22), so W10 does not implement it; remove it from `BookingService` or leave it unsupported. `BookingServiceImpl.complete` (`"Owned by W8"`) and the auto-complete guard in item 1 are still unbuilt on `main`.
+3. **Reconcile the state machine** (D9, C23). W10 allows `Role.AGENT` on `CONFIRMED → COMPLETED` in
+   `BookingStateMachine`. If W3 touches that file, keep the AGENT permission.
+4. **Shared wiring:** both branches edit `AppContext` (additive service/repository wiring) —
+   expect a trivial conflict there.
+5. **Mock DB:** `db/snoozeshare-mock.db` / `seed-mock-data.sql` now follow C17/C20 (open tickets
+   sit on `CONFIRMED` bookings with escrow held; resolved tickets settle full escrow two-sided).
+   W3 tests or seed logic that assumed the old rows (bookings 9, 10, 11, 13) must be re-checked.
 
 Status vocabulary, used verbatim: `Not started` · `Spec'd` · `Planned` · `Building` ·
 `Blocked — needs human` · `In review` · `Done` · `Abandoned`
@@ -182,6 +211,8 @@ pieces (`WalletPanelController`, `NavShell`, formatting/validation helpers, shar
 constructed once per session and embedded into whichever role shell is active. Controllers are
 meant to depend only on `service.*` interfaces, never `repository.*` or `infra.db.*` directly.
 
+**W10 Agent screens (built):** `ui.admin` has the canvas-style agent shell (top bar + tab strip: Disputes / Accounts / Audit Log / Categories; Accounts and Audit Log are placeholders) in the "Fall Light" palette (`agent-theme.css`, agent scene only; C24). Screens: `DisputeQueueController` (oldest-first table, All/Unassigned/Mine chips, width-fitted status dropdown, unassigned badge), `DisputeDetailController` (summary card, resizable guest/host chat boxes, one persisted internal-notes field with Save, Assign/Unassign, Accept / Reject / Manual actions; C25), `ResolutionDialogController` and `CategoryDialogController` (modal cards built on `AgentModal` with a 50% grey scrim; live refund/payout preview, reason required; category Add/Edit/Delete; C26) and `CategoryAdminController`. To try it on a copy of the mock DB, set env `SNOOZESHARE_DB_URL` (e.g. `jdbc:sqlite:build/acceptance.db`); `Main` passes it to `AppContext.create(jdbcUrl)`. `AdminUiSmokeTest` and the snapshot tests exercise the screens on the FX toolkit and write `build/ui-snapshots/*.png`.
+
 **Visual design (S2, branch `ui-mockup`):** fully spec'd. The design spec is
 [`docs/superpowers/specs/2026-09-23-ui-design-system-design.md`](docs/superpowers/specs/2026-09-23-ui-design-system-design.md)
 — design tokens, the AtlantaFX theming mechanism, the component library mapping, app shell/nav,
@@ -213,13 +244,18 @@ exact contracts, including which backlog item (F-number) each method backs.
 W6 extends `ListingServiceImpl` with host-authorized listing creation, detail updates, and
 status changes, with validation and audit records.
 
+**W10 adds:** `TicketServiceImpl` (queue, assign, notes, resolve, category admin),
+`DisputeSettlementServiceImpl` (atomic full-escrow two-sided settlement, C20),
+`DisputeQueryServiceImpl` (queue/detail read models for the Agent UI) and a temporary
+`InMemoryMessageService` (session-only chat; W13 replaces it).
+
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
 | C3 | unknown | Two separate financial interfaces: `WalletService` (dumb primitive — balance, top-up, withdraw) vs. `TransactionService` (business rules — escrow, 3% fee, refund policy, dispute remedies). UI may call `WalletService` directly only for top-up/withdrawal; `BookingService`/`TicketService` are the only callers of `TransactionService` | Keeps "how do bookings pay out" and "how do I add money to my account" independently testable; centralizes every balance change behind one choke point so wallets can't drift from booking/ticket state | [architecture proposal §3](docs/SnoozeShare-Architecture-Proposal.md) |
 | C4 | unknown | Use Java 25 records directly as the domain model passed to JavaFX view models; no separate DTO layer | Over-engineering for MVP scale | [architecture proposal §3](docs/SnoozeShare-Architecture-Proposal.md) |
 | C7 | 2026-09-22 | **No guest-side service fee.** `bookings.totalAmount = nightlyRateSnapshot × nights`, full stop. The only platform fee anywhere is the 3% deducted from a host's `BOOKING_PAYOUT` (already specified). Corrects an earlier mock-data draft that had invented a 5% guest fee to fill the doc's undefined `serviceFeeAmount` column — that column is now removed | Operator confirmed while reviewing generated mock data | Operator conversation, 2026-09-22 |
 | C8 | 2026-09-22 | `REJECTED` and `CANCELLED_BY_HOST` bookings both trigger a 100% `ESCROW_REFUND`, same as a guest cancelling >48h out. (Note: `BookingService` in the proposal has no explicit host-initiated-cancel method distinct from `decide(...,approve=false)` — flagged as a spec gap for whoever builds F6.1.2/host cancellation, not resolved by this decision.) | Operator confirmed "good assumption" while reviewing generated mock data | Operator conversation, 2026-09-22 |
-| C9 | 2026-09-22 | `TICKET_REMEDY` and `AGENT_OVERRIDE` wallet rows are single-sided — only the wallet actually credited/debited gets a row, no matching entry on the other side. There is no double-entry anywhere in `wallet_transactions`, extending the doc's existing "fees aren't a real platform-wallet transfer" note to these two types as well | Operator confirmed while reviewing generated mock data | Operator conversation, 2026-09-22 |
+| C9 | 2026-09-22 | *(Superseded for agent ticket resolutions by C20, 2026-09-25 — those are now two-sided: guest refund row + host payout row.)* `TICKET_REMEDY` and `AGENT_OVERRIDE` wallet rows are single-sided — only the wallet actually credited/debited gets a row, no matching entry on the other side. There is no double-entry anywhere in `wallet_transactions`, extending the doc's existing "fees aren't a real platform-wallet transfer" note to these two types as well | Operator confirmed while reviewing generated mock data | Operator conversation, 2026-09-22 |
 | C10 | 2026-09-22 | `wallets.currency` is `"SGD"` for real, not just the doc's illustrative example | Operator confirmed while reviewing generated mock data | Operator conversation, 2026-09-22 |
 
 ### 4.4 Domain
@@ -229,6 +265,10 @@ Java with zero
 JavaFX/JDBC dependencies. `BookingStateMachine.canTransition(from, to, actingRole)` and
 `TicketStateMachine` are meant to be the single legality check every role's service call goes
 through (guest cancel, host approve/reject, agent force-override all call the same function).
+
+**W10 adds:** `domain.settlement` (`SettlementCalculator` for refund/host-share/fee math,
+`EscrowPolicy` for the escrow-held check) and the `Role.AGENT` permission on
+`BookingStateMachine` `CONFIRMED -> COMPLETED` (C23, D9).
 
 | Path | Role |
 |---|---|
@@ -257,6 +297,10 @@ unbuilt). A hand-written (non-Flyway) copy of this schema plus a full mock datas
 into a **shared, committed reference DB** — `db/schema.sql` / `db/seed-mock-data.sql` /
 `db/snoozeshare-mock.db` — for the team to query together; it is a dev/reference artifact only,
 not loaded by the application at startup. See § Record.
+
+**W10 adds:** `JdbcTicketRepository` and `JdbcTicketCategoryRepository`, and `MigrationRunner` now
+adopts a pre-provisioned database (one with tables but no `schema_history`, such as the mock DB) by
+recording the baseline (D10).
 
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
@@ -288,8 +332,9 @@ session.
 
 ## 5. Conventions
 
-Durable rules, harvested from the architecture proposal. None are enforced by tooling yet
-(no ArchUnit test exists) — treat as intent until a workstream adds enforcement.
+Durable rules, harvested from the architecture proposal. Enforcement is partial: `LayerDependencyTest` and `UiDependencyTest` check that `ui` does not import
+`repository`/`java.sql` and that `domain` is free of JavaFX/`java.sql`; the other rules (e.g. `ui` not importing
+`infra.db`) are intent until a workstream adds a test.
 
 - `ui.*` must never import `repository.*` or `infra.db.*` directly — only `service.*`.
 - Only `repository.jdbc.*` may import `java.sql.*`.
@@ -364,11 +409,37 @@ architecture area remain recorded in that area's table.
 | C12 | 2026-09-23 | Host and Agent registration codes are mock constants | Operator approved this F0 simplification; real credential or configuration management is out of scope | Operator conversation, 2026-09-23 |
 | C13 | 2026-09-23 | W1 owns the complete shared foundation and all cross-cutting logic required by later workstreams; feature workstreams own feature-specific business rules and UI behavior | Operator clarified that W1 must provide the full common base before parallel development begins | Operator conversation, 2026-09-23 |
 | C14 | 2026-09-23 | Use a combined Login/Register entry screen; display Support Agent as the user-facing Agent role; use a shared header/left-navigation/content shell, shared CSS, Guest/Host wallet panels, and a minimum window size around 1280×800 | Operator approved all W1 UI recommendations before execution | Operator conversation, 2026-09-23 |
+| C16 | 2026-09-25 | W10 is built concurrently with W3/W4 against the service interfaces (no waiting on `origin/w3`). W10 owns the ticket persistence + `TicketServiceImpl` + Agent UI; its remedy/override money logic lives in its own class (not inside W3's `TransactionServiceImpl`) so the only shared touchpoints are `AppContext` wiring and one new `BookingService` agent force-transition method. Tests use fakes/seeded tickets; guest ticket filing (W4) is out of W10 scope | Operator pointed out that interface-based design should allow concurrent development; agent had over-stated the coupling | Operator conversation, 2026-09-25 |
+| C17 | 2026-09-25 | Escrow is held through the 7-day dispute window (checkout + 7d). A ticket opened in the window keeps escrow on hold and the agent fully controls its settlement; only an unchallenged window releases escrow to the host. Consequence: agent money overrides always operate on **held escrow** — no clawback from host wallets, no `COMPLETED`-and-paid-out case. Requires W3/W8's auto-complete trigger (F7.3.1) to skip bookings with an open ticket | Operator answer while scoping W10 override semantics; consistent with `docs/ProductBacklog.md` F7.3.1 and F3.1.1 | Operator conversation, 2026-09-25 |
+| C18 | 2026-09-25 | On an agent Full Payout or Partial split, the 3% platform fee applies to the host's share (host gets share × 0.97, fee recorded informationally as with `BOOKING_PAYOUT`); a Full Refund to guest carries no fee | Operator chose the recommended uniform-fee rule | Operator conversation, 2026-09-25 |
+| C19 | 2026-09-25 | Agent Force Cancel = 100% escrow refund to guest (per C8); Force Complete = normal settlement, host paid net of 3%. Each is one atomic action with a required reason and an audit row. Other splits go through the ticket money override, not the force action | Operator chose the recommended coupled-defaults option | Operator conversation, 2026-09-25 |
+| C20 | 2026-09-25 | Every ticket resolution and manual adjustment settles the **full** held escrow: guest refund R (no fee), host receives (escrow − R) × 0.97. Platform cut is only ever taken from host earnings, never from guest money. Accept = requested remedy; Reject = R 0 (host paid in full, net of fee); Manual = agent-set R (Full refund = all, Full payout = 0). Supersedes the mockup's single-wallet "Adjust wallet" dropdown; the mockups are otherwise accurate but the operator's discussions take precedence | Operator answer while reviewing the W10 design artifact | Operator conversation, 2026-09-25 |
+| C21 | 2026-09-25 | Ticket chat threads (guest↔agent and host↔agent, as shown in the design artifact's dispute detail) are required. No backing columns or service exist today and the backlog has no messaging epic. **Ownership: a general `MessageService` owned by new workstream W13 (Messaging)** — the agent chat is just another participant in the same chat, so it does not belong to W10 (the first draft had W10 owning a `ticket_messages` table; operator corrected this). W10 codes against a `MessageService` interface with a fake in tests | Operator: "There should be chat threads"; then "shouldn't the service that configures the chat be the one to own this?" | Operator conversation, 2026-09-25 |
+| C22 | 2026-09-25 | **Reverses C19 and drops backlog F9.2.1 (Force Cancel / Force Complete) from W10.** Force actions are redundant: Accept with full refund ≡ force cancel, Reject ≡ force complete, and both close the ticket. The agent only ever settles via ticket resolution. F9.2.1, the two Force confirm artboards, and the "Booking state override" block on the dispute detail artboard are out of scope. `BookingStatus.FORCE_*` enum values stay in the enum, unused by W10 | Operator: force actions are just a forced ticket close the agent can already achieve by accepting/rejecting | Operator conversation, 2026-09-25 |
+| C23 | 2026-09-25 | Ticket resolution moves the booking `CONFIRMED → COMPLETED` (funds settled per C20), which requires allowing `Role.AGENT` on that transition in `BookingStateMachine` (small additive change to a W1 file). Bookings in the dispute window are `CONFIRMED`; "Stay ended — escrow held" is a derived display label (`CONFIRMED`, stay over, escrow still held — within the 7-day window, or beyond it while a ticket is open), not a new status | Operator chose the recommended option; also clarifies the "COMPLETED with open ticket" mock rows meant stay-over-funds-held | Operator conversation, 2026-09-25 |
+| C24 | 2026-09-25 | **Reverses D11 for the agent screens.** After the manual visual check the operator ruled that layout and palette differences from the design canvas (artifact `PWBCxbfv9e9FGVvY6RKUwd`: `AgentDisputeQueue`, `AgentDisputeDetail`, `AgentTicketCategories`, `ConfirmDispute*`) are defects, not accepted deviations. The agent shell becomes the canvas layout (top bar + horizontal tab strip Disputes / Accounts / Audit Log / Categories) in the canvas "Fall Light" palette, applied to the agent scene only via a new `agent-theme.css` (guest/host shells untouched). Still intentionally different from the canvas: no Force block (C22), refund-amount field instead of "Adjust wallet" (C20), `SGD` currency label (C10), native dialog without the dimmed backdrop. | Operator, on seeing the sidebar/navy UI. Rejected: keeping D11 as a documented deviation. |
+| C25 | 2026-09-25 | After the second visual check the operator changed three behaviours: (1) internal notes become ONE persisted free-text field per ticket (`Ticket.agentNotes`, replaced on Save, autopopulated on return; no history list; white background like the chat panes; "Add note" becomes a "Save" button in the Send-button colour); (2) "Assign to me" becomes "Unassign" once the ticket is assigned to the signed-in agent (`UNDER_REVIEW` -> `OPEN`, assignee cleared, persisted, audited `TICKET_UNASSIGNED`), so `TicketStateMachine` now allows `UNDER_REVIEW -> OPEN` for agents; (3) dialogs, summary card and status dropdown restyled to the canvas exactly (no shadows in dialogs, border around the whole modal). | Operator. Rejected: note history list; disabling the assign button after assign. |
+| C26 | 2026-09-25 | Third visual round, operator: dropdown text and options right-aligned; pointer cursor on ticket rows; chat boxes (resized together) and the notes box are user-resizable with minimum heights, notes Save button moves to the bottom-right of the field; every modal gets a light-grey 50% scrim over the window behind it (reverses the "no dimmed backdrop" exception in C24); Add/Edit category use the same modal card design, and the Edit modal gets a red Delete. **Scope decision:** category delete is a NEW capability beyond F9.3.1 (add/rename/toggle); a category still referenced by any ticket cannot be deleted (use the active toggle instead). | Operator. |
+| C27 | 2026-09-25 | Ticket status `UNDER_REVIEW` is renamed **`IN_REVIEW`** everywhere (enum, `tickets.status` CHECK in `db/schema.sql` and `V001__foundation.sql`, seed data, mock DB, tests, UI text "In review", messages, variable names) so code and UI use one term. Status filter labels are now All statuses / Open / In review / Approved / Rejected, the dropdown is as narrow as its widest option (selector and popup the same width) and text is left-aligned again (reverses the right-alignment in C26 item 1). **Cross-workstream impact:** any other branch that references `TicketStatus.UNDER_REVIEW` or the string `'UNDER_REVIEW'` must rename it at merge; the architecture proposal's status list is updated in the same change. | Operator (inconsistency between UI and code). Rejected: UI-only rename. |
 | C15 | 2026-09-23 | Execute W1 natively in the existing `w1` checkout rather than creating a separate worktree | Operator explicitly selected the current checkout for execution | Operator conversation, 2026-09-23 |
 
 ---
 
 ## 9. Deviations & Discoveries
+
+### W10 deviations (OPEN 2026-09-25) — full detail in the [W10 spec § 6](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md)
+
+- **D5** — W10 adds `DisputeSettlementService` instead of `TransactionService.applyTicketRemedy`/`manualOverride` (single-sided, cannot express C20). Reconcile with W3 at merge.
+- **D6 (RESOLVED 2026-09-25)** — The mock DB held rows predating C17/C20. Per operator direction it is now corrected **in place** (`db/seed-mock-data.sql` edited, `db/snoozeshare-mock.db` rebuilt from `schema.sql` + seed, rebuild verified deterministic): open tickets 2 and 3 sit on `CONFIRMED` bookings 9 and 11 with escrow held (payout and reviews for them removed); resolved ticket 1 now pays the host `380 − 3%` on 8/28 with `COMPLETED` at resolution; ticket 4 / booking 13 is a 50/50 manual adjustment (guest `AGENT_OVERRIDE` +165, host `BOOKING_PAYOUT` 160.05) and `COMPLETED`; tickets 1–4 filed inside the 7-day window; wallet 5's pre-existing `balanceAfter` chain fixed. Ledger invariants (balance = Σ tx, running `balanceAfter`, FK check) verified. `FORCE_COMPLETED` no longer appears in the mock data (C22); `FORCE_CANCELLED` remains (booking 12, suspension cascade). Tests still run against a temp *copy* purely so mutating tests never write to the committed file — no normalisation step exists any more. A schema-parity test still guards migration-vs-`schema.sql` drift.
+- **D7** — Design artifact differs from decisions: Force actions (C22), newest-first queue (F9.1.1 wins), "Adjust wallet" dropdown (C20), no Accept amount field (added).
+- **D8** — `tickets.category` is label text, not an FK; renames don't propagate.
+- **D9** — `BookingStateMachine` gains `AGENT` on `CONFIRMED → COMPLETED` (C23); W3 must be told at merge.
+- **D10** — `MigrationRunner` adopts a pre-provisioned DB: the mock DB has tables but no `schema_history`, and the app could not open it otherwise. See the [W10 spec § 6](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md).
+- **D11 (SUPERSEDED by C24, 2026-09-25)** — The admin shell is sidebar-based and uses the current navy `theme.css`, not the canvas tabs / Fall Light palette. Accepted; alignment is a separate UI-design workstream. See the [W10 spec § 6](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md).
+- **D12** — Accepted minor findings from the W10 code review (not fixed; revisit if they matter): (a) `JdbcTicketRepository` orders by `createdAt` text, so sub-second ties can mis-order; (b) `MigrationRunner` adoption only checks for a `users` table; (c) settlement reads guest/host wallets once, so a self-booking (guest == host) would lose an update; (d) `AuditServiceImpl` stamps `Instant.now()`, not the injected clock; (e) settlement takes escrow from `booking.totalAmount()`, not the `ESCROW_HOLD` row; (f) `DisputeDetailController.load()` still calls `render()` outside the error handler.
+- **Found during W10 execution (2026-09-25, all fixed, each in the ledger):** (a) mock seed timestamps lacked the trailing `Z`, so `JdbcCodecs.instant` rejected them; (b) mock seed IDs used non-hex prefixes, so `UUID.fromString` threw (rule now in § Orientation repo map); (c) the baseline build was red from 7 pre-existing W2 checkstyle violations.
+- **Backlog edits made 2026-09-25 (operator approved):** `docs/ProductBacklog.md` — F9.2.1 struck as dropped; F9.2.2 reworded to full-escrow settlement; F9.1.1 gains chat threads; F7.3.1 gains the open-ticket guard; new epic F12 Messaging (W13); changelog entry added.
+- **Cross-workstream requirements:** listed under § Workstreams → *Handoffs into W3*.
 
 ### D2 — Two schema gaps found while grounding the UI mockups against `db/schema.sql` (OPEN 2026-09-23)
 
@@ -451,7 +522,7 @@ unchanged.
 The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-state/done-ledger.md)**
 — every change, big or small, newest first.
 
-- **Latest entry:** 2026-09-26
-- **Entries:** 46 (including W7 completion and follow-up fixes)
+- **Latest entry:** 2026-09-25
+- **Entries:** 59 (4 backfilled coarsely from git history)
 
 Deviations stay in § Deviations above: those are read every session.

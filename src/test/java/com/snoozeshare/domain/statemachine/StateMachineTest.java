@@ -43,22 +43,32 @@ class StateMachineTest {
     }
 
     @Test
-    void agentMovesOpenTicketToUnderReview() {
+    void agentMovesOpenTicketToInReview() {
         assertTrue(TicketStateMachine.canTransition(
-                TicketStatus.OPEN, TicketStatus.UNDER_REVIEW, Role.AGENT));
+                TicketStatus.OPEN, TicketStatus.IN_REVIEW, Role.AGENT));
     }
 
     @Test
-    void agentResolvesTicketFromUnderReview() {
+    void agentResolvesTicketFromInReview() {
         assertTrue(TicketStateMachine.canTransition(
-                TicketStatus.UNDER_REVIEW, TicketStatus.RESOLVED_APPROVED, Role.AGENT));
+                TicketStatus.IN_REVIEW, TicketStatus.RESOLVED_APPROVED, Role.AGENT));
         assertTrue(TicketStateMachine.canTransition(
-                TicketStatus.UNDER_REVIEW, TicketStatus.RESOLVED_REJECTED, Role.AGENT));
+                TicketStatus.IN_REVIEW, TicketStatus.RESOLVED_REJECTED, Role.AGENT));
+    }
+
+    @Test
+    void agentMayReturnAnInReviewTicketToOpenButNobodyElse() {
+        assertTrue(TicketStateMachine.canTransition(
+                TicketStatus.IN_REVIEW, TicketStatus.OPEN, Role.AGENT));
+        assertFalse(TicketStateMachine.canTransition(
+                TicketStatus.IN_REVIEW, TicketStatus.OPEN, Role.HOST));
+        assertFalse(TicketStateMachine.canTransition(
+                TicketStatus.RESOLVED_APPROVED, TicketStatus.OPEN, Role.AGENT));
     }
 
     @Test
     void resolvedTicketCannotTransitionAgain() {
         assertFalse(TicketStateMachine.canTransition(
-                TicketStatus.RESOLVED_APPROVED, TicketStatus.UNDER_REVIEW, Role.AGENT));
+                TicketStatus.RESOLVED_APPROVED, TicketStatus.IN_REVIEW, Role.AGENT));
     }
 }
