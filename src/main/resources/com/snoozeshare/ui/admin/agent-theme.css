@@ -544,3 +544,32 @@
 
 /* ---- Modal scrim: light grey, 50% opacity, over the whole owner window while a modal is open ---- */
 .modal-scrim { -fx-background-color: rgba(160, 160, 160, 0.5); }
+
+/* ---- Audit log screen (W12) ---- */
+.agent-root .agent-filter-card { -fx-padding: 14px 16px 14px 16px; }
+.agent-root .agent-pill-neutral { -fx-background-color: bg-inset; -fx-text-fill: fg-muted; }
+.agent-root .agent-audit-table .table-row-cell:filled { -fx-cursor: default; }
+.agent-root .agent-audit-table .table-row-cell:hover { -fx-background-color: transparent; }
+.agent-root .date-picker { -fx-background-color: transparent; -fx-padding: 0; }
+.agent-root .date-picker > .text-field {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px 0 0 8px;
+    -fx-border-color: border;
+    -fx-border-radius: 8px 0 0 8px;
+    -fx-border-width: 1px 0 1px 1px;
+    -fx-padding: 8px 12px 8px 12px;
+    -fx-font-size: 12px;
+}
+.agent-root .date-picker > .arrow-button {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 0 8px 8px 0;
+    -fx-border-color: border;
+    -fx-border-radius: 0 8px 8px 0;
+    -fx-border-width: 1px;
+    -fx-padding: 0 10px 0 6px;
+}
+.agent-root .date-picker > .arrow-button > .arrow { -fx-background-color: fg-subtle; }
+.agent-root .date-picker:focused > .text-field,
+.agent-root .date-picker:showing > .text-field { -fx-border-color: accent; }
+.agent-root .date-picker:focused > .arrow-button,
+.agent-root .date-picker:showing > .arrow-button { -fx-border-color: accent; }
