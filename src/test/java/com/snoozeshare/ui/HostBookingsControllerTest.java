@@ -1,5 +1,6 @@
 package com.snoozeshare.ui;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
@@ -45,6 +46,16 @@ class HostBookingsControllerTest {
                         + "HostBookingDecisionDialogController.java"));
         assertTrue(controller.contains("Reject booking request?"));
         assertTrue(controller.contains("Confirm reject"));
+    }
+
+    @Test
+    void decisionModalUsesAnAbsoluteClasspathResource() throws Exception {
+        assertNotNull(HostBookingsControllerTest.class.getResource(
+                "/com/snoozeshare/ui/host/bookings/host-booking-decision-dialog.fxml"));
+        String controller = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/bookings/HostBookingDecisionDialogController.java"));
+        assertTrue(controller.contains("getResource(\"/com/snoozeshare/ui/host/bookings/"
+                + "host-booking-decision-dialog.fxml\")"));
     }
 
     @Test

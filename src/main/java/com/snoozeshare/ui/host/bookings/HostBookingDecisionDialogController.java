@@ -36,7 +36,7 @@ public final class HostBookingDecisionDialogController {
     public static void show(HostBookingRow row, boolean approving, Consumer<String> onConfirm) {
         try {
             FXMLLoader loader = new FXMLLoader(HostBookingDecisionDialogController.class
-                    .getResource("host-booking-decision-dialog.fxml"));
+                    .getResource("/com/snoozeshare/ui/host/bookings/host-booking-decision-dialog.fxml"));
             Parent card = loader.load();
             HostBookingDecisionDialogController controller = loader.getController();
             controller.configure(row, approving, onConfirm);
