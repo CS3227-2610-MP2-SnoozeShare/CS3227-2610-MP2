@@ -1,21 +1,32 @@
 package com.snoozeshare.service.impl;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import com.snoozeshare.domain.enums.AccountStatus;
 import com.snoozeshare.domain.enums.AuditAction;
+import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.domain.enums.Role;
+import com.snoozeshare.domain.enums.WalletTransactionType;
+import com.snoozeshare.domain.model.Booking;
+import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.domain.model.User;
+import com.snoozeshare.domain.model.Wallet;
+import com.snoozeshare.domain.model.WalletTransaction;
+import com.snoozeshare.domain.statemachine.BookingStateMachine;
 import com.snoozeshare.infra.db.TransactionManager;
 import com.snoozeshare.infra.events.DomainEvent;
 import com.snoozeshare.infra.events.EventBus;
 import com.snoozeshare.infra.events.events.AccountStatusChangedEvent;
+import com.snoozeshare.infra.events.events.BookingCancelledEvent;
+import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.repository.AvailabilityBlockRepository;
 import com.snoozeshare.repository.BookingRepository;
 import com.snoozeshare.repository.PropertyRepository;
@@ -110,8 +121,53 @@ public final class AccountGovernanceServiceImpl implements AccountGovernanceServ
         return reactivated;
     }
 
-    /** Task 6 and Task 7 fill this in; suspension without a cascade is complete for a user with no bookings. */
+    /** The suspended user's PENDING and not-yet-started CONFIRMED bookings are force-cancelled with a refund. */
     private void cascade(User target, UUID agentId, Instant now, List<DomainEvent> events) {
+        LocalDate today = LocalDate.ofInstant(now, clock.getZone());
+        List<Booking> affected = new ArrayList<>();
+        if (target.role() == Role.GUEST) {
+            affected.addAll(bookings.findByGuest(target.userId()));
+        } else {
+            for (Property property : properties.findByHostId(target.userId())) {
+                affected.addAll(bookings.findByListing(property.propertyId()));
+            }
+        }
+        for (Booking booking : affected) {
+            if (isCancellable(booking, today)) {
+                forceCancel(booking, target, agentId, now, events);
+            }
+        }
+    }
+
+    /** PENDING, or CONFIRMED with a check-in date after today. Started and ended stays belong to W10 (C36). */
+    static boolean isCancellable(Booking booking, LocalDate today) {
+        return booking.status() == BookingStatus.PENDING
+                || (booking.status() == BookingStatus.CONFIRMED && booking.startDate().isAfter(today));
+    }
+
+    private void forceCancel(Booking booking, User suspended, UUID agentId, Instant now, List<DomainEvent> events) {
+        if (!BookingStateMachine.canTransition(booking.status(), BookingStatus.FORCE_CANCELLED, Role.AGENT)) {
+            throw new IllegalStateException("Cannot force-cancel a booking in status " + booking.status());
+        }
+        bookings.save(new Booking(booking.bookingId(), booking.listingId(), booking.guestId(),
+                booking.startDate(), booking.endDate(), BookingStatus.FORCE_CANCELLED,
+                booking.nightlyRateSnapshot(), booking.totalAmount(), booking.createdAt(), now, null));
+        blocks.deleteByBookingId(booking.bookingId());
+        audit.record(AuditRecord.builder(agentId, AuditAction.BOOKING_FORCE_CANCELLED, "Booking",
+                        booking.bookingId())
+                .status(booking.status(), BookingStatus.FORCE_CANCELLED).reason(CASCADE_BOOKING_REASON)
+                .subject(suspended.userId()).booking(booking.bookingId()).at(now).build());
+        // Inline wallet write: WalletLedgerWriter opens its own transaction, which would commit early here.
+        Wallet wallet = wallets.findByUserId(booking.guestId())
+                .orElseThrow(() -> new IllegalArgumentException("Guest wallet does not exist"));
+        BigDecimal balanceAfter = wallet.balance().add(booking.totalAmount());
+        wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter, wallet.currency(), now));
+        WalletTransaction refund = transactions.save(new WalletTransaction(UUID.randomUUID(), wallet.walletId(),
+                WalletTransactionType.ESCROW_REFUND, booking.totalAmount(), BigDecimal.ZERO, balanceAfter,
+                booking.bookingId(), null, agentId, now));
+        audit.recordWalletTransaction(agentId, booking.guestId(), refund, refund.amount(), null);
+        events.add(new WalletTransactionRecordedEvent(refund.transactionId(), refund.walletId(), now));
+        events.add(new BookingCancelledEvent(booking.bookingId(), agentId, now));
     }
 
     private <T> T inTransaction(String what, java.util.concurrent.Callable<T> work) {

@@ -41,7 +41,7 @@ final class AccountFixture implements AutoCloseable {
     static final Instant NOW = Instant.parse("2026-09-26T04:00:00Z");
     static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
     static final LocalDate TODAY = LocalDate.of(2026, 9, 26);
-    static final BigDecimal START_BALANCE = new BigDecimal("1000.00");
+    static final BigDecimal START_BALANCE = new BigDecimal("5000.00");
 
     final Connection connection;
     final JdbcUserRepository users;
