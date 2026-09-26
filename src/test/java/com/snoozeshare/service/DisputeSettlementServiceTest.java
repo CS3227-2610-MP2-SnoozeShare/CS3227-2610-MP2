@@ -30,6 +30,7 @@ import com.snoozeshare.testsupport.MockIds;
 class DisputeSettlementServiceTest {
 
     private static final UUID BEN = MockIds.AGENT_BEN;
+    private static final String NOW = "2026-09-25T04:00:00Z";
 
     private static DisputeSettlementServiceImpl service(MockDbFixture db, InProcessEventBus bus) {
         return SettlementFixtures.settlement(db, bus,
@@ -273,6 +274,70 @@ class DisputeSettlementServiceTest {
             assertThrows(IllegalArgumentException.class, () ->
                     service.settle(UUID.randomUUID(), ResolutionMode.REJECT, BigDecimal.ZERO, BEN,
                             "who?"));
+        }
+    }
+
+    private static List<String> resolutionActions(MockDbFixture db, UUID ticketId) throws Exception {
+        List<String> actions = new ArrayList<>();
+        try (var statement = db.connection().prepareStatement("SELECT actionType FROM audit_log "
+                + "WHERE ticketId = ? AND timestamp = ? ORDER BY rowid")) {
+            statement.setString(1, ticketId.toString());
+            statement.setString(2, NOW);
+            try (var result = statement.executeQuery()) {
+                while (result.next()) {
+                    actions.add(result.getString(1));
+                }
+            }
+        }
+        return actions;
+    }
+
+    private static BigDecimal adjustment(MockDbFixture db, UUID ticketId, String action) throws Exception {
+        return new BigDecimal(db.scalarString("SELECT walletAdjustment FROM audit_log "
+                + "WHERE ticketId = ? AND actionType = ? AND timestamp = ?", ticketId, action, NOW));
+    }
+
+    @Test
+    void aManualSplitWritesTicketBookingGuestAndHostRowsInCausalOrder(@TempDir Path directory) throws Exception {
+        try (MockDbFixture db = MockDbFixture.open(directory)) {
+            service(db, new InProcessEventBus()).settle(MockIds.TICKET_3, ResolutionMode.MANUAL,
+                    new BigDecimal("60.00"), BEN, "split");
+
+            assertEquals(List.of("TICKET_RESOLVED", "BOOKING_COMPLETED", "AGENT_OVERRIDE", "BOOKING_PAYOUT"),
+                    resolutionActions(db, MockIds.TICKET_3));
+            assertMoney("60", adjustment(db, MockIds.TICKET_3, "AGENT_OVERRIDE"));
+            assertMoney("145.50", adjustment(db, MockIds.TICKET_3, "BOOKING_PAYOUT"));
+            assertEquals("IN_REVIEW", db.scalarString("SELECT beforeState FROM audit_log "
+                    + "WHERE ticketId = ? AND actionType = 'TICKET_RESOLVED' AND timestamp = ?",
+                    MockIds.TICKET_3, NOW));
+            assertEquals("RESOLVED_APPROVED", db.scalarString("SELECT afterState FROM audit_log "
+                    + "WHERE ticketId = ? AND actionType = 'TICKET_RESOLVED' AND timestamp = ?",
+                    MockIds.TICKET_3, NOW));
+            assertEquals("COMPLETED", db.scalarString("SELECT afterState FROM audit_log "
+                    + "WHERE ticketId = ? AND actionType = 'BOOKING_COMPLETED' AND timestamp = ?",
+                    MockIds.TICKET_3, NOW));
+            assertEquals(1L, db.scalarLong("SELECT COUNT(*) FROM audit_log WHERE ticketId = ? AND timestamp = ? "
+                    + "AND walletAdjustment IS NOT NULL AND subjectUserId = ?", MockIds.TICKET_3, NOW,
+                    MockIds.GUEST_SOPHIA));
+            assertEquals(1L, db.scalarLong("SELECT COUNT(*) FROM audit_log WHERE ticketId = ? AND timestamp = ? "
+                    + "AND walletAdjustment IS NOT NULL AND subjectUserId = ?", MockIds.TICKET_3, NOW,
+                    MockIds.HOST_DIEGO));
+            assertEquals(1L, db.scalarLong("SELECT COUNT(*) FROM audit_log WHERE ticketId = ? AND timestamp = ? "
+                    + "AND reason LIKE '%3%% platform fee (4.50)%'", MockIds.TICKET_3, NOW));
+            assertEquals(0L, db.scalarLong("SELECT COUNT(*) FROM audit_log WHERE walletAdjustment IS NOT NULL "
+                    + "AND (beforeState IS NOT NULL OR afterState IS NOT NULL)"));
+        }
+    }
+
+    @Test
+    void rejectSkipsTheZeroGuestRefundRow(@TempDir Path directory) throws Exception {
+        try (MockDbFixture db = MockDbFixture.open(directory)) {
+            service(db, new InProcessEventBus()).settle(MockIds.TICKET_3, ResolutionMode.REJECT,
+                    BigDecimal.ZERO, BEN, "No evidence of a violation");
+
+            assertEquals(List.of("TICKET_RESOLVED", "BOOKING_COMPLETED", "BOOKING_PAYOUT"),
+                    resolutionActions(db, MockIds.TICKET_3));
+            assertMoney("203.70", adjustment(db, MockIds.TICKET_3, "BOOKING_PAYOUT"));
         }
     }
 

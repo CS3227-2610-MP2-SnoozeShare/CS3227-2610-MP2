@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.UUID;
 
 import com.snoozeshare.domain.enums.AccountStatus;
+import com.snoozeshare.domain.enums.AuditAction;
 import com.snoozeshare.domain.enums.ListingStatus;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.validation.DomainValidation;
 import com.snoozeshare.repository.PropertyRepository;
+import com.snoozeshare.service.AuditRecord;
 import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.AvailabilityService;
 import com.snoozeshare.service.ListingService;
@@ -105,8 +107,10 @@ public final class ListingServiceImpl implements ListingService {
                 draft.baseNightlyRate(), draft.checkInTime(), draft.checkOutTime(),
                 draft.amenities(), draft.createdAt() == null ? Instant.now() : draft.createdAt());
         Property persisted = properties.save(saved);
-        audit.record(host.userId(), "LISTING_CREATED", "PROPERTY", persisted.propertyId(),
-                null, persisted);
+        audit.record(AuditRecord.builder(host.userId(), AuditAction.LISTING_CREATED, "Property",
+                        persisted.propertyId())
+                .status(null, persisted.status()).subject(host.userId())
+                .reason("Listing created: " + persisted.title()).build());
         return persisted;
     }
 
@@ -128,8 +132,9 @@ public final class ListingServiceImpl implements ListingService {
                 draft.bedrooms(), draft.bathrooms(), draft.baseNightlyRate(), draft.checkInTime(),
                 draft.checkOutTime(), draft.amenities(), existing.createdAt());
         Property persisted = properties.save(edited);
-        audit.record(host.userId(), "LISTING_UPDATED", "PROPERTY", edited.propertyId(),
-                existing, persisted);
+        audit.record(AuditRecord.builder(host.userId(), AuditAction.LISTING_UPDATED, "Property",
+                        edited.propertyId())
+                .subject(host.userId()).reason("Listing details updated").build());
         return persisted;
     }
 
@@ -154,8 +159,9 @@ public final class ListingServiceImpl implements ListingService {
                 existing.bathrooms(), existing.baseNightlyRate(), existing.checkInTime(),
                 existing.checkOutTime(), existing.amenities(), existing.createdAt());
         Property persisted = properties.save(updated);
-        audit.record(host.userId(), "LISTING_STATUS_CHANGED", "PROPERTY", propertyId,
-                existing, persisted);
+        audit.record(AuditRecord.builder(host.userId(), AuditAction.LISTING_STATUS_CHANGED, "Property",
+                        propertyId)
+                .status(existing.status(), persisted.status()).subject(host.userId()).build());
         return persisted;
     }
 

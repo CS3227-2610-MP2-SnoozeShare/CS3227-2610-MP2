@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.snoozeshare.domain.enums.AssigneeFilter;
+import com.snoozeshare.domain.enums.AuditAction;
 import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.TicketStatus;
@@ -23,6 +24,7 @@ import com.snoozeshare.repository.BookingRepository;
 import com.snoozeshare.repository.TicketCategoryRepository;
 import com.snoozeshare.repository.TicketRepository;
 import com.snoozeshare.repository.UserRepository;
+import com.snoozeshare.service.AuditRecord;
 import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.DisputeSettlementService;
 import com.snoozeshare.service.TicketService;
@@ -126,8 +128,9 @@ public final class TicketServiceImpl implements TicketService {
             throw new IllegalArgumentException("Category label already exists");
         }
         TicketCategory created = categories.save(new TicketCategory(UUID.randomUUID(), clean, true));
-        audit.record(agentId, "TICKET_CATEGORY_CREATED", "TicketCategory", created.categoryId(), null,
-                created);
+        audit.record(AuditRecord.builder(agentId, AuditAction.TICKET_CATEGORY_CREATED, "TicketCategory",
+                        created.categoryId())
+                .status(null, "ACTIVE").reason("Category created: " + created.label()).build());
         return created;
     }
 
@@ -141,7 +144,9 @@ public final class TicketServiceImpl implements TicketService {
         }
         TicketCategory renamed = categories.save(
                 new TicketCategory(categoryId, clean, existing.active()));
-        audit.record(agentId, "TICKET_CATEGORY_RENAMED", "TicketCategory", categoryId, existing, renamed);
+        audit.record(AuditRecord.builder(agentId, AuditAction.TICKET_CATEGORY_RENAMED, "TicketCategory",
+                        categoryId)
+                .reason("Renamed \"" + existing.label() + "\" to \"" + renamed.label() + "\"").build());
         return renamed;
     }
 
@@ -151,7 +156,10 @@ public final class TicketServiceImpl implements TicketService {
         TicketCategory existing = loadCategory(categoryId);
         TicketCategory updated = categories.save(
                 new TicketCategory(categoryId, existing.label(), active));
-        audit.record(agentId, "TICKET_CATEGORY_TOGGLED", "TicketCategory", categoryId, existing, updated);
+        audit.record(AuditRecord.builder(agentId, AuditAction.TICKET_CATEGORY_TOGGLED, "TicketCategory",
+                        categoryId)
+                .status(existing.active() ? "ACTIVE" : "INACTIVE", updated.active() ? "ACTIVE" : "INACTIVE")
+                .reason("Category: " + existing.label()).build());
         return updated;
     }
 
@@ -163,7 +171,10 @@ public final class TicketServiceImpl implements TicketService {
             throw new IllegalStateException("Category is in use by tickets; deactivate it instead");
         }
         categories.deleteById(categoryId);
-        audit.record(agentId, "CATEGORY_DELETED", "TicketCategory", categoryId, existing, null);
+        audit.record(AuditRecord.builder(agentId, AuditAction.TICKET_CATEGORY_DELETED, "TicketCategory",
+                        categoryId)
+                .status(existing.active() ? "ACTIVE" : "INACTIVE", null)
+                .reason("Category deleted: " + existing.label()).build());
     }
 
     @Override
@@ -184,7 +195,8 @@ public final class TicketServiceImpl implements TicketService {
         }
         Ticket updated = tickets.save(with(ticket, TicketStatus.IN_REVIEW, agentId,
                 ticket.agentNotes()));
-        audit.record(agentId, "TICKET_ASSIGNED", "Ticket", ticketId, ticket.status(), updated.status());
+        audit.record(ticketRow(agentId, AuditAction.TICKET_ASSIGNED, ticket)
+                .status(ticket.status(), updated.status()).reason("Assigned for review").build());
         return updated;
     }
 
@@ -200,7 +212,8 @@ public final class TicketServiceImpl implements TicketService {
         }
         String text = notes == null ? "" : notes;
         Ticket updated = tickets.save(with(ticket, ticket.status(), ticket.assignedAgentId(), text));
-        audit.record(agentId, "TICKET_NOTE_SAVED", "Ticket", ticketId, ticket.agentNotes(), text);
+        audit.record(ticketRow(agentId, AuditAction.TICKET_NOTE_SAVED, ticket)
+                .reason("Internal note updated").build());
         return updated;
     }
 
@@ -216,8 +229,14 @@ public final class TicketServiceImpl implements TicketService {
             throw new IllegalStateException("Ticket is not assigned to this agent");
         }
         Ticket updated = tickets.save(with(ticket, TicketStatus.OPEN, null, ticket.agentNotes()));
-        audit.record(agentId, "TICKET_UNASSIGNED", "Ticket", ticketId, ticket.status(), updated.status());
+        audit.record(ticketRow(agentId, AuditAction.TICKET_UNASSIGNED, ticket)
+                .status(ticket.status(), updated.status()).reason("Returned to the queue").build());
         return updated;
+    }
+
+    private static AuditRecord.Builder ticketRow(UUID agentId, AuditAction action, Ticket ticket) {
+        return AuditRecord.builder(agentId, action, "Ticket", ticket.ticketId())
+                .subject(ticket.raisedByUserId()).booking(ticket.bookingId()).ticket(ticket.ticketId());
     }
 
     @Override

@@ -103,7 +103,7 @@ class TicketServiceCategoryTest {
         service.deleteCategory(noise.categoryId(), agent);
 
         assertTrue(service.listAllCategories().isEmpty());
-        assertEquals(List.of("TICKET_CATEGORY_CREATED", "CATEGORY_DELETED"), audit.actions());
+        assertEquals(List.of("TICKET_CATEGORY_CREATED", "TICKET_CATEGORY_DELETED"), audit.actions());
     }
 
     @Test

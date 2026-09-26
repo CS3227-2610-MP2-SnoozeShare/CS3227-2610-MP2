@@ -128,7 +128,7 @@ The Support Agent backlog manages dispute triage, manual state overrides, accoun
 |  | **F11.1** | **System Audit Trail Inspector** |  |  |  |
 |  |  | F11.1.1 | The system shall provide an audit logging service and database table, and log every booking state transition into it. | High | 1 |
 |  |  | F11.1.2 | The system shall extend audit logging to wallet transactions (escrow, payout, refund, override) and ticket resolutions as those features land. | Medium | 2 |
-|  |  | F11.1.3 | The system shall allow support agents to filter audit logs by User ID, Booking ID, and Action Type. | Medium | 3 |
+|  |  | F11.1.3 | The system shall allow support agents to filter audit logs by a single search (user name or User/Booking/Ticket ID), Action Type, and a From/To date range. | Medium | 3 |
 
 ## 6. Agentic Software Engineering (SE) Workflow Guidelines
 
@@ -140,6 +140,10 @@ To meet the course requirements for Agentic SE integration in Java 25, team memb
 > 4. **CI/CD Integration:** Use automated agent scripts to construct GitHub Actions pipelines for running headless TestFX UI tests and Maven unit builds on every PR merge.
 
 ## Changelog & Revision Notes
+
+**2026-09-26 (W12 audit trail, see PROJECT_STATE C28–C32; operator approved)**
+- **F11.1.3** reworded: filter by one search box (user name or User/Booking/Ticket ID), Action Type, and a From/To date range, replacing separate User ID / Booking ID filters.
+- Audit rows are one row per change with typed wallet-adjustment, reason and id columns; account-governance rows are emitted by W11.
 
 **2026-09-25 (W10 design, see PROJECT_STATE C16–C23)**
 - **F9.2.1** (agent Force Cancel / Force Complete) dropped as redundant with ticket accept/reject.

@@ -134,11 +134,18 @@ public final class RowMappers {
         return new AuditLogEntry(
                 JdbcCodecs.uuid(result.getString("logId")),
                 JdbcCodecs.uuid(result.getString("actorUserId")),
+                result.getString("actorName"),
                 result.getString("actionType"),
                 result.getString("entityType"),
                 JdbcCodecs.uuid(result.getString("entityId")),
                 result.getString("beforeState"),
                 result.getString("afterState"),
+                JdbcCodecs.decimal(result.getString("walletAdjustment")),
+                result.getString("reason"),
+                JdbcCodecs.uuid(result.getString("subjectUserId")),
+                result.getString("subjectName"),
+                JdbcCodecs.uuid(result.getString("bookingId")),
+                JdbcCodecs.uuid(result.getString("ticketId")),
                 JdbcCodecs.instant(result.getString("timestamp")));
     }
 

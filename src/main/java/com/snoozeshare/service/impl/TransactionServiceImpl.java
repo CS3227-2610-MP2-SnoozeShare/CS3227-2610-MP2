@@ -14,6 +14,7 @@ import com.snoozeshare.infra.events.EventBus;
 import com.snoozeshare.repository.BookingRepository;
 import com.snoozeshare.repository.WalletRepository;
 import com.snoozeshare.repository.WalletTransactionRepository;
+import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.TransactionService;
 
 public final class TransactionServiceImpl implements TransactionService {
@@ -26,8 +27,8 @@ public final class TransactionServiceImpl implements TransactionService {
     public TransactionServiceImpl(Connection connection, BookingRepository bookings,
                                    WalletRepository wallets,
                                    WalletTransactionRepository transactions,
-                                   EventBus eventBus) {
-        this.ledger = new WalletLedgerWriter(connection, wallets, transactions, eventBus);
+                                   EventBus eventBus, AuditService audit) {
+        this.ledger = new WalletLedgerWriter(connection, wallets, transactions, eventBus, audit);
         this.bookings = bookings;
         this.wallets = wallets;
         this.transactions = transactions;

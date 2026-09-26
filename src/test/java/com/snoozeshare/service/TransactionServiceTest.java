@@ -32,6 +32,7 @@ import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
+import com.snoozeshare.service.impl.NoOpAuditService;
 import com.snoozeshare.service.impl.TransactionServiceImpl;
 
 class TransactionServiceTest {
@@ -168,7 +169,7 @@ class TransactionServiceTest {
                 new JdbcBookingRepository(connection),
                 new JdbcWalletRepository(connection),
                 new JdbcWalletTransactionRepository(connection),
-                null);
+                null, new NoOpAuditService());
     }
 
     private static Connection migratedConnection() throws Exception {
