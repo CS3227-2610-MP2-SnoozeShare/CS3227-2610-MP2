@@ -4,7 +4,7 @@ Handover brief for developers taking over this project. It describes **confirmed
 is updated at checkpoints, so it can lag behind the code. For current status, work in flight, and
 what to build next, read [`PROJECT_STATE.md`](../PROJECT_STATE.md) — that is the source of truth.
 
-**Last updated:** 2026-09-26 — covers W10 (Agent Dispute Resolution), plus the scope, setup,
+**Last updated:** 2026-09-27 — covers W6–W8 (Host Listings, Calendar, and Booking Requests), W10 (Agent Dispute Resolution), plus the scope, setup,
 requirements and glossary it relies on
 
 ## Contents
@@ -28,7 +28,8 @@ and its dispute window are over. It runs as a single process against an embedded
 there is no server.
 
 **Target user:** the three roles the app serves — Guest (renter), Host (homeowner) and Support
-Agent (platform admin). This guide documents the Support Agent's dispute-resolution tooling.
+Agent (platform admin). This guide documents the Host management/request workflows and the Support
+Agent's dispute-resolution tooling.
 
 **Value proposition:** a support agent can take a dispute ticket, read both parties' evidence and
 chat, and settle the booking's held escrow between guest and host in one atomic, audited action.
@@ -165,6 +166,22 @@ flowchart TB
 Left out for clarity: `AppContext` wiring, `SessionContext`, the other repositories (booking,
 property, user, wallet, wallet transaction), and the queue and category screens, which call the
 same services.
+
+The host-facing slices use the same service and repository boundaries:
+
+```mermaid
+flowchart LR
+  HostUI["ui.host\nListings / Calendar / Requests"] --> HostServices["ListingService\nAvailabilityService\nBookingService"]
+  HostServices --> HostRepos["Property / Availability / Booking repositories"]
+  HostRepos --> DB2["SQLite"]
+  HostServices --> Wallet["TransactionService\nWalletService"]
+  HostServices --> Audit["AuditService"]
+```
+
+W6 owns listing CRUD, publishing status and host listing metrics. W7 adds listing-specific calendar
+views and persisted manual date blocks. W8 adds host-scoped booking projections, request decisions,
+earnings previews and guarded escrow completion. Controllers receive these capabilities through
+`AppContext`; they do not access repositories directly.
 
 **One request: an agent resolves a ticket**
 
@@ -489,6 +506,54 @@ sequenceDiagram
 
 **Deviations:** D7 (the design canvas shows Force actions, a newest-first queue, an "Adjust wallet" dropdown and no Accept amount field; the built screens follow C22, oldest-first per F9.1.1, and the refund-amount field of C20); D11 (a sidebar shell) was superseded by C24, so the built shell is the tab strip; D12 (f) (`DisputeDetailController.load()` still calls `render()` outside the error handler). The dispute screens use the `SGD` currency label (C10).
 
+### 4.9 Host listing management (`ui.host.listings`)
+
+**Purpose:** hosts create, edit, publish, deactivate and inspect their own properties.
+
+| File | Role |
+|---|---|
+| [`HostListingsController`](../src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java) + `host-listings.fxml` | Host-scoped `My listings` dashboard with listing cards, booking/rating metrics, Active/Inactive control, Edit, and calendar entry. |
+| [`HostListingFormController`](../src/main/java/com/snoozeshare/ui/host/listings/HostListingFormController.java) + `host-listing-form.fxml` | Shared create/edit form with Basic Details, Location, Capacity & Pricing, and Amenities cards; validates checkout after check-in. |
+| [`HostListingDetailController`](../src/main/java/com/snoozeshare/ui/host/listings/HostListingDetailController.java) + `host-listing-detail.fxml` | Host-facing listing detail view with Back and Edit actions. |
+| [`ListingServiceImpl`](../src/main/java/com/snoozeshare/service/impl/ListingServiceImpl.java) | Enforces host ownership, validates listing data, persists changes and emits audit records. |
+| [`ListingMetricsService`](../src/main/java/com/snoozeshare/service/ListingMetricsService.java) | Supplies total-booking and average-rating metrics with zero-value fallbacks. |
+
+New listings are `ACTIVE` by default. Property and status values are displayed with human-readable
+labels, while the service and database retain enum values. Host listing mutations are owner-only and
+audited.
+
+### 4.10 Host calendar and date overrides (`ui.host.calendar`)
+
+**Purpose:** hosts inspect one listing's monthly availability and create or remove manual blocks.
+
+[`HostCalendarController`](../src/main/java/com/snoozeshare/ui/host/calendar/HostCalendarController.java)
+loads the selected listing, renders booked/blocked/available/adjacent-month days, supports month
+navigation, and shows all-month manual overrides. Manual blocks use inclusive end dates and permit
+single-day ranges; creation rejects invalid dates, overlaps with bookings or existing blocks, and
+non-owned listings. Every persisted block carries an optional reason and can be removed by its owner.
+
+The calendar is reached from a listing card and returns to Host Listings through the shell callback.
+Availability rules remain in `AvailabilityService`; the controller does not query the database.
+
+### 4.11 Host booking requests (`ui.host.bookings`)
+
+**Purpose:** hosts review pending requests, see past decisions, approve or reject requests, and view
+projected earnings.
+
+| File | Role |
+|---|---|
+| [`HostBookingsController`](../src/main/java/com/snoozeshare/ui/host/bookings/HostBookingsController.java) + `host-bookings.fxml` | Host-scoped pending/history tables, guest rating, gross/net figures, decision actions, and status badges. The page loads its own `host-bookings.css`; it does not own agent table classes. |
+| [`HostBookingDecisionDialogController`](../src/main/java/com/snoozeshare/ui/host/bookings/HostBookingDecisionDialogController.java) + `host-booking-decision-dialog.fxml` | Approve/reject confirmation modal; rejection accepts an optional message to the guest. |
+| [`BookingServiceImpl`](../src/main/java/com/snoozeshare/service/impl/BookingServiceImpl.java) | Enforces host ownership and state transitions, previews host earnings, persists the optional rejection message, and settles normal bookings. |
+| [`HostBookingRow`](../src/main/java/com/snoozeshare/service/HostBookingRow.java) | Read model combining booking, listing, guest, gross/net projection and average guest rating. |
+
+Approval moves a pending booking to `CONFIRMED` while retaining escrow until check-in. Rejection
+fully refunds the held amount and may expose the host's optional message in the guest trip view.
+Normal completion runs only after checkout plus the seven-day dispute window and skips bookings with
+an open or in-review ticket. Eligible completion atomically pays the host the net amount after the 3%
+host-side fee and publishes wallet events after commit. The broader structured host dispute response
+path remains deferred to W13 (C29); W8's persisted message is the confirmed narrow exception (C31).
+
 ---
 
 ## 5. Requirements
@@ -496,6 +561,10 @@ sequenceDiagram
 ### Functional Requirements
 
 Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
+
+- **F5 / W6** Hosts can create, edit, publish and deactivate their own listings, view listing details and metrics, and open a listing-specific calendar.
+- **F6 / W7** Hosts can inspect monthly availability and create/remove validated inclusive manual date blocks with optional reasons.
+- **F7 / W8** Hosts can review pending booking requests, approve or reject them, see gross/net earnings and guest ratings, and review past request statuses. Normal completion respects the seven-day dispute window and open-ticket guard.
 
 - **F9.1.1** The system shows an active dispute ticket queue sorted oldest first, with guest and host evidence and their chat threads. Filters: All / Unassigned / Mine, and by status. Chat threads are session-only for now (see Known Limitations).
 - **F9.1.2** Agents can accept (assign to themselves) ticket requests, unassign, and record internal notes on a ticket.
@@ -533,6 +602,9 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 - **Escrow amount is `booking.totalAmount()`** — settlement does not read it from the `ESCROW_HOLD` row (D12 (e)).
 - **A load error can escape the detail screen's handler** — `DisputeDetailController.load()` calls `render()` outside the error handler (D12 (f)).
 - **Auto-complete must skip open tickets** — W10 does not implement the scheduler; whatever completes bookings after the dispute window must leave a booking alone while its ticket is `OPEN` or `IN_REVIEW` (C17).
+- **W6 host listing forms** use text inputs for descriptions and max guests, human-readable dropdown values, and a four-card two-column layout.
+- **W7 manual blocks** use inclusive end dates, including single-day blocks; overlapping bookings and blocks are rejected.
+- **W8 host responses** persist only the optional rejection message; structured dispute notes/evidence remain W13 scope (C29).
 
 ---
 
@@ -557,6 +629,9 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 - **Ticket category:** an admin-managed label (`ticket_categories`) offered to guests when they file a ticket. A ticket stores the label text.
 - **TICKET_REMEDY:** wallet transaction type written on the guest's wallet when an agent accepts a ticket and refunds the guest.
 - **Wallet:** a user's balance holder; `WalletTransaction` rows record every change.
+- **Manual block:** a host-created availability override that makes a listing unavailable for an inclusive date range.
+- **Pending request:** a guest booking with status `PENDING`, escrow held, and a host decision still required.
+- **Projected net:** the host's gross booking amount less the 3% platform fee, before normal completion settlement.
 
 ---
 
@@ -569,6 +644,7 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 | `.\gradlew test` | Runs every suite below (JUnit 5, TestFX on the classpath). |
 | `.\gradlew build` | Compiles, runs checkstyle (`config/checkstyle/checkstyle.xml`), then all tests. |
 | `.\gradlew test --tests "com.snoozeshare.service.DisputeFlowEndToEndTest"` | Runs one class. A pattern such as `--tests "*DisputeSettlement*"` also works. |
+| `.\gradlew test --tests "com.snoozeshare.ui.HostBookingsControllerTest"` | Verifies the Host booking requests FXML/classes, context handoff, modal resource, host-owned stylesheet, table widths and status-badge selectors. |
 
 No credentials or external services are needed. Database-backed suites copy `db/snoozeshare-mock.db`
 to a temporary directory, so the committed file is never modified. Test run times were not
@@ -584,6 +660,7 @@ measured for this guide.
 | End to end: `DisputeFlowEndToEndTest` | `AppContext` on a mock DB copy: agent works an open ticket from queue to resolution through the real services. |
 | Architecture: `LayerDependencyTest`, `UiDependencyTest` | `domain` has no JavaFX or `java.sql` imports; `ui` has no `com.snoozeshare.repository` or `java.sql` imports. |
 | Layout: `AdminFxmlLayoutTest`, `AdminShellInitialsTest`, `ShellLayoutTest`, `AuthLayoutTest` | FXML and CSS content checks; these need no display. |
+| Host UI: `HostListingsControllerTest`, `HostListingFormControllerTest`, `HostCalendarControllerTest`, `HostBookingsControllerTest` | Host listing CRUD/navigation/form contracts, calendar layout and validation, booking-request tables, decision modal, stylesheet ownership and status badges. |
 | FX smoke and flow: `AdminUiSmokeTest`, `AgentModalTest`, `ResolutionDialogFlowTest`, `CategoryDialogFlowTest` | Real JavaFX toolkit: screens render, dialogs validate and return results, the scrim is added and removed. They skip (`assumeTrue`) when the toolkit cannot start, for example on a headless machine. |
 | Snapshots: `AdminUiSnapshotTest`, `AdminDetailSnapshotTest`, `AdminModalSnapshotTest` | Render the agent screens at 1280x800 and write PNGs to `build/ui-snapshots/`. They never assert on pixels and skip when the toolkit cannot start. Open the images to review layout by eye. |
 
@@ -607,3 +684,12 @@ measured for this guide.
   5. Press Accept and enter a refund of `175`: the preview should read `Guest refund SGD 175.00 | Host payout SGD 679.00 (fee SGD 21.00)`. Leave the reason empty and confirm the dialog will not submit, then enter a reason and confirm.
   6. Open the Categories tab: add, rename and deactivate a category, try a duplicate label, and delete one that no ticket uses.
 - **Expected:** the agent screens use the canvas tab strip and "Fall Light" palette; every modal dims the window behind it with a light-grey scrim; the resolved ticket shows escrow as "Settled" and its actions are disabled; a duplicate category label shows an error; a category used by a ticket cannot be deleted.
+
+**Host screens visual and workflow check.** Use a copy of the mock DB and log in with a seeded host
+account. Confirm that Listings starts on `My listings`, listing cards show metrics and fixed-width
+status controls, Create/Edit uses the four-card form, and Open booking calendar shows the selected
+listing's month with booked, blocked and available dates. Add and remove a manual block, including a
+single-day block, and verify overlap/invalid-date feedback. On Requests, confirm pending and past
+tables are populated, pending actions open the approve/reject modal, rejection accepts an optional
+guest message, past statuses are uppercase green/red badges, and the first five pending columns align
+with the past-request table.
