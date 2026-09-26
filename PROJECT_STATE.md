@@ -4,11 +4,11 @@
 anything, then run `git log --oneline -20` to confirm it still matches reality. Update it at
 every boundary, not at the end of the session.
 
-- **Phase:** W7 Host Calendar & Date Overrides — complete
+- **Phase:** W12 Platform Audit Trail — in review
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `agent-platform-audit-trail` (W12 — Platform Audit Trail; branched from `main` after the W10 merge)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-26 by Claude Sonnet 5 — W12 spec approved, decisions C28–C32 recorded, W14 opened
+- **Last updated:** 2026-09-26 by Claude Sonnet 5 — W12 Tasks 1-11 done, clean build green (302 tests), In review
 - **Last verified against repo:** 2026-09-26
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
 
@@ -44,7 +44,7 @@ three iterations).
 | `logs/` | Per-agent-session interaction logs named `YYYY-MM-DD_HH-mm-ss_<branch>.md` in SGT |
 | `src/main/java/com/snoozeshare/` | Application source — package skeleton only, see § Architecture |
 | `config/checkstyle/` | Checkstyle rules enforced on build |
-| `db/schema.sql`, `db/seed-mock-data.sql`, `db/snoozeshare-mock.db` | Shared team-reference SQLite DB — draft SQL + the built `.db` file, committed so everyone queries the same data. **Rebuild the `.db` from the two SQL files after any seed edit** (`sqlite3 x.db < schema.sql; sqlite3 x.db < seed-mock-data.sql`); corrected 2026-09-25 to follow C17/C20 (see D6). **Seed timestamps are UTC ISO-8601 ending in `Z`** (as the app writes them via `Instant.toString()`; `JdbcCodecs.instant` rejects zone-less values) — keep that format in any seed edit. **Seed IDs must be valid hex UUIDs** (mock prefixes: users `a`/`b`/`c`, tickets `d`, listings `1`, bookings `2`, wallets `3`, transactions `4`, availability `5`, audit `6`, categories `7`, reviews `8`); non-hex prefixes make `UUID.fromString` throw. Dev/reference artifact, not wired into app startup (see § 4.5) |
+| `db/schema.sql`, `db/seed-mock-data.sql`, `db/snoozeshare-mock.db` | Shared team-reference SQLite DB — draft SQL + the built `.db` file, committed so everyone queries the same data. **Rebuild the `.db` from the two SQL files after any seed edit** (`sqlite3 x.db < schema.sql; sqlite3 x.db < seed-mock-data.sql`); corrected 2026-09-25 to follow C17/C20 (see D6). **Seed timestamps are UTC ISO-8601 ending in `Z`** (as the app writes them via `Instant.toString()`; `JdbcCodecs.instant` rejects zone-less values) — keep that format in any seed edit. **Seed IDs must be valid hex UUIDs** (mock prefixes: users `a`/`b`/`c`, tickets `d`, listings `1`, bookings `2`, wallets `3`, transactions `4`, availability `5`, audit `6`, categories `7`, reviews `8`); non-hex prefixes make `UUID.fromString` throw. **The committed `.db` ships already migrated** (schema_history v1+v2, System user; `db/schema.sql` includes `CREATE TABLE IF NOT EXISTS schema_history`) and `CommittedMockDbTest` guards that. Dev/reference artifact, not wired into app startup (see § 4.5) |
 
 ---
 
@@ -65,7 +65,7 @@ three iterations).
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 | S7 | 2026-09-25 | Codex | w7 | W7 scope assessment | Paused | `w7` created from `w6`; booking display maps to W8/F7.1, while W7 remains calendar/date overrides | 2026-09-25 |
-| S9 | 2026-09-26 | Claude Sonnet 5 | agent-platform-audit-trail | W12 | Active | Executing plan via subagents (commits authorised); Tasks 1-4 in flight | 2026-09-26 |
+| S9 | 2026-09-26 | Claude Sonnet 5 | agent-platform-audit-trail | W12 | Paused | All 11 plan tasks done and committed; `gradlew clean build` green (302 tests). Waiting on operator: (1) W12 acceptance incl. plan Task 10 Step 3 (run real app on a copy of the mock DB) and the Task 10 Step 3 visual check vs the board, (2) confirm `Done`, then Guide checkpoint (§ Guide: `Awaiting confirmation` → `Pending`). Nothing in flight | 2026-09-26 |
 | S8 | 2026-09-26 | Codex | w7 | W7 | Paused | W7 complete: host calendar, inclusive manual blocks, removal, validation, and layout delivered; full tests/build pass | 2026-09-26 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
@@ -93,7 +93,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
 | W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
 | W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
-| W12 | F11 — Platform Audit Trail (Analytics half of the epic has no items, out of scope; W11 emits the account-governance rows, C32) | Building | [W12 design](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) | [W12 plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md) | Tasks 1-4/11 in flight: domain, migration, repo, service | — |
+| W12 | F11 — Platform Audit Trail (Analytics half of the epic has no items, out of scope; W11 emits the account-governance rows, C32) | In review | [W12 design](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) | [W12 plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md) | Tasks 1-11/11 done, build green; awaiting operator acceptance (D13, D14) | — |
 | W14 | Unified ledger — fold `wallet_transactions` into `audit_log`, `users.balance`, System account with a real wallet (C30, C31) | Not started | — | — | Not spec'd; reverses Known Gaps entry, C3, C9; runs after W12; touches W1/W3/W5/W6/W10 money paths | — |
 | W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
 
@@ -213,7 +213,7 @@ pieces (`WalletPanelController`, `NavShell`, formatting/validation helpers, shar
 constructed once per session and embedded into whichever role shell is active. Controllers are
 meant to depend only on `service.*` interfaces, never `repository.*` or `infra.db.*` directly.
 
-**W10 Agent screens (built):** `ui.admin` has the canvas-style agent shell (top bar + tab strip: Disputes / Accounts / Audit Log / Categories; Accounts and Audit Log are placeholders) in the "Fall Light" palette (`agent-theme.css`, agent scene only; C24). Screens: `DisputeQueueController` (oldest-first table, All/Unassigned/Mine chips, width-fitted status dropdown, unassigned badge), `DisputeDetailController` (summary card, resizable guest/host chat boxes, one persisted internal-notes field with Save, Assign/Unassign, Accept / Reject / Manual actions; C25), `ResolutionDialogController` and `CategoryDialogController` (modal cards built on `AgentModal` with a 50% grey scrim; live refund/payout preview, reason required; category Add/Edit/Delete; C26) and `CategoryAdminController`. To try it on a copy of the mock DB, set env `SNOOZESHARE_DB_URL` (e.g. `jdbc:sqlite:build/acceptance.db`); `Main` passes it to `AppContext.create(jdbcUrl)`. `AdminUiSmokeTest` and the snapshot tests exercise the screens on the FX toolkit and write `build/ui-snapshots/*.png`.
+**W10 Agent screens (built):** `ui.admin` has the canvas-style agent shell (top bar + tab strip: Disputes / Accounts / Audit Log / Categories; Accounts and Audit Log are placeholders) in the "Fall Light" palette (`agent-theme.css`, agent scene only; C24). Screens: `DisputeQueueController` (oldest-first table, All/Unassigned/Mine chips, width-fitted status dropdown, unassigned badge), `DisputeDetailController` (summary card, resizable guest/host chat boxes, one persisted internal-notes field with Save, Assign/Unassign, Accept / Reject / Manual actions; C25), `ResolutionDialogController` and `CategoryDialogController` (modal cards built on `AgentModal` with a 50% grey scrim; live refund/payout preview, reason required; category Add/Edit/Delete; C26) and `CategoryAdminController`. To try it on a copy of the mock DB, set env `SNOOZESHARE_DB_URL` (e.g. `jdbc:sqlite:build/acceptance.db`); `Main` passes it to `AppContext.create(jdbcUrl)`. **W12 adds the Audit Log tab** (`ui.admin.audit.AuditLogController`, read-only): one search box + action-type combo + From/To date pickers + Clear, a table with a `REF` column (`Booking #0009` / `Ticket #0004`), `Before → After` status cell and signed wallet-adjustment cell, and pagination via `AuditService.search` (C29, C32). `AdminUiSmokeTest` and the snapshot tests exercise the screens on the FX toolkit and write `build/ui-snapshots/*.png`.
 
 **Visual design (S2, branch `ui-mockup`):** fully spec'd. The design spec is
 [`docs/superpowers/specs/2026-09-23-ui-design-system-design.md`](docs/superpowers/specs/2026-09-23-ui-design-system-design.md)
@@ -330,6 +330,14 @@ credential check), `logout()`. Every service method that needs an actor takes th
 id explicitly rather than reaching into a global, so services stay unit-testable without a live
 session.
 
+### 4.8 Audit trail
+
+**Now:** `audit_log` is one row per change (C28). Migration `V002__audit_trail.sql` adds 7 columns to the V001 table: `actorName`, `walletAdjustment` (signed, wallet rows only), `reason`, `ticketId`, `bookingId`, `subjectUserId`, `subjectName`, plus indexes on timestamp/actor/subject/booking/ticket and a seeded non-loginable **System user** (`AuditService.SYSTEM_ACTOR_ID`, role `AGENT`, `SUSPENDED`; C29, C32). `beforeState`/`afterState` hold status text only. Rows are written through `AuditRecord.builder(...)` and `AuditService.record(...)` **on the caller's connection**, so a state change and its money rows commit or roll back together (rollback tests exist). A ticket resolution writes 4 rows: ticket status, booking status, guest wallet adjustment, host wallet adjustment (net of fee; zero-amount sides skipped). `AuditService.search(AuditFilter, limit, offset)` returns newest first; a name in the search text is resolved to user ids first and the log queried by id. The Audit Log screen is described in § 4.2. **Dual-write until W14:** wallet movements still write `wallet_transactions` (the ledger) AND an `audit_log` money row in one transaction; W14 folds them together (C31).
+
+| ID | Date | Decision | Why / who asked | Source |
+|---|---|---|---|---|
+| C28–C32 | 2026-09-26 | Audit structure, filters, System user, platform fee as reason text only, W14 split, account-governance rows reserved for W11 — recorded in full in § Decisions | Operator | [W12 spec](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) |
+
 ---
 
 ## 5. Conventions
@@ -348,9 +356,7 @@ Durable rules, harvested from the architecture proposal. Enforcement is partial:
   transaction.
 - All state transitions (booking, ticket) go through the shared `*StateMachine`, never
   re-implemented per role/UI.
-- Every mutating service method has exactly one `AuditService.record(...)` call site (or,
-  alternatively, `AuditService` subscribes to domain events — pick one convention project-wide
-  once this is actually built; not yet decided in code).
+- One audit row per change: a state change and its money movements are separate rows written in the same DB transaction, via `AuditRecord.builder`. Audit rows are only ever written by services, on the caller's connection.
 - `wallets.balance` is a denormalized cache of "sum of this wallet's transactions" — it is only
   ever written in the same DB transaction as the triggering `wallet_transactions` row insert,
   never independently.
@@ -387,6 +393,9 @@ and the stated assumptions/constraints. **These are decisions, not a TODO list �
 - **Auth is fully mocked** — no real credential validation anywhere; role separation is enforced
   in service/domain code, not by real authentication. This is a stated project constraint, not
   an oversight.
+
+- **Audit timestamps are `Instant.toString()` strings (W12).** Variable-length fractional seconds can misorder rows within the same second under `ORDER BY timestamp DESC`. Accepted; do not "fix" without a decision.
+- **Audit Log UI polish left open (W12):** the From/To date pickers look slightly double-bordered, and the `REF` column truncates when a row has both a booking and a ticket. The design board artifact is older than the spec (it has User ID / Booking ID inputs and no REF); the spec and C29 supersede it.
 
 **Explicitly out of scope:** microservices, message brokers, horizontal scaling, JPMS module
 boundaries, JPA/Hibernate, a separate DTO layer distinct from domain records.
@@ -449,7 +458,17 @@ architecture area remain recorded in that area's table.
 - **Backlog edits made 2026-09-25 (operator approved):** `docs/ProductBacklog.md` — F9.2.1 struck as dropped; F9.2.2 reworded to full-escrow settlement; F9.1.1 gains chat threads; F7.3.1 gains the open-ticket guard; new epic F12 Messaging (W13); changelog entry added.
 - **Cross-workstream requirements:** listed under § Workstreams → *Handoffs into W3*.
 
-### D2 — Two schema gaps found while grounding the UI mockups against `db/schema.sql` (OPEN 2026-09-23)
+### W12 deviations (2026-09-26) — see the [W12 spec](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) and [plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md)
+
+- **D13 — Wallet rows are dual-written until W14.** Every wallet movement writes `wallet_transactions` and an `audit_log` money row in one transaction (C31). Deliberate; W14 removes the duplication.
+- **D14 — Not yet done: real-app manual run.** Plan Task 10 Step 3 (launch the app on a copy of the mock DB, log in as `amy.tanaka@snoozeshare.test`, exercise Audit Log) was not performed. FX smoke and snapshot tests cover the flows; this stays as operator acceptance. Open UI polish is listed in § Known Gaps.
+- **D15 — Mock DB now ships migrated.** `MockDbFixture` no longer migrates its copy; the committed `db/snoozeshare-mock.db` already has `schema_history` v1+v2 and the System user, `CommittedMockDbTest` guards it, and `db/schema.sql` now contains `CREATE TABLE IF NOT EXISTS schema_history`. Rebuild the `.db` from schema + seed after seed edits, as before.
+- **D16 — Seed `availability_blocks` ids remapped** to valid hex prefixes (`60…`/`10…`/`20…`) because the old seed did not rebuild cleanly.
+- **D17 — API changes from the plan:** `AuditService.query(...)` replaced by `search(...)`; `CATEGORY_DELETED` renamed `TICKET_CATEGORY_DELETED`. W11 emits account-governance rows (C32); the W14 unified ledger is unchanged by W12. W12 spec corrections (`actorName` snapshot, 7 `ALTER TABLE` columns, ≥4-char contains-match search, last-four-character REF labels) were applied to the spec.
+
+### D2 — Two schema gaps found while grounding the UI mockups against `db/schema.sql` (RESOLVED 2026-09-26 by W12: point 1 by C32, point 2 by C28)
+
+**Resolution (2026-09-26):** point 2 — audit status/reason/amount are now real columns (`walletAdjustment`, `reason`, ...; C28), so no JSON projection layer exists. Point 1 — the suspension reason is stored as `reason` on the `ACCOUNT_SUSPENDED` audit row (C32), no `users.suspensionReason` column; W11 emits that row. Original notes below kept for history.
 
 While extending the Design canvas (C11) to show every field the operator asked for, checking
 each field against `db/schema.sql` / the architecture proposal §4 turned up two things the
@@ -530,7 +549,7 @@ unchanged.
 The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-state/done-ledger.md)**
 — every change, big or small, newest first.
 
-- **Latest entry:** 2026-09-25
-- **Entries:** 59 (4 backfilled coarsely from git history)
+- **Latest entry:** 2026-09-26
+- **Entries:** 70 (4 backfilled coarsely from git history)
 
 Deviations stay in § Deviations above: those are read every session.
