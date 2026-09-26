@@ -5,6 +5,9 @@ why, with a commit, plan or artifact as the reference. Not a copy of `git log`.
 
 | Date | What changed | Workstream | Ref |
 |---|---|---|---|
+| 2026-09-26 | Recorded C33 (operator UI amendments), fixed spec § 5-6 (multi-select, date pickers, Clear button, fixed headers), added D18 and cleared the double-border Known Gap | W12 | `PROJECT_STATE.md` C33; W12 spec |
+| 2026-09-26 | Audit Log UI amendments (C33): `MultiSelectMenu` action filter at the same height as the other inputs, board-styled single-border date pickers and calendar popup (no range, no Clear/Apply), red-outline Clear, fixed headers with only rows scrolling in the queue, audit and categories screens, grey audit row hover with default cursor; new layout/multi-select tests and popup snapshots | W12 | commit `4882c0c`; `build/ui-snapshots/agent-audit-*.png` |
+| 2026-09-26 | Audit filter takes a set of actions (`AuditFilter.actions`, `AuditCriteria.actionTypes`, `IN` clause with bound parameters, empty = all) with repository and service tests | W12 | commit `cea5340` |
 | 2026-09-26 | W12 verification: `gradlew clean build` green (checkstyle + 302 tests, 0 failures); `PRAGMA foreign_key_check` on the mock DB is clean; W12 set to In review; D13-D17 and § 4.8 recorded (Task 11) | W12 | `docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md`; Task 11 |
 | 2026-09-26 | Reworded backlog F11.1.3 (single search + Action Type + From/To dates) and added a 2026-09-26 changelog entry for C28-C32 (operator approved); applied the three spec corrections | W12 | `docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md`; `docs/ProductBacklog.md`, W12 spec |
 | 2026-09-26 | Added the Audit Log screen tests: layout, filter, and PNG snapshot tests on the FX toolkit (Task 10) | W12 | `docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md`; commit `ae6128c` |

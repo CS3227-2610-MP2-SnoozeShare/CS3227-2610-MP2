@@ -80,7 +80,7 @@ resolution reason.
 
 ## 4. Action vocabulary (`domain.enums.AuditAction`)
 
-Producers pass the enum; the column stores its name; the screen's combo lists all values.
+Producers pass the enum; the column stores its name; the screen's multi-select lists all values.
 
 - **Booking:** `BOOKING_REQUESTED` (null→PENDING), `BOOKING_CONFIRMED`, `BOOKING_REJECTED`,
   `BOOKING_CANCELLED_BY_GUEST`, `BOOKING_CANCELLED_BY_HOST`, `BOOKING_COMPLETED`.
@@ -120,7 +120,8 @@ is added). The seeded suspension/cascade rows are written in this shape.
   `UserRepository` at write time. It never opens its own transaction: it uses the caller's
   connection so the row commits or rolls back with the change.
 - `AuditService.search(AuditFilter, limit, offset)` replaces `query(userId, bookingId, actionType)`.
-  `AuditFilter(String text, AuditAction action, LocalDate from, LocalDate to)`.
+  `AuditFilter(String text, Set<AuditAction> actions, LocalDate from, LocalDate to)`; an empty set means
+  all actions (multi-select, C33). The repository binds an `actionType IN (?, ...)` clause, one parameter per action.
 - **Search semantics** (operator, C29): a full UUID, or a hex id fragment (contains-match) of ≥ 4 chars, matches
   `actorUserId`, `subjectUserId`, `bookingId`, `ticketId`, `entityId`. Any other text is a
   case-insensitive contains match on display name/email, **resolved to user ids first** (current
@@ -155,16 +156,16 @@ New files: `ui/admin/audit/AuditLogController.java`, `resources/.../ui/admin/aud
 | Filter card (white, 1px border, radius 12, padding 14/16) | `HBox styleClass="agent-card"` (padding, `alignment=BOTTOM_LEFT`, spacing 12) |
 | Field label 10px caps bold | `Label styleClass="agent-dialog-field-label"` (W10 modal label) |
 | Text input radius 8 | `TextField` (`.agent-root .text-field`, existing) |
-| `<select>` action type | `ComboBox styleClass="agent-combo"` |
-| **New:** From / To date | `DatePicker`, new `.agent-root .date-picker` block styled like `.text-field` |
+| `<select>` action type | **Multi-select** `MultiSelectMenu` (check-box drop-down, empty = all types, C33), same 34px height as the other filter controls |
+| **New:** From / To date | Two separate `DatePicker`s (no range). One border around field + icon; the popup follows the board's *Date picker* component (12px card, accent border, 34px day cells, accent selected day, ringed today, muted other-month days) with no Clear/Apply row: a click selects (C33) |
 | "Apply filters" solid accent | `Button styleClass="button"` |
-| "Clear" underlined link | `Hyperlink styleClass="agent-crumb-link"` |
+| "Clear" underlined link | `Button styleClass="agent-button-danger"` (red outline, C33); resets every filter |
 | Hint text in the card | dropped (the snapshot caveat no longer applies) |
-| Results grid (bordered card, inset header) | `TableView styleClass="agent-table"` inside `VBox agent-card`, same fixed-row-height binding as `DisputeQueueController` |
+| Results grid (bordered card, inset header) | `TableView styleClass="agent-table"` inside `VBox agent-card`, same fixed-row-height binding as `DisputeQueueController`; the header is fixed and only the rows scroll (no outer `ScrollPane`), scroll bar starts below the header (C33) |
 | Header cells 11px caps | table headers (existing `agent-table` column-header style), titles `TIMESTAMP · ACTOR · ACTION TYPE · STATUS · REASON · AMOUNT` |
 | Action pill (per-type colours) | `TableCell` graphic `Label` with `agent-pill-{accent,success,warning,danger}` or neutral `agent-pill` |
 | Amount `+$465.60` / `-$120.00` / `—` | plain cell, `agent-cell-strong`; SGD label per C10; `—` when no wallet adjustment |
-| Rows not clickable | no row click handler (unlike disputes), no pointer cursor |
+| Rows not clickable | no row click handler (unlike disputes), default cursor; same grey hover highlight as the queue (C33) |
 
 **Board deviations (deliberate, operator-decided):** User ID + Booking ID inputs become one search
 box (C29); From/To date pickers added; force-action options removed (C22); currency `SGD` (C10);
