@@ -10,7 +10,7 @@ every boundary, not at the end of the session.
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
 - **Last updated:** 2026-09-27 by Codex — W9 wallet UI and native modal refinement completed as one cohesive change
 - **Last verified against repo:** 2026-09-27
-- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
+- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W1, W6–W10, and W12 on 2026-09-27; W1 is documented, while W2 remains `Awaiting confirmation` and is not yet documented.
 
 Sections are ordered by how often they are needed: **1–3 say where we are, 4–5 say what the
 system is, 6–7 say what not to touch and what is stuck, 8–10 are the record.** Cite sections by
@@ -72,14 +72,14 @@ question ID, same as a workstream row).
 
 ## 3. Workstreams
 
-W1 has completed its shared-foundation implementation and is awaiting operator confirmation. The rows below are the backlog's epics (§2 of the architecture proposal is
+W1 has completed its shared-foundation implementation and is documented in the Developer Guide. The rows below are the backlog's epics (§2 of the architecture proposal is
 their shared design; `docs/ProductBacklog.md` is their shared spec source) reframed as
 workstreams so future sessions have somewhere to record status. Each started workstream must link
 its spec and plan before feature implementation, per AGENTS.md § 3.
 
 | ID | Workstream | Status | Spec | Plan | Progress | Guide |
 |---|---|---|---|---|---|---|
-| W1 | F0 — Auth, Registration & Wallet Provisioning | Done | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | W1 implementation and verification complete; guide confirmation pending | Awaiting confirmation |
+| W1 | F0 — Auth, Registration & Wallet Provisioning | Done | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | W1 implementation and verification complete; Developer Guide updated with shared-foundation coverage | Documented 2026-09-27 |
 | W2 | F1 — Listing Search & Property Discovery | Done | [listing-search design](docs/superpowers/specs/2026-09-24-w2-listing-search-design.md) | [listing-search plan](docs/superpowers/plans/2026-09-24-w2-listing-search.md) | Implementation complete: search/filter, detail modal, price breakdown | Awaiting confirmation |
 | W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Building | [booking-execution design](docs/superpowers/specs/2026-09-24-w3-booking-execution-design.md) | [booking-execution plan](docs/superpowers/plans/2026-09-24-w3-booking-execution.md) | All 9 tasks complete: TransactionServiceImpl, BookingServiceImpl (submit/cancel/decide), AppContext wiring, Trip Hub UI, Book Now button | — |
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Done | [guest-feedback design](docs/superpowers/specs/2026-09-26-w4-guest-feedback-disputes-reviews-design.md) | [guest-feedback plan](docs/superpowers/plans/2026-09-26-w4-guest-feedback-disputes-reviews.md) | All 8 tasks complete: fileTicket, ReviewService, AppContext wiring, ticket filing modal, review modal, Support tab, Trip Hub buttons | Awaiting confirmation |
