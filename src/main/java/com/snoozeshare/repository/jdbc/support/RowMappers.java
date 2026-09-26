@@ -12,6 +12,7 @@ import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.domain.enums.ListingStatus;
 import com.snoozeshare.domain.enums.PropertyType;
 import com.snoozeshare.domain.enums.RemedyType;
+import com.snoozeshare.domain.model.Review;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.TicketStatus;
 import com.snoozeshare.domain.enums.WalletTransactionType;
@@ -165,5 +166,15 @@ public final class RowMappers {
                 JdbcCodecs.uuid(result.getString("categoryId")),
                 result.getString("label"),
                 result.getInt("active") != 0);
+    }
+
+    public static Review review(ResultSet result) throws SQLException {
+        return new Review(
+                JdbcCodecs.uuid(result.getString("reviewId")),
+                JdbcCodecs.uuid(result.getString("bookingId")),
+                JdbcCodecs.uuid(result.getString("guestId")),
+                result.getInt("rating"),
+                result.getString("comment"),
+                JdbcCodecs.instant(result.getString("createdAt")));
     }
 }
