@@ -6,9 +6,9 @@ every boundary, not at the end of the session.
 
 - **Phase:** W6 Host Listing Management & Publishing — complete, awaiting guide confirmation
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `agent-dispute-resolution-and-state-overrides` (W10 — Agent Dispute Resolution & State Overrides; branched from `main` after W2 merge)
+- **Branch:** `agent-account-governance` (W11 — Agent Account Governance; branched 2026-09-26 from the W10 branch tip, which already contains `main`)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-26 by Claude Sonnet 5 — W10 Done; developer guide seeded with W10
+- **Last updated:** 2026-09-26 by Claude Sonnet 5 — W11 spec written and committed; awaiting operator spec review
 - **Last verified against repo:** 2026-09-26
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
 
@@ -63,6 +63,7 @@ three iterations).
 | S1 | 2026-09-22 (time not tracked) | Claude Sonnet 5 | main | — | Paused | Bootstrapped this file; switched DB to SQLite; built and populated the shared mock DB `db/snoozeshare-mock.db` with operator-approved schema/data; no feature (F0–F11) work started yet | 2026-09-22 |
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
+| S7 | 2026-09-26 | Claude Sonnet 5 | agent-account-governance | W11 | Active | Brainstormed and wrote the W11 spec (committed `f24b018`); operator approved the design in chat. Next: operator reviews the spec file, then `writing-plans` for the plan. No code yet | 2026-09-26 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
@@ -89,7 +90,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W8 | F7 — Host Request Queue, Earnings & Disputes | Not started | — | — | Backlog only: §4 | — |
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
 | W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
-| W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
+| W11 | F10 — Agent Account Governance (F10.1.1 suspend, F10.1.2 cascade; Reactivate added, C28) | Spec'd | [W11 design](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) | — | Spec awaiting operator review; plan not started | — |
 | W12 | F11 — Platform Audit Trail & Analytics | Not started | — | — | Backlog only: §5 | — |
 | W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
 
@@ -419,6 +420,8 @@ architecture area remain recorded in that area's table.
 | C25 | 2026-09-25 | After the second visual check the operator changed three behaviours: (1) internal notes become ONE persisted free-text field per ticket (`Ticket.agentNotes`, replaced on Save, autopopulated on return; no history list; white background like the chat panes; "Add note" becomes a "Save" button in the Send-button colour); (2) "Assign to me" becomes "Unassign" once the ticket is assigned to the signed-in agent (`UNDER_REVIEW` -> `OPEN`, assignee cleared, persisted, audited `TICKET_UNASSIGNED`), so `TicketStateMachine` now allows `UNDER_REVIEW -> OPEN` for agents; (3) dialogs, summary card and status dropdown restyled to the canvas exactly (no shadows in dialogs, border around the whole modal). | Operator. Rejected: note history list; disabling the assign button after assign. |
 | C26 | 2026-09-25 | Third visual round, operator: dropdown text and options right-aligned; pointer cursor on ticket rows; chat boxes (resized together) and the notes box are user-resizable with minimum heights, notes Save button moves to the bottom-right of the field; every modal gets a light-grey 50% scrim over the window behind it (reverses the "no dimmed backdrop" exception in C24); Add/Edit category use the same modal card design, and the Edit modal gets a red Delete. **Scope decision:** category delete is a NEW capability beyond F9.3.1 (add/rename/toggle); a category still referenced by any ticket cannot be deleted (use the active toggle instead). | Operator. |
 | C27 | 2026-09-25 | Ticket status `UNDER_REVIEW` is renamed **`IN_REVIEW`** everywhere (enum, `tickets.status` CHECK in `db/schema.sql` and `V001__foundation.sql`, seed data, mock DB, tests, UI text "In review", messages, variable names) so code and UI use one term. Status filter labels are now All statuses / Open / In review / Approved / Rejected, the dropdown is as narrow as its widest option (selector and popup the same width) and text is left-aligned again (reverses the right-alignment in C26 item 1). **Cross-workstream impact:** any other branch that references `TicketStatus.UNDER_REVIEW` or the string `'UNDER_REVIEW'` must rename it at merge; the architecture proposal's status list is updated in the same change. | Operator (inconsistency between UI and code). Rejected: UI-only rename. |
+| C28 | 2026-09-26 | W11 scope: (a) **Reactivate** is built although F10.1.1 says only suspend (new capability, like C26 delete); (b) the F10.1.2 cascade (pending bookings force-cancelled with 100% refund, host's active listings set inactive; CONFIRMED stays untouched) is in W11; (c) Agent accounts are listed with no action, and agents cannot be suspended or self-suspend; (d) suspension reason lives in a nullable `users.suspensionReason` column (resolves D2 item 1) | Operator answers while scoping W11. Rejected: a `suspensions` table (overkill), deriving from `audit_log` (slow, coupled to W12), suspend-only, cascade deferred, hiding or suspending agent rows | Operator conversation, 2026-09-26; [W11 spec](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) |
+| C29 | 2026-09-26 | W11 UI deltas from the canvas: first column "Display Name" plus a new Email column; dates (Joined, both modals) as `DD MMM YYYY`; Suspend modal banner shows display name large with the full email beneath; Reactivate modal banner uses `#40680C` (from the Force Complete mock-up); modals use `AgentModal` scrim (C26) | Operator, 2026-09-26 | Operator conversation; [W11 spec](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) § 2 |
 | C15 | 2026-09-23 | Execute W1 natively in the existing `w1` checkout rather than creating a separate worktree | Operator explicitly selected the current checkout for execution | Operator conversation, 2026-09-23 |
 
 ---
@@ -438,6 +441,10 @@ architecture area remain recorded in that area's table.
 - **Found during W10 execution (2026-09-25, all fixed, each in the ledger):** (a) mock seed timestamps lacked the trailing `Z`, so `JdbcCodecs.instant` rejected them; (b) mock seed IDs used non-hex prefixes, so `UUID.fromString` threw (rule now in § Orientation repo map); (c) the baseline build was red from 7 pre-existing W2 checkstyle violations.
 - **Backlog edits made 2026-09-25 (operator approved):** `docs/ProductBacklog.md` — F9.2.1 struck as dropped; F9.2.2 reworded to full-escrow settlement; F9.1.1 gains chat threads; F7.3.1 gains the open-ticket guard; new epic F12 Messaging (W13); changelog entry added.
 - **Cross-workstream requirements:** listed under § Workstreams → *Handoffs into W3*.
+
+### D13 — `UserService.suspend` to be replaced by `AccountGovernanceService` (W11, OPEN 2026-09-26)
+
+The W1 stub `UserService.suspend(userId, agentId)` only flips the status. W11 removes it in favour of `AccountGovernanceService.suspend/reactivate` (reason, cascade, audit). D2 item 1 (reason column) is resolved by C28(d); D2 item 2 stays with W12. See the [W11 spec § 6](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md).
 
 ### D2 — Two schema gaps found while grounding the UI mockups against `db/schema.sql` (OPEN 2026-09-23)
 
