@@ -44,6 +44,7 @@ public final class TripDashboardController {
 
     public void setContext(AppContext context) {
         this.context = context;
+        context.runBookingCompletionSweep();
         loadTrips(currentTab);
         subscribeToEvents();
     }

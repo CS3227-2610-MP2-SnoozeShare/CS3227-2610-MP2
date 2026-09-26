@@ -112,6 +112,7 @@ public final class HostShellController extends NavShellController {
     private void showBookings() {
         selectTab(bookingsTab);
         cleanupWalletController();
+        getContext().runBookingCompletionSweep();
         try {
             Node bookingsView = FXMLLoader.load(getClass().getResource(
                     "/com/snoozeshare/ui/host/bookings/host-bookings.fxml"));

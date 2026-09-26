@@ -93,6 +93,10 @@ class ShellNavigationTest {
         assertTrue(guestController.contains("showExplore();"));
         assertTrue(hostController.contains("void setContext(AppContext"));
         assertTrue(hostController.contains("showListings();"));
+        assertTrue(hostController.contains("runBookingCompletionSweep()"));
+        String tripsController = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/guest/trips/TripDashboardController.java"));
+        assertTrue(tripsController.contains("runBookingCompletionSweep()"));
     }
 
     @Test

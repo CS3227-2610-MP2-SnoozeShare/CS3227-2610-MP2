@@ -100,6 +100,7 @@ public final class AppContext implements AutoCloseable {
                 users, txnRepo, clock);
         this.messageService = new InMemoryMessageService(clock);
         this.sceneRouter = new SceneRouter();
+        bookingService.completeEligibleBookings();
     }
 
     public static AppContext create() throws SQLException {
@@ -152,6 +153,10 @@ public final class AppContext implements AutoCloseable {
 
     public BookingService bookingService() {
         return bookingService;
+    }
+
+    public int runBookingCompletionSweep() {
+        return bookingService.completeEligibleBookings();
     }
 
     public TransactionService transactionService() {
