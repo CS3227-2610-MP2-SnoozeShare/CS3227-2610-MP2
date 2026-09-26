@@ -16,16 +16,16 @@
     <Label fx:id="currentBalanceLabel" text="Current balance SGD 0.00"
            styleClass="wallet-modal-balance" wrapText="true"/>
     <Label text="Amount" styleClass="wallet-modal-label"/>
-    <TextField fx:id="amountField" promptText="$ 0.00" styleClass="wallet-amount-field"/>
+    <TextField fx:id="amountField" promptText="\$ 0.00" styleClass="wallet-amount-field"/>
 
     <HBox spacing="10" styleClass="wallet-preset-row">
-        <Button fx:id="preset50" text="$50" styleClass="wallet-preset-button"
+        <Button fx:id="preset50" text="\$50" styleClass="wallet-preset-button"
                 onAction="#handlePreset50"/>
-        <Button fx:id="preset100" text="$100" styleClass="wallet-preset-button"
+        <Button fx:id="preset100" text="\$100" styleClass="wallet-preset-button"
                 onAction="#handlePreset100"/>
-        <Button fx:id="preset500" text="$500" styleClass="wallet-preset-button"
+        <Button fx:id="preset500" text="\$500" styleClass="wallet-preset-button"
                 onAction="#handlePreset500"/>
-        <Button fx:id="preset1000" text="$1000" styleClass="wallet-preset-button"
+        <Button fx:id="preset1000" text="\$1000" styleClass="wallet-preset-button"
                 onAction="#handlePreset1000"/>
     </HBox>
     <Label fx:id="fullBalanceLink" text="Withdraw full available balance"

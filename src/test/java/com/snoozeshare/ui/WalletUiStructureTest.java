@@ -5,12 +5,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
 
 class WalletUiStructureTest {
 
     private static final Path WALLET_DIR = Path.of(
             "src/main/resources/com/snoozeshare/ui/common/wallet");
+
+    @BeforeAll
+    static void startToolkit() {
+        try {
+            Platform.startup(() -> { });
+        } catch (IllegalStateException alreadyStarted) {
+            // Another JavaFX test owns the toolkit in this Gradle worker.
+        }
+    }
 
     @Test
     void commonDashboardUsesCommonControllerAndMockupColumns() throws Exception {
@@ -37,6 +50,14 @@ class WalletUiStructureTest {
             assertTrue(fxml.contains(preset), preset);
         }
         assertTrue(fxml.contains("Withdraw full available balance"));
+    }
+
+    @Test
+    void commonWalletFxmlLoadsThroughJavaFx() throws Exception {
+        FXMLLoader.load(getClass().getResource(
+                "/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
+        FXMLLoader.load(getClass().getResource(
+                "/com/snoozeshare/ui/common/wallet/wallet-action-dialog.fxml"));
     }
 
 }
