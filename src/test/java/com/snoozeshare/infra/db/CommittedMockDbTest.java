@@ -27,7 +27,7 @@ class CommittedMockDbTest {
     }
 
     @Test
-    void theCommittedFileHasTheAuditColumnsTheSystemUserAndMigrationVersionTwo() throws Exception {
+    void theCommittedFileHasTheAuditColumnsTheSystemUserAndMigrationVersionThree() throws Exception {
         try (Connection connection = openCommittedReadOnly();
              Statement statement = connection.createStatement()) {
             Set<String> columns = new HashSet<>();
@@ -46,12 +46,17 @@ class CommittedMockDbTest {
                 result.next();
                 assertEquals(1, result.getInt(1), "System user");
             }
-            for (int version : new int[] {1, 2}) {
+            for (int version : new int[] {1, 2, 3}) {
                 try (ResultSet result = statement.executeQuery(
                         "SELECT COUNT(*) FROM schema_history WHERE version = " + version)) {
                     result.next();
                     assertEquals(1, result.getInt(1), "schema_history version " + version);
                 }
+            }
+            try (ResultSet result = statement.executeQuery("SELECT COUNT(*) FROM users "
+                    + "WHERE suspensionReason IS NOT NULL AND accountStatus = 'SUSPENDED'")) {
+                result.next();
+                assertEquals(2, result.getInt(1), "the two seeded suspended accounts carry a reason");
             }
         }
     }

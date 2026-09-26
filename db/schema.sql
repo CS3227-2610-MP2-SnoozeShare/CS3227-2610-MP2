@@ -16,7 +16,8 @@ CREATE TABLE users (
     email               TEXT NOT NULL UNIQUE,
     accountStatus       TEXT NOT NULL CHECK (accountStatus IN ('ACTIVE','SUSPENDED')),
     registrationCode    TEXT,
-    createdAt           TEXT NOT NULL
+    createdAt           TEXT NOT NULL,
+    suspensionReason    TEXT
 );
 
 CREATE TABLE properties (

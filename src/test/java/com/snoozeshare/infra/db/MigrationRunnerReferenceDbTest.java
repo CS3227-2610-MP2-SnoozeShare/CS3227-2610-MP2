@@ -48,6 +48,7 @@ class MigrationRunnerReferenceDbTest {
             assertEquals(historyBefore, db.scalarLong("SELECT COUNT(*) FROM schema_history"));
             assertEquals(1L, db.scalarLong("SELECT COUNT(*) FROM schema_history WHERE version = 1"));
             assertEquals(1L, db.scalarLong("SELECT COUNT(*) FROM schema_history WHERE version = 2"));
+            assertEquals(1L, db.scalarLong("SELECT COUNT(*) FROM schema_history WHERE version = 3"));
             assertEquals(17L, db.scalarLong("SELECT COUNT(*) FROM users"));
         }
     }
@@ -65,6 +66,7 @@ class MigrationRunnerReferenceDbTest {
 
             assertEquals(1L, scalar(connection, "SELECT COUNT(*) FROM schema_history WHERE version = 1"));
             assertEquals(1L, scalar(connection, "SELECT COUNT(*) FROM schema_history WHERE version = 2"));
+            assertEquals(1L, scalar(connection, "SELECT COUNT(*) FROM schema_history WHERE version = 3"));
             assertEquals(1L, scalar(connection,
                     "SELECT COUNT(*) FROM pragma_table_info('audit_log') WHERE name = 'walletAdjustment'"));
             assertEquals(1L, scalar(connection, "SELECT COUNT(*) FROM users WHERE userId = "
@@ -82,7 +84,7 @@ class MigrationRunnerReferenceDbTest {
 
             MigrationRunner.migrate(connection);
 
-            assertEquals(2L, scalar(connection, "SELECT COUNT(*) FROM schema_history"));
+            assertEquals(3L, scalar(connection, "SELECT COUNT(*) FROM schema_history"));
             assertEquals(1L, scalar(connection,
                     "SELECT COUNT(*) FROM pragma_table_info('audit_log') WHERE name = 'walletAdjustment'"));
         }

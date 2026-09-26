@@ -24,6 +24,7 @@ class SchemaParityTest {
              Connection reference = DatabaseTestSupport.openIsolatedDatabase()) {
             apply(migration, "src/main/resources/db/migration/V001__foundation.sql");
             apply(migration, "src/main/resources/db/migration/V002__audit_trail.sql");
+            apply(migration, "src/main/resources/db/migration/V003__suspension_reason.sql");
             apply(reference, "db/schema.sql");
 
             for (String table : TABLES) {
