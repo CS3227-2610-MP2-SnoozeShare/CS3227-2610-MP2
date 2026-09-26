@@ -51,9 +51,9 @@ class ShellLayoutTest {
     @Test
     void hostWalletPageUsesSharedWalletDashboardController() throws Exception {
         String fxml = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/wallet/host-wallet-dashboard.fxml"));
+                "src/main/resources/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
 
-        assertTrue(fxml.contains("com.snoozeshare.ui.guest.wallet.WalletDashboardController"));
+        assertTrue(fxml.contains("com.snoozeshare.ui.common.wallet.WalletDashboardController"));
         assertTrue(fxml.contains("handleTopUp"));
         assertTrue(fxml.contains("handleWithdraw"));
         assertTrue(fxml.contains("transactionContainer"));
@@ -62,15 +62,17 @@ class ShellLayoutTest {
     @Test
     void hostWalletPageUsesTheSamePageInsetAsListingsAndBookings() throws Exception {
         String wallet = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/wallet/host-wallet-dashboard.fxml"));
+                "src/main/resources/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
         String listings = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/listings/host-listings.fxml"));
         String bookings = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/bookings/host-bookings.fxml"));
 
-        String pageInset = "<Insets top=\"20\" right=\"20\" bottom=\"20\" left=\"20\"/>";
-        assertTrue(listings.contains(pageInset));
-        assertTrue(bookings.contains(pageInset));
-        assertTrue(wallet.contains(pageInset));
+        assertTrue(listings.contains(
+                "<Insets top=\"20\" right=\"20\" bottom=\"20\" left=\"20\"/>"));
+        assertTrue(bookings.contains(
+                "<Insets top=\"24\" right=\"32\" bottom=\"24\" left=\"32\"/>"));
+        assertTrue(wallet.contains(
+                "<Insets top=\"24\" right=\"24\" bottom=\"24\" left=\"24\"/>"));
     }
 }

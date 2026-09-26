@@ -125,7 +125,7 @@ public final class GuestShellController extends NavShellController {
         cleanupTripController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                    "/com/snoozeshare/ui/guest/wallet/wallet-dashboard.fxml"));
+                    "/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
             Node walletView = loader.load();
             walletController = loader.getController();
             walletController.setContext(getContext());

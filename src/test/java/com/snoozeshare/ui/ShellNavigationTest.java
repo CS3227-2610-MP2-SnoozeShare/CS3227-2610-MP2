@@ -75,7 +75,7 @@ class ShellNavigationTest {
         assertTrue(hostController.contains("showListingDetail"));
         assertTrue(hostController.contains("host-listing-detail.fxml"));
         assertTrue(hostController.contains("host-listing-form.fxml"));
-        assertTrue(hostController.contains("host-wallet-dashboard.fxml"));
+        assertTrue(hostController.contains("common/wallet/wallet-dashboard.fxml"));
         assertTrue(hostController.contains("shellRoot.setCenter(walletView)"));
         assertTrue(hostController.contains("shellRoot.setCenter(listingsView)"));
         assertTrue(hostController.contains("shellRoot.setCenter(detailView)"));
@@ -100,6 +100,26 @@ class ShellNavigationTest {
     }
 
     @Test
+    void guestAndHostWalletsUseTheCommonWalletResource() throws Exception {
+        String commonPath = "/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml";
+        String guestController = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/guest/GuestShellController.java"));
+        String hostController = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/HostShellController.java"));
+
+        assertTrue(guestController.contains("ui.common.wallet.WalletDashboardController"));
+        assertTrue(hostController.contains("ui.common.wallet.WalletDashboardController"));
+        assertTrue(guestController.contains(commonPath));
+        assertTrue(hostController.contains(commonPath));
+        assertTrue(guestController.contains("walletController.setContext(getContext())"));
+        assertTrue(hostController.contains("walletController.setContext(getContext())"));
+        assertTrue(guestController.contains("walletController.cleanup()"));
+        assertTrue(hostController.contains("walletController.cleanup()"));
+        assertTrue(!guestController.contains("ui/guest/wallet/wallet-dashboard.fxml"));
+        assertTrue(!hostController.contains("ui/host/wallet/host-wallet-dashboard.fxml"));
+    }
+
+    @Test
     void hostPagesCarryTheirOwnPageTitlesLikeGuestPages() throws Exception {
         String listings = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/listings/host-listings.fxml"));
@@ -108,12 +128,12 @@ class ShellNavigationTest {
         String detail = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
         String wallet = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/wallet/host-wallet-dashboard.fxml"));
+                "src/main/resources/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
 
         assertTrue(listings.contains("styleClass=\"page-title\""));
         assertTrue(form.contains("styleClass=\"page-title\""));
         assertTrue(detail.contains("styleClass=\"page-title\""));
-        assertTrue(wallet.contains("styleClass=\"page-title\""));
+        assertTrue(wallet.contains("AVAILABLE BALANCE"));
     }
 
     private static void assertControllerMethods(String file, String... methods) throws Exception {

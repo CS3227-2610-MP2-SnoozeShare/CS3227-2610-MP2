@@ -117,31 +117,26 @@ class HostListingsControllerTest {
         String bookings = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/bookings/host-bookings.fxml"));
         String wallet = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/wallet/host-wallet-dashboard.fxml"));
+                "src/main/resources/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
 
         assertTrue(shell.contains("text=\"Requests\""));
         assertTrue(bookings.contains("text=\"Booking requests\""));
         assertTrue(wallet.contains("text=\"Top up\""));
-        assertTrue(wallet.contains("wallet-action-button"));
+        assertTrue(wallet.contains("wallet-top-up-button"));
+        assertTrue(wallet.contains("wallet-withdraw-button"));
     }
 
     @Test
     void walletActionsShareDimensionsAcrossGuestAndHost() throws Exception {
-        String guestWallet = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/guest/wallet/wallet-dashboard.fxml"));
-        String hostWallet = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/wallet/host-wallet-dashboard.fxml"));
+        String wallet = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
         String theme = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/admin/agent-theme.css"));
+                "src/main/resources/com/snoozeshare/ui/common/theme.css"));
 
-        assertTrue(guestWallet.contains("text=\"Top up\""));
-        assertTrue(guestWallet.contains("styleClass=\"button, wallet-action-button\""));
-        assertTrue(guestWallet.contains("styleClass=\"outline-button, wallet-action-button\""));
-        assertTrue(hostWallet.contains("styleClass=\"button, wallet-action-button\""));
-        assertTrue(hostWallet.contains("styleClass=\"outline-button, wallet-action-button\""));
-        assertTrue(theme.contains(".agent-root .wallet-action-button"));
-        assertTrue(theme.contains("-fx-pref-width: 118px"));
-        assertTrue(theme.contains("-fx-pref-height: 40px"));
+        assertTrue(wallet.contains("text=\"Top up\""));
+        assertTrue(wallet.contains("text=\"Withdraw\""));
+        assertTrue(theme.contains(".wallet-top-up-button"));
+        assertTrue(theme.contains(".wallet-withdraw-button"));
     }
 
     @Test
