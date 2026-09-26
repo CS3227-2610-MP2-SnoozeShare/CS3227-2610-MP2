@@ -62,7 +62,7 @@
                 <TextField fx:id="toField" promptText="YYYY-MM-DD"/>
                 <Label text="Reason (optional)" styleClass="small"/>
                 <TextField fx:id="reasonField" promptText="Maintenance, private use..."/>
-                <Button text="Block dates" styleClass="primary-button" onAction="#handleBlockDates"/>
+                <Button text="Block dates" styleClass="button" onAction="#handleBlockDates"/>
                 <Label fx:id="statusLabel" styleClass="form-error" wrapText="true"/>
                 <Label text="Current overrides" styleClass="card-title"/>
                 <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">

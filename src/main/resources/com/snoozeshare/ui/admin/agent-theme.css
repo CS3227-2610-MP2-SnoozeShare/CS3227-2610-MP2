@@ -544,3 +544,170 @@
 
 /* ---- Modal scrim: light grey, 50% opacity, over the whole owner window while a modal is open ---- */
 .modal-scrim { -fx-background-color: rgba(160, 160, 160, 0.5); }
+
+/* ======================================================================
+ * Guest & Host screen overrides — Fall Light palette applied to classes
+ * that were originally styled in theme.css with a blue palette.
+ * ====================================================================== */
+
+/* ---- Auth / login page ---- */
+.agent-root.auth-page {
+    -fx-background-color: bg;
+}
+.agent-root .app-title { -fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: accent; }
+
+/* ---- Wallet display in topbar ---- */
+.agent-root .wallet-amount { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: accent; }
+.agent-root .wallet-panel { -fx-background-color: bg-overlay; -fx-border-color: border; -fx-padding: 20px; }
+
+/* ---- Property search cards (Guest) ---- */
+.agent-root .property-card {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.08), 8, 0, 0, 2);
+    -fx-cursor: hand;
+}
+.agent-root .property-card:hover { -fx-border-color: accent; }
+.agent-root .card-price { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: accent; }
+.agent-root .unavailable-label { -fx-text-fill: danger; -fx-font-style: italic; }
+
+/* ---- Host listing cards ---- */
+.agent-root .listing-card {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-padding: 14px;
+    -fx-max-width: infinity;
+}
+.agent-root .listing-status {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 8px 2px 8px;
+    -fx-background-radius: 999px;
+}
+.agent-root .status-active { -fx-text-fill: success; -fx-background-color: success-subtle; }
+.agent-root .status-inactive { -fx-text-fill: fg-subtle; -fx-background-color: bg-inset; }
+.agent-root .status-toggle { -fx-padding: 4px 10px; -fx-font-size: 11px; }
+.agent-root .listing-form { -fx-padding: 12px 0 4px 0; }
+.agent-root .listing-description { -fx-alignment: top-left; }
+.agent-root .form-error { -fx-text-fill: danger; }
+.agent-root .section-title { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: fg; }
+.agent-root .empty-state { -fx-text-fill: fg-subtle; -fx-font-style: italic; }
+
+/* ---- Detail modal (shared Guest & Host) ---- */
+.agent-root .detail-modal {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 12px;
+}
+.agent-root .price-panel {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 8px;
+}
+.agent-root .amenity-chip {
+    -fx-background-color: accent-subtle;
+    -fx-background-radius: 999px;
+    -fx-padding: 4px 12px 4px 12px;
+    -fx-font-size: 11px;
+    -fx-text-fill: accent;
+}
+.agent-root .modal-overlay {
+    -fx-background-color: rgba(16, 6, 4, 0.4);
+}
+
+/* ---- Trip dashboard (Guest) ---- */
+.agent-root .trip-tab-bar {
+    -fx-padding: 0 0 8px 0;
+    -fx-border-color: transparent transparent border-muted transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.agent-root .trip-tab {
+    -fx-padding: 6px 12px 6px 12px;
+    -fx-font-size: 13px;
+    -fx-text-fill: fg-subtle;
+    -fx-cursor: hand;
+}
+.agent-root .trip-tab-active {
+    -fx-text-fill: accent;
+    -fx-border-color: transparent transparent accent transparent;
+    -fx-border-width: 0 0 2 0;
+    -fx-font-weight: bold;
+}
+.agent-root .trip-card {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.06), 6, 0, 0, 2);
+}
+.agent-root .trip-status {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 8px 2px 8px;
+    -fx-background-radius: 999px;
+}
+.agent-root .status-pending { -fx-text-fill: warning; -fx-background-color: warning-subtle; }
+.agent-root .status-confirmed { -fx-text-fill: success; -fx-background-color: success-subtle; }
+.agent-root .status-completed { -fx-text-fill: fg-muted; -fx-background-color: bg-inset; }
+.agent-root .status-cancelled { -fx-text-fill: danger; -fx-background-color: danger-subtle; }
+
+/* ---- Wallet dashboard (Guest & Host) ---- */
+.agent-root .wallet-balance-section {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+}
+.agent-root .transaction-card {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+}
+.agent-root .transaction-type {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 8px 2px 8px;
+    -fx-background-radius: 999px;
+    -fx-background-color: accent-subtle;
+    -fx-text-fill: accent;
+}
+.agent-root .transaction-amount-positive { -fx-font-weight: bold; -fx-text-fill: success; }
+.agent-root .transaction-amount-negative { -fx-font-weight: bold; -fx-text-fill: danger; }
+
+/* ---- Host calendar ---- */
+.agent-root .host-calendar-page { -fx-background-color: bg; }
+.agent-root .calendar-main { -fx-pref-width: 900px; }
+.agent-root .calendar-month-label { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: fg; -fx-min-width: 130px; }
+.agent-root .calendar-legend { -fx-alignment: center-right; }
+.agent-root .calendar-legend .label { -fx-padding: 4px 8px 4px 8px; -fx-background-radius: 4px; }
+.agent-root .legend-available { -fx-background-color: bg-overlay; -fx-border-color: border; -fx-text-fill: fg; }
+.agent-root .legend-booked { -fx-background-color: success-subtle; -fx-text-fill: success; }
+.agent-root .legend-blocked { -fx-background-color: danger-subtle; -fx-text-fill: danger; }
+.agent-root .legend-other-month { -fx-background-color: bg-inset; -fx-text-fill: fg-subtle; }
+.agent-root .calendar-grid { -fx-background-color: border; -fx-hgap: 1; -fx-vgap: 1; }
+.agent-root .calendar-cell { -fx-background-color: bg-overlay; -fx-padding: 12px; -fx-alignment: top-left; }
+.agent-root .calendar-cell-available { -fx-background-color: bg-overlay; }
+.agent-root .calendar-cell-booked { -fx-background-color: success-subtle; -fx-text-fill: success; }
+.agent-root .calendar-cell-blocked { -fx-background-color: danger-subtle; -fx-text-fill: danger; }
+.agent-root .calendar-cell-other-month { -fx-background-color: bg-inset; -fx-text-fill: fg-subtle; }
+.agent-root .calendar-side-panel { -fx-background-color: bg-overlay; -fx-border-color: border; -fx-padding: 16px; }
+.agent-root .override-row { -fx-alignment: center-left; -fx-padding: 6px 0 6px 0; }
+.agent-root .override-row .button { -fx-background-color: transparent; -fx-padding: 2px 0 2px 8px; -fx-text-fill: danger; -fx-font-weight: normal; }
+.agent-root .override-row .button:hover { -fx-underline: true; }
+
+/* ---- ScrollPane backgrounds (prevent white flash inside agent-root) ---- */
+.agent-root .scroll-pane, .agent-root .scroll-pane > .viewport {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+}
+.agent-root .scroll-pane { -fx-border-color: transparent; }
+
+/* ---- Nav item (used by trip tabs) ---- */
+.agent-root .nav-item { -fx-text-fill: fg-subtle; -fx-font-weight: bold; -fx-cursor: hand; }
+.agent-root .nav-item:hover { -fx-text-fill: accent; }
+
+/* ---- Text button utility ---- */
+.agent-root .text-button { -fx-cursor: hand; }
