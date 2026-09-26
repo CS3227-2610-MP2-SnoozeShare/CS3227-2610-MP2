@@ -23,8 +23,8 @@
         </VBox>
 
         <HBox spacing="12">
-            <Button text="Top Up" styleClass="button" onAction="#handleTopUp"/>
-            <Button text="Withdraw" styleClass="outline-button" onAction="#handleWithdraw"/>
+            <Button text="Top up" styleClass="button, wallet-action-button" onAction="#handleTopUp"/>
+            <Button text="Withdraw" styleClass="outline-button, wallet-action-button" onAction="#handleWithdraw"/>
         </HBox>
 
         <Label text="Transaction History" styleClass="card-title"/>

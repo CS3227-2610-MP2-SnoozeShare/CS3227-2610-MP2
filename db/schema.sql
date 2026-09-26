@@ -63,7 +63,8 @@ CREATE TABLE bookings (
     totalAmount           REAL NOT NULL,   -- nightlyRateSnapshot * nights, no guest-side fee (confirmed 2026-09-22 — only fee is the 3% deducted from host BOOKING_PAYOUT)
     createdAt             TEXT NOT NULL,
     decidedAt             TEXT,
-    completedAt           TEXT
+    completedAt           TEXT,
+    hostDecisionMessage   TEXT
 );
 
 CREATE TABLE wallets (

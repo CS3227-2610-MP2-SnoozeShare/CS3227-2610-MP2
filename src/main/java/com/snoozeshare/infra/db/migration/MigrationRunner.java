@@ -22,16 +22,21 @@ public final class MigrationRunner {
             createHistoryTable(connection);
             if (!migrationApplied(connection, FOUNDATION_VERSION)) {
                 if (!tableExists(connection, "users")) {
-                    applyMigrationFile(connection, "/db/migration/V001__foundation.sql");
+                    applyFoundationMigration(connection);
                 }
                 // else: a pre-provisioned reference database (db/snoozeshare-mock.db) already has the schema.
                 recordMigration(connection, FOUNDATION_VERSION);
             }
-            if (!migrationApplied(connection, AUDIT_TRAIL_VERSION)) {
-                if (!columnExists(connection, "audit_log", "walletAdjustment")) {
-                    applyMigrationFile(connection, "/db/migration/V002__audit_trail.sql");
+            if (!migrationApplied(connection, AUDIT_TRAIL_VERSION)
+                    && !columnExists(connection, "audit_log", "walletAdjustment")) {
+                applySqlMigration(connection, "/db/migration/V002__audit_trail.sql");
+            }
+            if (!columnExists(connection, "bookings", "hostDecisionMessage")) {
+                try (Statement statement = connection.createStatement()) {
+                    statement.executeUpdate("ALTER TABLE bookings ADD COLUMN hostDecisionMessage TEXT");
                 }
-                // else: a reference database rebuilt from db/schema.sql already has the audit columns.
+            }
+            if (!migrationApplied(connection, AUDIT_TRAIL_VERSION)) {
                 recordMigration(connection, AUDIT_TRAIL_VERSION);
             }
             connection.commit();
@@ -71,6 +76,31 @@ public final class MigrationRunner {
         }
     }
 
+    private static void applyFoundationMigration(Connection connection) throws SQLException {
+        applySqlMigration(connection, "/db/migration/V001__foundation.sql");
+    }
+
+    private static void applySqlMigration(Connection connection, String resource) throws SQLException {
+        String sql;
+        try (InputStream input = MigrationRunner.class.getResourceAsStream(
+                resource)) {
+            if (input == null) {
+                throw new SQLException("Migration resource is missing: " + resource);
+            }
+            sql = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException exception) {
+            throw new SQLException("Unable to read foundation migration", exception);
+        }
+
+        for (String statementSql : sql.split(";")) {
+            if (!statementSql.isBlank()) {
+                try (Statement statement = connection.createStatement()) {
+                    statement.executeUpdate(statementSql);
+                }
+            }
+        }
+    }
+
     private static boolean columnExists(Connection connection, String table, String column)
             throws SQLException {
         try (Statement statement = connection.createStatement();
@@ -81,26 +111,6 @@ public final class MigrationRunner {
                 }
             }
             return false;
-        }
-    }
-
-    private static void applyMigrationFile(Connection connection, String resource) throws SQLException {
-        String sql;
-        try (InputStream input = MigrationRunner.class.getResourceAsStream(resource)) {
-            if (input == null) {
-                throw new SQLException("Migration resource is missing: " + resource);
-            }
-            sql = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException exception) {
-            throw new SQLException("Unable to read migration " + resource, exception);
-        }
-
-        for (String statementSql : sql.split(";")) {
-            if (!statementSql.isBlank()) {
-                try (Statement statement = connection.createStatement()) {
-                    statement.executeUpdate(statementSql);
-                }
-            }
         }
     }
 

@@ -21,26 +21,21 @@ public final class JdbcReviewRepository implements ReviewRepository {
 
     @Override
     public List<Review> findByBookingId(UUID bookingId) {
-        try (var statement = connection.prepareStatement(
-                "SELECT * FROM reviews WHERE bookingId = ?")) {
-            statement.setString(1, JdbcCodecs.uuid(bookingId));
-            try (var result = statement.executeQuery()) {
-                List<Review> reviews = new ArrayList<>();
-                while (result.next()) {
-                    reviews.add(RowMappers.review(result));
-                }
-                return reviews;
-            }
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Unable to query reviews", exception);
-        }
+        return findBy("bookingId", bookingId, "Unable to query reviews by booking");
+    }
+
+    @Override
+    public List<Review> findByGuestId(UUID guestId) {
+        return findBy("guestId", guestId, "Unable to query reviews by guest");
     }
 
     @Override
     public Review save(Review review) {
         try (var statement = connection.prepareStatement(
                 "INSERT INTO reviews (reviewId, bookingId, guestId, rating, comment, createdAt) "
-                        + "VALUES (?, ?, ?, ?, ?, ?)")) {
+                        + "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(reviewId) DO UPDATE SET "
+                        + "bookingId = excluded.bookingId, guestId = excluded.guestId, "
+                        + "rating = excluded.rating, comment = excluded.comment")) {
             statement.setString(1, JdbcCodecs.uuid(review.reviewId()));
             statement.setString(2, JdbcCodecs.uuid(review.bookingId()));
             statement.setString(3, JdbcCodecs.uuid(review.guestId()));
@@ -51,6 +46,22 @@ public final class JdbcReviewRepository implements ReviewRepository {
             return review;
         } catch (SQLException exception) {
             throw new IllegalStateException("Unable to save review", exception);
+        }
+    }
+
+    private List<Review> findBy(String column, UUID value, String message) {
+        try (var statement = connection.prepareStatement(
+                "SELECT * FROM reviews WHERE " + column + " = ? ORDER BY createdAt DESC")) {
+            statement.setString(1, JdbcCodecs.uuid(value));
+            try (var result = statement.executeQuery()) {
+                List<Review> reviews = new ArrayList<>();
+                while (result.next()) {
+                    reviews.add(RowMappers.review(result));
+                }
+                return reviews;
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException(message, exception);
         }
     }
 }

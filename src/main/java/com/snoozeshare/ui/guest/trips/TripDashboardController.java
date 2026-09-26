@@ -55,6 +55,7 @@ public final class TripDashboardController {
 
     public void setContext(AppContext context) {
         this.context = context;
+        context.runBookingCompletionSweep();
         loadTrips(currentTab);
         subscribeToEvents();
     }
@@ -157,6 +158,12 @@ public final class TripDashboardController {
         amount.getStyleClass().add("card-price");
 
         card.getChildren().addAll(title, dates, status, amount);
+
+        if (booking.hostDecisionMessage() != null && !booking.hostDecisionMessage().isBlank()) {
+            Label hostMessage = new Label("Host message: " + booking.hostDecisionMessage());
+            hostMessage.getStyleClass().add("small");
+            card.getChildren().add(hostMessage);
+        }
 
         if (canCancel(booking)) {
             Button cancelButton = new Button("Cancel Booking");

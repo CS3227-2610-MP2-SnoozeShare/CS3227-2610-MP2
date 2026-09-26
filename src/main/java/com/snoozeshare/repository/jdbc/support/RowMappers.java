@@ -110,7 +110,8 @@ public final class RowMappers {
                 JdbcCodecs.decimal(result.getString("totalAmount")),
                 JdbcCodecs.instant(result.getString("createdAt")),
                 JdbcCodecs.instant(result.getString("decidedAt")),
-                JdbcCodecs.instant(result.getString("completedAt")));
+                JdbcCodecs.instant(result.getString("completedAt")),
+                optionalString(result, "hostDecisionMessage"));
     }
 
     private static Set<AmenityType> parseAmenities(String value) {
@@ -128,6 +129,14 @@ public final class RowMappers {
                     }
                 })
                 .collect(Collectors.toUnmodifiableSet());
+    }
+
+    private static String optionalString(ResultSet result, String column) throws SQLException {
+        try {
+            return result.getString(column);
+        } catch (SQLException missingColumn) {
+            return null;
+        }
     }
 
     public static AuditLogEntry auditLogEntry(ResultSet result) throws SQLException {

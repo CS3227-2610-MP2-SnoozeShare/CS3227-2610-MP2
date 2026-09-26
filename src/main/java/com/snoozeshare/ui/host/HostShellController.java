@@ -6,6 +6,7 @@ import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.ui.common.NavShellController;
 import com.snoozeshare.ui.guest.wallet.WalletDashboardController;
+import com.snoozeshare.ui.host.bookings.HostBookingsController;
 import com.snoozeshare.ui.host.calendar.HostCalendarController;
 import com.snoozeshare.ui.host.listings.HostListingDetailController;
 import com.snoozeshare.ui.host.listings.HostListingFormController;
@@ -112,9 +113,13 @@ public final class HostShellController extends NavShellController {
     private void showBookings() {
         selectTab(bookingsTab);
         cleanupWalletController();
+        getContext().runBookingCompletionSweep();
         try {
-            Node bookingsView = FXMLLoader.load(getClass().getResource(
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/host/bookings/host-bookings.fxml"));
+            Node bookingsView = loader.load();
+            HostBookingsController controller = loader.getController();
+            controller.setContext(getContext());
             shellRoot.setCenter(bookingsView);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load host bookings view", exception);

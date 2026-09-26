@@ -56,6 +56,14 @@ public final class TicketServiceImpl implements TicketService {
         this.eventBus = eventBus;
     }
 
+    public TicketServiceImpl(TicketRepository tickets, TicketCategoryRepository categories,
+                             BookingRepository bookings, UserRepository users,
+                             DisputeSettlementService settlement, AuditService audit,
+                             Clock clock) {
+        this(tickets, categories, bookings, users, settlement, audit, clock,
+                new com.snoozeshare.infra.events.InProcessEventBus());
+    }
+
     @Override
     public List<Ticket> myTickets(UUID userId) {
         return tickets.findByRaisedByUserId(userId);
@@ -105,7 +113,8 @@ public final class TicketServiceImpl implements TicketService {
                 TicketStatus.OPEN, null, null, null, now, null);
 
         Ticket saved = tickets.save(ticket);
-        audit.record(raisedByUserId, "TICKET_FILED", "Ticket", saved.ticketId(), null, saved);
+        audit.record(AuditRecord.builder(raisedByUserId, AuditAction.TICKET_OPENED, "Ticket", saved.ticketId())
+                .subject(raisedByUserId).booking(saved.bookingId()).ticket(saved.ticketId()).at(now).build());
         eventBus.publish(new TicketOpenedEvent(saved.ticketId(), raisedByUserId, now));
         return saved;
     }

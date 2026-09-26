@@ -2,13 +2,11 @@ package com.snoozeshare.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -26,7 +24,6 @@ import com.snoozeshare.domain.enums.ListingStatus;
 import com.snoozeshare.domain.enums.PropertyType;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.WalletTransactionType;
-import com.snoozeshare.domain.model.AuditLogEntry;
 import com.snoozeshare.domain.model.Booking;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.domain.model.User;
@@ -35,17 +32,16 @@ import com.snoozeshare.infra.db.ConnectionFactory;
 import com.snoozeshare.infra.db.migration.MigrationRunner;
 import com.snoozeshare.infra.events.InProcessEventBus;
 import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
-import com.snoozeshare.repository.AuditCriteria;
-import com.snoozeshare.repository.jdbc.JdbcAuditLogRepository;
 import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
+import com.snoozeshare.repository.jdbc.JdbcReviewRepository;
+import com.snoozeshare.repository.jdbc.JdbcTicketRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
-import com.snoozeshare.service.impl.AuditServiceImpl;
 import com.snoozeshare.service.impl.BookingServiceImpl;
-import com.snoozeshare.testsupport.FailingAuditService;
+import com.snoozeshare.service.impl.TransactionServiceImpl;
 
 class BookingServiceTest {
 
@@ -435,170 +431,133 @@ class BookingServiceTest {
         }
     }
 
-    // --- audit tests ---
-
-    private static List<AuditLogEntry> auditRows(Connection connection) {
-        return new JdbcAuditLogRepository(connection).search(AuditCriteria.all(), 100, 0);
-    }
-
-    private static AuditLogEntry row(List<AuditLogEntry> rows, String action) {
-        return rows.stream().filter(r -> r.actionType().equals(action)).findFirst().orElseThrow();
-    }
-
     @Test
-    void submitRequestAuditsTheRequestAndTheEscrowHoldAsSeparateRows() throws Exception {
+    void pendingRequestRowsIncludeGrossNetNightsAndGuestRating() throws Exception {
         try (Connection connection = migratedConnection()) {
             var ctx = seedContext(connection, new BigDecimal("500.00"));
             BookingService service = createService(connection);
-
             Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
                     LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
+            new JdbcReviewRepository(connection).save(new com.snoozeshare.domain.model.Review(
+                    UUID.randomUUID(), booking.bookingId(), ctx.guestId, 5, "great", Instant.now()));
 
-            List<AuditLogEntry> rows = auditRows(connection);
-            assertEquals(Set.of("BOOKING_REQUESTED", "ESCROW_HOLD"),
-                    Set.copyOf(rows.stream().map(AuditLogEntry::actionType).toList()));
-            assertEquals(2, rows.size());
-            AuditLogEntry requested = row(rows, "BOOKING_REQUESTED");
-            assertEquals("Booking", requested.entityType());
-            assertEquals(booking.bookingId(), requested.entityId());
-            assertNull(requested.beforeState());
-            assertEquals("PENDING", requested.afterState());
-            assertNull(requested.walletAdjustment());
-            assertEquals(booking.bookingId(), requested.bookingId());
-            assertEquals(ctx.guestId, requested.actorUserId());
-            assertEquals(ctx.guestId, requested.subjectUserId());
-            AuditLogEntry hold = row(rows, "ESCROW_HOLD");
-            assertEquals("WalletTransaction", hold.entityType());
-            assertEquals(0, new BigDecimal("-300.00").compareTo(hold.walletAdjustment()));
-            assertNull(hold.afterState());
-            assertEquals(booking.bookingId(), hold.bookingId());
-            assertEquals(ctx.guestId, hold.subjectUserId());
+            HostBookingRow row = service.pendingRequestRowsFor(ctx.hostId).get(0);
+
+            assertEquals(3, row.nights());
+            assertEquals(0, new BigDecimal("300.00").compareTo(row.grossAmount()));
+            assertEquals(0, new BigDecimal("291.00").compareTo(row.projectedNetAmount()));
+            assertTrue(row.guestAverageRating().isPresent());
+            assertEquals(5.0, row.guestAverageRating().getAsDouble());
         }
     }
 
     @Test
-    void hostConfirmAuditsOneStatusRowByTheHost() throws Exception {
+    void pendingRequestRowsUseEmptyRatingWhenGuestHasNoReviews() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            BookingService service = createService(connection);
+            service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
+
+            assertTrue(service.pendingRequestRowsFor(ctx.hostId).get(0)
+                    .guestAverageRating().isEmpty());
+        }
+    }
+
+    @Test
+    void rejectTrimsAndPersistsOptionalHostMessage() throws Exception {
         try (Connection connection = migratedConnection()) {
             var ctx = seedContext(connection, new BigDecimal("500.00"));
             BookingService service = createService(connection);
             Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
                     LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
 
+            Booking rejected = service.decide(booking.bookingId(), false, ctx.hostId,
+                    "  Dates unavailable  ");
+
+            assertEquals("Dates unavailable", rejected.hostDecisionMessage());
+            assertEquals("Dates unavailable", new JdbcBookingRepository(connection)
+                    .findById(booking.bookingId()).orElseThrow().hostDecisionMessage());
+        }
+    }
+
+    @Test
+    void blankRejectMessageIsStoredAsNull() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            BookingService service = createService(connection);
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
+
+            assertEquals(null, service.decide(booking.bookingId(), false, ctx.hostId,
+                    "   ").hostDecisionMessage());
+        }
+    }
+
+    @Test
+    void completeRejectsBookingBeforeCheckoutWindow() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            BookingService service = createService(connection);
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
             service.decide(booking.bookingId(), true, ctx.hostId);
 
-            AuditLogEntry confirmed = row(auditRows(connection), "BOOKING_CONFIRMED");
-            assertEquals("PENDING", confirmed.beforeState());
-            assertEquals("CONFIRMED", confirmed.afterState());
-            assertEquals(ctx.hostId, confirmed.actorUserId());
-            assertEquals(ctx.guestId, confirmed.subjectUserId());
-            assertEquals(booking.bookingId(), confirmed.bookingId());
+            assertThrows(IllegalStateException.class, () -> service.complete(booking.bookingId()));
         }
     }
 
     @Test
-    void hostRejectAuditsTheStatusChangeAndTheFullRefundSeparately() throws Exception {
+    void completeSettlesNetHostPayoutAndIsIdempotent() throws Exception {
         try (Connection connection = migratedConnection()) {
             var ctx = seedContext(connection, new BigDecimal("500.00"));
-            BookingService service = createService(connection);
+            var events = new InProcessEventBus();
+            List<WalletTransactionRecordedEvent> payoutEvents = new ArrayList<>();
+            events.subscribe(WalletTransactionRecordedEvent.class, payoutEvents::add);
+            BookingService service = createService(connection, events);
             Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
-                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
-
-            service.decide(booking.bookingId(), false, ctx.hostId);
-
-            List<AuditLogEntry> rows = auditRows(connection);
-            AuditLogEntry rejected = row(rows, "BOOKING_REJECTED");
-            assertEquals("PENDING", rejected.beforeState());
-            assertEquals("REJECTED", rejected.afterState());
-            assertNull(rejected.walletAdjustment());
-            AuditLogEntry refund = row(rows, "ESCROW_REFUND");
-            assertEquals(0, new BigDecimal("300.00").compareTo(refund.walletAdjustment()));
-            assertEquals(ctx.hostId, refund.actorUserId());
-            assertEquals(ctx.guestId, refund.subjectUserId());
-        }
-    }
-
-    @Test
-    void guestCancelAuditsTheStatusChangeAndTheRefundSeparately() throws Exception {
-        try (Connection connection = migratedConnection()) {
-            var ctx = seedContext(connection, new BigDecimal("500.00"));
-            BookingService service = createService(connection);
-            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
-                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
-
-            service.cancel(booking.bookingId(), ctx.guestId);
-
-            List<AuditLogEntry> rows = auditRows(connection);
-            AuditLogEntry cancelled = row(rows, "BOOKING_CANCELLED_BY_GUEST");
-            assertEquals("PENDING", cancelled.beforeState());
-            assertEquals("CANCELLED_BY_GUEST", cancelled.afterState());
-            assertNull(cancelled.walletAdjustment());
-            assertEquals("Full refund", cancelled.reason());
-            assertEquals(0, new BigDecimal("300.00").compareTo(row(rows, "ESCROW_REFUND").walletAdjustment()));
-        }
-    }
-
-    @Test
-    void aFailedSubmitLeavesNoAuditRow() throws Exception {
-        try (Connection connection = migratedConnection()) {
-            var ctx = seedContext(connection, new BigDecimal("10.00"));
-            BookingService service = createService(connection);
-
-            assertThrows(IllegalArgumentException.class, () -> service.submitRequest(ctx.guestId,
-                    ctx.propertyId, LocalDate.now().plusDays(10), LocalDate.now().plusDays(13)));
-
-            assertEquals(0, auditRows(connection).size());
-        }
-    }
-
-    @Test
-    void aFailingAuditWriteRollsBackTheWholeSubmit() throws Exception {
-        // submitRequest writes two audit rows: the request (call 1) and the escrow hold (call 2).
-        for (int failingCall = 1; failingCall <= 2; failingCall++) {
-            try (Connection connection = migratedConnection()) {
-                var ctx = seedContext(connection, new BigDecimal("500.00"));
-                var realAudit = new AuditServiceImpl(new JdbcAuditLogRepository(connection),
-                        new JdbcUserRepository(connection), Clock.systemUTC());
-                BookingService service = createService(connection, null,
-                        new FailingAuditService(realAudit, failingCall));
-                String label = "failing audit call " + failingCall;
-
-                assertThrows(RuntimeException.class, () -> service.submitRequest(ctx.guestId,
-                        ctx.propertyId, LocalDate.now().plusDays(10), LocalDate.now().plusDays(13)), label);
-
-                assertEquals(0, count(connection, "bookings"), label);
-                assertEquals(0, count(connection, "availability_blocks"), label);
-                assertEquals(0, count(connection, "wallet_transactions"), label);
-                assertEquals(0, count(connection, "audit_log"), label);
-                assertEquals(0, new BigDecimal("500.00").compareTo(new JdbcWalletRepository(connection)
-                        .findByUserId(ctx.guestId).orElseThrow().balance()), label);
-            }
-        }
-    }
-
-    @Test
-    void cancelConfirmedBookingWithin48hAuditsAFiftyPercentRefund() throws Exception {
-        try (Connection connection = migratedConnection()) {
-            var ctx = seedContext(connection, new BigDecimal("500.00"));
-            BookingService service = createService(connection);
-            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
-                    LocalDate.now().plusDays(1), LocalDate.now().plusDays(4));
-            new JdbcBookingRepository(connection).save(new Booking(
-                    booking.bookingId(), booking.listingId(), booking.guestId(),
-                    booking.startDate(), booking.endDate(), BookingStatus.CONFIRMED,
-                    booking.nightlyRateSnapshot(), booking.totalAmount(),
+                    LocalDate.now().minusDays(10), LocalDate.now().minusDays(7));
+            new JdbcBookingRepository(connection).save(new Booking(booking.bookingId(),
+                    booking.listingId(), booking.guestId(), booking.startDate(), booking.endDate(),
+                    BookingStatus.CONFIRMED, booking.nightlyRateSnapshot(), booking.totalAmount(),
                     booking.createdAt(), Instant.now(), null));
 
-            service.cancel(booking.bookingId(), ctx.guestId);
+            Booking completed = service.complete(booking.bookingId());
+            Booking repeated = service.complete(booking.bookingId());
+            var transactions = new JdbcWalletTransactionRepository(connection)
+                    .findByBookingId(booking.bookingId()).stream()
+                    .filter(txn -> txn.type() == WalletTransactionType.BOOKING_PAYOUT).toList();
 
-            List<AuditLogEntry> rows = auditRows(connection);
-            AuditLogEntry cancelled = row(rows, "BOOKING_CANCELLED_BY_GUEST");
-            assertEquals("CONFIRMED", cancelled.beforeState());
-            assertEquals("CANCELLED_BY_GUEST", cancelled.afterState());
-            assertEquals("50% refund (within 48h of check-in)", cancelled.reason());
-            AuditLogEntry refund = row(rows, "ESCROW_REFUND");
-            assertEquals(0, new BigDecimal("150.00").compareTo(refund.walletAdjustment()));
-            assertEquals(ctx.guestId, refund.subjectUserId());
-            assertEquals(booking.bookingId(), refund.bookingId());
+            assertEquals(BookingStatus.COMPLETED, completed.status());
+            assertEquals(completed, repeated);
+            assertEquals(1, transactions.size());
+            assertEquals(0, new BigDecimal("291.00").compareTo(transactions.get(0).amount()));
+            assertEquals(0, new BigDecimal("9.00").compareTo(transactions.get(0).feeAmount()));
+            assertEquals(1, payoutEvents.stream().filter(event -> event.transactionId()
+                    .equals(transactions.get(0).transactionId())).count());
+        }
+    }
+
+    @Test
+    void completeBlocksBookingWithOpenTicket() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            BookingService service = createService(connection);
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().minusDays(10), LocalDate.now().minusDays(7));
+            new JdbcBookingRepository(connection).save(new Booking(booking.bookingId(),
+                    booking.listingId(), booking.guestId(), booking.startDate(), booking.endDate(),
+                    BookingStatus.CONFIRMED, booking.nightlyRateSnapshot(), booking.totalAmount(),
+                    booking.createdAt(), Instant.now(), null));
+            new JdbcTicketRepository(connection).save(new com.snoozeshare.domain.model.Ticket(
+                    UUID.randomUUID(), booking.bookingId(), ctx.guestId, Role.GUEST, "Other",
+                    "Issue", "Details", com.snoozeshare.domain.enums.RemedyType.OTHER,
+                    null, com.snoozeshare.domain.enums.TicketStatus.OPEN, null, null, null,
+                    Instant.now(), null));
+
+            assertThrows(IllegalStateException.class, () -> service.complete(booking.bookingId()));
+            assertEquals(BookingStatus.CONFIRMED, new JdbcBookingRepository(connection)
+                    .findById(booking.bookingId()).orElseThrow().status());
         }
     }
 
@@ -624,6 +583,7 @@ class BookingServiceTest {
         users.save(guest);
 
         walletRepo.save(new Wallet(UUID.randomUUID(), guest.userId(), walletBalance, "SGD", now));
+        walletRepo.save(new Wallet(UUID.randomUUID(), host.userId(), BigDecimal.ZERO, "SGD", now));
 
         Property property = new Property(UUID.randomUUID(), host.userId(), ListingStatus.ACTIVE,
                 "Test Property", "A nice place", PropertyType.APARTMENT,
@@ -640,27 +600,19 @@ class BookingServiceTest {
     }
 
     static BookingService createService(Connection connection, InProcessEventBus eventBus) {
-        return createService(connection, eventBus, new AuditServiceImpl(new JdbcAuditLogRepository(connection),
-                new JdbcUserRepository(connection), Clock.systemUTC()));
-    }
-
-    static BookingService createService(Connection connection, InProcessEventBus eventBus,
-                                        AuditService audit) {
         return new BookingServiceImpl(connection,
                 new JdbcBookingRepository(connection),
                 new JdbcPropertyRepository(connection),
                 new JdbcAvailabilityBlockRepository(connection),
                 new JdbcWalletRepository(connection),
                 new JdbcWalletTransactionRepository(connection),
-                eventBus, audit);
-    }
-
-    private static long count(Connection connection, String table) throws Exception {
-        try (var statement = connection.createStatement();
-             var result = statement.executeQuery("SELECT COUNT(*) FROM " + table)) {
-            result.next();
-            return result.getLong(1);
-        }
+                new JdbcUserRepository(connection),
+                new JdbcReviewRepository(connection),
+                eventBus,
+                new TransactionServiceImpl(connection, new JdbcBookingRepository(connection),
+                        new JdbcPropertyRepository(connection), new JdbcWalletRepository(connection),
+                        new JdbcWalletTransactionRepository(connection), eventBus),
+                new JdbcTicketRepository(connection));
     }
 
     static Connection migratedConnection() throws Exception {

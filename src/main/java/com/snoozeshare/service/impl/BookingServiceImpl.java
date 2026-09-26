@@ -7,9 +7,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.OptionalDouble;
 import java.util.UUID;
 
-import com.snoozeshare.domain.enums.AuditAction;
 import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.WalletTransactionType;
@@ -28,11 +28,13 @@ import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.repository.AvailabilityBlockRepository;
 import com.snoozeshare.repository.BookingRepository;
 import com.snoozeshare.repository.PropertyRepository;
+import com.snoozeshare.repository.ReviewRepository;
+import com.snoozeshare.repository.TicketRepository;
+import com.snoozeshare.repository.UserRepository;
 import com.snoozeshare.repository.WalletRepository;
 import com.snoozeshare.repository.WalletTransactionRepository;
-import com.snoozeshare.service.AuditRecord;
-import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.BookingService;
+import com.snoozeshare.service.HostBookingRow;
 import com.snoozeshare.service.Money;
 import com.snoozeshare.service.TripFilter;
 
@@ -44,23 +46,33 @@ public final class BookingServiceImpl implements BookingService {
     private final AvailabilityBlockRepository blocks;
     private final WalletRepository wallets;
     private final WalletTransactionRepository transactions;
+    private final UserRepository users;
+    private final ReviewRepository reviews;
+    private final com.snoozeshare.service.TransactionService transactionService;
+    private final TicketRepository tickets;
     private final EventBus eventBus;
-    private final AuditService audit;
 
     public BookingServiceImpl(Connection connection, BookingRepository bookings,
                                PropertyRepository properties,
                                AvailabilityBlockRepository blocks,
                                WalletRepository wallets,
                                WalletTransactionRepository transactions,
-                               EventBus eventBus, AuditService audit) {
+                               UserRepository users,
+                               ReviewRepository reviews,
+                               EventBus eventBus,
+                               com.snoozeshare.service.TransactionService transactionService,
+                               TicketRepository tickets) {
         this.connection = connection;
         this.bookings = bookings;
         this.properties = properties;
         this.blocks = blocks;
         this.wallets = wallets;
         this.transactions = transactions;
+        this.users = users;
+        this.reviews = reviews;
         this.eventBus = eventBus;
-        this.audit = audit;
+        this.transactionService = transactionService;
+        this.tickets = tickets;
     }
 
     @Override
@@ -107,12 +119,9 @@ public final class BookingServiceImpl implements BookingService {
                 }
                 wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter,
                         wallet.currency(), now));
-                WalletTransaction hold = transactions.save(new WalletTransaction(UUID.randomUUID(),
-                        wallet.walletId(), WalletTransactionType.ESCROW_HOLD, totalAmount.negate(),
+                transactions.save(new WalletTransaction(UUID.randomUUID(), wallet.walletId(),
+                        WalletTransactionType.ESCROW_HOLD, totalAmount.negate(),
                         BigDecimal.ZERO, balanceAfter, bookingId, null, guestId, now));
-                audit.record(AuditRecord.builder(guestId, AuditAction.BOOKING_REQUESTED, "Booking", bookingId)
-                        .status(null, BookingStatus.PENDING).subject(guestId).booking(bookingId).at(now).build());
-                audit.recordWalletTransaction(guestId, guestId, hold, hold.amount(), null);
 
                 return newBooking;
             });
@@ -153,32 +162,68 @@ public final class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public List<HostBookingRow> pendingRequestRowsFor(UUID hostId) {
+        return toHostRows(bookings.findByHostPending(hostId));
+    }
+
+    @Override
+    public List<HostBookingRow> historyRowsFor(UUID hostId) {
+        return toHostRows(bookings.findByHost(hostId));
+    }
+
+    private List<HostBookingRow> toHostRows(List<Booking> source) {
+        return source.stream().map(booking -> {
+            Property property = properties.findById(booking.listingId())
+                    .orElseThrow(() -> new IllegalArgumentException("Property does not exist"));
+            String guestName = users.findById(booking.guestId())
+                    .orElseThrow(() -> new IllegalArgumentException("Guest does not exist"))
+                    .displayName();
+            List<com.snoozeshare.domain.model.Review> guestReviews =
+                    reviews.findByGuestId(booking.guestId());
+            OptionalDouble rating = guestReviews.isEmpty() ? OptionalDouble.empty()
+                    : OptionalDouble.of(guestReviews.stream().mapToInt(
+                            com.snoozeshare.domain.model.Review::rating).average().orElse(0));
+            long nights = ChronoUnit.DAYS.between(booking.startDate(), booking.endDate());
+            BigDecimal net = booking.totalAmount().multiply(new BigDecimal("0.97"))
+                    .setScale(2, java.math.RoundingMode.HALF_UP);
+            return new HostBookingRow(booking, guestName, property.title(), nights,
+                    booking.totalAmount(), net, rating);
+        }).toList();
+    }
+
+    @Override
     public Booking decide(UUID bookingId, boolean approve, UUID hostId) {
-        Booking booking = bookings.findById(bookingId)
-                .orElseThrow(() -> new IllegalArgumentException("Booking does not exist"));
-        Property property = properties.findById(booking.listingId())
-                .orElseThrow(() -> new IllegalArgumentException("Property does not exist"));
-        if (!property.hostId().equals(hostId)) {
-            throw new IllegalArgumentException("Only the property host can decide");
-        }
-        BookingStatus target = approve ? BookingStatus.CONFIRMED : BookingStatus.REJECTED;
-        if (!BookingStateMachine.canTransition(booking.status(), target, Role.HOST)) {
-            throw new IllegalStateException("Cannot transition from " + booking.status()
-                    + " to " + target);
-        }
+        return decide(bookingId, approve, hostId, null);
+    }
+
+    @Override
+    public Booking decide(UUID bookingId, boolean approve, UUID hostId,
+                          String hostDecisionMessage) {
         try {
             Booking decided = new TransactionManager(connection).inTransaction(conn -> {
+                Booking booking = bookings.findById(bookingId)
+                        .orElseThrow(() -> new IllegalArgumentException("Booking does not exist"));
+                Property property = properties.findById(booking.listingId())
+                        .orElseThrow(() -> new IllegalArgumentException("Property does not exist"));
+                if (!property.hostId().equals(hostId)) {
+                    throw new IllegalArgumentException("Only the property host can decide");
+                }
+                BookingStatus target = approve ? BookingStatus.CONFIRMED : BookingStatus.REJECTED;
+                if (!BookingStateMachine.canTransition(booking.status(), target, Role.HOST)) {
+                    throw new IllegalStateException("Cannot transition from " + booking.status()
+                            + " to " + target);
+                }
                 Instant now = Instant.now();
+                String message = approve || hostDecisionMessage == null
+                        ? null : hostDecisionMessage.trim();
+                if (message != null && message.isEmpty()) {
+                    message = null;
+                }
                 Booking updated = new Booking(booking.bookingId(), booking.listingId(),
                         booking.guestId(), booking.startDate(), booking.endDate(),
                         target, booking.nightlyRateSnapshot(), booking.totalAmount(),
-                        booking.createdAt(), now, null);
+                        booking.createdAt(), now, null, message);
                 bookings.save(updated);
-                audit.record(AuditRecord.builder(hostId,
-                                approve ? AuditAction.BOOKING_CONFIRMED : AuditAction.BOOKING_REJECTED,
-                                "Booking", bookingId)
-                        .status(booking.status(), target).subject(booking.guestId()).booking(bookingId)
-                        .at(now).build());
 
                 if (!approve) {
                     // Reject: 100% refund (decision C8) + remove block
@@ -189,11 +234,10 @@ public final class BookingServiceImpl implements BookingService {
                     BigDecimal balanceAfter = wallet.balance().add(booking.totalAmount());
                     wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter,
                             wallet.currency(), now));
-                    WalletTransaction refund = transactions.save(new WalletTransaction(UUID.randomUUID(),
+                    transactions.save(new WalletTransaction(UUID.randomUUID(),
                             wallet.walletId(), WalletTransactionType.ESCROW_REFUND,
                             booking.totalAmount(), BigDecimal.ZERO, balanceAfter,
                             bookingId, null, hostId, now));
-                    audit.recordWalletTransaction(hostId, booking.guestId(), refund, refund.amount(), null);
                 }
 
                 return updated;
@@ -234,13 +278,6 @@ public final class BookingServiceImpl implements BookingService {
                         BookingStatus.CANCELLED_BY_GUEST, booking.nightlyRateSnapshot(),
                         booking.totalAmount(), booking.createdAt(), now, null);
                 bookings.save(updated);
-                audit.record(AuditRecord.builder(actingGuestId, AuditAction.BOOKING_CANCELLED_BY_GUEST,
-                                "Booking", bookingId)
-                        .status(booking.status(), BookingStatus.CANCELLED_BY_GUEST).subject(actingGuestId)
-                        .booking(bookingId)
-                        .reason(refundAmount.compareTo(booking.totalAmount()) == 0
-                                ? "Full refund" : "50% refund (within 48h of check-in)")
-                        .at(now).build());
 
                 blocks.deleteByBookingId(bookingId);
 
@@ -251,10 +288,9 @@ public final class BookingServiceImpl implements BookingService {
                 BigDecimal balanceAfter = wallet.balance().add(refundAmount);
                 wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter,
                         wallet.currency(), now));
-                WalletTransaction refund = transactions.save(new WalletTransaction(UUID.randomUUID(),
-                        wallet.walletId(), WalletTransactionType.ESCROW_REFUND, refundAmount,
+                transactions.save(new WalletTransaction(UUID.randomUUID(), wallet.walletId(),
+                        WalletTransactionType.ESCROW_REFUND, refundAmount,
                         BigDecimal.ZERO, balanceAfter, bookingId, null, actingGuestId, now));
-                audit.recordWalletTransaction(actingGuestId, actingGuestId, refund, refund.amount(), null);
 
                 return updated;
             });
@@ -283,7 +319,40 @@ public final class BookingServiceImpl implements BookingService {
 
     @Override
     public Booking complete(UUID bookingId) {
-        throw new UnsupportedOperationException("Owned by W8");
+        Booking booking = bookings.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking does not exist"));
+        if (booking.status() == BookingStatus.COMPLETED) {
+            return booking;
+        }
+        if (booking.status() != BookingStatus.CONFIRMED) {
+            throw new IllegalStateException("Only confirmed bookings can be completed");
+        }
+        if (booking.endDate().isAfter(LocalDate.now().minusDays(7))) {
+            throw new IllegalStateException("Booking is not eligible for completion");
+        }
+        boolean blocked = tickets.findByBookingId(bookingId).stream()
+                .anyMatch(ticket -> ticket.status() == com.snoozeshare.domain.enums.TicketStatus.OPEN
+                        || ticket.status() == com.snoozeshare.domain.enums.TicketStatus.IN_REVIEW);
+        if (blocked) {
+            throw new IllegalStateException("Open dispute blocks booking completion");
+        }
+        transactionService.settleBookingCompletion(bookingId);
+        return bookings.findById(bookingId).orElseThrow();
+    }
+
+    @Override
+    public int completeEligibleBookings() {
+        int completed = 0;
+        LocalDate cutoff = LocalDate.now().minusDays(7);
+        for (Booking booking : bookings.findConfirmedEndingOnOrBefore(cutoff)) {
+            try {
+                complete(booking.bookingId());
+                completed++;
+            } catch (IllegalStateException ignored) {
+                // Open disputes and transiently ineligible rows remain held for a later sweep.
+            }
+        }
+        return completed;
     }
 
     @Override
@@ -294,6 +363,9 @@ public final class BookingServiceImpl implements BookingService {
 
     @Override
     public Money previewHostEarnings(UUID bookingId) {
-        throw new UnsupportedOperationException("Owned by W8");
+        Booking booking = bookings.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking does not exist"));
+        return new Money(booking.totalAmount().multiply(new BigDecimal("0.97"))
+                .setScale(2, java.math.RoundingMode.HALF_UP), "SGD");
     }
 }

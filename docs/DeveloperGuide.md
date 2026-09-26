@@ -4,8 +4,9 @@ Handover brief for developers taking over this project. It describes **confirmed
 is updated at checkpoints, so it can lag behind the code. For current status, work in flight, and
 what to build next, read [`PROJECT_STATE.md`](../PROJECT_STATE.md) — that is the source of truth.
 
-**Last updated:** 2026-09-26 — covers W10 (Agent Dispute Resolution) and W12 (Platform Audit Trail),
-plus the scope, setup, requirements and glossary they rely on
+**Last updated:** 2026-09-27 — covers W6–W8 (Host Listings, Calendar, and Booking Requests),
+W10 (Agent Dispute Resolution), and W12 (Platform Audit Trail), plus the scope, setup,
+requirements and glossary they rely on
 
 ## Contents
 
@@ -35,8 +36,11 @@ platform audit trail that records every change to bookings, tickets, listings an
 
 | Feature | What it is | Section |
 |---|---|---|
+| F5 (W6) | Host listing management: create/edit, publish, status controls, listing details and metrics | [4.9](#49-host-listing-management-uihostlistings) |
+| F6 (W7) | Host calendar: monthly availability, inclusive manual date blocks and removal | [4.10](#410-host-calendar-and-date-overrides-uihostcalendar) |
+| F7 (W8) | Host booking requests, approval/rejection messages, earnings previews and guarded completion | [4.11](#411-host-booking-requests-uihostbookings) |
 | F9 (W10) | Agent dispute resolution: ticket queue, assign / unassign / notes, settlement of held escrow, ticket categories | [4.1](#41-settlement-domain)–[4.8](#48-agent-ui-uiadmin) |
-| F11 (W12) | **Platform Audit Trail:** every change is logged as one typed row, and agents search the log on the Audit Log screen | [4.9](#49-audit-trail) |
+| F11 (W12) | **Platform Audit Trail:** every change is logged as one typed row, and agents search the log on the Audit Log screen | [4.12](#412-audit-trail) |
 
 **Value proposition:** a support agent can take a dispute ticket, read both parties' evidence and
 chat, and settle the booking's held escrow between guest and host in one atomic, audited action.
@@ -184,7 +188,7 @@ services as well as settlement) also calls `AuditService`; the Audit Log screen 
 `AuditService.record(...)` while its `TransactionManager.inTransaction` block is open. The audit
 repository shares the transaction's connection, so the audit rows commit with the change they describe
 and roll back with it: a failed change leaves no audit row, and an audit write that fails rolls the
-change back. See [4.9](#49-audit-trail).
+change back. See [4.12](#412-audit-trail).
 
 **One request: an agent resolves a ticket**
 
@@ -219,7 +223,7 @@ change back. See [4.9](#49-audit-trail).
 - **`domain`** is pure Java (no JavaFX, no JDBC): the settlement maths, the escrow-held test and the
   state machines.
 - **`AuditService`** (with `AuditServiceImpl` and `JdbcAuditLogRepository`) owns the audit log: services
-  write rows through it, and only the Audit Log screen reads them ([4.9](#49-audit-trail)).
+  write rows through it, and only the Audit Log screen reads them ([4.12](#412-audit-trail)).
 - **`repository.jdbc`** is the only place that touches `java.sql`. **`infra.db`** owns the connection,
   the transaction boundary and migrations.
 
@@ -409,7 +413,7 @@ sequenceDiagram
   R-->>TM: current state
   Note over DS: EscrowPolicy.isHeld, SettlementCalculator.split, state machine checks
   TM->>R: save wallets, ledger rows, ticket, booking
-  TM->>AU: record audit rows (4.9)
+  TM->>AU: record audit rows (4.12)
   TM-->>DS: commit (or rollback and rethrow)
   DS->>EB: TicketResolvedEvent, WalletTransactionRecordedEvent
   DS-->>TS: Settlement
@@ -419,7 +423,7 @@ sequenceDiagram
 2. `settle` validates the reason and the `AGENT` role, then hands the work to `TransactionManager`.
 3. Inside the transaction the service loads the current ticket, booking, both wallets and the booking's ledger rows.
 4. It applies the preconditions and the split (shown as a note; the domain classes are pure).
-5. It writes wallets, ledger rows, ticket and booking, then the audit rows (ticket, booking and the wallet sides; see [4.9](#49-audit-trail)), all on the same connection.
+5. It writes wallets, ledger rows, ticket and booking, then the audit rows (ticket, booking and the wallet sides; see [4.12](#412-audit-trail)), all on the same connection.
 6. Commit makes everything visible at once; any exception rolls back all of it.
 7. Only after commit are events published, then the `Settlement` is returned.
 
@@ -453,7 +457,7 @@ sequenceDiagram
 
 `ResolutionRequest` is a record of `mode`, `guestRefund` and `reason`; the refund is required for
 `MANUAL` and for `ACCEPT` of a `PARTIAL_REFUND` or `OTHER` request, and is ignored or derived otherwise.
-`fileTicket` throws `UnsupportedOperationException` (guest filing is a separate feature) and
+`fileTicket` validates the guest, booking eligibility and active category before creating a ticket;
 `addHostResponse` is deprecated (see 4.4).
 
 **Depends on:** `TicketRepository`, `TicketCategoryRepository`, `BookingRepository`, `UserRepository`, `DisputeSettlementService`, `AuditService`, `AuthorizationService`, `TicketStateMachine`.
@@ -505,7 +509,7 @@ sequenceDiagram
 | [`HeightGrip`](../src/main/java/com/snoozeshare/ui/admin/HeightGrip.java) | Drag handle that resizes chat panes together and the notes box, within min and max heights. |
 | [`agent-theme.css`](../src/main/resources/com/snoozeshare/ui/admin/agent-theme.css) | The "Fall Light" palette, loaded on the agent scene root only. |
 
-**Audit Log screen (W12).** A read-only table over `AuditService.search` ([4.9](#49-audit-trail)).
+**Audit Log screen (W12).** A read-only table over `AuditService.search` ([4.12](#412-audit-trail)).
 
 - **Filters:** one **Search** box (user name, or booking / ticket / user id; Enter applies it), an **Action type** multi-select (empty means all actions), separate **From** and **To** date pickers, an **Apply filters** button and a red-outline **Clear** button. Filters take effect only on Apply (selecting does not auto-apply); Apply refuses a From date after the To date. The date pickers and the multi-select popup are styled after the design board's Date picker component in `agent-theme.css` (C33).
 - **Table:** TIMESTAMP, ACTOR, ACTION TYPE (a coloured pill), REF (`Booking #0009 · Ticket #0004`, the last four characters of each id), STATUS (`Before → After`, or one status, or a dash), REASON and AMOUNT (signed, for example `+SGD 175.00`), 200 rows at a time with a Load more button. Rows are not clickable: they get the queue's grey hover but keep the default cursor.
@@ -522,7 +526,49 @@ sequenceDiagram
 
 **Deviations:** D18 (the JavaFX date-picker popup cannot be restyled to match the board exactly: it keeps two month/year spinners and mixed-case weekday names, has no unavailable-day state, and the categories header columns sit about 5px left of the rows while the scroll bar shows); the design board's Audit Log artboard is older than the built screen (it has User ID / Booking ID inputs and no REF column) and C29 supersedes it. D7 (the design canvas shows Force actions, a newest-first queue, an "Adjust wallet" dropdown and no Accept amount field; the built screens follow C22, oldest-first per F9.1.1, and the refund-amount field of C20); D11 (a sidebar shell) was superseded by C24, so the built shell is the tab strip; D12 (f) (`DisputeDetailController.load()` still calls `render()` outside the error handler). The dispute screens use the `SGD` currency label (C10).
 
-### 4.9 Audit trail
+### 4.9 Host listing management (`ui.host.listings`)
+
+**Purpose:** hosts create, edit, publish, deactivate and inspect their own properties.
+
+| File | Role |
+|---|---|
+| [`HostListingsController`](../src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java) + `host-listings.fxml` | Host-scoped listing dashboard with listing cards, booking/rating metrics, Active/Inactive control, Edit and calendar entry. |
+| [`HostListingFormController`](../src/main/java/com/snoozeshare/ui/host/listings/HostListingFormController.java) + `host-listing-form.fxml` | Shared create/edit form for details, location, capacity, pricing and amenities; validates checkout after check-in. |
+| [`HostListingDetailController`](../src/main/java/com/snoozeshare/ui/host/listings/HostListingDetailController.java) + `host-listing-detail.fxml` | Host-facing detail page with Back, Edit and booking-calendar actions. |
+| [`ListingServiceImpl`](../src/main/java/com/snoozeshare/service/impl/ListingServiceImpl.java) | Enforces host ownership, validates listing data, persists changes and emits audit records. |
+| [`ListingMetricsService`](../src/main/java/com/snoozeshare/service/ListingMetricsService.java) | Supplies booking, occupancy and earnings metrics with zero-value fallbacks. |
+
+Listings are host-owned and mutations are enforced in the service layer. New listings are active by
+default; status and property values remain enum/database values even when the UI renders readable labels.
+
+### 4.10 Host calendar and date overrides (`ui.host.calendar`)
+
+**Purpose:** hosts inspect one listing's monthly availability and create or remove manual blocks.
+
+[`HostCalendarController`](../src/main/java/com/snoozeshare/ui/host/calendar/HostCalendarController.java)
+uses `AvailabilityService` to load the selected month, navigate months, add inclusive single-date or
+range blocks, and remove existing manual blocks. Booking blocks and manual blocks are shown with separate
+visual treatments. Validation rejects an end date before the start date and overlapping unavailable dates.
+The calendar is listing-scoped and does not bypass booking availability checks.
+
+### 4.11 Host booking requests (`ui.host.bookings`)
+
+**Purpose:** hosts review pending requests, decide them, inspect earnings and see request history.
+
+[`HostBookingsController`](../src/main/java/com/snoozeshare/ui/host/bookings/HostBookingsController.java)
+uses `BookingService.pendingRequestRowsFor` and `historyRowsFor` for host-scoped projections. The request
+table includes guest, dates, nights, amount, estimated net earnings and guest rating. Approve and reject
+decisions use the shared host modal style; rejection may include the persisted `hostDecisionMessage`.
+Rejected requests refund held escrow and approved requests retain it until completion or dispute settlement.
+`BookingService.completeEligibleBookings()` guards automatic completion so bookings with open or in-review
+tickets remain held.
+
+The host-facing slices share the same service and repository boundaries as the agent slice: controllers
+receive capabilities through `AppContext` and do not access repositories directly. `TransactionService`
+settles eligible completion payouts, while `DisputeSettlementService` owns agent-directed two-sided
+settlement of held escrow.
+
+### 4.12 Audit trail
 
 **Purpose:** record every change to bookings, tickets, listings, ticket categories and wallet balances as typed, searchable rows, and let a support agent search them.
 
@@ -762,9 +808,9 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 - **F9.2.1** *Dropped.* Force Cancel / Force Complete was removed as redundant with ticket accept and reject (C22).
 - **F9.2.2** Agents resolve a dispute by settling the booking's full held escrow: accept the requested remedy, reject the ticket (host paid in full net of the 3% fee), or apply a manual adjustment (Full refund, Full payout, or a custom split). Guest refunds carry no fee. Resolution completes the booking (`CONFIRMED → COMPLETED`).
 - **F9.3.1** Agents can create, rename, activate/deactivate and delete the ticket categories guests choose from. Delete is beyond the backlog wording (C26): it is refused when any ticket was filed under the label, in which case the category must be deactivated instead.
-- **F11.1.1** The system provides an audit logging service and table and logs every booking state transition. Built as one typed row per change (4.9). Booking cancellation by a host and force cancellation are not written yet (see Known Limitations).
+- **F11.1.1** The system provides an audit logging service and table and logs every booking state transition. Built as one typed row per change (4.12). Booking cancellation by a host and force cancellation are not written yet (see Known Limitations).
 - **F11.1.2** Audit logging covers wallet transactions (hold, refund, payout, remedy, override, top-up, withdrawal) and ticket resolutions.
-- **F11.1.3** Agents filter the audit log with one search (user name, or user / booking / ticket id), a set of action types, and a From and To date (4.8, 4.9).
+- **F11.1.3** Agents filter the audit log with one search (user name, or user / booking / ticket id), a set of action types, and a From and To date (4.8, 4.12).
 - **F12.1.1** A `MessageService` gives each dispute ticket a guest-to-agent and a host-to-agent thread. *(planned)*
 - **F12.1.2** Messages persist, each party reads only its own thread, and the agent reads both. *(planned)*
 
@@ -772,7 +818,7 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 
 - **NFR1** Settlement is atomic: wallet balances, ledger rows, ticket, booking and audit rows commit together or not at all, and no event is published on failure.
 - **NFR2** Money is `BigDecimal` at scale 2 with `HALF_UP` rounding. The platform fee is 3% of the host share, rounded once, and no fee is taken from guest money.
-- **NFR3** Every mutating agent action makes an audit record; each change is one row, so a ticket resolution writes several (4.9).
+- **NFR3** Every mutating agent action makes an audit record; each change is one row, so a ticket resolution writes several (4.12).
 - **NFR4** Layering: `ui.*` imports no `repository.*` and no `java.sql`; only `repository.jdbc.*` imports `java.sql`; `domain` imports no JavaFX or `java.sql`.
 - **NFR5** Ticket and booking status changes go through `TicketStateMachine` and `BookingStateMachine`; a resolved ticket cannot be settled again.
 - **NFR6** Ledger integrity: for each wallet, `balance` equals the sum of its transactions, and each row's `balanceAfter` equals the running sum in time order.
@@ -782,7 +828,7 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 ### Known Limitations
 
 - **Chat is not persisted** — dispute chat uses `InMemoryMessageService` until the Messaging workstream supplies a persistent `MessageService` (C21).
-- **No guest or host screens to file a ticket** — `fileTicket` is unsupported, so tickets exist only through seeded data until those features arrive.
+- **Host ticket-filing screens** — guests can file tickets through the delivered guest flow; a dedicated host response screen remains outside the current scope.
 - **Category renames do not update existing tickets** — `tickets.category` stores label text (D8).
 - **Accounts tab is a placeholder** — owned by the Account Governance feature (W11).
 - **Platform fees are informational** — `feeAmount` on `BOOKING_PAYOUT` rows records the fee, but there is no platform wallet and no double-entry transfer. Revisit only if the platform needs its own reportable balance (`PROJECT_STATE.md` § Known Gaps).
@@ -897,4 +943,4 @@ measured for this guide.
   4. Press Clear: every filter resets and all rows return.
   5. Resolve a ticket on the Disputes tab, return to Audit Log and Apply: the resolution's rows appear together, in order.
   6. Scroll the table: the header stays fixed; check the same on the Disputes and Categories tabs, and that hovering a row shows a grey background without a hand cursor.
-- **Expected:** filters combine as described in [4.9](#49-audit-trail); the red Clear button resets them; the ticket resolution appears as its ticket, booking and wallet rows; table headers stay put while rows scroll.
+- **Expected:** filters combine as described in [4.12](#412-audit-trail); the red Clear button resets them; the ticket resolution appears as its ticket, booking and wallet rows; table headers stay put while rows scroll.

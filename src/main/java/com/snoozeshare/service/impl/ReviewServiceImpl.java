@@ -4,11 +4,13 @@ import java.time.Clock;
 import java.util.UUID;
 
 import com.snoozeshare.domain.enums.BookingStatus;
+import com.snoozeshare.domain.enums.AuditAction;
 import com.snoozeshare.domain.model.Booking;
 import com.snoozeshare.domain.model.Review;
 import com.snoozeshare.repository.BookingRepository;
 import com.snoozeshare.repository.ReviewRepository;
 import com.snoozeshare.service.AuditService;
+import com.snoozeshare.service.AuditRecord;
 import com.snoozeshare.service.ReviewService;
 
 public final class ReviewServiceImpl implements ReviewService {
@@ -50,7 +52,8 @@ public final class ReviewServiceImpl implements ReviewService {
         Review review = new Review(UUID.randomUUID(), bookingId, guestId, rating, comment,
                 clock.instant());
         Review saved = reviews.save(review);
-        audit.record(guestId, "REVIEW_SUBMITTED", "Review", saved.reviewId(), null, saved);
+        audit.record(AuditRecord.builder(guestId, AuditAction.REVIEW_SUBMITTED, "Review", saved.reviewId())
+                .subject(guestId).booking(bookingId).at(saved.createdAt()).build());
         return saved;
     }
 

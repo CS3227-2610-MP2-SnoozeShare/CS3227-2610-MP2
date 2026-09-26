@@ -93,13 +93,57 @@ public final class JdbcBookingRepository implements BookingRepository {
     }
 
     @Override
-    public Booking save(Booking booking) {
+    public List<Booking> findByHost(UUID hostId) {
         try (var statement = connection.prepareStatement(
-                "INSERT INTO bookings (bookingId, listingId, guestId, startDate, endDate, "
-                        + "status, nightlyRateSnapshot, totalAmount, createdAt, decidedAt, "
-                        + "completedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
-                        + "ON CONFLICT(bookingId) DO UPDATE SET status = excluded.status, "
-                        + "decidedAt = excluded.decidedAt, completedAt = excluded.completedAt")) {
+                "SELECT b.* FROM bookings b JOIN properties p ON b.listingId = p.propertyId "
+                        + "WHERE p.hostId = ? ORDER BY b.createdAt DESC, b.bookingId")) {
+            statement.setString(1, JdbcCodecs.uuid(hostId));
+            try (var result = statement.executeQuery()) {
+                List<Booking> bookings = new ArrayList<>();
+                while (result.next()) {
+                    bookings.add(RowMappers.booking(result));
+                }
+                return bookings;
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to query bookings by host", exception);
+        }
+    }
+
+    @Override
+    public List<Booking> findConfirmedEndingOnOrBefore(LocalDate checkoutCutoff) {
+        try (var statement = connection.prepareStatement(
+                "SELECT * FROM bookings WHERE status = 'CONFIRMED' AND endDate <= ? "
+                        + "ORDER BY endDate, bookingId")) {
+            statement.setString(1, JdbcCodecs.localDate(checkoutCutoff));
+            try (var result = statement.executeQuery()) {
+                List<Booking> bookings = new ArrayList<>();
+                while (result.next()) {
+                    bookings.add(RowMappers.booking(result));
+                }
+                return bookings;
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to query eligible bookings", exception);
+        }
+    }
+
+    @Override
+    public Booking save(Booking booking) {
+        boolean supportsDecisionMessage = hasDecisionMessageColumn();
+        String columns = "bookingId, listingId, guestId, startDate, endDate, status, "
+                + "nightlyRateSnapshot, totalAmount, createdAt, decidedAt, completedAt";
+        String values = "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?";
+        String updates = "status = excluded.status, decidedAt = excluded.decidedAt, "
+                + "completedAt = excluded.completedAt";
+        if (supportsDecisionMessage) {
+            columns += ", hostDecisionMessage";
+            values += ", ?";
+            updates += ", hostDecisionMessage = excluded.hostDecisionMessage";
+        }
+        String sql = "INSERT INTO bookings (" + columns + ") VALUES (" + values + ") "
+                + "ON CONFLICT(bookingId) DO UPDATE SET " + updates;
+        try (var statement = connection.prepareStatement(sql)) {
             statement.setString(1, JdbcCodecs.uuid(booking.bookingId()));
             statement.setString(2, JdbcCodecs.uuid(booking.listingId()));
             statement.setString(3, JdbcCodecs.uuid(booking.guestId()));
@@ -111,10 +155,27 @@ public final class JdbcBookingRepository implements BookingRepository {
             statement.setString(9, JdbcCodecs.instant(booking.createdAt()));
             statement.setString(10, JdbcCodecs.instant(booking.decidedAt()));
             statement.setString(11, JdbcCodecs.instant(booking.completedAt()));
+            if (supportsDecisionMessage) {
+                statement.setString(12, booking.hostDecisionMessage());
+            }
             statement.executeUpdate();
             return booking;
         } catch (SQLException exception) {
             throw new IllegalStateException("Unable to save booking", exception);
+        }
+    }
+
+    private boolean hasDecisionMessageColumn() {
+        try (var statement = connection.createStatement();
+             var result = statement.executeQuery("PRAGMA table_info(bookings)")) {
+            while (result.next()) {
+                if ("hostDecisionMessage".equals(result.getString("name"))) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to inspect booking schema", exception);
         }
     }
 }

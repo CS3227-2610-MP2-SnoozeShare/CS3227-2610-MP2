@@ -74,6 +74,16 @@ class JdbcTicketRepositoryTest {
     }
 
     @Test
+    void findsTicketsByBookingId(@TempDir Path directory) throws Exception {
+        try (MockDbFixture db = MockDbFixture.open(directory)) {
+            List<UUID> ids = new JdbcTicketRepository(db.connection())
+                    .findByBookingId(MockIds.BOOKING_9).stream().map(Ticket::ticketId).toList();
+
+            assertEquals(List.of(MockIds.TICKET_2), ids);
+        }
+    }
+
+    @Test
     void mineWithoutAnAgentIdIsRejected(@TempDir Path directory) throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
             JdbcTicketRepository repository = new JdbcTicketRepository(db.connection());

@@ -57,4 +57,19 @@ class ShellLayoutTest {
         assertTrue(fxml.contains("handleWithdraw"));
         assertTrue(fxml.contains("transactionContainer"));
     }
+
+    @Test
+    void hostWalletPageUsesTheSamePageInsetAsListingsAndBookings() throws Exception {
+        String wallet = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/wallet/host-wallet-dashboard.fxml"));
+        String listings = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listings.fxml"));
+        String bookings = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/bookings/host-bookings.fxml"));
+
+        String pageInset = "<Insets top=\"20\" right=\"20\" bottom=\"20\" left=\"20\"/>";
+        assertTrue(listings.contains(pageInset));
+        assertTrue(bookings.contains(pageInset));
+        assertTrue(wallet.contains(pageInset));
+    }
 }

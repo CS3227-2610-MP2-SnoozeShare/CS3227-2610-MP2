@@ -14,11 +14,19 @@ public interface BookingService {
 
     List<Booking> pendingRequestsFor(UUID hostId);
 
+    List<HostBookingRow> pendingRequestRowsFor(UUID hostId);
+
+    List<HostBookingRow> historyRowsFor(UUID hostId);
+
     Booking decide(UUID bookingId, boolean approve, UUID hostId);
+
+    Booking decide(UUID bookingId, boolean approve, UUID hostId, String hostDecisionMessage);
 
     Booking cancel(UUID bookingId, UUID actingGuestId);
 
     Booking complete(UUID bookingId);
+
+    int completeEligibleBookings();
 
     Booking forceTransition(UUID bookingId, BookingStatus target, UUID agentId, String reason);
 
