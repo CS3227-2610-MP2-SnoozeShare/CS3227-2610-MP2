@@ -91,8 +91,18 @@ class TicketServiceTest {
                 return booking;
             }
         };
+        com.snoozeshare.infra.events.EventBus noopBus = new com.snoozeshare.infra.events.EventBus() {
+            @Override
+            public <T extends com.snoozeshare.infra.events.DomainEvent>
+                    com.snoozeshare.infra.events.Subscription subscribe(Class<T> type,
+                    java.util.function.Consumer<T> subscriber) {
+                return () -> {};
+            }
+            @Override
+            public void publish(com.snoozeshare.infra.events.DomainEvent event) {}
+        };
         service = new TicketServiceImpl(tickets, categories, bookings, users, settlement, audit,
-                Clock.fixed(Instant.parse("2026-09-25T04:00:00Z"), ZoneOffset.UTC));
+                Clock.fixed(Instant.parse("2026-09-25T04:00:00Z"), ZoneOffset.UTC), noopBus);
     }
 
     @Test
@@ -264,9 +274,7 @@ class TicketServiceTest {
     }
 
     @Test
-    void fileTicketAndHostResponseAreNotOwnedByW10() {
-        assertThrows(UnsupportedOperationException.class, () ->
-                service.fileTicket(null, host, Role.HOST));
+    void hostResponseIsNotOwnedByW10() {
         assertThrows(UnsupportedOperationException.class, () ->
                 service.addHostResponse(UUID.randomUUID(), "x", host));
     }

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -29,6 +30,7 @@ import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.infra.db.ConnectionFactory;
 import com.snoozeshare.infra.db.migration.MigrationRunner;
+import com.snoozeshare.repository.AuditCriteria;
 import com.snoozeshare.repository.jdbc.JdbcAuditLogRepository;
 import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
@@ -57,7 +59,7 @@ class ListingServiceTest {
             assertTrue(new JdbcPropertyRepository(connection)
                     .findById(created.propertyId()).isPresent());
             assertEquals(1, new JdbcAuditLogRepository(connection)
-                    .query(ctx.hostId(), null, "LISTING_CREATED").size());
+                    .search(AuditCriteria.forAction("LISTING_CREATED"), 100, 0).size());
         }
     }
 
@@ -170,10 +172,10 @@ class ListingServiceTest {
                     new JdbcPropertyRepository(connection).findById(ctx.singaporeId())
                             .orElseThrow().status());
             var audit = new JdbcAuditLogRepository(connection)
-                    .query(ctx.hostId(), null, "LISTING_STATUS_CHANGED");
+                    .search(AuditCriteria.forAction("LISTING_STATUS_CHANGED"), 100, 0);
             assertEquals(1, audit.size());
-            assertTrue(audit.get(0).beforeState().contains("ACTIVE"));
-            assertTrue(audit.get(0).afterState().contains("INACTIVE"));
+            assertEquals("ACTIVE", audit.get(0).beforeState());
+            assertEquals("INACTIVE", audit.get(0).afterState());
 
             Property reactivated = service.updateStatus(ctx.singaporeId(), ListingStatus.ACTIVE,
                     ctx.hostId());
@@ -190,7 +192,7 @@ class ListingServiceTest {
             service.updateStatus(ctx.singaporeId(), ListingStatus.ACTIVE, ctx.hostId());
 
             assertEquals(0, new JdbcAuditLogRepository(connection)
-                    .query(ctx.hostId(), null, "LISTING_STATUS_CHANGED").size());
+                    .search(AuditCriteria.forAction("LISTING_STATUS_CHANGED"), 100, 0).size());
         }
     }
 
@@ -406,7 +408,8 @@ class ListingServiceTest {
         var users = new JdbcUserRepository(connection);
         var userService = new UserServiceImpl(connection, users,
                 new JdbcWalletRepository(connection));
-        var auditService = new AuditServiceImpl(new JdbcAuditLogRepository(connection));
+        var auditService = new AuditServiceImpl(new JdbcAuditLogRepository(connection), users,
+                Clock.systemUTC());
         return new ListingServiceImpl(properties, availability, userService, auditService);
     }
 

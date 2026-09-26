@@ -10,7 +10,7 @@ import java.sql.Statement;
 public final class MigrationRunner {
 
     private static final int FOUNDATION_VERSION = 1;
-    private static final int BOOKING_DECISION_MESSAGE_VERSION = 2;
+    private static final int AUDIT_TRAIL_VERSION = 2;
 
     private MigrationRunner() {
     }
@@ -27,9 +27,17 @@ public final class MigrationRunner {
                 // else: a pre-provisioned reference database (db/snoozeshare-mock.db) already has the schema.
                 recordMigration(connection, FOUNDATION_VERSION);
             }
-            if (!migrationApplied(connection, BOOKING_DECISION_MESSAGE_VERSION)) {
-                applySqlMigration(connection, "/db/migration/V002__booking_decision_message.sql");
-                recordMigration(connection, BOOKING_DECISION_MESSAGE_VERSION);
+            if (!migrationApplied(connection, AUDIT_TRAIL_VERSION)
+                    && !columnExists(connection, "audit_log", "walletAdjustment")) {
+                applySqlMigration(connection, "/db/migration/V002__audit_trail.sql");
+            }
+            if (!columnExists(connection, "bookings", "hostDecisionMessage")) {
+                try (Statement statement = connection.createStatement()) {
+                    statement.executeUpdate("ALTER TABLE bookings ADD COLUMN hostDecisionMessage TEXT");
+                }
+            }
+            if (!migrationApplied(connection, AUDIT_TRAIL_VERSION)) {
+                recordMigration(connection, AUDIT_TRAIL_VERSION);
             }
             connection.commit();
         } catch (SQLException | RuntimeException exception) {
@@ -90,6 +98,19 @@ public final class MigrationRunner {
                     statement.executeUpdate(statementSql);
                 }
             }
+        }
+    }
+
+    private static boolean columnExists(Connection connection, String table, String column)
+            throws SQLException {
+        try (Statement statement = connection.createStatement();
+             var result = statement.executeQuery("PRAGMA table_info(" + table + ")")) {
+            while (result.next()) {
+                if (column.equals(result.getString("name"))) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 

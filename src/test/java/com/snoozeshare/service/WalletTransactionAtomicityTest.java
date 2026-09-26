@@ -20,6 +20,7 @@ import com.snoozeshare.infra.db.migration.MigrationRunner;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
+import com.snoozeshare.service.impl.NoOpAuditService;
 import com.snoozeshare.service.impl.WalletLedgerWriter;
 
 class WalletTransactionAtomicityTest {
@@ -36,7 +37,8 @@ class WalletTransactionAtomicityTest {
             wallets.save(new Wallet(walletId, userId, BigDecimal.ZERO, "SGD", Instant.now()));
             JdbcWalletTransactionRepository transactions = new JdbcWalletTransactionRepository(
                     connection);
-            WalletLedgerWriter writer = new WalletLedgerWriter(connection, wallets, transactions);
+            WalletLedgerWriter writer = new WalletLedgerWriter(connection, wallets, transactions,
+                    null, new NoOpAuditService());
 
             assertThrows(IllegalArgumentException.class, () -> writer.record(walletId,
                     WalletTransactionType.WITHDRAWAL, new BigDecimal("-1.00"), BigDecimal.ZERO,

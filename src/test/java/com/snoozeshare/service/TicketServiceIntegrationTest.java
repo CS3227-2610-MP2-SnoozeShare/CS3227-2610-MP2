@@ -32,10 +32,12 @@ class TicketServiceIntegrationTest {
         var connection = db.connection();
         var settlement = SettlementFixtures.settlement(db, new InProcessEventBus(),
                 new JdbcWalletTransactionRepository(connection));
+        var eventBus = new InProcessEventBus();
         return new TicketServiceImpl(new JdbcTicketRepository(connection),
                 new JdbcTicketCategoryRepository(connection), new JdbcBookingRepository(connection),
                 new JdbcUserRepository(connection), settlement,
-                new AuditServiceImpl(new JdbcAuditLogRepository(connection)), SettlementFixtures.CLOCK);
+                new AuditServiceImpl(new JdbcAuditLogRepository(connection), new JdbcUserRepository(connection),
+                        SettlementFixtures.CLOCK), SettlementFixtures.CLOCK);
     }
 
     @Test
@@ -75,7 +77,8 @@ class TicketServiceIntegrationTest {
 
             assertEquals("Category is in use by tickets; deactivate it instead", refused.getMessage());
             assertEquals(6, service.listAllCategories().size());
-            assertEquals(1, db.scalarLong("SELECT COUNT(*) FROM audit_log WHERE actionType = 'CATEGORY_DELETED'"));
+            assertEquals(1, db.scalarLong(
+                    "SELECT COUNT(*) FROM audit_log WHERE actionType = 'TICKET_CATEGORY_DELETED'"));
         }
     }
 
