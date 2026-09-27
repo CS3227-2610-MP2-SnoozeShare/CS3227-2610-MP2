@@ -141,11 +141,27 @@ class FileTicketTest {
     }
 
     @Test
-    void rejectsWhenStayHasNotEndedYet() {
-        Booking futureBooking = new Booking(UUID.randomUUID(), listingId, guestId,
+    void allowsTicketDuringActiveStay() {
+        // Booking Sep 8-15, clock Sep 10 — trip started but not ended; now allowed
+        Booking activeBooking = new Booking(UUID.randomUUID(), listingId, guestId,
                 LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 15),
                 BookingStatus.CONFIRMED, new BigDecimal("100.00"),
                 new BigDecimal("700.00"), Instant.parse("2026-08-20T00:00:00Z"),
+                Instant.parse("2026-08-21T00:00:00Z"), null);
+        service = rebuildService(activeBooking);
+        var request = new NewTicketRequest(activeBooking.bookingId(), "Cleanliness",
+                "Title", "Desc", RemedyType.FULL_REFUND, null);
+        Ticket filed = service.fileTicket(request, guestId, Role.GUEST);
+        assertEquals(TicketStatus.OPEN, filed.status());
+    }
+
+    @Test
+    void rejectsWhenTripHasNotStartedYet() {
+        // Booking starts Sep 20, clock Sep 10 — trip not started
+        Booking futureBooking = new Booking(UUID.randomUUID(), listingId, guestId,
+                LocalDate.of(2026, 9, 20), LocalDate.of(2026, 9, 25),
+                BookingStatus.CONFIRMED, new BigDecimal("100.00"),
+                new BigDecimal("500.00"), Instant.parse("2026-08-20T00:00:00Z"),
                 Instant.parse("2026-08-21T00:00:00Z"), null);
         service = rebuildService(futureBooking);
         var request = new NewTicketRequest(futureBooking.bookingId(), "Cleanliness",

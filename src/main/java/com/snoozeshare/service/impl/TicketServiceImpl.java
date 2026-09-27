@@ -116,11 +116,11 @@ public final class TicketServiceImpl implements TicketService {
     }
 
     private static boolean ticketWindowOpen(Booking booking, LocalDate today) {
-        boolean stayEnded = !booking.endDate().isAfter(today);
+        boolean tripStarted = !today.isBefore(booking.startDate());
+        boolean inWindow = !today.isAfter(booking.endDate().plusDays(7));
         boolean statusEligible = booking.status() == BookingStatus.CONFIRMED
                 || booking.status() == BookingStatus.COMPLETED;
-        return statusEligible && (booking.status() != BookingStatus.CONFIRMED || stayEnded)
-                && !today.isAfter(booking.endDate().plusDays(7));
+        return statusEligible && tripStarted && inWindow;
     }
 
     @Override
