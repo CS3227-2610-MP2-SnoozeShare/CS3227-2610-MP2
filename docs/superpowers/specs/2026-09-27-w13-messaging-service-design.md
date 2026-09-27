@@ -129,7 +129,7 @@ ticket chat minus the agent: text only, no edit/delete, no typing indicator.
   dispute period). Pending, rejected and cancelled bookings, completed bookings and anything past the window
   are read-only; history stays readable. Posting outside the window throws
   `IllegalStateException("Chat is closed for this booking")`.
-- **Parties.** Only the booking's guest and its property's host. Agents are rejected (§ 9).
+- **Parties.** Only the booking's guest and its property's host. Agents are rejected by decision (§ 9).
 - **Storage.** Migration `V005__booking_messaging.sql`: `booking_messages` and `booking_message_reads`, same
   `rowid` ordering and last-read-message unread rule as the ticket chat.
 - **Contract.** `BookingConversationService` (`thread`, `post`, `conversationsFor`, `unreadCount`, `markRead`),
@@ -138,10 +138,9 @@ ticket chat minus the agent: text only, no edit/delete, no typing indicator.
 - **Seed data.** The mock DB has a chat on every ticket and on bookings 3, 4, 14 (open), 9, 10, 11 (closed), with
   a mix of read and unread so each role has something to display.
 
-## 9. Open question
+## 9. Agent access (decided)
 
-Should an agent be able to read a booking chat as evidence when resolving a dispute? Not built; the chat is
-private to guest and host until the operator decides.
+Agents may **not** read the host↔guest booking chat, including as dispute evidence (operator, 2026-09-27, C38). The chat stays private to the booking's guest and host; `BookingConversationService` rejects agents.
 
 ## 8. Acceptance
 
