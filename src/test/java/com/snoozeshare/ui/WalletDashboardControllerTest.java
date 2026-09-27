@@ -104,7 +104,7 @@ class WalletDashboardControllerTest {
                                                  UUID ticketId, UUID initiatedBy,
                                                  BigDecimal amount) {
         return new WalletTransaction(UUID.randomUUID(), WALLET_ID, type,
-                amount, BigDecimal.ZERO, new BigDecimal("10.00"),
+                amount, new BigDecimal("10.00"),
                 bookingId, ticketId, initiatedBy, Instant.parse("2026-09-27T00:00:00Z"));
     }
 }

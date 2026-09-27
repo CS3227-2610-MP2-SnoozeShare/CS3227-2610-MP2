@@ -103,9 +103,9 @@ public final class WalletDashboardController {
     }
 
     private static String amountWithFee(WalletTransaction transaction) {
-        String fee = WalletTransactionFormatter.dollarFeeLabel(transaction.feeAmount());
-        return fee.isEmpty() ? WalletTransactionFormatter.dollarAmountLabel(transaction.amount())
-                : WalletTransactionFormatter.dollarAmountLabel(transaction.amount()) + "\n" + fee;
+        // The platform fee is its own PLATFORM_FEE row to the System wallet (W14), not a field on this
+        // row, so the amount shown here is exactly what moved in this wallet.
+        return WalletTransactionFormatter.dollarAmountLabel(transaction.amount());
     }
 
     private static TableCell<WalletTransaction, String> styledCell(String styleClass) {
