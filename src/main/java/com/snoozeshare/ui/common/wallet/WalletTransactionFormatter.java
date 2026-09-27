@@ -23,16 +23,13 @@ public final class WalletTransactionFormatter {
     }
 
     public static String relatedLabel(WalletTransaction transaction) {
-        if (transaction.relatedBookingId() != null) {
-            return "Booking #" + shortId(transaction.relatedBookingId());
-        }
-        if (transaction.relatedTicketId() != null) {
-            return "Ticket #" + shortId(transaction.relatedTicketId());
-        }
-        if (transaction.initiatedBy() != null) {
-            return "Agent #" + shortId(transaction.initiatedBy());
-        }
-        return "—";
+        return switch (transaction.type()) {
+            case TOP_UP, WITHDRAWAL -> "—";
+            case ESCROW_HOLD, ESCROW_REFUND, BOOKING_PAYOUT -> referenceLabel(
+                    "Booking", transaction.relatedBookingId());
+            case TICKET_REMEDY -> referenceLabel("Ticket", transaction.relatedTicketId());
+            case AGENT_OVERRIDE -> referenceLabel("Agent", transaction.initiatedBy());
+        };
     }
 
     public static String amountLabel(BigDecimal amount) {
@@ -114,5 +111,9 @@ public final class WalletTransactionFormatter {
 
     private static String shortId(java.util.UUID id) {
         return id.toString().substring(0, 8);
+    }
+
+    private static String referenceLabel(String kind, UUID id) {
+        return id == null ? "—" : kind + " #" + shortId(id);
     }
 }
