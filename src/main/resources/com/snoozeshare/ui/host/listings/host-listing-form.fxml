@@ -23,6 +23,8 @@
                 <Label text="›" styleClass="host-crumb"/>
                 <Hyperlink fx:id="listingCrumb" onAction="#handleListingDetail"
                            styleClass="host-crumb-link" visible="false" managed="false"/>
+                <Label fx:id="editSeparator" text="›" styleClass="host-crumb"
+                       visible="false" managed="false"/>
                 <Label fx:id="formBreadcrumb" text="Create" styleClass="host-crumb-current"/>
             </HBox>
 

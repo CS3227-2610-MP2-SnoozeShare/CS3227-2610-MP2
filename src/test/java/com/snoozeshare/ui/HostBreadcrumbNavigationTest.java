@@ -28,6 +28,7 @@ class HostBreadcrumbNavigationTest {
 
         assertTrue(fxml.contains("text=\"Listings\""));
         assertTrue(fxml.contains("fx:id=\"listingCrumb\""));
+        assertTrue(fxml.contains("fx:id=\"editSeparator\""));
         assertTrue(fxml.contains("fx:id=\"formBreadcrumb\""));
         assertTrue(fxml.contains("styleClass=\"host-crumb-current\""));
         assertFalse(fxml.contains("agent-crumb"));
@@ -35,6 +36,7 @@ class HostBreadcrumbNavigationTest {
         assertFalse(fxml.contains("text=\"Back\""));
         assertTrue(source.contains("formBreadcrumb.setText"));
         assertTrue(source.contains("listingCrumb.setText"));
+        assertTrue(source.contains("editSeparator.setVisible"));
     }
 
     @Test

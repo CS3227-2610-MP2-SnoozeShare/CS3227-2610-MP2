@@ -48,6 +48,7 @@ public final class HostListingFormController {
     @FXML private CheckBox workDeskBox;
     @FXML private Label errorLabel;
     @FXML private Hyperlink listingCrumb;
+    @FXML private Label editSeparator;
     @FXML private Label formBreadcrumb;
     @FXML private Button saveButton;
 
@@ -77,12 +78,16 @@ public final class HostListingFormController {
         if (listing == null) {
             listingCrumb.setVisible(false);
             listingCrumb.setManaged(false);
+            editSeparator.setVisible(false);
+            editSeparator.setManaged(false);
             formBreadcrumb.setText("Create");
             saveButton.setText("Create listing");
         } else {
             listingCrumb.setText(listing.title());
             listingCrumb.setVisible(true);
             listingCrumb.setManaged(true);
+            editSeparator.setVisible(true);
+            editSeparator.setManaged(true);
             formBreadcrumb.setText("Edit");
             saveButton.setText("Save listing");
             populate(listing);
