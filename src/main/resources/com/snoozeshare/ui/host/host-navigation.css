@@ -24,7 +24,7 @@
 }
 
 .host-message-sidebar-title {
-    -fx-font-size: 18px;
+    -fx-font-size: 16px;
 }
 
 .host-message-row-title {
@@ -32,11 +32,11 @@
 }
 
 .host-message-row-subtitle {
-    -fx-font-size: 11px;
+    -fx-font-size: 13px;
 }
 
 .host-message-header-title {
-    -fx-font-size: 20px;
+    -fx-font-size: 18px;
 }
 
 .host-message-header-subtitle {

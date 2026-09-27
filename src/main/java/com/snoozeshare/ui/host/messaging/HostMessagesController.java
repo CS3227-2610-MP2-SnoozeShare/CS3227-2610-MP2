@@ -18,6 +18,7 @@ import com.snoozeshare.ui.common.messaging.ChatBubbles;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -217,7 +218,12 @@ public final class HostMessagesController {
             subtitle.setMinWidth(0);
             subtitle.setMaxWidth(Double.MAX_VALUE);
             subtitle.setTextOverrun(OverrunStyle.ELLIPSIS);
-            VBox copy = new VBox(4, title, subtitle);
+            HBox titleLine = new HBox(8);
+            titleLine.setAlignment(Pos.CENTER_LEFT);
+            titleLine.setMaxWidth(Double.MAX_VALUE);
+            titleLine.getChildren().add(title);
+            HBox.setHgrow(title, Priority.ALWAYS);
+            VBox copy = new VBox(4, titleLine, subtitle);
             copy.setMinWidth(0);
             copy.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(copy, Priority.ALWAYS);
@@ -229,7 +235,7 @@ public final class HostMessagesController {
                 Label status = new Label(row.statusLabel());
                 status.getStyleClass().addAll("host-message-status", row.open()
                         ? "host-message-status-open" : "host-message-status-resolved");
-                content.getChildren().add(status);
+                titleLine.getChildren().add(status);
             }
             setGraphic(content);
         }
