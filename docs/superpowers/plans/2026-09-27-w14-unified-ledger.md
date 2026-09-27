@@ -287,7 +287,7 @@ public enum Role {
 
 ```sql
 -- SQLite cannot alter a CHECK constraint, so rebuild users with role SYSTEM allowed.
--- MigrationRunner runs this with foreign keys off; column order matches V001 + V003.
+-- MigrationRunner runs this with foreign keys off, and column order matches V001 + V003.
 CREATE TABLE users_new (
     userId TEXT PRIMARY KEY,
     role TEXT NOT NULL CHECK (role IN ('GUEST', 'HOST', 'AGENT', 'SYSTEM')),
