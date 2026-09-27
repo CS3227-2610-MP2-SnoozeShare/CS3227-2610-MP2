@@ -18,6 +18,6 @@ public record AccountSummary(UUID userId, String displayName, String email, Role
 
     /** Only Guest and Host accounts can be suspended or reactivated (C34). */
     public boolean governable() {
-        return role != Role.AGENT;
+        return role != Role.AGENT && role != Role.SYSTEM;
     }
 }

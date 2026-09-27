@@ -50,6 +50,9 @@ public final class UserServiceImpl implements UserService {
         if (role == null) {
             throw new IllegalArgumentException("Role must not be null");
         }
+        if (role == Role.SYSTEM) {
+            throw new IllegalArgumentException("The system account cannot be registered");
+        }
         if (users.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("Email is already registered");
         }

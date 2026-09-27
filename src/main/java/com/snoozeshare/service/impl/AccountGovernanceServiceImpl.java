@@ -74,7 +74,7 @@ public final class AccountGovernanceServiceImpl implements AccountGovernanceServ
     @Override
     public List<AccountSummary> listAccounts() {
         return users.findAll().stream()
-                .filter(user -> !user.userId().equals(AuditService.SYSTEM_ACTOR_ID))
+                .filter(user -> user.role() != Role.SYSTEM)
                 .map(AccountSummary::from)
                 .toList();
     }
@@ -229,7 +229,7 @@ public final class AccountGovernanceServiceImpl implements AccountGovernanceServ
     private User requireGovernable(UUID userId) {
         User target = users.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
-        if (target.role() == Role.AGENT || target.userId().equals(AuditService.SYSTEM_ACTOR_ID)) {
+        if (target.role() == Role.AGENT || target.role() == Role.SYSTEM) {
             throw new IllegalArgumentException("Support agent accounts cannot be suspended or reactivated");
         }
         return target;
