@@ -22,3 +22,23 @@
     -fx-font-weight: bold;
     -fx-text-fill: #381a10;
 }
+
+.host-message-sidebar-title {
+    -fx-font-size: 18px;
+}
+
+.host-message-row-title {
+    -fx-font-size: 14px;
+}
+
+.host-message-row-subtitle {
+    -fx-font-size: 11px;
+}
+
+.host-message-header-title {
+    -fx-font-size: 20px;
+}
+
+.host-message-header-subtitle {
+    -fx-font-size: 14px;
+}

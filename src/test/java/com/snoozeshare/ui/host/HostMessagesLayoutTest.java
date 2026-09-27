@@ -15,6 +15,8 @@ class HostMessagesLayoutTest {
         String fxml = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/messaging/host-messages.fxml"));
         String css = Files.readString(Path.of("src/main/resources/com/snoozeshare/ui/admin/agent-theme.css"));
+        String hostCss = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/host-navigation.css"));
         String controller = Files.readString(Path.of(
                 "src/main/java/com/snoozeshare/ui/host/messaging/HostMessagesController.java"));
         String shellController = Files.readString(Path.of(
@@ -26,6 +28,13 @@ class HostMessagesLayoutTest {
         assertTrue(css.contains("-fx-min-width: 380px;"));
         assertTrue(css.contains("-fx-max-width: 380px;"));
         assertTrue(css.contains(".host-message-sidebar .list-view .scroll-bar:horizontal"));
+        assertTrue(fxml.contains("@../host-navigation.css"));
+        assertTrue(hostCss.contains(".host-message-sidebar-title"));
+        assertTrue(hostCss.contains("-fx-font-size: 18px;"));
+        assertTrue(hostCss.contains(".host-message-row-title"));
+        assertTrue(hostCss.contains("-fx-font-size: 14px;"));
+        assertTrue(hostCss.contains(".host-message-header-title"));
+        assertTrue(hostCss.contains("-fx-font-size: 20px;"));
         assertTrue(controller.contains("OverrunStyle.ELLIPSIS"));
         assertTrue(controller.contains("HBox.setHgrow(copy, Priority.ALWAYS)"));
         assertTrue(controller.contains("copy.setMinWidth(0)"));
