@@ -6,9 +6,9 @@ every boundary, not at the end of the session.
 
 - **Phase:** W12 Platform Audit Trail done (merged in); W11 Account Governance implemented, awaiting operator acceptance
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `messaging-service` (W13 — Messaging; branched 2026-09-27 from the `agent-account-governance` tip, which contains `main`)
+- **Branch:** `unified-ledger` (W14 spec; branched 2026-09-27 from the `messaging-service` tip, which carries W11–W13 and is not yet in `main`). W13 work continues on `messaging-service`.
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-27 by Claude Sonnet 5 — W13 messaging service slice built on `messaging-service`
+- **Last updated:** 2026-09-27 by Claude Sonnet 5 — W14 unified-ledger spec approved and plan written on `unified-ledger`
 - **Last verified against repo:** 2026-09-26
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, W6/W7 and others on `main`, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.13 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.9 Audit trail, two diagrams, the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented.
 
@@ -69,6 +69,7 @@ three iterations).
 | S9 | 2026-09-26 | Codex | w8 | Host portal UI refinement | Paused | Completed wallet/listing layout, copy, metrics, action sizing, and status-control spacing; focused tests, XML validation, Checkstyle, and diff checks pass; full suite retains two unrelated UI failures | 2026-09-26 |
 | S14 | 2026-09-26 | Codex | w8 | W8 — Host Request Queue, Earnings & Disputes | Paused | PR #11 open against main; W8 implementation, review fixes, and Developer Guide handoff complete | 2026-09-27 |
 | S15 | 2026-09-27 | Claude Sonnet 5 | messaging-service | W13 | Paused | Service slice built and verified (see Done ledger); next: operator runs the agent page on a mock-DB copy, then the guest/host Messages tabs get their own slice | 2026-09-27 |
+| S16 | 2026-09-27 | Claude Sonnet 5 | unified-ledger | W14 | Paused | Spec approved (defaults accepted, C41) and 12-task plan written; nothing built. Next: execute the plan from Task 1 (subagent-driven or inline, operator's choice) | 2026-09-27 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -96,7 +97,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
 | W11 | F10 — Agent Account Governance (F10.1.1 suspend, F10.1.2 cascade; Reactivate added, C34) | Done | [W11 design](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) | [W11 plan](docs/superpowers/plans/2026-09-26-w11-account-governance.md) | 14/14 tasks; operator accepted real-app run 2026-09-27 | Documented 2026-09-27 |
 | W12 | F11 — Platform Audit Trail (Analytics half of the epic has no items, out of scope; W11 emits the account-governance rows, C32) | Done | [W12 design](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) | [W12 plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md) | Done | Documented 2026-09-26 |
-| W14 | Unified ledger — fold `wallet_transactions` into `audit_log`, `users.balance`, System account with a real wallet (C30, C31) | Not started | — | — | Not spec'd; reverses Known Gaps entry, C3, C9; runs after W12; touches W1/W3/W5/W6/W10 money paths | — |
+| W14 | Unified ledger — fold `wallet_transactions` into `audit_log`, System account (role SYSTEM) with a real wallet; `wallets` table kept (C30, C31, C39, C40) | Planned | [W14 design](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md) | [W14 plan](docs/superpowers/plans/2026-09-27-w14-unified-ledger.md) | Plan written, 12 tasks; not started (C41) | — |
 | W13 | F12 — Messaging (persistent ticket chat; `MessageService` replaces the in-memory seam; guest/host UI deferred, C37) | Building | [W13 design](docs/superpowers/specs/2026-09-27-w13-messaging-service-design.md) | [W13 plan](docs/superpowers/plans/2026-09-27-w13-messaging-service.md) | Ticket and booking chat services done (Tasks 1–8); guest/host Messages UI not started (C37, C38) | — |
 | W15 | Host Listings Dashboard & Copy Refinement | Done | — | — | Live listing metrics, listing-card redesign, Requests/wallet copy, and layout updates complete; operator explicitly waived new spec/plan | — |
 
@@ -437,7 +438,7 @@ and the stated assumptions/constraints. **These are decisions, not a TODO list �
 - **Platform fees are informational only** (`feeAmount` column on `BOOKING_PAYOUT` rows) — no
   system-owned platform `Wallet`, no true double-entry transfer. Revisit only if the platform
   ever needs its own reportable balance.
-  *(Operator intends to reverse this in W14 — see C31. Do not implement a platform wallet in W12.)*
+  *(Operator intends to reverse this in W14 — see C31, C39 and the [W14 spec](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md). Still in force until the W14 plan is built; do not implement a platform wallet outside W14.)*
 - **Auth is fully mocked** — no real credential validation anywhere; role separation is enforced
   in service/domain code, not by real authentication. This is a stated project constraint, not
   an oversight.
@@ -497,6 +498,9 @@ architecture area remain recorded in that area's table.
 | C29 | 2026-09-26 | Defer F7.2.2 structured host dispute response notes/evidence from W8 to W13 Messaging | Operator chose to defer the formal host response path to W13; W8 will not add ticket response fields or conflate the flow with chat | Operator conversation, 2026-09-26 |
 | C30 | 2026-09-27 | Host booking approve/reject actions require confirmation modals matching the supplied mockups | Operator requested centered AgentModal-style dialogs with scrim, booking summary cards, explanatory notices, and modal-specific confirm/cancel actions | Operator conversation, 2026-09-27 |
 | C31 | 2026-09-27 | W8 persists the optional host rejection message on the booking and exposes it to guest booking/trip views; broader F7.2.2 response notes/evidence remains deferred to W13 | Operator confirmed the proposed nullable `hostDecisionMessage` behavior | Operator conversation, 2026-09-27 |
+| C39 | 2026-09-27 | W14 specified. Follows C31, with two refinements: `WalletService`/`TransactionService` are kept (C3 narrowed to storage, not removed) and escrow stays implicit (no escrow account). Reversal of the § Known Gaps platform-fee entry, C9 and the `wallets.balance` convention takes effect when the plan runs, on operator approval of the spec. Defaults in spec § 10 are open until confirmed | Operator asked to spec W14; agent flagged that it is medium-sized (about 18 main / 13 test files, one migration, seed rewrite), not small, and that the UI needs no change | Operator conversation; [W14 spec](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md) |
+| C40 | 2026-09-27 | W14 refinements: (a) the `wallets` table stays, so **no `users.balance`** (reverses that part of C31); only `wallet_transactions` is folded into `audit_log`. (b) The System user gets a real **`SYSTEM` role** by rebuilding `users` (new CHECK; migration V006, which `MigrationRunner` must run with foreign keys off), reversing C32's `AGENT` + `SUSPENDED`; the ledger fold is V007. Spec § 8 and § 10 updated | Operator: "for security and maybe less changes, lets keep the dedicated wallets table"; the SYSTEM role "should be a small addition". Rejected: `users.balance`; keeping the System user as a suspended agent | Operator conversation; [W14 spec](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md) |
+| C41 | 2026-09-27 | W14 spec § 10 defaults accepted as written: keep `WalletService` and `TransactionService`; balance stays a stored cache on `wallets`; no escrow account; legacy payouts get backfilled `PLATFORM_FEE` rows. Ledger fold is split into V006 (SYSTEM role), V007 (add and backfill) and V008 (drop table) so code can leave `wallet_transactions` before it is dropped. The Known Gaps platform-fee entry, C9 and C3-storage reversals are approved and take effect as the plan executes | Operator: "Accept defaults. Write plan" | Operator conversation; [W14 spec](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md), [W14 plan](docs/superpowers/plans/2026-09-27-w14-unified-ledger.md) |
 
 ---
 
