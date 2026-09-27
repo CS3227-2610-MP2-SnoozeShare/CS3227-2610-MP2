@@ -41,7 +41,7 @@ class DomainModelTest {
 
     @Test
     void roleAndAmenityEnumsContainTheSharedVocabulary() {
-        assertEquals(3, Role.values().length);
+        assertEquals(4, Role.values().length);
         assertEquals(6, AmenityType.values().length);
     }
 

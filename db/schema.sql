@@ -11,7 +11,7 @@ PRAGMA foreign_keys = ON;
 
 CREATE TABLE users (
     userId              TEXT PRIMARY KEY,
-    role                TEXT NOT NULL CHECK (role IN ('GUEST','HOST','AGENT')),
+    role                TEXT NOT NULL CHECK (role IN ('GUEST','HOST','AGENT','SYSTEM')),
     displayName         TEXT NOT NULL,
     email               TEXT NOT NULL UNIQUE,
     accountStatus       TEXT NOT NULL CHECK (accountStatus IN ('ACTIVE','SUSPENDED')),
@@ -185,7 +185,7 @@ CREATE TABLE booking_message_reads (
     PRIMARY KEY (bookingId, userId)
 );
 
--- Migration bookkeeping, identical to what MigrationRunner creates. The seed records V001 to V005 as applied.
+-- Migration bookkeeping, identical to what MigrationRunner creates. The seed records V001 to V006 as applied.
 CREATE TABLE IF NOT EXISTS schema_history (
     version   INTEGER PRIMARY KEY,
     appliedAt TEXT NOT NULL

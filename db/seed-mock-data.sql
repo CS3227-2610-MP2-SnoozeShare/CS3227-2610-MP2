@@ -32,7 +32,7 @@ INSERT INTO users (userId, role, displayName, email, accountStatus, registration
 ('a0000000-0000-0000-0000-000000000001','AGENT','Amy Tanaka','amy.tanaka@snoozeshare.test','ACTIVE','AGENT-2026-01','2026-01-10T09:00:00Z'),
 ('a0000000-0000-0000-0000-000000000002','AGENT','Ben Alvarez','ben.alvarez@snoozeshare.test','ACTIVE','AGENT-2026-02','2026-01-10T09:05:00Z'),
 ('a0000000-0000-0000-0000-000000000003','AGENT','Chen Wu','chen.wu@snoozeshare.test','ACTIVE','AGENT-2026-03','2026-01-10T09:10:00Z'),
-('a0000000-0000-0000-0000-0000000000ff','AGENT','SnoozeShare System','system@snoozeshare.invalid','SUSPENDED',NULL,'2026-01-01T00:00:00Z'),
+('a0000000-0000-0000-0000-0000000000ff','SYSTEM','SnoozeShare System','system@snoozeshare.invalid','ACTIVE',NULL,'2026-01-01T00:00:00Z'),
 
 ('b0000000-0000-0000-0000-000000000001','HOST','Olivia Bennett','olivia.bennett@snoozeshare.test','ACTIVE','HOST-2026-01','2026-02-01T10:00:00Z'),
 ('b0000000-0000-0000-0000-000000000002','HOST','Marcus Lee','marcus.lee@snoozeshare.test','ACTIVE','HOST-2026-02','2026-02-02T10:00:00Z'),
@@ -368,6 +368,6 @@ JOIN properties p ON p.propertyId = b.listingId;
 
 -- ============================== schema_history ==============================
 -- The reference DB ships fully migrated (V001 to V005), so the app's MigrationRunner has nothing to apply.
-INSERT INTO schema_history (version, appliedAt) VALUES (1, '2026-09-26 00:00:00'), (2, '2026-09-26 00:00:00'), (3, '2026-09-26 00:00:00'), (4, '2026-09-27 00:00:00'), (5, '2026-09-27 00:00:00');
+INSERT INTO schema_history (version, appliedAt) VALUES (1, '2026-09-26 00:00:00'), (2, '2026-09-26 00:00:00'), (3, '2026-09-26 00:00:00'), (4, '2026-09-27 00:00:00'), (5, '2026-09-27 00:00:00'), (6, '2026-09-27 00:00:00');
 
 PRAGMA foreign_keys = ON;

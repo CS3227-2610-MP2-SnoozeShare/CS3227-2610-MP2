@@ -14,6 +14,7 @@ public final class MigrationRunner {
     private static final int SUSPENSION_REASON_VERSION = 3;
     private static final int MESSAGING_VERSION = 4;
     private static final int BOOKING_MESSAGING_VERSION = 5;
+    private static final int SYSTEM_ROLE_VERSION = 6;
 
     private MigrationRunner() {
     }
@@ -68,6 +69,18 @@ public final class MigrationRunner {
                 // else: a reference database rebuilt from db/schema.sql already has the tables.
                 recordMigration(connection, BOOKING_MESSAGING_VERSION);
             }
+            boolean rebuilt = false;
+            if (!migrationApplied(connection, SYSTEM_ROLE_VERSION)) {
+                if (!usersAllowSystemRole(connection)) {
+                    applySqlMigration(connection, "/db/migration/V006__system_role.sql");
+                    rebuilt = true;
+                }
+                // else: a reference database rebuilt from db/schema.sql already allows SYSTEM.
+                recordMigration(connection, SYSTEM_ROLE_VERSION);
+            }
+            if (rebuilt) {
+                requireForeignKeysIntact(connection);
+            }
             connection.commit();
         } catch (SQLException | RuntimeException exception) {
             connection.rollback();
@@ -101,6 +114,14 @@ public final class MigrationRunner {
                 throw new SQLException("Foreign key violation after migration in table "
                         + result.getString("table") + " (row " + result.getLong("rowid") + ")");
             }
+        }
+    }
+
+    private static boolean usersAllowSystemRole(Connection connection) throws SQLException {
+        try (var statement = connection.prepareStatement(
+                "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'");
+             var result = statement.executeQuery()) {
+            return result.next() && result.getString(1).contains("'SYSTEM'");
         }
     }
 

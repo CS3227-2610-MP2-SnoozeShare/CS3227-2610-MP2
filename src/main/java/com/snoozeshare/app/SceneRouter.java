@@ -26,6 +26,7 @@ public final class SceneRouter {
             case GUEST -> GUEST_SCENE;
             case HOST -> HOST_SCENE;
             case AGENT -> ADMIN_SCENE;
+            case SYSTEM -> AUTH_SCENE;
         };
     }
 

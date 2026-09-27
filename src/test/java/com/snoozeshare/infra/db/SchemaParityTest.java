@@ -29,6 +29,7 @@ class SchemaParityTest {
             apply(migration, "src/main/resources/db/migration/V003__suspension_reason.sql");
             apply(migration, "src/main/resources/db/migration/V004__messaging.sql");
             apply(migration, "src/main/resources/db/migration/V005__booking_messaging.sql");
+            apply(migration, "src/main/resources/db/migration/V006__system_role.sql");
             applySql(migration, "ALTER TABLE bookings ADD COLUMN hostDecisionMessage TEXT;");
             apply(reference, "db/schema.sql");
 
