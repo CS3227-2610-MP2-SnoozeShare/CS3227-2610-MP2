@@ -1171,6 +1171,9 @@
     -fx-background-color: #fffdf9;
     -fx-border-color: #ddc3a5;
     -fx-border-width: 0 1px 0 0;
+    -fx-min-width: 380px;
+    -fx-pref-width: 380px;
+    -fx-max-width: 380px;
 }
 .agent-root .host-message-sidebar-title,
 .agent-root .host-message-header-title {

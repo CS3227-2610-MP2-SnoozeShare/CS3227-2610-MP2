@@ -22,8 +22,10 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public final class HostMessagesController {
@@ -221,10 +223,18 @@ public final class HostMessagesController {
             }
             Label title = new Label(row.title());
             title.getStyleClass().add("host-message-row-title");
+            title.setMaxWidth(Double.MAX_VALUE);
+            title.setTextOverrun(OverrunStyle.ELLIPSIS);
             Label subtitle = new Label(row.subtitle());
             subtitle.getStyleClass().add("host-message-row-subtitle");
+            subtitle.setMaxWidth(Double.MAX_VALUE);
+            subtitle.setTextOverrun(OverrunStyle.ELLIPSIS);
             VBox copy = new VBox(4, title, subtitle);
+            copy.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(copy, Priority.ALWAYS);
             HBox content = new HBox(copy);
+            content.setMaxWidth(Double.MAX_VALUE);
+            content.prefWidthProperty().bind(widthProperty().subtract(24));
             content.getStyleClass().add("host-message-row");
             if (row.statusLabel() != null) {
                 Label status = new Label(row.statusLabel());

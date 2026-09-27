@@ -17,7 +17,7 @@
         <URL value="@../../admin/agent-theme.css"/>
     </stylesheets>
     <left>
-        <VBox prefWidth="340" styleClass="host-message-sidebar">
+        <VBox minWidth="380" prefWidth="380" maxWidth="380" styleClass="host-message-sidebar">
             <padding><Insets top="18" right="0" bottom="0" left="0"/></padding>
             <Label text="Messages" styleClass="host-message-sidebar-title"/>
             <ListView fx:id="conversationList" VBox.vgrow="ALWAYS"/>
