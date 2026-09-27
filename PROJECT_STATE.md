@@ -10,7 +10,7 @@ every boundary, not at the end of the session.
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
 - **Last updated:** 2026-09-27 by Claude Sonnet 5 — W13 messaging service slice built on `messaging-service`
 - **Last verified against repo:** 2026-09-26
-- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, W6/W7 and others on `main`, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.13 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.9 Audit trail, two diagrams, the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented.
+- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, W6/W7 and others on `main`, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.14 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.13 Audit trail, two diagrams and the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented.
 
 Sections are ordered by how often they are needed: **1–3 say where we are, 4–5 say what the
 system is, 6–7 say what not to touch and what is stuck, 8–10 are the record.** Cite sections by
@@ -549,11 +549,11 @@ architecture area remain recorded in that area's table.
 
 ### D22 — W13 notes (2026-09-27)
 
-The `MessageService.thread` signature gained a viewer (`viewerId`, `viewerRole`) and the in-memory implementation was deleted, so any other branch calling the old `thread(ticketId, channel)` must update. Wrong-role and non-party calls throw `IllegalArgumentException`, unlike W10's in-memory service which trusted the caller. Schema parity, `DatabaseBootstrapTest`, `MigrationRunnerReferenceDbTest` and `CommittedMockDbTest` now expect V004. Still red and unrelated (D21): `FileTicketTest.successfullyFilesTicketAndPublishesEvent`, `ShellLayoutTest.hostWalletPageUsesTheSamePageInsetAsListingsAndBookings`. The duplicate W14 was resolved by the operator renaming the Host Listings Dashboard row to W15.
+The `MessageService.thread` signature gained a viewer (`viewerId`, `viewerRole`) and the in-memory implementation was deleted, so any other branch calling the old `thread(ticketId, channel)` must update. Wrong-role and non-party calls throw `IllegalArgumentException`, unlike W10's in-memory service which trusted the caller. Schema parity, `DatabaseBootstrapTest`, `MigrationRunnerReferenceDbTest` and `CommittedMockDbTest` now expect V004. Still red and unrelated (D21): `FileTicketTest.successfullyFilesTicketAndPublishesEvent`, `ShellLayoutTest.hostWalletPageUsesTheSamePageInsetAsListingsAndBookings`.
 
 ### D21 — Merge of `origin/main` into the W11 branch (2026-09-27)
 
-Resolved by keeping both sides. `BookingServiceImpl` already had a `UserRepository` from W8, so W11's extra constructor parameter was dropped and only the suspended-guest guard remains. `AppContext` builds `AccountGovernanceService` after the W8 wiring. The W8 `hostDecisionMessage` column and W11's V003 both live in `MigrationRunner`; `SchemaParityTest` applies both. The guide's audit trail section is now § 4.12 on `main`, so W11's is § 4.13. W8 auto-completion (`completeEligibleBookings`, run at startup) now settles a suspended guest's in-progress stay. **Pre-existing red on `main`, not from W11:** `FileTicketTest.successfullyFilesTicketAndPublishesEvent` and `ShellLayoutTest.hostWalletPageUsesTheSamePageInsetAsListingsAndBookings` fail on `origin/main` too; I fixed the checkstyle violations `main` carried (`ReviewServiceImpl` import order, `FileTicketTest` line wraps). **Re-check after the merge (2026-09-27):** the app launched on a copy of the mock DB with no startup errors and its window opened; a headless drive of `AccountGovernanceService` on that copy suspended Noah Kim (1 `ACCOUNT_SUSPENDED`, 3 `BOOKING_FORCE_CANCELLED`, refund rows) and reactivated him. Nobody clicked through the merged Accounts screen; the UI tests cover it. Note W8 also numbered a deviation D13, colliding with W12's D13 (resolved by renaming W12's to D13.5).
+Resolved by keeping both sides. `BookingServiceImpl` already had a `UserRepository` from W8, so W11's extra constructor parameter was dropped and only the suspended-guest guard remains. `AppContext` builds `AccountGovernanceService` after the W8 wiring. The W8 `hostDecisionMessage` column and W11's V003 both live in `MigrationRunner`; `SchemaParityTest` applies both. The guide's audit trail section is § 4.13, so W11's account-governance section is § 4.14. W8 auto-completion (`completeEligibleBookings`, run at startup) now settles a suspended guest's in-progress stay. **Pre-existing red on `main`, not from W11:** `FileTicketTest.successfullyFilesTicketAndPublishesEvent` and `ShellLayoutTest.hostWalletPageUsesTheSamePageInsetAsListingsAndBookings` fail on `origin/main` too; I fixed the checkstyle violations `main` carried (`ReviewServiceImpl` import order, `FileTicketTest` line wraps). **Re-check after the merge (2026-09-27):** the app launched on a copy of the mock DB with no startup errors and its window opened; a headless drive of `AccountGovernanceService` on that copy suspended Noah Kim (1 `ACCOUNT_SUSPENDED`, 3 `BOOKING_FORCE_CANCELLED`, refund rows) and reactivated him. Nobody clicked through the merged Accounts screen; the UI tests cover it. Note W8 also numbered a deviation D13, colliding with W12's D13 (resolved by renaming W12's to D13.5).
 
 ### D19 — `UserService.suspend` replaced by `AccountGovernanceService` (W11, RESOLVED 2026-09-26: stub removed)
 
@@ -640,6 +640,6 @@ The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-st
 — every change, big or small, newest first.
 
 - **Latest entry:** 2026-09-27
-- **Entries:** 94 (4 backfilled coarsely from git history)
+- **Entries:** 106 (4 backfilled coarsely from git history)
 
 Deviations stay in § Deviations above: those are read every session.

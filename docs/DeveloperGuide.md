@@ -251,7 +251,7 @@ change back. See [4.13](#413-audit-trail).
   state machines.
 - **`AccountGovernanceService`** (`AccountGovernanceServiceImpl`) owns account suspension and reactivation.
   A suspension and its cascade (force-cancelled bookings with refunds, deactivated listings, audit rows) run
-  in one transaction, and its events publish after commit ([4.13](#413-account-governance)).
+  in one transaction, and its events publish after commit ([4.14](#414-account-governance)).
 - **`AuditService`** (with `AuditServiceImpl` and `JdbcAuditLogRepository`) owns the audit log: services
   write rows through it, and only the Audit Log screen reads them ([4.13](#413-audit-trail)).
 - **`repository.jdbc`** is the only place that touches `java.sql`. **`infra.db`** owns the connection,
@@ -679,7 +679,7 @@ rolls back with the change.
 | `DisputeSettlementServiceImpl` | `TICKET_RESOLVED`, `BOOKING_COMPLETED`, and the guest and host money rows (see the sequence diagram below) |
 | `TicketServiceImpl` | `TICKET_ASSIGNED`, `TICKET_UNASSIGNED`, `TICKET_NOTE_SAVED`, `TICKET_CATEGORY_CREATED`, `TICKET_CATEGORY_RENAMED`, `TICKET_CATEGORY_TOGGLED`, `TICKET_CATEGORY_DELETED` |
 | `ListingServiceImpl` | `LISTING_CREATED`, `LISTING_UPDATED`, `LISTING_STATUS_CHANGED` |
-| `AccountGovernanceServiceImpl` | `ACCOUNT_SUSPENDED` or `ACCOUNT_REACTIVATED`; on a suspension also `LISTING_STATUS_CASCADE`, `BOOKING_FORCE_CANCELLED` and an `ESCROW_REFUND` money row per affected booking ([4.13](#413-account-governance)) |
+| `AccountGovernanceServiceImpl` | `ACCOUNT_SUSPENDED` or `ACCOUNT_REACTIVATED`; on a suspension also `LISTING_STATUS_CASCADE`, `BOOKING_FORCE_CANCELLED` and an `ESCROW_REFUND` money row per affected booking ([4.14](#414-account-governance)) |
 | `WalletLedgerWriter` (used by `WalletServiceImpl` and `TransactionServiceImpl`) | One money row per ledger row it writes: `TOP_UP`, `WITHDRAWAL` and the other wallet transaction types |
 
 The `AuditAction` values `BOOKING_CANCELLED_BY_HOST` and `TICKET_OPENED` exist, but no service writes them yet (see
@@ -865,7 +865,7 @@ erDiagram
 
 **Deviations:** D13 (dual-write); D15 (the committed mock DB ships already migrated: `schema_history` records V001 and V002, the System user exists, and `db/schema.sql` creates `schema_history`); D16 (seed `availability_blocks` ids were remapped to valid hex); D17 (the spec's `AuditService.query` became `search`, `CATEGORY_DELETED` became `TICKET_CATEGORY_DELETED`, and the search was corrected to a contains-match with a 4-character minimum for id fragments).
 
-### 4.13 Account governance
+### 4.14 Account governance
 
 **Purpose:** let a support agent suspend and reactivate Guest and Host accounts, cascading a suspension to the account's upcoming bookings and listings atomically.
 
