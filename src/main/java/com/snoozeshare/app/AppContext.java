@@ -12,6 +12,7 @@ import com.snoozeshare.repository.jdbc.JdbcAuditLogRepository;
 import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingMessageRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
+import com.snoozeshare.repository.jdbc.JdbcLedgerRepository;
 import com.snoozeshare.repository.jdbc.JdbcMessageRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
 import com.snoozeshare.repository.jdbc.JdbcReviewRepository;
@@ -42,6 +43,7 @@ import com.snoozeshare.service.impl.BookingConversationServiceImpl;
 import com.snoozeshare.service.impl.BookingServiceImpl;
 import com.snoozeshare.service.impl.DisputeQueryServiceImpl;
 import com.snoozeshare.service.impl.DisputeSettlementServiceImpl;
+import com.snoozeshare.service.impl.LedgerWriter;
 import com.snoozeshare.service.impl.ListingMetricsServiceImpl;
 import com.snoozeshare.service.impl.ListingServiceImpl;
 import com.snoozeshare.service.impl.MessageServiceImpl;
@@ -84,8 +86,9 @@ public final class AppContext implements AutoCloseable {
         this.userService = new UserServiceImpl(connection, users, wallets);
         this.auditService = new AuditServiceImpl(new JdbcAuditLogRepository(connection), users,
                 Clock.systemDefaultZone());
-        this.walletService = new WalletServiceImpl(connection, wallets,
-                new JdbcWalletTransactionRepository(connection), eventBus, auditService);
+        JdbcLedgerRepository ledgerRepository = new JdbcLedgerRepository(connection);
+        LedgerWriter ledgerWriter = new LedgerWriter(wallets, auditService);
+        this.walletService = new WalletServiceImpl(connection, wallets, ledgerWriter, ledgerRepository, eventBus);
         JdbcPropertyRepository propertyRepo = new JdbcPropertyRepository(connection);
         JdbcAvailabilityBlockRepository blockRepo = new JdbcAvailabilityBlockRepository(connection);
         JdbcBookingRepository bookingRepo = new JdbcBookingRepository(connection);
