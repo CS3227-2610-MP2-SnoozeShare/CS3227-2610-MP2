@@ -8,10 +8,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalTime;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
+import javafx.application.Platform;
+
 class HostListingsControllerTest {
+
+    @BeforeAll
+    static void startToolkit() {
+        try {
+            Platform.startup(() -> { });
+        } catch (IllegalStateException alreadyStarted) {
+            // Another JavaFX test owns the toolkit in this Gradle worker.
+        }
+    }
 
     @Test
     void listingsPageExposesCreateStatusAndEditFlow() throws Exception {
@@ -117,31 +129,26 @@ class HostListingsControllerTest {
         String bookings = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/bookings/host-bookings.fxml"));
         String wallet = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/wallet/host-wallet-dashboard.fxml"));
+                "src/main/resources/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
 
         assertTrue(shell.contains("text=\"Requests\""));
         assertTrue(bookings.contains("text=\"Booking requests\""));
         assertTrue(wallet.contains("text=\"Top up\""));
-        assertTrue(wallet.contains("wallet-action-button"));
+        assertTrue(wallet.contains("wallet-top-up-button"));
+        assertTrue(wallet.contains("wallet-withdraw-button"));
     }
 
     @Test
     void walletActionsShareDimensionsAcrossGuestAndHost() throws Exception {
-        String guestWallet = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/guest/wallet/wallet-dashboard.fxml"));
-        String hostWallet = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/wallet/host-wallet-dashboard.fxml"));
-        String theme = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/admin/agent-theme.css"));
+        String wallet = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
+        String walletCss = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/common/wallet/wallet.css"));
 
-        assertTrue(guestWallet.contains("text=\"Top up\""));
-        assertTrue(guestWallet.contains("styleClass=\"button, wallet-action-button\""));
-        assertTrue(guestWallet.contains("styleClass=\"outline-button, wallet-action-button\""));
-        assertTrue(hostWallet.contains("styleClass=\"button, wallet-action-button\""));
-        assertTrue(hostWallet.contains("styleClass=\"outline-button, wallet-action-button\""));
-        assertTrue(theme.contains(".agent-root .wallet-action-button"));
-        assertTrue(theme.contains("-fx-pref-width: 118px"));
-        assertTrue(theme.contains("-fx-pref-height: 40px"));
+        assertTrue(wallet.contains("text=\"Top up\""));
+        assertTrue(wallet.contains("text=\"Withdraw\""));
+        assertTrue(walletCss.contains(".wallet-top-up-button"));
+        assertTrue(walletCss.contains(".wallet-withdraw-button"));
     }
 
     @Test
@@ -172,6 +179,46 @@ class HostListingsControllerTest {
         assertTrue(fxml.contains("fx:id=\"descriptionLabel\""));
         assertTrue(fxml.contains("fx:id=\"amenitiesPane\""));
         assertTrue(fxml.contains("fx:id=\"statusLabel\""));
+    }
+
+    @Test
+    void hostListingDetailMatchesMockupActionsAndLayout() throws Exception {
+        String source = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/listings/HostListingDetailController.java"));
+        String fxml = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
+        String css = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.css"));
+
+        assertTrue(source.contains("setOnEdit"));
+        assertTrue(source.contains("setOnOpenCalendar"));
+        assertTrue(source.contains("capacityLabel.setText(Integer.toString(property.maxGuests()))"));
+        assertTrue(source.contains("bedroomsLabel.setText(Integer.toString(property.bedrooms()))"));
+        assertTrue(source.contains("bathroomsLabel.setText(formatNumber(property.bathrooms()))"));
+        assertTrue(source.contains("rateLabel.setText(\"$\""));
+        assertTrue(!source.contains(" + \" guests\""));
+        assertTrue(!source.contains(" + \" bedrooms\""));
+        assertTrue(!source.contains(" + \" bathrooms\""));
+        assertTrue(fxml.contains("onAction=\"#handleEdit\""));
+        assertTrue(fxml.contains("onAction=\"#handleOpenCalendar\""));
+        assertTrue(fxml.contains("listing-detail-image-placeholder"));
+        assertTrue(fxml.contains("listing-detail-stats"));
+        assertTrue(fxml.contains("listing-detail-performance"));
+        assertTrue(fxml.contains("text=\"Open booking calendar\""));
+        assertTrue(fxml.contains("text=\"Edit\""));
+        assertTrue(css.contains("linear-gradient"));
+        assertTrue(css.contains(".listing-detail-action-edit"));
+        assertTrue(css.contains(".listing-detail-performance"));
+        assertTrue(!source.contains("Check-in: "));
+        assertTrue(!source.contains("Check-out: "));
+        assertTrue(source.contains("\"$\" + property.baseNightlyRate()"));
+        assertTrue(!source.contains(" / night"));
+    }
+
+    @Test
+    void hostListingDetailFxmlLoads() throws Exception {
+        javafx.fxml.FXMLLoader.load(getClass().getResource(
+                "/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
     }
 
     @Test

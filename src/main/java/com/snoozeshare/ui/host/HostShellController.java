@@ -5,12 +5,13 @@ import java.io.IOException;
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.ui.common.NavShellController;
-import com.snoozeshare.ui.guest.wallet.WalletDashboardController;
+import com.snoozeshare.ui.common.wallet.WalletDashboardController;
 import com.snoozeshare.ui.host.bookings.HostBookingsController;
 import com.snoozeshare.ui.host.calendar.HostCalendarController;
 import com.snoozeshare.ui.host.listings.HostListingDetailController;
 import com.snoozeshare.ui.host.listings.HostListingFormController;
 import com.snoozeshare.ui.host.listings.HostListingsController;
+import com.snoozeshare.ui.host.messaging.HostMessagesController;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -26,9 +27,11 @@ public final class HostShellController extends NavShellController {
     private BorderPane shellRoot;
     @FXML private Label listingsTab;
     @FXML private Label bookingsTab;
+    @FXML private Label messagesTab;
     @FXML private Label walletTab;
 
     private WalletDashboardController walletController;
+    private HostMessagesController messagesController;
 
     @Override
     public void setContext(AppContext appContext) {
@@ -40,6 +43,7 @@ public final class HostShellController extends NavShellController {
     private void showListings() {
         selectTab(listingsTab);
         cleanupWalletController();
+        cleanupMessagesController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/host/listings/host-listings.fxml"));
@@ -71,7 +75,10 @@ public final class HostShellController extends NavShellController {
             Node detailView = loader.load();
             HostListingDetailController controller = loader.getController();
             controller.setProperty(property);
+            controller.setMetrics(getContext().listingMetricsService().metricsFor(property.propertyId()));
             controller.setOnBack(this::showListings);
+            controller.setOnEdit(this::showEditListing);
+            controller.setOnOpenCalendar(this::showCalendar);
             shellRoot.setCenter(detailView);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load host listing detail view", exception);
@@ -113,6 +120,7 @@ public final class HostShellController extends NavShellController {
     private void showBookings() {
         selectTab(bookingsTab);
         cleanupWalletController();
+        cleanupMessagesController();
         getContext().runBookingCompletionSweep();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -127,12 +135,30 @@ public final class HostShellController extends NavShellController {
     }
 
     @FXML
+    private void showMessages() {
+        selectTab(messagesTab);
+        cleanupWalletController();
+        cleanupMessagesController();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/snoozeshare/ui/host/messaging/host-messages.fxml"));
+            Node messagesView = loader.load();
+            messagesController = loader.getController();
+            messagesController.setContext(getContext());
+            shellRoot.setCenter(messagesView);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load host messages view", exception);
+        }
+    }
+
+    @FXML
     private void showWallet() {
         selectTab(walletTab);
+        cleanupMessagesController();
         cleanupWalletController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                    "/com/snoozeshare/ui/host/wallet/host-wallet-dashboard.fxml"));
+                    "/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
             Node walletView = loader.load();
             walletController = loader.getController();
             walletController.setContext(getContext());
@@ -149,8 +175,15 @@ public final class HostShellController extends NavShellController {
         }
     }
 
+    private void cleanupMessagesController() {
+        if (messagesController != null) {
+            messagesController.cleanup();
+            messagesController = null;
+        }
+    }
+
     private void selectTab(Label selected) {
-        for (Label tab : new Label[] {listingsTab, bookingsTab, walletTab}) {
+        for (Label tab : new Label[] {listingsTab, bookingsTab, messagesTab, walletTab}) {
             tab.getStyleClass().remove(ACTIVE_TAB);
         }
         selected.getStyleClass().add(ACTIVE_TAB);
