@@ -14,7 +14,7 @@ class HostMessagesLayoutTest {
     void hostMessagesSidebarHasFixedWidthAndOverflowLayout() throws IOException {
         String fxml = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/messaging/host-messages.fxml"));
-        String css = Files.readString(Path.of("src/main/resources/com/snoozeshare/ui/admin/agent-theme.css"));
+        String css = Files.readString(Path.of("src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
         String hostCss = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/host-navigation.css"));
         String controller = Files.readString(Path.of(
@@ -28,7 +28,9 @@ class HostMessagesLayoutTest {
         assertTrue(css.contains("-fx-min-width: 380px;"));
         assertTrue(css.contains("-fx-max-width: 380px;"));
         assertTrue(css.contains(".host-message-sidebar .list-view .scroll-bar:horizontal"));
+        assertTrue(fxml.contains("@../host-theme.css"));
         assertTrue(fxml.contains("@../host-navigation.css"));
+        assertTrue(!fxml.contains("agent-theme.css"));
         assertTrue(hostCss.contains(".host-message-sidebar-title"));
         assertTrue(hostCss.contains("-fx-font-size: 16px;"));
         assertTrue(hostCss.contains(".host-message-row-title"));

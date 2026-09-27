@@ -63,6 +63,8 @@ class HostBreadcrumbNavigationTest {
 
         assertTrue(source.contains("controller.setOnListings(this::showListings)"));
         assertTrue(source.contains("controller.setOnListingDetail"));
+        assertTrue(shell.contains("host-theme.css"));
+        assertTrue(!shell.contains("agent-theme.css"));
         assertTrue(shell.contains("host-navigation.css"));
         assertTrue(css.contains(".host-crumb-link"));
     }

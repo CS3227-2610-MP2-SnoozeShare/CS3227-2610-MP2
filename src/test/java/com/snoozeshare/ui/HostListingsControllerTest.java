@@ -99,7 +99,7 @@ class HostListingsControllerTest {
         String source = Files.readString(Path.of(
                 "src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java"));
         String theme = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/admin/agent-theme.css"));
+                "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
 
         assertTrue(source.contains("listingMetricsService"));
         assertTrue(source.contains("listing-image-placeholder"));
@@ -115,10 +115,10 @@ class HostListingsControllerTest {
         String source = Files.readString(Path.of(
                 "src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java"));
         String theme = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/admin/agent-theme.css"));
+                "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
 
         assertTrue(source.contains("listing-status-control"));
-        assertTrue(theme.contains(".agent-root .listing-status-control"));
+        assertTrue(theme.contains(".host-root .listing-status-control"));
         assertTrue(theme.contains("-fx-pref-width: 100px"));
         assertTrue(theme.contains("-fx-max-width: 100px"));
     }
@@ -157,11 +157,11 @@ class HostListingsControllerTest {
         String fxml = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.fxml"));
         String theme = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/admin/agent-theme.css"));
+                "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
 
         assertTrue(fxml.contains("styleClass=\"listing-form-action\""));
         assertTrue(fxml.contains("styleClass=\"outline-button, listing-form-action\""));
-        assertTrue(theme.contains(".agent-root .listing-form-action"));
+        assertTrue(theme.contains(".host-root .listing-form-action"));
         assertTrue(theme.contains("-fx-pref-height: 40px"));
     }
 

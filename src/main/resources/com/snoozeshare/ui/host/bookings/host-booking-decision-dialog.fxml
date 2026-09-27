@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
@@ -7,9 +8,12 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox prefWidth="650" spacing="16" styleClass="agent-root, agent-modal, agent-dialog-card"
+<VBox prefWidth="650" spacing="16" styleClass="host-root, agent-modal, agent-dialog-card"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.snoozeshare.ui.host.bookings.HostBookingDecisionDialogController">
+    <stylesheets>
+        <URL value="@../host-theme.css"/>
+    </stylesheets>
     <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
     <Label fx:id="titleLabel" text="Approve booking request?" styleClass="page-title"/>
     <VBox fx:id="summaryPane" styleClass="agent-booking-summary" spacing="6">

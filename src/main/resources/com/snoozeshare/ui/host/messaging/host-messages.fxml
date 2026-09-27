@@ -14,7 +14,7 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.snoozeshare.ui.host.messaging.HostMessagesController">
     <stylesheets>
-        <URL value="@../../admin/agent-theme.css"/>
+        <URL value="@../host-theme.css"/>
         <URL value="@../host-navigation.css"/>
     </stylesheets>
     <left>

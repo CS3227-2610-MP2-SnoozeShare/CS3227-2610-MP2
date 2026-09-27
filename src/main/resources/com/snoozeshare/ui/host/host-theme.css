@@ -1,0 +1,1233 @@
+/*
+ * Host "Fall Light" theme, consolidated from the shared Fall Light component rules.
+ * Loaded on the Host shell root so Host pages inherit one owned stylesheet.
+ * Colour tokens are looked-up colours on .host-root so every descendant can reference them.
+ * The rules for shared class names (button, outline-button, badge-*, filter-chip, chat-*, ...)
+ * override theme.css inside the host scene so the detail and dialog screens pick up the palette.
+ */
+.host-root {
+    bg: #fdf8f0;
+    bg-overlay: #ffffff;
+    bg-inset: #f0e8d8;
+    fg: #100604;
+    fg-muted: #381a10;
+    fg-subtle: #6c4434;
+    border: #c0a080;
+    border-muted: #d8c4a8;
+    accent: #98300c;
+    accent-subtle: #fde8d8;
+    success: #40680c;
+    success-subtle: #e8f8d0;
+    warning: #7e5400;
+    warning-subtle: #fff4d8;
+    danger: #980c1c;
+    danger-subtle: #fcd8da;
+
+    -fx-font-family: "Segoe UI", "System";
+    -fx-font-size: 13px;
+    -fx-background-color: bg;
+    -fx-text-fill: fg;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.host-root .label { -fx-text-fill: fg; }
+
+/* ---- Shell chrome ---- */
+.agent-topbar {
+    -fx-background-color: bg-overlay;
+    -fx-border-color: transparent transparent border-muted transparent;
+    -fx-padding: 14px 32px 14px 32px;
+}
+.host-root .agent-brand { -fx-text-fill: accent; -fx-font-size: 16px; -fx-font-weight: 800; }
+.host-root .agent-workspace-pill {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 999px;
+    -fx-text-fill: fg-subtle;
+    -fx-font-size: 12px;
+    -fx-padding: 3px 10px 3px 10px;
+}
+.host-root .agent-avatar {
+    -fx-background-color: accent-subtle;
+    -fx-background-radius: 999px;
+    -fx-text-fill: accent;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-min-width: 32px;
+    -fx-min-height: 32px;
+    -fx-pref-width: 32px;
+    -fx-pref-height: 32px;
+    -fx-max-width: 32px;
+    -fx-max-height: 32px;
+    -fx-alignment: CENTER;
+}
+.agent-tabstrip {
+    -fx-background-color: bg-overlay;
+    -fx-border-color: transparent transparent border-muted transparent;
+    -fx-padding: 0px 32px 0px 32px;
+}
+.host-root .agent-tab {
+    -fx-text-fill: fg-subtle;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 12px 18px 12px 18px;
+    -fx-border-color: transparent transparent transparent transparent;
+    -fx-border-width: 0 0 2 0;
+    -fx-cursor: hand;
+}
+.host-root .agent-tab-active {
+    -fx-text-fill: accent;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent transparent accent transparent;
+}
+.agent-content { -fx-background-color: bg; }
+
+/* ---- Typography ---- */
+.host-root .page-title, .host-root .agent-page-title { -fx-font-size: 20px; -fx-font-weight: 800; -fx-text-fill: fg; }
+.host-root .agent-subtitle, .host-root .small { -fx-font-size: 12px; -fx-text-fill: fg-subtle; }
+.host-root .error-message { -fx-text-fill: danger; }
+.host-root .success-message { -fx-text-fill: success; }
+.host-root .card-title { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: fg; }
+.host-root .summary-caption { -fx-font-size: 11px; -fx-text-fill: fg-subtle; }
+
+/* ---- Pill badges ---- */
+.host-root .agent-pill,
+.host-root .badge-danger,
+.host-root .badge-warning,
+.host-root .badge-success,
+.host-root .badge-accent {
+    -fx-background-radius: 999px;
+    -fx-padding: 3px 11px 3px 11px;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+.host-root .agent-pill-danger, .host-root .badge-danger { -fx-background-color: danger-subtle; -fx-text-fill: danger; }
+.host-root .agent-pill-warning, .host-root .badge-warning { -fx-background-color: warning-subtle; -fx-text-fill: warning; }
+.host-root .agent-pill-success, .host-root .badge-success { -fx-background-color: success-subtle; -fx-text-fill: success; }
+.host-root .agent-pill-accent, .host-root .badge-accent { -fx-background-color: accent-subtle; -fx-text-fill: accent; }
+/* The queue heading pill is 11px, a touch larger than the row badges. */
+.host-root .agent-count-pill { -fx-font-size: 11px; }
+
+/* ---- Filter chips ---- */
+.host-root .filter-chip, .host-root .agent-chip {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 999px;
+    -fx-background-insets: 0;
+    -fx-text-fill: fg-muted;
+    -fx-font-size: 12px;
+    -fx-font-weight: normal;
+    -fx-padding: 5px 13px 5px 13px;
+    -fx-cursor: hand;
+}
+.host-root .filter-chip:selected, .host-root .agent-chip:selected {
+    -fx-background-color: accent-subtle;
+    -fx-text-fill: accent;
+    -fx-font-weight: bold;
+}
+
+/* ---- Cards, tables ---- */
+.host-root .agent-card, .host-root .summary-card, .host-root .chat-pane {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 12px;
+    -fx-border-color: border;
+    -fx-border-radius: 12px;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.08), 14, 0, 0, 4);
+}
+.host-root .summary-card { -fx-padding: 16px 20px 16px 20px; }
+.host-root .chat-pane { -fx-padding: 12px; }
+.host-root .agent-card-flat { -fx-effect: null; }
+
+.host-root .agent-grid-header {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 11px 11px 0 0;
+    -fx-padding: 10px 18px 10px 18px;
+}
+.host-root .agent-grid-header .label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: fg-subtle;
+}
+.host-root .agent-grid-row {
+    -fx-border-color: border-muted transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 13px 18px 13px 18px;
+    -fx-background-color: transparent;
+}
+.host-root .agent-grid-row-click { -fx-cursor: hand; -fx-padding: 14px 18px 14px 18px; }
+.host-root .agent-grid-row-click:hover { -fx-background-color: rgba(240, 232, 216, 0.4); }
+/* Account rows are not clickable: the shared grey hover, default cursor; only the action button is a hand. */
+.host-root .outline-button.agent-account-action, .host-root .agent-button-danger.agent-account-action {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 9px 18px 9px 18px;
+    -fx-min-width: 108px;
+    -fx-pref-width: 108px;
+    -fx-alignment: center;
+}
+.host-root .agent-account-row:hover { -fx-background-color: rgba(240, 232, 216, 0.4); }
+.host-root .agent-cell { -fx-font-size: 13px; -fx-text-fill: fg-muted; }
+.host-root .agent-cell-id { -fx-text-fill: fg-subtle; }
+.host-root .agent-cell-strong { -fx-font-weight: bold; -fx-text-fill: fg; }
+.host-root .agent-empty { -fx-padding: 24px 18px 24px 18px; -fx-text-fill: fg-subtle; }
+
+/* ---- Buttons ---- */
+.host-root .button {
+    -fx-background-color: accent;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-text-fill: #fdf8f0;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 9px 18px 9px 18px;
+    -fx-cursor: hand;
+}
+.host-root .button:hover { -fx-background-color: #7e2609; }
+.host-root .button:pressed { -fx-background-color: #641e07; }
+.host-root .button:disabled { -fx-opacity: 0.45; }
+.host-root .outline-button, .host-root .agent-button-secondary {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-text-fill: fg-muted;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-padding: 6px 14px 6px 14px;
+    -fx-cursor: hand;
+}
+.host-root .outline-button:hover, .host-root .agent-button-secondary:hover { -fx-background-color: bg-inset; }
+.host-root .outline-button:pressed, .host-root .agent-button-secondary:pressed { -fx-background-color: border-muted; }
+.host-root .agent-button-danger {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-border-color: danger;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-text-fill: danger;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 9px 18px 9px 18px;
+    -fx-cursor: hand;
+}
+.host-root .agent-button-danger:hover { -fx-background-color: danger-subtle; }
+.host-root .booking-approve-button, .host-root .booking-confirm-approve {
+    -fx-background-color: success;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 14px 8px 14px;
+}
+.host-root .booking-approve-button:hover, .host-root .booking-confirm-approve:hover {
+    -fx-background-color: #315208;
+}
+.host-root .booking-reject-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+    -fx-border-color: danger;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-text-fill: danger;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 14px 8px 14px;
+}
+.host-root .booking-reject-button:hover { -fx-background-color: danger-subtle; }
+.host-root .booking-confirm-reject {
+    -fx-background-color: danger;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-padding: 9px 18px 9px 18px;
+}
+.host-root .booking-confirm-reject:hover { -fx-background-color: #7d0716; }
+.host-root .agent-booking-summary {
+    -fx-background-color: success;
+    -fx-background-radius: 12px;
+    -fx-padding: 18px 20px 18px 20px;
+}
+.host-root .agent-booking-summary .booking-summary-title,
+.host-root .agent-booking-summary .booking-summary-detail,
+.host-root .agent-booking-summary .booking-summary-amount { -fx-text-fill: #ffffff; }
+.host-root .booking-summary-title { -fx-font-size: 17px; -fx-font-weight: bold; }
+.host-root .booking-summary-detail { -fx-font-size: 13px; }
+.host-root .booking-summary-amount { -fx-font-size: 24px; -fx-font-weight: bold; }
+.host-root .agent-booking-notice {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 10px;
+    -fx-padding: 12px 14px 12px 14px;
+    -fx-text-fill: fg-muted;
+}
+.host-root .booking-message-label { -fx-font-weight: bold; }
+.host-root .agent-booking-summary.booking-reject-summary { -fx-background-color: danger; }
+.host-root #logoutButton {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: fg-subtle;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-padding: 4px 8px 4px 8px;
+}
+.host-root #logoutButton:hover { -fx-background-color: transparent; -fx-text-fill: accent; }
+
+/* ---- Inputs ---- */
+.host-root .text-field, .host-root .text-area, .host-root .combo-box-base {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-font-size: 12px;
+    -fx-text-fill: fg;
+}
+.host-root .text-field { -fx-padding: 8px 12px 8px 12px; }
+.host-root .text-area .content { -fx-background-color: bg-overlay; -fx-background-radius: 8px; }
+.host-root .text-area { -fx-padding: 0; }
+.host-root .text-field:focused, .host-root .text-area:focused, .host-root .combo-box-base:focused {
+    -fx-border-color: accent;
+}
+/* Status dropdown: one 8px rounded border around the whole control (arrow included). */
+.host-root .agent-combo, .host-root .combo-box {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 0;
+    -fx-font-size: 12px;
+}
+.host-root .combo-box:focused, .host-root .combo-box:showing { -fx-border-color: accent; -fx-background-color: bg-overlay; }
+.host-root .combo-box-base > .list-cell {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-text-fill: fg;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 5px 4px 5px 10px;
+    -fx-alignment: center-left;
+    -fx-text-alignment: left;
+}
+.host-root .combo-box-base > .arrow-button {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 10px 0 4px;
+}
+.host-root .combo-box-base > .arrow-button:hover { -fx-background-color: transparent; }
+.host-root .combo-box-base > .arrow-button > .arrow { -fx-background-color: fg-subtle; -fx-padding: 2.5px 4px 2.5px 4px; }
+.host-root .combo-box-popup > .list-view {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 4px;
+    -fx-effect: null;
+}
+.host-root .combo-box-popup .list-cell {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6px;
+    -fx-background-insets: 0;
+    -fx-text-fill: fg;
+    -fx-font-size: 12px;
+    -fx-font-weight: normal;
+    -fx-padding: 7px 10px 7px 10px;
+    -fx-alignment: center-left;
+    -fx-text-alignment: left;
+}
+.host-root .combo-box-popup .list-cell:filled:hover,
+.host-root .combo-box-popup .list-cell:filled:selected,
+.host-root .combo-box-popup .list-cell:filled:focused {
+    -fx-background-color: accent-subtle;
+    -fx-text-fill: accent;
+    -fx-font-weight: bold;
+}
+
+/* ---- Toggle switch (40x22 pill, 18px knob) ---- */
+.host-root .agent-switch {
+    -fx-background-color: border;
+    -fx-background-radius: 999px;
+    -fx-background-insets: 0;
+    -fx-padding: 2px;
+    -fx-min-width: 40px;
+    -fx-pref-width: 40px;
+    -fx-max-width: 40px;
+    -fx-min-height: 22px;
+    -fx-pref-height: 22px;
+    -fx-max-height: 22px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-content-display: GRAPHIC_ONLY;
+    -fx-cursor: hand;
+}
+.host-root .agent-switch:selected { -fx-background-color: success; -fx-alignment: CENTER_RIGHT; }
+.host-root .agent-switch-knob {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 999px;
+    -fx-min-width: 18px;
+    -fx-min-height: 18px;
+    -fx-pref-width: 18px;
+    -fx-pref-height: 18px;
+    -fx-max-width: 18px;
+    -fx-max-height: 18px;
+}
+
+/* ---- Chat ---- */
+.host-root .chat-bubble, .host-root .chat-bubble-agent {
+    -fx-background-radius: 8px;
+    -fx-padding: 8px 12px 8px 12px;
+    -fx-font-size: 12px;
+}
+.host-root .chat-bubble { -fx-background-color: bg-inset; }
+.host-root .chat-bubble-agent { -fx-background-color: accent-subtle; }
+.host-root .agent-chat-time { -fx-font-size: 9px; -fx-text-fill: fg-subtle; }
+.host-root .agent-chat-header {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 11px 11px 0 0;
+    -fx-padding: 10px 14px 10px 14px;
+}
+
+/* ---- Modal card ---- */
+.host-root .agent-modal, .agent-modal {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 12px;
+    -fx-border-color: border;
+    -fx-border-radius: 12px;
+    -fx-background-insets: 0;
+    -fx-border-width: 1px;
+    -fx-padding: 24px;
+    -fx-effect: null;
+}
+/* Nothing inside the modal casts a shadow or glow; focus is shown by border colour only. */
+.agent-modal .button, .agent-modal .text-field, .agent-modal .text-area, .agent-modal .text-area .content,
+.agent-modal .toggle-button, .agent-modal .label, .agent-modal .agent-banner { -fx-effect: null; }
+/* Modena puts a white drop shadow on scroll-bar arrows (inside the reason text area). */
+.agent-modal .scroll-bar > .increment-button > .increment-arrow,
+.agent-modal .scroll-bar > .decrement-button > .decrement-arrow,
+.agent-modal .scroll-bar > .increment-button,
+.agent-modal .scroll-bar > .decrement-button { -fx-effect: null; }
+
+/* ---- Table view restyled to look like the canvas grid (fallback for TableView screens) ---- */
+.host-root .agent-table {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-table-cell-border-color: transparent;
+}
+.host-root .agent-table .column-header-background {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 11px 11px 0 0;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+.host-root .agent-table .column-header {
+    -fx-background-color: transparent;
+    -fx-size: 34px;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+.host-root .agent-table .column-header .label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: fg-subtle;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 18px;
+}
+.host-root .agent-table .column-drag-header,
+.host-root .agent-table .filler { -fx-background-color: transparent; }
+.host-root .agent-table .column-resize-line { -fx-background-color: transparent; -fx-pref-width: 0; }
+.host-root .agent-table .table-row-cell {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: border-muted transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-cell-size: 47px;
+    -fx-padding: 0;
+}
+.host-root .agent-table .table-row-cell:empty { -fx-border-color: transparent; }
+.host-root .agent-table .table-row-cell:filled { -fx-cursor: hand; }
+.host-root .agent-table .table-row-cell:filled:hover { -fx-background-color: rgba(240, 232, 216, 0.4); }
+.host-root .agent-table .table-row-cell:selected { -fx-background-color: transparent; }
+.host-root .agent-table .table-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0 0 0 18px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-font-size: 13px;
+    -fx-text-fill: fg-muted;
+}
+.host-root .agent-table .table-cell:selected { -fx-text-fill: fg-muted; }
+.host-root .agent-table .placeholder { -fx-background-color: transparent; }
+/* Header row stays put; only the rows scroll, with a slim scroll bar that starts below the header. */
+.host-root .agent-table .scroll-bar:horizontal { -fx-opacity: 0; -fx-pref-height: 0; -fx-max-height: 0; }
+.host-root .agent-table .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-pref-width: 10px;
+    -fx-min-width: 10px;
+    -fx-max-width: 10px;
+}
+.host-root .agent-table .scroll-bar:vertical > .track,
+.host-root .agent-table .scroll-bar:vertical > .track-background {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+}
+.host-root .agent-table .scroll-bar:vertical > .thumb {
+    -fx-background-color: border;
+    -fx-background-insets: 2px;
+    -fx-background-radius: 999px;
+}
+.host-root .agent-table .scroll-bar:vertical > .thumb:hover { -fx-background-color: fg-subtle; }
+.host-root .agent-table .scroll-bar > .increment-button,
+.host-root .agent-table .scroll-bar > .decrement-button {
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-background-color: transparent;
+}
+.host-root .agent-table .scroll-bar > .increment-button > .increment-arrow,
+.host-root .agent-table .scroll-bar > .decrement-button > .decrement-arrow { -fx-padding: 0; -fx-shape: null; }
+.host-root .agent-table .cell-id { -fx-text-fill: fg-subtle; }
+.host-root .agent-table .cell-strong { -fx-font-weight: bold; -fx-text-fill: fg; }
+
+/* ---- Detail screen ---- */
+.host-root .agent-scroll, .host-root .agent-scroll > .viewport {
+    -fx-background-color: bg;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+.host-root .agent-scroll { -fx-border-color: transparent; }
+.host-root .agent-crumb-link, .host-root .agent-crumb-link:visited {
+    -fx-text-fill: fg-subtle;
+    -fx-font-size: 12px;
+    -fx-underline: false;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+}
+.host-root .agent-crumb-link:hover { -fx-text-fill: accent; -fx-underline: false; }
+.host-root .agent-crumb { -fx-font-size: 12px; -fx-text-fill: fg-subtle; }
+.host-root .agent-crumb-current { -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: fg; }
+.host-root .agent-button-sm { -fx-font-size: 12px; -fx-padding: 8px 16px 8px 16px; }
+.host-root .agent-summary-title { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: fg; }
+.host-root .agent-escrow { -fx-font-size: 13px; -fx-font-weight: 800; -fx-text-fill: accent; }
+.host-root .agent-thumb {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #e06830, #c0a080);
+    -fx-background-radius: 8px;
+    -fx-min-width: 56px;
+    -fx-min-height: 56px;
+    -fx-pref-width: 56px;
+    -fx-pref-height: 56px;
+    -fx-max-width: 56px;
+    -fx-max-height: 56px;
+}
+.host-root .agent-chat-box {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 12px;
+    -fx-border-color: border;
+    -fx-border-radius: 12px;
+    -fx-border-width: 1px;
+}
+.host-root .agent-chat-header { -fx-padding: 10px 16px 10px 16px; -fx-min-height: 38px; -fx-pref-height: 38px; }
+.host-root .agent-chat-title { -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: fg-muted; }
+.host-root .agent-pill-solid {
+    -fx-background-color: accent;
+    -fx-background-radius: 999px;
+    -fx-text-fill: #fdf8f0;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 8px 2px 8px;
+}
+.host-root .agent-chat-scroll, .host-root .agent-chat-scroll > .viewport {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+.host-root .agent-chat-scroll { -fx-border-color: transparent; }
+.host-root .agent-thread { -fx-padding: 14px 16px 14px 16px; -fx-background-color: transparent; }
+.host-root .agent-chat-footer {
+    -fx-padding: 10px 12px 10px 12px;
+    -fx-border-color: border-muted transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+.host-root .agent-bubble-body { -fx-font-size: 12px; -fx-text-fill: fg; }
+.host-root .agent-bubble-strong { -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: accent; }
+.host-root .agent-bubble-box { -fx-background-radius: 8px; -fx-padding: 9px 12px 9px 12px; }
+.host-root .agent-bubble-in { -fx-background-color: bg-inset; }
+.host-root .agent-bubble-out { -fx-background-color: accent-subtle; }
+.host-root .agent-field-label { -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: fg-muted; }
+.host-root .agent-input, .host-root .agent-input .content {
+    -fx-background-color: bg;
+}
+.host-root .agent-input .content { -fx-padding: 8px 12px 8px 12px; -fx-background-radius: 8px; }
+.host-root .agent-notes, .host-root .agent-notes .content { -fx-background-color: bg-overlay; }
+.host-root .agent-notes .content { -fx-padding: 8px 12px 8px 12px; -fx-background-radius: 8px; }
+.host-root .agent-resize-grip { -fx-min-height: 10px; -fx-pref-height: 10px; -fx-max-height: 10px; -fx-cursor: s-resize; }
+.host-root .agent-resize-bar {
+    -fx-background-color: border;
+    -fx-background-radius: 2px;
+    -fx-min-width: 36px;
+    -fx-pref-width: 36px;
+    -fx-max-width: 36px;
+    -fx-min-height: 3px;
+    -fx-pref-height: 3px;
+    -fx-max-height: 3px;
+}
+.host-root .agent-resize-grip:hover .agent-resize-bar { -fx-background-color: accent; }
+.host-root .agent-action { -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10px 20px 10px 20px; }
+.host-root .agent-action-success { -fx-background-color: success; }
+.host-root .agent-action-success:hover { -fx-background-color: #33540a; }
+.host-root .agent-action-reject { -fx-border-color: #f07878; -fx-text-fill: danger; }
+.host-root .agent-action-reject:hover { -fx-background-color: danger-subtle; }
+.host-root .outline-button.agent-action { -fx-text-fill: fg-muted; }
+.host-root .outline-button.agent-action-reject { -fx-text-fill: danger; }
+
+/* ---- Resolution dialog ---- */
+.agent-dialog-card { -fx-padding: 26px; }
+.host-root .agent-dialog-title { -fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: fg; }
+.host-root .agent-dialog-field-label { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: fg-muted; }
+.host-root .agent-note { -fx-font-size: 10px; -fx-text-fill: fg-subtle; }
+.host-root .agent-banner { -fx-background-radius: 12px; -fx-padding: 16px; }
+.host-root .agent-banner-success { -fx-background-color: success; }
+.host-root .agent-banner-danger { -fx-background-color: danger; }
+.host-root .agent-banner-caption { -fx-font-size: 13px; -fx-text-fill: #fdf8f0; -fx-opacity: 0.9; }
+.host-root .agent-banner-remedy { -fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #fdf8f0; }
+.host-root .agent-banner-name { -fx-font-size: 24px; -fx-font-weight: 800; -fx-text-fill: #fdf8f0; }
+.host-root .agent-banner-sub { -fx-font-size: 13px; -fx-text-fill: #fdf8f0; -fx-opacity: 0.9; }
+.host-root .agent-dialog-info {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px 12px 10px 12px;
+    -fx-font-size: 12px;
+    -fx-text-fill: fg-muted;
+}
+.host-root .agent-dialog-area, .host-root .agent-dialog-area .content { -fx-font-size: 13px; }
+.host-root .agent-dialog-area .content { -fx-padding: 9px 10px 9px 10px; }
+.host-root .agent-dialog-field { -fx-font-size: 13px; -fx-padding: 9px 10px 9px 10px; }
+.host-root .agent-segment {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-text-fill: fg-muted;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-padding: 9px 4px 9px 4px;
+    -fx-alignment: CENTER;
+    -fx-cursor: hand;
+}
+.host-root .agent-segment:selected {
+    -fx-background-color: accent-subtle;
+    -fx-border-color: accent;
+    -fx-text-fill: accent;
+    -fx-font-weight: bold;
+}
+.host-root .agent-dialog-button { -fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 9px 18px 9px 18px; }
+.host-root .outline-button.agent-dialog-button { -fx-font-weight: 600; -fx-text-fill: fg-muted; }
+.host-root .agent-confirm-success { -fx-background-color: success; }
+.host-root .agent-confirm-success:hover { -fx-background-color: #33540a; }
+.host-root .agent-confirm-danger { -fx-background-color: danger; }
+.host-root .agent-confirm-danger:hover { -fx-background-color: #7e0a17; }
+.host-root .agent-confirm-accent { -fx-background-color: accent; }
+
+/* ---- Modal scrim: light grey, 50% opacity, over the whole owner window while a modal is open ---- */
+.modal-scrim { -fx-background-color: rgba(160, 160, 160, 0.5); }
+
+/* ======================================================================
+ * Guest & Host screen overrides — Fall Light palette applied to classes
+ * that were originally styled in theme.css with a blue palette.
+ * ====================================================================== */
+
+/* ---- Auth / login page ---- */
+.host-root.auth-page {
+    -fx-background-color: bg;
+}
+.host-root .app-title { -fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: accent; }
+
+/* ---- Wallet display in topbar ---- */
+.host-root .wallet-amount { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: accent; }
+.host-root .wallet-panel { -fx-background-color: bg-overlay; -fx-border-color: border; -fx-padding: 20px; }
+
+/* ---- Property search cards (Guest) ---- */
+.host-root .property-card {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.08), 8, 0, 0, 2);
+    -fx-cursor: hand;
+}
+.host-root .property-card:hover { -fx-border-color: accent; }
+.host-root .card-price { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: accent; }
+.host-root .unavailable-label { -fx-text-fill: danger; -fx-font-style: italic; }
+
+/* ---- Host listing cards ---- */
+.host-root .listing-card {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.08), 10, 0, 0, 2);
+    -fx-padding: 14px;
+    -fx-max-width: infinity;
+    -fx-alignment: center-left;
+}
+.host-root .listing-image-placeholder {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 8px;
+    -fx-border-color: border-muted;
+    -fx-border-radius: 8px;
+}
+.host-root .listing-card .card-title { -fx-font-size: 15px; -fx-font-weight: bold; }
+.host-root .listing-card .card-price { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: accent; }
+.host-root .listing-metric-value { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: fg; }
+.host-root .listing-metric-caption { -fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: fg-subtle; }
+.host-root .listing-rating-star { -fx-text-fill: accent; -fx-font-size: 14px; }
+.host-root .listing-status-toggle {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 999px;
+    -fx-border-color: border-muted;
+    -fx-border-radius: 999px;
+    -fx-min-width: 30px;
+    -fx-min-height: 18px;
+    -fx-pref-width: 30px;
+    -fx-pref-height: 18px;
+    -fx-padding: 0;
+}
+.host-root .listing-status-toggle:selected { -fx-background-color: success; }
+.host-root .status-active-text { -fx-text-fill: success; -fx-font-size: 11px; -fx-font-weight: bold; }
+.host-root .status-inactive-text { -fx-text-fill: fg-subtle; -fx-font-size: 11px; -fx-font-weight: bold; }
+.host-root .listing-status-control {
+    -fx-min-width: 100px;
+    -fx-pref-width: 100px;
+    -fx-max-width: 100px;
+}
+.host-root .listing-card .outline-button { -fx-min-width: 110px; }
+.host-root .listing-card .outline-button:last-child { -fx-min-width: 76px; }
+.host-root .listing-status {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 8px 2px 8px;
+    -fx-background-radius: 999px;
+}
+.host-root .status-active { -fx-text-fill: success; -fx-background-color: success-subtle; }
+.host-root .status-inactive { -fx-text-fill: fg-subtle; -fx-background-color: bg-inset; }
+.host-root .status-toggle { -fx-padding: 4px 10px; -fx-font-size: 11px; }
+.host-root .listing-form { -fx-padding: 12px 0 4px 0; }
+.host-root .listing-description { -fx-alignment: top-left; }
+.host-root .form-error { -fx-text-fill: danger; }
+.host-root .section-title { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: fg; }
+.host-root .empty-state { -fx-text-fill: fg-subtle; -fx-font-style: italic; }
+
+/* ---- Host listing create/edit form ---- */
+.host-root .listing-form-scroll,
+.host-root .listing-form-scroll > .viewport,
+.host-root .listing-form-page { -fx-background-color: bg; }
+.host-root .listing-form-card {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 10px;
+    -fx-border-color: border;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.08), 10, 0, 0, 2);
+    -fx-padding: 18px;
+}
+.host-root .listing-form-card-title {
+    -fx-text-fill: accent;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+.host-root .listing-form-label {
+    -fx-text-fill: fg-muted;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+.host-root .listing-form-card .text-field,
+.host-root .listing-form-card .combo-box-base {
+    -fx-background-color: bg;
+    -fx-border-color: border;
+    -fx-border-radius: 7px;
+    -fx-background-radius: 7px;
+    -fx-padding: 8px 10px;
+}
+.host-root .listing-form-card .text-field:focused,
+.host-root .listing-form-card .combo-box-base:focused {
+    -fx-border-color: accent;
+}
+.host-root .listing-form-card .combo-box-base > .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: fg;
+}
+.host-root .amenity-option {
+    -fx-background-color: bg;
+    -fx-background-radius: 7px;
+    -fx-border-color: border;
+    -fx-border-radius: 7px;
+    -fx-padding: 8px 10px;
+}
+.host-root .amenity-option .check-box { -fx-text-fill: fg; }
+.host-root .listing-form-action {
+    -fx-min-width: 132px;
+    -fx-pref-width: 132px;
+    -fx-max-width: 132px;
+    -fx-min-height: 40px;
+    -fx-pref-height: 40px;
+    -fx-max-height: 40px;
+}
+.host-root .wallet-action-button {
+    -fx-min-width: 118px;
+    -fx-pref-width: 118px;
+    -fx-max-width: 118px;
+    -fx-min-height: 40px;
+    -fx-pref-height: 40px;
+    -fx-max-height: 40px;
+}
+
+/* ---- Detail modal (shared Guest & Host) ---- */
+.host-root .detail-modal {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 12px;
+}
+.host-root .price-panel {
+    -fx-background-color: bg-inset;
+    -fx-background-radius: 8px;
+}
+.host-root .amenity-chip {
+    -fx-background-color: accent-subtle;
+    -fx-background-radius: 999px;
+    -fx-padding: 4px 12px 4px 12px;
+    -fx-font-size: 11px;
+    -fx-text-fill: accent;
+}
+.host-root .modal-overlay {
+    -fx-background-color: rgba(16, 6, 4, 0.4);
+}
+
+/* ---- Trip dashboard (Guest) ---- */
+.host-root .trip-tab-bar {
+    -fx-padding: 0 0 8px 0;
+    -fx-border-color: transparent transparent border-muted transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.host-root .trip-tab {
+    -fx-padding: 6px 12px 6px 12px;
+    -fx-font-size: 13px;
+    -fx-text-fill: fg-subtle;
+    -fx-cursor: hand;
+}
+.host-root .trip-tab-active {
+    -fx-text-fill: accent;
+    -fx-border-color: transparent transparent accent transparent;
+    -fx-border-width: 0 0 2 0;
+    -fx-font-weight: bold;
+}
+.host-root .trip-card {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.06), 6, 0, 0, 2);
+}
+.host-root .trip-status {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 8px 2px 8px;
+    -fx-background-radius: 999px;
+}
+.host-root .status-pending { -fx-text-fill: warning; -fx-background-color: warning-subtle; }
+.host-root .status-confirmed { -fx-text-fill: success; -fx-background-color: success-subtle; }
+.host-root .status-completed { -fx-text-fill: fg-muted; -fx-background-color: bg-inset; }
+.host-root .status-cancelled { -fx-text-fill: danger; -fx-background-color: danger-subtle; }
+
+/* ---- Wallet dashboard (Guest & Host) ---- */
+.host-root .wallet-balance-section {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+}
+.host-root .transaction-card {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+}
+.host-root .transaction-type {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 8px 2px 8px;
+    -fx-background-radius: 999px;
+    -fx-background-color: accent-subtle;
+    -fx-text-fill: accent;
+}
+.host-root .transaction-amount-positive { -fx-font-weight: bold; -fx-text-fill: success; }
+.host-root .transaction-amount-negative { -fx-font-weight: bold; -fx-text-fill: danger; }
+
+/* ---- Host calendar ---- */
+.host-root .host-calendar-page { -fx-background-color: bg; }
+.host-root .calendar-main { -fx-pref-width: 900px; }
+.host-root .calendar-month-label { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: fg; -fx-min-width: 130px; }
+.host-root .calendar-legend { -fx-alignment: center-right; }
+.host-root .calendar-legend .label { -fx-padding: 4px 8px 4px 8px; -fx-background-radius: 4px; }
+.host-root .legend-available { -fx-background-color: bg-overlay; -fx-border-color: border; -fx-text-fill: fg; }
+.host-root .legend-booked { -fx-background-color: success-subtle; -fx-text-fill: success; }
+.host-root .legend-blocked { -fx-background-color: danger-subtle; -fx-text-fill: danger; }
+.host-root .legend-other-month { -fx-background-color: bg-inset; -fx-text-fill: fg-subtle; }
+.host-root .calendar-grid { -fx-background-color: border; -fx-hgap: 1; -fx-vgap: 1; }
+.host-root .calendar-cell { -fx-background-color: bg-overlay; -fx-padding: 12px; -fx-alignment: top-left; }
+.host-root .calendar-cell-available { -fx-background-color: bg-overlay; }
+.host-root .calendar-cell-booked { -fx-background-color: success-subtle; -fx-text-fill: success; }
+.host-root .calendar-cell-blocked { -fx-background-color: danger-subtle; -fx-text-fill: danger; }
+.host-root .calendar-cell-other-month { -fx-background-color: bg-inset; -fx-text-fill: fg-subtle; }
+.host-root .calendar-side-panel { -fx-background-color: bg-overlay; -fx-border-color: border; -fx-padding: 16px; }
+.host-root .override-row { -fx-alignment: center-left; -fx-padding: 6px 0 6px 0; }
+.host-root .override-row .button { -fx-background-color: transparent; -fx-padding: 2px 0 2px 8px; -fx-text-fill: danger; -fx-font-weight: normal; }
+.host-root .override-row .button:hover { -fx-underline: true; }
+
+/* ---- ScrollPane backgrounds (prevent white flash inside agent-root) ---- */
+.host-root .scroll-pane, .host-root .scroll-pane > .viewport {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+}
+.host-root .scroll-pane { -fx-border-color: transparent; }
+
+/* ---- Nav item (used by trip tabs) ---- */
+.host-root .nav-item { -fx-text-fill: fg-subtle; -fx-font-weight: bold; -fx-cursor: hand; }
+.host-root .nav-item:hover { -fx-text-fill: accent; }
+
+/* ---- Text button utility ---- */
+.host-root .text-button { -fx-cursor: hand; }
+
+/* ---- Audit log screen (W12) ---- */
+.host-root .agent-filter-card { -fx-padding: 14px 16px 14px 16px; }
+.host-root .agent-pill-neutral { -fx-background-color: bg-inset; -fx-text-fill: fg-muted; }
+/* Audit rows are not clickable: same grey hover as the ticket queue, but the default cursor. */
+.host-root .agent-audit-table .table-row-cell:filled { -fx-cursor: default; }
+
+/* Filter row: every control shares one 34px height. */
+.host-root .agent-filter-card .text-field,
+.host-root .agent-filter-card .agent-multi-select,
+.host-root .agent-filter-card .date-picker,
+.host-root .agent-filter-card .button,
+.host-root .agent-filter-card .agent-button-danger {
+    -fx-min-height: 34px;
+    -fx-pref-height: 34px;
+    -fx-max-height: 34px;
+}
+.host-root .agent-filter-card .button,
+.host-root .agent-filter-card .agent-button-danger { -fx-padding: 0 18px 0 18px; -fx-font-size: 12px; }
+.host-root .agent-filter-card .text-field { -fx-padding: 0 12px 0 12px; }
+
+/* Date picker trigger: one border around field + icon (the board's closed date picker). */
+.host-root .date-picker {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 0;
+}
+.host-root .date-picker > .text-field {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 0 0 12px;
+    -fx-font-size: 12px;
+}
+.host-root .date-picker > .arrow-button {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 12px 0 6px;
+}
+.host-root .date-picker > .arrow-button > .arrow { -fx-background-color: fg-subtle; }
+.host-root .date-picker:focused, .host-root .date-picker:showing { -fx-border-color: accent; }
+.host-root .date-picker:showing > .arrow-button > .arrow { -fx-background-color: accent; }
+
+/* Multi-select (action types): a menu button styled like the other inputs, check-box list in the popup. */
+.host-root .agent-multi-select {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 0 0 0 12px;
+    -fx-font-size: 12px;
+    -fx-text-fill: fg;
+    -fx-alignment: CENTER_LEFT;
+    -fx-cursor: hand;
+}
+.host-root .agent-multi-select:hover { -fx-background-color: bg-overlay; }
+.host-root .agent-multi-select:focused, .host-root .agent-multi-select:showing { -fx-border-color: accent; }
+.host-root .agent-multi-select > .label {
+    -fx-text-fill: fg;
+    -fx-font-size: 12px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0;
+}
+.host-root .agent-multi-select > .arrow-button { -fx-padding: 0 12px 0 6px; -fx-background-color: transparent; }
+.host-root .agent-multi-select > .arrow-button > .arrow { -fx-background-color: fg-subtle; }
+.host-root .context-menu {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;
+    -fx-border-color: border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 4px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.08), 14, 0, 0, 4);
+}
+.host-root .context-menu .agent-multi-item { -fx-padding: 0; -fx-background-color: transparent; }
+.host-root .agent-multi-scroll .scroll-bar:horizontal { -fx-opacity: 0; -fx-pref-height: 0; -fx-max-height: 0; }
+.host-root .agent-multi-scroll .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-pref-width: 10px;
+    -fx-min-width: 10px;
+    -fx-max-width: 10px;
+}
+.host-root .agent-multi-scroll .scroll-bar:vertical > .track,
+.host-root .agent-multi-scroll .scroll-bar:vertical > .track-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+.host-root .agent-multi-scroll .scroll-bar:vertical > .thumb {
+    -fx-background-color: border;
+    -fx-background-insets: 2px;
+    -fx-background-radius: 999px;
+}
+.host-root .agent-multi-scroll .scroll-bar > .increment-button,
+.host-root .agent-multi-scroll .scroll-bar > .decrement-button {
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-background-color: transparent;
+}
+.host-root .agent-multi-scroll .scroll-bar > .increment-button > .increment-arrow,
+.host-root .agent-multi-scroll .scroll-bar > .decrement-button > .decrement-arrow { -fx-padding: 0; -fx-shape: null; }
+.host-root .agent-multi-scroll, .host-root .agent-multi-scroll > .viewport,
+.host-root .agent-rows-scroll, .host-root .agent-rows-scroll > .viewport {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+.host-root .agent-multi-scroll, .host-root .agent-rows-scroll { -fx-border-color: transparent; }
+.host-root .agent-multi-list { -fx-background-color: transparent; }
+.host-root .agent-multi-option {
+    -fx-background-radius: 6px;
+    -fx-padding: 7px 10px 7px 10px;
+    -fx-font-size: 12px;
+    -fx-text-fill: fg;
+    -fx-cursor: hand;
+}
+.host-root .agent-multi-option:hover { -fx-background-color: accent-subtle; -fx-text-fill: accent; }
+.host-root .agent-multi-option > .box {
+    -fx-background-color: bg-overlay;
+    -fx-background-insets: 0;
+    -fx-background-radius: 4px;
+    -fx-border-color: border;
+    -fx-border-radius: 4px;
+    -fx-border-width: 1px;
+    -fx-padding: 3px;
+}
+.host-root .agent-multi-option:selected > .box { -fx-background-color: accent; -fx-border-color: accent; }
+.host-root .agent-multi-option > .box > .mark { -fx-background-color: #fdf8f0; }
+.host-root .agent-multi-option:selected { -fx-font-weight: bold; }
+
+.host-root .agent-rows-scroll .scroll-bar:horizontal { -fx-opacity: 0; -fx-pref-height: 0; -fx-max-height: 0; }
+.host-root .agent-rows-scroll .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-pref-width: 10px;
+    -fx-min-width: 10px;
+    -fx-max-width: 10px;
+}
+.host-root .agent-rows-scroll .scroll-bar:vertical > .track,
+.host-root .agent-rows-scroll .scroll-bar:vertical > .track-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+.host-root .agent-rows-scroll .scroll-bar:vertical > .thumb {
+    -fx-background-color: border;
+    -fx-background-insets: 2px;
+    -fx-background-radius: 999px;
+}
+.host-root .agent-rows-scroll .scroll-bar > .increment-button,
+.host-root .agent-rows-scroll .scroll-bar > .decrement-button {
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-background-color: transparent;
+}
+.host-root .agent-rows-scroll .scroll-bar > .increment-button > .increment-arrow,
+.host-root .agent-rows-scroll .scroll-bar > .decrement-button > .decrement-arrow { -fx-padding: 0; -fx-shape: null; }
+/* Calendar popup (board component "Date picker"): 12px card, accent border, 34px day cells, accent selected day,
+   ringed today, muted other-month days. No Clear / Apply row: a click on a day selects it. */
+.host-root .date-picker-popup {
+    -fx-background-color: bg-overlay;
+    -fx-background-radius: 12px;
+    -fx-background-insets: 0;
+    -fx-border-color: accent;
+    -fx-border-radius: 12px;
+    -fx-border-width: 1px;
+    -fx-padding: 14px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.08), 14, 0, 0, 4);
+}
+.host-root .date-picker-popup .month-year-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0 0 10px 0;
+}
+.host-root .date-picker-popup .spinner { -fx-background-color: transparent; -fx-spacing: 4px; -fx-alignment: CENTER; }
+.host-root .date-picker-popup .spinner .button {
+    -fx-background-color: bg-overlay;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8px;
+    -fx-border-color: border-muted;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 0;
+    -fx-min-width: 28px;
+    -fx-pref-width: 28px;
+    -fx-max-width: 28px;
+    -fx-min-height: 28px;
+    -fx-pref-height: 28px;
+    -fx-max-height: 28px;
+    -fx-cursor: hand;
+}
+.host-root .date-picker-popup .spinner .button:hover { -fx-background-color: bg-inset; }
+.host-root .date-picker-popup .spinner .button .left-arrow,
+.host-root .date-picker-popup .spinner .button .right-arrow { -fx-background-color: fg-muted; }
+.host-root .date-picker-popup .spinner-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: fg;
+    -fx-alignment: CENTER;
+    -fx-padding: 0 6px 0 6px;
+}
+.host-root .date-picker-popup .calendar-grid {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-hgap: 2px;
+    -fx-vgap: 2px;
+}
+.host-root .date-picker-popup .date-cell {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 0;
+    -fx-alignment: CENTER;
+    -fx-text-fill: fg;
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-cursor: hand;
+}
+.host-root .date-picker-popup .day-name-cell {
+    -fx-text-fill: fg-subtle;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-min-height: 24px;
+    -fx-pref-height: 24px;
+    -fx-cursor: default;
+}
+.host-root .date-picker-popup .day-cell { -fx-min-height: 34px; -fx-pref-height: 34px; -fx-max-height: 34px; }
+.host-root .date-picker-popup .day-cell:hover { -fx-background-color: bg-inset; }
+.host-root .date-picker-popup .day-cell:focused { -fx-border-color: border-muted; }
+.host-root .date-picker-popup .day-cell.previous-month,
+.host-root .date-picker-popup .day-cell.next-month { -fx-text-fill: fg-subtle; -fx-opacity: 0.45; }
+.host-root .date-picker-popup .day-cell.today { -fx-border-color: accent; -fx-font-weight: bold; }
+.host-root .date-picker-popup .day-cell.selected,
+.host-root .date-picker-popup .day-cell.selected:hover {
+    -fx-background-color: accent;
+    -fx-border-color: accent;
+    -fx-text-fill: #fdf8f0;
+    -fx-font-weight: bold;
+}
+
+.host-root .host-messages-root { -fx-background-color: #fcf8f1; }
+.host-root .host-message-sidebar {
+    -fx-background-color: #fffdf9;
+    -fx-border-color: #ddc3a5;
+    -fx-border-width: 0 1px 0 0;
+    -fx-min-width: 380px;
+    -fx-pref-width: 380px;
+    -fx-max-width: 380px;
+}
+.host-root .host-message-sidebar-title,
+.host-root .host-message-header-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f1713;
+}
+.host-root .host-message-sidebar-title { -fx-padding: 0 24px 18px 24px; }
+.host-root .host-message-header {
+    -fx-padding: 20px 28px;
+    -fx-border-color: #ddc3a5;
+    -fx-border-width: 0 0 1px 0;
+}
+.host-root .host-message-header-subtitle,
+.host-root .host-message-row-subtitle { -fx-text-fill: #704d3b; }
+.host-root .host-message-header-subtitle { -fx-font-size: 15px; }
+.host-root .host-message-sidebar .list-view {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+.host-root .host-message-sidebar .list-view .scroll-bar:horizontal {
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-opacity: 0;
+}
+.host-root .host-message-sidebar .list-cell {
+    -fx-padding: 16px 18px 16px 24px;
+    -fx-background-color: transparent;
+    -fx-border-color: #ead7c0;
+    -fx-border-width: 1px 0 0 0;
+}
+.host-root .host-message-sidebar .list-cell:selected { -fx-background-color: #fce5d4; }
+.host-root .host-message-row { -fx-alignment: center-left; -fx-spacing: 10px; }
+.host-root .host-message-row-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f1713;
+}
+.host-root .host-message-row-subtitle { -fx-font-size: 13px; }
+.host-root .host-message-status {
+    -fx-padding: 4px 10px;
+    -fx-background-radius: 12px;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+.host-root .host-message-status-open { -fx-background-color: #fff1cf; -fx-text-fill: #805c00; }
+.host-root .host-message-status-resolved { -fx-background-color: #e3f4c7; -fx-text-fill: #40680c; }
+.host-root .agent-bubble-author { -fx-font-weight: bold; -fx-text-fill: #381a10; }
+.host-root .host-message-thread-scroll,
+.host-root .host-message-thread-scroll > .viewport,
+.host-root .host-message-thread { -fx-background-color: #fcf8f1; }
+.host-root .host-message-composer {
+    -fx-padding: 16px 28px 22px 28px;
+    -fx-border-color: #ddc3a5;
+    -fx-border-width: 1px 0 0 0;
+}
