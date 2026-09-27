@@ -27,6 +27,7 @@
                        visible="false" managed="false"/>
                 <Label fx:id="formBreadcrumb" text="Create" styleClass="host-crumb-current"/>
             </HBox>
+            <Label fx:id="formTitle" text="Create listing" styleClass="page-title"/>
 
             <GridPane hgap="16" vgap="16" styleClass="listing-form-grid" maxWidth="Infinity">
                 <columnConstraints>

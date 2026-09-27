@@ -22,7 +22,7 @@ class HostBreadcrumbNavigationTest {
     }
 
     @Test
-    void listingFormUsesCreateOrEditBreadcrumbsWithoutPageTitle() throws Exception {
+    void listingFormUsesCreateOrEditBreadcrumbsWithPageTitle() throws Exception {
         String fxml = read("src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.fxml");
         String source = read("src/main/java/com/snoozeshare/ui/host/listings/HostListingFormController.java");
 
@@ -30,11 +30,14 @@ class HostBreadcrumbNavigationTest {
         assertTrue(fxml.contains("fx:id=\"listingCrumb\""));
         assertTrue(fxml.contains("fx:id=\"editSeparator\""));
         assertTrue(fxml.contains("fx:id=\"formBreadcrumb\""));
+        assertTrue(fxml.contains("fx:id=\"formTitle\""));
+        assertTrue(fxml.contains("text=\"Create listing\""));
         assertTrue(fxml.contains("styleClass=\"host-crumb-current\""));
         assertFalse(fxml.contains("agent-crumb"));
-        assertFalse(fxml.contains("fx:id=\"formTitle\""));
         assertFalse(fxml.contains("text=\"Back\""));
         assertTrue(source.contains("formBreadcrumb.setText"));
+        assertTrue(source.contains("formTitle.setText(\"Create listing\")"));
+        assertTrue(source.contains("formTitle.setText(\"Edit listing\")"));
         assertTrue(source.contains("listingCrumb.setText"));
         assertTrue(source.contains("editSeparator.setVisible"));
     }

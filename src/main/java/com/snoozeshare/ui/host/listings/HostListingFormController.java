@@ -50,6 +50,7 @@ public final class HostListingFormController {
     @FXML private Hyperlink listingCrumb;
     @FXML private Label editSeparator;
     @FXML private Label formBreadcrumb;
+    @FXML private Label formTitle;
     @FXML private Button saveButton;
 
     private AppContext context;
@@ -81,6 +82,7 @@ public final class HostListingFormController {
             editSeparator.setVisible(false);
             editSeparator.setManaged(false);
             formBreadcrumb.setText("Create");
+            formTitle.setText("Create listing");
             saveButton.setText("Create listing");
         } else {
             listingCrumb.setText(listing.title());
@@ -89,6 +91,7 @@ public final class HostListingFormController {
             editSeparator.setVisible(true);
             editSeparator.setManaged(true);
             formBreadcrumb.setText("Edit");
+            formTitle.setText("Edit listing");
             saveButton.setText("Save listing");
             populate(listing);
         }
