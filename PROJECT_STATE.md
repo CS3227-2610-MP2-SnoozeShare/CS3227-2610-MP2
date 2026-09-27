@@ -6,7 +6,7 @@ every boundary, not at the end of the session.
 
 - **Phase:** W13 Host Messages UI implemented; awaiting operator acceptance before the Developer Guide checkpoint
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `w9` (W13 — Messaging; host Messages UI slice)
+- **Branch:** `host-ui-touchup` (branched from `w9`; Host UI touch-up commits)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
 - **Last updated:** 2026-09-27 by Codex — Compact left-aligned listing form actions
 - **Last verified against repo:** 2026-09-27
@@ -65,7 +65,7 @@ three iterations).
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 | S7 | 2026-09-27 | Claude Sonnet 5 | messaging-service | W13 | Paused | Service slice built and verified; host Messages UI continued on `w9` | 2026-09-27 |
-| S8 | 2026-09-27 | Codex | w9 | W6 | Paused | Listing form actions left-aligned and vertical spacing compacted; full suite retains one pre-existing AgentModal failure | 2026-09-27 |
+| S8 | 2026-09-27 | Codex | host-ui-touchup | W6/W13 | Paused | Host UI touch-ups carried from w9; listing form actions left-aligned and compacted | 2026-09-27 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
