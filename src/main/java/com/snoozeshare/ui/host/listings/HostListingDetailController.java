@@ -17,6 +17,7 @@ public final class HostListingDetailController {
             DateTimeFormatter.ofPattern("h:mm a");
 
     @FXML private Label titleLabel;
+    @FXML private Label titleCrumb;
     @FXML private Label typeLabel;
     @FXML private Label addressLabel;
     @FXML private Label descriptionLabel;
@@ -50,6 +51,7 @@ public final class HostListingDetailController {
 
     public void setProperty(Property property) {
         this.property = property;
+        titleCrumb.setText(property.title());
         titleLabel.setText(property.title());
         typeLabel.setText(property.propertyType().name().replace('_', ' '));
         addressLabel.setText(String.join(", ", property.streetAddress(), property.city(),

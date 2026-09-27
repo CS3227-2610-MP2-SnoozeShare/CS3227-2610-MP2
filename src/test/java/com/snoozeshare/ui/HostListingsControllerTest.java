@@ -53,10 +53,11 @@ class HostListingsControllerTest {
         assertTrue(source.contains("listingService().update"));
         assertTrue(source.contains("setOnBack"));
         assertTrue(source.contains("setOnSaved"));
-        assertTrue(fxml.contains("onAction=\"#handleBack\""));
+        assertTrue(fxml.contains("onAction=\"#handleListings\""));
+        assertTrue(fxml.contains("onAction=\"#handleListingDetail\""));
         assertTrue(fxml.contains("onAction=\"#handleSave\""));
         assertTrue(fxml.contains("styleClass=\"listing-description\""));
-        assertTrue(fxml.contains("fx:id=\"formTitle\""));
+        assertTrue(fxml.contains("fx:id=\"formBreadcrumb\""));
     }
 
     @Test
@@ -250,7 +251,7 @@ class HostListingsControllerTest {
         assertTrue(fxml.contains("text=\"Create listing\""));
         assertTrue(source.contains("saveButton.setText(\"Save listing\")"));
         assertTrue(fxml.contains("text=\"Cancel\""));
-        assertTrue(fxml.contains("styleClass=\"outline-button\""));
+        assertTrue(fxml.contains("styleClass=\"outline-button, listing-form-action\""));
         assertTrue(!fxml.contains("fillWidth"));
     }
 

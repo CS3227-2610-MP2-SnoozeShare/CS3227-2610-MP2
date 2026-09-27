@@ -13,6 +13,7 @@ import com.snoozeshare.domain.model.Property;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
@@ -28,6 +29,9 @@ public final class HostCalendarController {
 
     @FXML
     private Label monthLabel;
+
+    @FXML
+    private Hyperlink listingCrumb;
 
     @FXML
     private GridPane calendarGrid;
@@ -51,6 +55,7 @@ public final class HostCalendarController {
     private Property property;
     private YearMonth displayedMonth = YearMonth.now();
     private Runnable onBack = () -> { };
+    private Runnable onListingDetail = () -> { };
 
     public void setContext(AppContext appContext) {
         context = appContext;
@@ -59,12 +64,17 @@ public final class HostCalendarController {
 
     public void setProperty(Property selectedProperty) {
         property = selectedProperty;
+        listingCrumb.setText(selectedProperty.title());
         displayedMonth = YearMonth.now();
         refresh();
     }
 
     public void setOnBack(Runnable callback) {
         onBack = callback == null ? () -> { } : callback;
+    }
+
+    public void setOnListingDetail(Runnable callback) {
+        onListingDetail = callback == null ? () -> { } : callback;
     }
 
     @FXML
@@ -82,6 +92,11 @@ public final class HostCalendarController {
     @FXML
     private void handleBack() {
         onBack.run();
+    }
+
+    @FXML
+    private void handleListingDetail() {
+        onListingDetail.run();
     }
 
     @FXML

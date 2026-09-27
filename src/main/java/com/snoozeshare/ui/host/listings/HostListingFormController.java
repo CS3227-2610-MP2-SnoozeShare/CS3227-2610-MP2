@@ -19,6 +19,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.util.StringConverter;
@@ -46,12 +47,15 @@ public final class HostListingFormController {
     @FXML private CheckBox washerBox;
     @FXML private CheckBox workDeskBox;
     @FXML private Label errorLabel;
-    @FXML private Label formTitle;
+    @FXML private Hyperlink listingCrumb;
+    @FXML private Label formBreadcrumb;
     @FXML private Button saveButton;
 
     private AppContext context;
     private Property property;
     private Runnable onBack = () -> { };
+    private Runnable onListings = () -> { };
+    private Runnable onListingDetail = () -> { };
     private Runnable onSaved = () -> { };
 
     @FXML
@@ -71,10 +75,15 @@ public final class HostListingFormController {
     public void setProperty(Property listing) {
         property = listing;
         if (listing == null) {
-            formTitle.setText("Create listing");
+            listingCrumb.setVisible(false);
+            listingCrumb.setManaged(false);
+            formBreadcrumb.setText("Create");
             saveButton.setText("Create listing");
         } else {
-            formTitle.setText("Edit listing");
+            listingCrumb.setText(listing.title());
+            listingCrumb.setVisible(true);
+            listingCrumb.setManaged(true);
+            formBreadcrumb.setText("Edit");
             saveButton.setText("Save listing");
             populate(listing);
         }
@@ -84,6 +93,14 @@ public final class HostListingFormController {
         onBack = callback == null ? () -> { } : callback;
     }
 
+    public void setOnListings(Runnable callback) {
+        onListings = callback == null ? () -> { } : callback;
+    }
+
+    public void setOnListingDetail(Runnable callback) {
+        onListingDetail = callback == null ? () -> { } : callback;
+    }
+
     public void setOnSaved(Runnable callback) {
         onSaved = callback == null ? () -> { } : callback;
     }
@@ -91,6 +108,16 @@ public final class HostListingFormController {
     @FXML
     private void handleBack() {
         onBack.run();
+    }
+
+    @FXML
+    private void handleListings() {
+        onListings.run();
+    }
+
+    @FXML
+    private void handleListingDetail() {
+        onListingDetail.run();
     }
 
     @FXML

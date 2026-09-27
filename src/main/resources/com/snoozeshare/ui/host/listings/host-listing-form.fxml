@@ -3,6 +3,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
@@ -18,8 +19,11 @@
             <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
 
             <HBox alignment="CENTER_LEFT" spacing="16">
-                <Button text="Back" onAction="#handleBack" styleClass="outline-button"/>
-                <Label fx:id="formTitle" text="Create listing" styleClass="page-title"/>
+                <Hyperlink text="Listings" onAction="#handleListings" styleClass="agent-crumb-link"/>
+                <Label text="›" styleClass="agent-crumb"/>
+                <Hyperlink fx:id="listingCrumb" onAction="#handleListingDetail"
+                           styleClass="agent-crumb-link" visible="false" managed="false"/>
+                <Label fx:id="formBreadcrumb" text="Create" styleClass="agent-crumb-current"/>
             </HBox>
 
             <GridPane hgap="16" vgap="16" styleClass="listing-form-grid" maxWidth="Infinity">
