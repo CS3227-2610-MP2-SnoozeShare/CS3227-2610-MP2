@@ -34,14 +34,16 @@ import com.snoozeshare.infra.events.InProcessEventBus;
 import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
+import com.snoozeshare.repository.jdbc.JdbcLedgerRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
 import com.snoozeshare.repository.jdbc.JdbcReviewRepository;
 import com.snoozeshare.repository.jdbc.JdbcTicketRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
-import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
 import com.snoozeshare.service.impl.BookingServiceImpl;
+import com.snoozeshare.service.impl.LedgerWriter;
 import com.snoozeshare.service.impl.TransactionServiceImpl;
+import com.snoozeshare.testsupport.LedgerTestSupport;
 
 class BookingServiceTest {
 
@@ -100,11 +102,12 @@ class BookingServiceTest {
             Wallet wallet = walletRepo.findByUserId(ctx.guestId).orElseThrow();
             assertEquals(0, new BigDecimal("200.00").compareTo(wallet.balance()));
 
-            var txnRepo = new JdbcWalletTransactionRepository(connection);
-            var transactions = txnRepo.findByBookingId(booking.bookingId());
+            var transactions = new JdbcLedgerRepository(connection).entriesForBooking(booking.bookingId());
             assertEquals(1, transactions.size());
             assertEquals(WalletTransactionType.ESCROW_HOLD, transactions.get(0).type());
             assertEquals(0, new BigDecimal("-300.00").compareTo(transactions.get(0).amount()));
+            assertEquals(0, wallet.balance().compareTo(transactions.get(0).balanceAfter()));
+            assertEquals(wallet.walletId(), transactions.get(0).walletId());
         }
     }
 
@@ -121,8 +124,8 @@ class BookingServiceTest {
                     LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
 
             assertEquals(1, events.size());
-            var transaction = new JdbcWalletTransactionRepository(connection)
-                    .findByBookingId(booking.bookingId()).get(0);
+            var transaction = new JdbcLedgerRepository(connection)
+                    .entriesForBooking(booking.bookingId()).get(0);
             assertEquals(transaction.transactionId(), events.get(0).transactionId());
             assertEquals(transaction.walletId(), events.get(0).walletId());
         }
@@ -234,6 +237,7 @@ class BookingServiceTest {
             var walletRepo = new JdbcWalletRepository(connection);
             assertEquals(0, new BigDecimal("500.00").compareTo(
                     walletRepo.findByUserId(ctx.guestId).orElseThrow().balance()));
+            assertRefundRow(connection, booking.bookingId(), new BigDecimal("300.00"), new BigDecimal("500.00"));
         }
     }
 
@@ -259,6 +263,33 @@ class BookingServiceTest {
             // 500 - 300 (escrow) + 150 (50% refund) = 350
             assertEquals(0, new BigDecimal("350.00").compareTo(
                     walletRepo.findByUserId(ctx.guestId).orElseThrow().balance()));
+            assertRefundRow(connection, booking.bookingId(), new BigDecimal("150.00"), new BigDecimal("350.00"));
+        }
+    }
+
+    @Test
+    void aFreeStayWritesNoLedgerRowsOnSubmitOrCancel() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            var properties = new JdbcPropertyRepository(connection);
+            Property paid = properties.findById(ctx.propertyId).orElseThrow();
+            properties.save(new Property(paid.propertyId(), paid.hostId(), paid.status(), paid.title(),
+                    paid.description(), paid.propertyType(), paid.streetAddress(), paid.city(), paid.region(),
+                    paid.postalCode(), paid.maxGuests(), paid.bedrooms(), paid.bathrooms(), BigDecimal.ZERO,
+                    paid.checkInTime(), paid.checkOutTime(), paid.amenities(), paid.createdAt()));
+            var events = new InProcessEventBus();
+            List<WalletTransactionRecordedEvent> recorded = new ArrayList<>();
+            events.subscribe(WalletTransactionRecordedEvent.class, recorded::add);
+            BookingService service = createService(connection, events);
+
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
+            service.cancel(booking.bookingId(), ctx.guestId);
+
+            assertTrue(new JdbcLedgerRepository(connection).entriesForBooking(booking.bookingId()).isEmpty());
+            assertTrue(recorded.isEmpty());
+            assertEquals(0, new BigDecimal("500.00").compareTo(new JdbcWalletRepository(connection)
+                    .findByUserId(ctx.guestId).orElseThrow().balance()));
         }
     }
 
@@ -348,6 +379,7 @@ class BookingServiceTest {
             // Availability block removed
             var blockRepo = new JdbcAvailabilityBlockRepository(connection);
             assertTrue(blockRepo.findByPropertyId(ctx.propertyId).isEmpty());
+            assertRefundRow(connection, booking.bookingId(), new BigDecimal("300.00"), new BigDecimal("500.00"));
         }
     }
 
@@ -524,15 +556,19 @@ class BookingServiceTest {
 
             Booking completed = service.complete(booking.bookingId());
             Booking repeated = service.complete(booking.bookingId());
-            var transactions = new JdbcWalletTransactionRepository(connection)
-                    .findByBookingId(booking.bookingId()).stream()
+            var entries = new JdbcLedgerRepository(connection).entriesForBooking(booking.bookingId());
+            var transactions = entries.stream()
                     .filter(txn -> txn.type() == WalletTransactionType.BOOKING_PAYOUT).toList();
+            var fees = entries.stream()
+                    .filter(txn -> txn.type() == WalletTransactionType.PLATFORM_FEE).toList();
 
             assertEquals(BookingStatus.COMPLETED, completed.status());
             assertEquals(completed, repeated);
             assertEquals(1, transactions.size());
             assertEquals(0, new BigDecimal("291.00").compareTo(transactions.get(0).amount()));
-            assertEquals(0, new BigDecimal("9.00").compareTo(transactions.get(0).feeAmount()));
+            assertEquals(1, fees.size());
+            assertEquals(0, new BigDecimal("9.00").compareTo(fees.get(0).amount()));
+            assertEquals(systemWalletId(connection), fees.get(0).walletId());
             assertEquals(1, payoutEvents.stream().filter(event -> event.transactionId()
                     .equals(transactions.get(0).transactionId())).count());
         }
@@ -585,6 +621,22 @@ class BookingServiceTest {
 
     // --- helpers ---
 
+    private static void assertRefundRow(Connection connection, UUID bookingId, BigDecimal amount,
+                                        BigDecimal balanceAfter) {
+        var entries = new JdbcLedgerRepository(connection).entriesForBooking(bookingId);
+        var refunds = entries.stream().filter(txn -> txn.type() == WalletTransactionType.ESCROW_REFUND).toList();
+        assertEquals(1, refunds.size());
+        assertEquals(0, amount.compareTo(refunds.get(0).amount()));
+        assertEquals(0, balanceAfter.compareTo(refunds.get(0).balanceAfter()));
+        assertTrue(entries.stream().noneMatch(txn -> txn.type() == WalletTransactionType.PLATFORM_FEE));
+        assertTrue(new JdbcLedgerRepository(connection).entriesForWallet(systemWalletId(connection)).isEmpty());
+    }
+
+    private static UUID systemWalletId(Connection connection) {
+        return new JdbcWalletRepository(connection).findByUserId(AuditService.SYSTEM_ACTOR_ID).orElseThrow()
+                .walletId();
+    }
+
     private record TestContext(UUID guestId, UUID hostId, UUID propertyId) {
     }
 
@@ -622,18 +674,21 @@ class BookingServiceTest {
     }
 
     static BookingService createService(Connection connection, InProcessEventBus eventBus) {
+        LedgerWriter ledger = LedgerTestSupport.writer(connection);
+        var ledgerEntries = new JdbcLedgerRepository(connection);
         return new BookingServiceImpl(connection,
                 new JdbcBookingRepository(connection),
                 new JdbcPropertyRepository(connection),
                 new JdbcAvailabilityBlockRepository(connection),
                 new JdbcWalletRepository(connection),
-                new JdbcWalletTransactionRepository(connection),
+                ledger,
+                ledgerEntries,
                 new JdbcUserRepository(connection),
                 new JdbcReviewRepository(connection),
                 eventBus,
                 new TransactionServiceImpl(connection, new JdbcBookingRepository(connection),
                         new JdbcPropertyRepository(connection), new JdbcWalletRepository(connection),
-                        new JdbcWalletTransactionRepository(connection), eventBus),
+                        ledger, ledgerEntries, eventBus),
                 new JdbcTicketRepository(connection));
     }
 
