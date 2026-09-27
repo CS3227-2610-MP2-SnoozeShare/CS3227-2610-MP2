@@ -12,8 +12,8 @@ for the two conversations already supported by the service layer:
 2. the host-side thread of a support ticket.
 
 The page follows the supplied Messages mockup and reuses the existing Fall Light shell and
-chat-bubble visual language. The `+ New Ticket` action is functional for hosts (operator-approved
-Option 1), not decorative.
+chat-bubble visual language. Hosts do not create tickets; they use the host-side ticket thread to
+respond to tickets opened by guests and handled by Support Agents.
 
 ## 2. Scope and success criteria
 
@@ -26,9 +26,9 @@ In scope:
 - Render the selected thread, send text replies, mark it read, and refresh on the existing
   `BookingMessagePostedEvent` / `MessagePostedEvent` events.
 - Show the correct read-only state after a ticket is resolved or a booking chat window closes.
-- Let a host file a support ticket from `+ New Ticket`, choosing one of the host's eligible
-  bookings when no booking is already selected.
-- Add service, controller, navigation, persistence-boundary, and JavaFX regression coverage.
+- Keep ticket creation out of the Host UI and service boundary; hosts may only reply to existing
+  agent-managed ticket threads.
+- Add controller, navigation, persistence-boundary, and JavaFX regression coverage.
 
 Out of scope:
 
@@ -57,7 +57,7 @@ Fall Light theme:
   `<property> · <start>–<end>` and `Direct message · <guest> (Guest)`. Ticket rows use the ticket
   title and `Ticket #<short id> · <property> · Support Agent`.
 - **Thread header:** selected booking/property and dates on the first line; counterpart and
-  booking/ticket reference on the second line; `+ New Ticket` button aligned right.
+  booking/ticket reference on the second line.
 - **Messages:** scrollable content, incoming bubbles left in neutral beige, host bubbles right
   in warm peach, author name above each body. `ChatBubbles` remains the shared renderer where
   its `Message` shape fits; booking messages get the same style through a small shared overload
@@ -87,24 +87,13 @@ thread when its source id matches. Subscription handles are disposed when the pa
 Service exceptions become an inline error/status message and do not leave a stale enabled Send
 button.
 
-## 5. Host ticket filing (Option 1)
+## 5. Host ticket responses
 
-`+ New Ticket` opens a Host ticket dialog. If a booking conversation is selected, that booking is
-preselected; otherwise the dialog starts with an eligible-booking selector. The remaining fields
-reuse the Guest ticket form's category, title, description, remedy, and supporting text controls.
-
-The service keeps all existing ticket validation rules and adds role-aware authorization:
-
-- `Role.GUEST` still requires `booking.guestId == raisedByUserId`.
-- `Role.HOST` requires the booking's property `hostId == raisedByUserId`.
-- Both roles use the existing booking-status, dispute-window, active-category, required-field,
-  and duplicate checks. Duplicate scope remains per actor and booking, so guest and host may each
-  raise their own ticket when otherwise eligible.
-- The UI obtains eligible bookings through a service-level host query; it does not read
-  `BookingRepository` directly. Pending/non-party bookings are not offered.
-
-After a successful filing, the dialog closes and the merged inbox refreshes to include the new
-host ticket thread. A failed validation stays in the dialog with user-readable feedback.
+Hosts cannot create support tickets. Existing ticket rows are supplied by the persistent
+`MessageService` and expose the host-side thread only when the host is the authorized booking
+party. An open or in-review ticket remains writable through the composer so the host can respond
+to the assigned Support Agent; resolved tickets are read-only. Guest ticket filing and Agent
+ticket assignment/resolution remain unchanged.
 
 ## 6. Architecture and files
 
@@ -117,19 +106,16 @@ Expected implementation shape:
   event bus.
 - Reuse the existing `ChatBubbles` styles and add the smallest common renderer extension needed
   for `BookingMessage`; keep host-specific layout rules in the existing Fall Light stylesheet.
-- Add a host ticket dialog/controller, or generalize the existing ticket form behind a role-aware
-  configuration, without making Guest behavior regress.
-- Extend `TicketServiceImpl.fileTicket` authorization for `Role.HOST` and expose only the
-  smallest service-level eligible-booking query needed by the dialog.
+- Keep `TicketService.fileTicket` guest-only; Host Messages must not expose a ticket-creation
+  callback or dialog.
 - Do not add repository access from UI or bypass service authorization.
 
 ## 7. Verification
 
-Service tests cover host ticket authorization, wrong host rejection, duplicate scope, and the
-existing guest rules. Host UI tests cover navigation order, merged row ordering, selected thread
-rendering, send/read-only states, event refresh, empty states, and new-ticket flow. FXML/CSS
+Service tests cover guest ticket filing and reject Host ticket creation. Host UI tests cover
+navigation order, merged row ordering, selected thread rendering, send/read-only states, event
+refresh, empty states, and absence of ticket-creation controls. FXML/CSS
 validation and the existing full Gradle test/build checks remain required.
 
 Review focus before implementation: the host eligibility query and the exact read-only behavior
 for completed bookings versus the booking service's existing `checkout + 7 days` rule.
-

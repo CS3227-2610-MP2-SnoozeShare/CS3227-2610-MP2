@@ -34,7 +34,6 @@
                         <Label fx:id="headerSubtitle" styleClass="host-message-header-subtitle"/>
                     </VBox>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Button fx:id="newTicketButton" text="+ New Ticket" styleClass="button"/>
                 </HBox>
             </top>
             <center>

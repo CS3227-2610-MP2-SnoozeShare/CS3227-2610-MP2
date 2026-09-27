@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.Property;
-import com.snoozeshare.ui.admin.AgentModal;
 import com.snoozeshare.ui.common.NavShellController;
 import com.snoozeshare.ui.common.wallet.WalletDashboardController;
 import com.snoozeshare.ui.host.bookings.HostBookingsController;
@@ -13,12 +12,10 @@ import com.snoozeshare.ui.host.listings.HostListingDetailController;
 import com.snoozeshare.ui.host.listings.HostListingFormController;
 import com.snoozeshare.ui.host.listings.HostListingsController;
 import com.snoozeshare.ui.host.messaging.HostMessagesController;
-import com.snoozeshare.ui.host.messaging.HostTicketFilingController;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 
@@ -148,7 +145,6 @@ public final class HostShellController extends NavShellController {
             Node messagesView = loader.load();
             messagesController = loader.getController();
             messagesController.setContext(getContext());
-            messagesController.setOnNewTicket(() -> showNewTicket(null));
             shellRoot.setCenter(messagesView);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load host messages view", exception);
@@ -183,24 +179,6 @@ public final class HostShellController extends NavShellController {
         if (messagesController != null) {
             messagesController.cleanup();
             messagesController = null;
-        }
-    }
-
-    private void showNewTicket(java.util.UUID preselectedBookingId) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                    "/com/snoozeshare/ui/host/messaging/host-ticket-filing.fxml"));
-            Parent card = loader.load();
-            HostTicketFilingController controller = loader.getController();
-            AgentModal modal = AgentModal.create(card, "File a support ticket");
-            controller.configure(getContext(), preselectedBookingId, modal::close, () -> {
-                if (messagesController != null) {
-                    messagesController.reload();
-                }
-            });
-            modal.showAndWait();
-        } catch (IOException exception) {
-            throw new IllegalStateException("Unable to open host ticket dialog", exception);
         }
     }
 

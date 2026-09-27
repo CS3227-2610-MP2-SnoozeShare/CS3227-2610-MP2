@@ -130,28 +130,14 @@ class FileTicketTest {
     }
 
     @Test
-    void hostCanFileTicketForTheirPropertyBooking() {
-        Ticket filed = service.fileTicket(validRequest(), hostId, Role.HOST);
-
-        assertEquals(hostId, filed.raisedByUserId());
-        assertEquals(Role.HOST, filed.raisedByRole());
+    void hostCannotFileTicket() {
+        assertThrows(IllegalArgumentException.class, () -> service.fileTicket(validRequest(), hostId, Role.HOST));
     }
 
     @Test
-    void hostCannotFileTicketForAnotherHostsBooking() {
+    void rejectsNonGuestTicketFilingRegardlessOfBookingOwnership() {
         UUID anotherHost = UUID.randomUUID();
         assertThrows(IllegalArgumentException.class, () -> service.fileTicket(validRequest(), anotherHost, Role.HOST));
-    }
-
-    @Test
-    void hostTicketBookingOptionsContainOnlyEligibleUnusedBookings() {
-        List<HostTicketBookingOption> options = service.hostTicketBookingOptions(hostId);
-
-        assertEquals(List.of(validBooking.bookingId()), options.stream()
-                .map(option -> option.booking().bookingId()).toList());
-
-        service.fileTicket(validRequest(), hostId, Role.HOST);
-        assertTrue(service.hostTicketBookingOptions(hostId).isEmpty());
     }
 
     @Test

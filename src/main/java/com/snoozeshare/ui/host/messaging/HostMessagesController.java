@@ -38,13 +38,11 @@ public final class HostMessagesController {
     @FXML private VBox thread;
     @FXML private TextField replyField;
     @FXML private Button sendButton;
-    @FXML private Button newTicketButton;
 
     private final List<Subscription> subscriptions = new ArrayList<>();
     private AppContext context;
     private UUID hostId;
     private HostConversationRow selected;
-    private Runnable onNewTicket;
     private boolean disposed;
 
     @FXML
@@ -57,7 +55,6 @@ public final class HostMessagesController {
             }
         });
         sendButton.setOnAction(event -> handleSend());
-        newTicketButton.setOnAction(event -> handleNewTicket());
     }
 
     public void setContext(AppContext appContext) {
@@ -70,10 +67,6 @@ public final class HostMessagesController {
         subscriptions.add(context.eventBus().subscribe(MessagePostedEvent.class,
                 event -> refreshFor(event.message().ticketId(), HostConversationRow.Kind.TICKET)));
         refreshInbox();
-    }
-
-    public void setOnNewTicket(Runnable callback) {
-        onNewTicket = callback;
     }
 
     @FXML
@@ -98,13 +91,6 @@ public final class HostMessagesController {
             refreshInbox();
         } catch (IllegalArgumentException | IllegalStateException exception) {
             showStatus(exception.getMessage());
-        }
-    }
-
-    @FXML
-    private void handleNewTicket() {
-        if (onNewTicket != null) {
-            onNewTicket.run();
         }
     }
 

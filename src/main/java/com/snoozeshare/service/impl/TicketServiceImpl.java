@@ -27,7 +27,6 @@ import com.snoozeshare.repository.UserRepository;
 import com.snoozeshare.service.AuditRecord;
 import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.DisputeSettlementService;
-import com.snoozeshare.service.HostTicketBookingOption;
 import com.snoozeshare.service.TicketService;
 import com.snoozeshare.service.requests.NewTicketRequest;
 import com.snoozeshare.service.requests.ResolutionRequest;
@@ -71,30 +70,15 @@ public final class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public List<HostTicketBookingOption> hostTicketBookingOptions(UUID hostId) {
-        LocalDate today = LocalDate.now(clock);
-        return bookings.findByHost(hostId).stream()
-                .filter(booking -> ticketWindowOpen(booking, today))
-                .filter(booking -> tickets.findByRaisedByUserId(hostId).stream()
-                        .noneMatch(ticket -> ticket.bookingId().equals(booking.bookingId())))
-                .map(HostTicketBookingOption::new)
-                .toList();
-    }
-
-    @Override
     public Ticket fileTicket(NewTicketRequest request, UUID raisedByUserId, Role raisedByRole) {
         Booking booking = bookings.findById(request.bookingId())
                 .orElseThrow(() -> new IllegalArgumentException("Booking does not exist"));
 
-        if (raisedByRole == Role.GUEST && !booking.guestId().equals(raisedByUserId)) {
+        if (raisedByRole != Role.GUEST) {
+            throw new IllegalArgumentException("Only guests may file a ticket");
+        }
+        if (!booking.guestId().equals(raisedByUserId)) {
             throw new IllegalArgumentException("Only the booking guest may file a ticket");
-        }
-        if (raisedByRole == Role.HOST && bookings.findByHost(raisedByUserId).stream()
-                .noneMatch(hostBooking -> hostBooking.bookingId().equals(booking.bookingId()))) {
-            throw new IllegalArgumentException("Only the property host may file a ticket");
-        }
-        if (raisedByRole != Role.GUEST && raisedByRole != Role.HOST) {
-            throw new IllegalArgumentException("Only a booking guest or host may file a ticket");
         }
 
         LocalDate today = LocalDate.now(clock);
