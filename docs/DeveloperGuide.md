@@ -70,8 +70,9 @@ Every payout follows one uniform fee rule, so the ledger always adds up.
   palette apply to the agent shell only; guest and host shells keep `theme.css` (C24).
 - **Guest ticket filing and host response screens** — these belong to the guest and host dispute
   features, not to agent dispute resolution.
-- **Account suspension (Accounts tab)** — the Accounts tab of the agent shell is a placeholder owned by
-  the Account Governance feature (W11). The audit schema already accommodates its rows (C32).
+- **Suspending Agent accounts, and undoing a suspension's side effects** — agents are listed but cannot be
+  suspended (including by themselves), and reactivating an account changes only its status and reason:
+  cancelled bookings are not reinstated and deactivated listings stay inactive (C34, C36).
 - **Platform wallet and the unified ledger** — folding `wallet_transactions` into `audit_log` and giving
   the platform a real wallet is a later workstream (W14, C31).
 - **The auto-complete scheduler** — a booking with an open ticket must be skipped by whatever
@@ -248,6 +249,9 @@ change back. See [4.13](#413-audit-trail).
   `DisputeQueryServiceImpl` builds read models for the screens.
 - **`domain`** is pure Java (no JavaFX, no JDBC): the settlement maths, the escrow-held test and the
   state machines.
+- **`AccountGovernanceService`** (`AccountGovernanceServiceImpl`) owns account suspension and reactivation.
+  A suspension and its cascade (force-cancelled bookings with refunds, deactivated listings, audit rows) run
+  in one transaction, and its events publish after commit ([4.13](#413-account-governance)).
 - **`AuditService`** (with `AuditServiceImpl` and `JdbcAuditLogRepository`) owns the audit log: services
   write rows through it, and only the Audit Log screen reads them ([4.13](#413-audit-trail)).
 - **`repository.jdbc`** is the only place that touches `java.sql`. **`infra.db`** owns the connection,
@@ -270,6 +274,9 @@ change back. See [4.13](#413-audit-trail).
 | The audit log is one row per change: status text in `beforeState` / `afterState`, money in a typed `walletAdjustment` column, plus typed reason and id columns. | The old single `afterState` blob was unreadable and unsearchable. | Two per-side booking rows; keeping JSON in `afterState`; `entityId`-only lookups | C28 |
 | Wallet movements write both a `wallet_transactions` row and an `audit_log` money row in one transaction, until W14 folds the two together. | The ledger cannot be removed without touching W1/W3/W5/W6/W10 money paths. | Doing the unification inside W12 | C31, D13 |
 | The platform fee is recorded only as text in the host payout row's reason; there is no platform wallet. | Keeps W12 small; the operator wants the fee as a real System-account entry in W14. | A platform wallet in W12 | C30 |
+| Reactivate is built although backlog F10.1.1 says only suspend. Agent accounts are listed with no action and cannot be suspended. | The operator wanted suspension to be reversible; agents governing agents was out of scope. | Suspend-only | C34 |
+| The suspension reason lives in a nullable `users.suspensionReason` column (migration V003) and is also written to the audit row. | Looking a reason up should not mean reading the audit log, which is not a data store. | A `suspensions` table; deriving the reason from `audit_log` | C34 (reverses the no-column part of C32) |
+| Suspending a Guest or Host force-cancels their PENDING and not-yet-started CONFIRMED bookings (check-in after today) with a 100% refund; a Host's ACTIVE listings become INACTIVE. Started and ended stays are untouched, and reactivation restores nothing. | Upcoming stays cannot be honoured by a suspended party; a stay in progress settles through the normal path (W8 auto-completion, or W10 dispute resolution). | Cancelling PENDING only; reinstating on reactivation | C36 |
 
 ---
 
@@ -517,19 +524,22 @@ sequenceDiagram
 
 ### 4.8 Agent UI (`ui.admin`)
 
-**Purpose:** the Support Agent's shell with the Disputes, Audit Log and Categories screens.
+**Purpose:** the Support Agent's shell with the Disputes, Accounts, Audit Log and Categories screens.
 
 **API**
 
 | File | Role |
 |---|---|
-| [`AdminShellController`](../src/main/java/com/snoozeshare/ui/admin/AdminShellController.java) + [`admin-shell.fxml`](../src/main/resources/com/snoozeshare/ui/admin/admin-shell.fxml) | Top bar and tab strip (Disputes, Accounts, Audit Log, Categories); swaps the centre view. Accounts is a placeholder. |
+| [`AdminShellController`](../src/main/java/com/snoozeshare/ui/admin/AdminShellController.java) + [`admin-shell.fxml`](../src/main/resources/com/snoozeshare/ui/admin/admin-shell.fxml) | Top bar and tab strip (Disputes, Accounts, Audit Log, Categories); swaps the centre view and disposes the live views (queue, accounts) when it does. |
 | [`DisputeQueueController`](../src/main/java/com/snoozeshare/ui/admin/tickets/DisputeQueueController.java) + `dispute-queue.fxml` | Oldest-first table, All / Unassigned / Mine chips, status filter (All statuses, Open, In review, Approved, Rejected), "N unassigned" badge; refreshes on `TicketResolvedEvent`. |
 | [`DisputeDetailController`](../src/main/java/com/snoozeshare/ui/admin/tickets/DisputeDetailController.java) + `dispute-detail.fxml` | Booking summary, guest and host chat panes, one notes field, Assign to me / Unassign, Accept, Reject dispute, Manual adjustment. The Accept label follows the ticket raiser ("remedy guest" or "remedy host"). |
 | [`ResolutionDialogController`](../src/main/java/com/snoozeshare/ui/admin/tickets/ResolutionDialogController.java) + `resolution-dialog.fxml` | One dialog for the three modes; reason required; live preview. |
 | [`ResolutionPreview`](../src/main/java/com/snoozeshare/ui/admin/tickets/ResolutionPreview.java) | Pure logic that turns a refund text into a preview or an error message, using `SettlementCalculator`. |
 | [`CategoryAdminController`](../src/main/java/com/snoozeshare/ui/admin/categories/CategoryAdminController.java), [`CategoryDialogController`](../src/main/java/com/snoozeshare/ui/admin/categories/CategoryDialogController.java) | Category table with active toggle, Add and Edit modals; Edit has Delete. |
 | [`AuditLogController`](../src/main/java/com/snoozeshare/ui/admin/audit/AuditLogController.java) + [`audit-log.fxml`](../src/main/resources/com/snoozeshare/ui/admin/audit/audit-log.fxml) | The read-only Audit Log screen (below). |
+| [`AccountGovernanceController`](../src/main/java/com/snoozeshare/ui/admin/accounts/AccountGovernanceController.java) + [`account-governance.fxml`](../src/main/resources/com/snoozeshare/ui/admin/accounts/account-governance.fxml) | The Accounts screen (below). Refreshes on `AccountStatusChangedEvent`. |
+| [`SuspensionDialogController`](../src/main/java/com/snoozeshare/ui/admin/accounts/SuspensionDialogController.java) + `suspension-dialog.fxml` | The Suspend and Reactivate modal (one card, two modes). |
+| [`AccountText`](../src/main/java/com/snoozeshare/ui/admin/accounts/AccountText.java), [`AccountSearch`](../src/main/java/com/snoozeshare/ui/admin/accounts/AccountSearch.java) | Pure helpers: role and status labels, `DD MMM YYYY` dates, and the live-search match. |
 | [`MultiSelectMenu`](../src/main/java/com/snoozeshare/ui/admin/audit/MultiSelectMenu.java) | The action-type dropdown with a check per option; an empty selection means every action. |
 | [`AgentModal`](../src/main/java/com/snoozeshare/ui/admin/AgentModal.java) | Shared modal shell: transparent undecorated stage plus a light-grey scrim over the owner window. |
 | [`HeightGrip`](../src/main/java/com/snoozeshare/ui/admin/HeightGrip.java) | Drag handle that resizes chat panes together and the notes box, within min and max heights. |
@@ -539,16 +549,23 @@ sequenceDiagram
 
 - **Filters:** one **Search** box (user name, or booking / ticket / user id; Enter applies it), an **Action type** multi-select (empty means all actions), separate **From** and **To** date pickers, an **Apply filters** button and a red-outline **Clear** button. Filters take effect only on Apply (selecting does not auto-apply); Apply refuses a From date after the To date. The date pickers and the multi-select popup are styled after the design board's Date picker component in `agent-theme.css` (C33).
 - **Table:** TIMESTAMP, ACTOR, ACTION TYPE (a coloured pill), REF (`Booking #0009 · Ticket #0004`, the last four characters of each id), STATUS (`Before → After`, or one status, or a dash), REASON and AMOUNT (signed, for example `+SGD 175.00`), 200 rows at a time with a Load more button. Rows are not clickable: they get the queue's grey hover but keep the default cursor.
-- **Fixed headers on every agent table:** in the dispute queue, the audit log and the categories list only the rows scroll; the header stays put and the slim scroll bar starts below it. The queue and audit tables size to their rows but shrink to the window and scroll internally; the categories list scrolls inside a `ScrollPane` under its fixed header.
+**Accounts screen (W11).** Every Guest, Host and Agent account except the System user, in a fixed-header table.
 
-**Depends on:** `AppContext` (to reach `TicketService`, `DisputeQueryService`, `MessageService`, `AuditService`, `SessionContext`, `EventBus`), the domain enums and records, and `NavShellController` from the shared shell.
+- **Columns:** DISPLAY NAME, EMAIL, ROLE, JOINED (`DD MMM YYYY`), STATUS (an ACTIVE or SUSPENDED pill, with `Reason: …` under a suspended one) and ACTION. Guests and Hosts get a red-outline **Suspend** or a **Reactivate** button of the same size; Agent rows show a dash and no action.
+- **Search:** one live box (no Apply button) that matches the displayed display name, email, role, joined text and status. It does not search the reason.
+- **Modals:** both use `AgentModal` with the 50% scrim. The banner shows the display name large, the email below it and `Role · joined DD MMM YYYY`; Suspend is red and Reactivate is green (#40680C). A reason is required, and Confirm stays disabled until one is typed.
+- **Sizing:** the scroll area takes its height from the laid-out rows, so a filtered list that fits shows without a scroll bar instead of being squeezed.
+
+- **Fixed headers on every agent table:** in the dispute queue, the audit log, the accounts list and the categories list only the rows scroll; the header stays put and the slim scroll bar starts below it. The queue and audit tables size to their rows but shrink to the window and scroll internally; the categories list scrolls inside a `ScrollPane` under its fixed header.
+
+**Depends on:** `AppContext` (to reach `TicketService`, `DisputeQueryService`, `MessageService`, `AuditService`, `AccountGovernanceService`, `SessionContext`, `EventBus`), the domain enums and records, and `NavShellController` from the shared shell.
 
 **Invariants**
 
 - `ui.*` must not import `com.snoozeshare.repository` or `java.sql`; `LayerDependencyTest` and `UiDependencyTest` check this. Controllers reach data only through service interfaces. (The rule against importing `infra.db` is a convention; the tests do not check it.)
 - The dialog requires a reason and a refund within the escrow, and the services enforce the same rules again.
 - There is no Force Cancel / Force Complete control anywhere (C22).
-- Subscriptions are released in `DisputeQueueController.dispose()` when the shell navigates away.
+- Subscriptions are released in `DisputeQueueController.dispose()` and `AccountGovernanceController.dispose()` when the shell navigates away.
 
 **Deviations:** D18 (the JavaFX date-picker popup cannot be restyled to match the board exactly: it keeps two month/year spinners and mixed-case weekday names, has no unavailable-day state, and the categories header columns sit about 5px left of the rows while the scroll bar shows); the design board's Audit Log artboard is older than the built screen (it has User ID / Booking ID inputs and no REF column) and C29 supersedes it. D7 (the design canvas shows Force actions, a newest-first queue, an "Adjust wallet" dropdown and no Accept amount field; the built screens follow C22, oldest-first per F9.1.1, and the refund-amount field of C20); D11 (a sidebar shell) was superseded by C24, so the built shell is the tab strip; D12 (f) (`DisputeDetailController.load()` still calls `render()` outside the error handler). The dispute screens use the `SGD` currency label (C10).
 
@@ -662,10 +679,10 @@ rolls back with the change.
 | `DisputeSettlementServiceImpl` | `TICKET_RESOLVED`, `BOOKING_COMPLETED`, and the guest and host money rows (see the sequence diagram below) |
 | `TicketServiceImpl` | `TICKET_ASSIGNED`, `TICKET_UNASSIGNED`, `TICKET_NOTE_SAVED`, `TICKET_CATEGORY_CREATED`, `TICKET_CATEGORY_RENAMED`, `TICKET_CATEGORY_TOGGLED`, `TICKET_CATEGORY_DELETED` |
 | `ListingServiceImpl` | `LISTING_CREATED`, `LISTING_UPDATED`, `LISTING_STATUS_CHANGED` |
+| `AccountGovernanceServiceImpl` | `ACCOUNT_SUSPENDED` or `ACCOUNT_REACTIVATED`; on a suspension also `LISTING_STATUS_CASCADE`, `BOOKING_FORCE_CANCELLED` and an `ESCROW_REFUND` money row per affected booking ([4.13](#413-account-governance)) |
 | `WalletLedgerWriter` (used by `WalletServiceImpl` and `TransactionServiceImpl`) | One money row per ledger row it writes: `TOP_UP`, `WITHDRAWAL` and the other wallet transaction types |
 
-The `AuditAction` values `BOOKING_CANCELLED_BY_HOST`, `BOOKING_FORCE_CANCELLED`, `TICKET_OPENED`,
-`LISTING_STATUS_CASCADE`, `ACCOUNT_SUSPENDED` and `ACCOUNT_REACTIVATED` exist, but no service writes them yet (see
+The `AuditAction` values `BOOKING_CANCELLED_BY_HOST` and `TICKET_OPENED` exist, but no service writes them yet (see
 [Known Limitations](#known-limitations)).
 
 The System user (`SnoozeShare System`, role `AGENT`, status `SUSPENDED`, so it can never sign in) is
@@ -681,7 +698,7 @@ balance; W14 is planned to fold the two together.
 - **Text** (one search box) matches in two ways, OR-ed. First, the text is resolved to user ids by a case-insensitive contains-match on `users.displayName` and `users.email` and on the `actorName` / `subjectName` snapshots, and the log is queried by those ids as actor or subject; because it goes by id, a user's rows are still found after a rename. Second, if the text is an **id fragment** (4 to 36 hex characters and dashes) it is also matched as a substring against `entityId`, `bookingId`, `ticketId`, `actorUserId` and `subjectUserId`. Text that resolves to nothing returns nothing.
 - **Action types** are a set: rows must have one of the chosen actions (an `IN` clause with bound parameters); an empty set means every action.
 - **Dates** are inclusive. `From` is the start of that day and `To` runs to the end of that day, both in the clock's zone, compared to the whole second.
-- **Ordering** is `timestamp DESC`, then insertion order within an identical timestamp, so the rows of one settlement read in the order they were written.
+- **Ordering** is `timestamp DESC`, then `rowid DESC` within an identical timestamp, so the last row written by an action is on top, like the rest of the list (operator change 2026-09-27).
 - **Paging** is `limit` and `offset`. The screen asks for 200 rows at a time and shows a Load more button while a full page came back.
 
 **Sequence diagram: a dispute resolution writes its audit rows.** All are written inside the
@@ -727,6 +744,7 @@ erDiagram
     TEXT displayName
     TEXT email
     TEXT accountStatus
+    TEXT suspensionReason "V003"
   }
   properties {
     TEXT propertyId PK
@@ -847,6 +865,62 @@ erDiagram
 
 **Deviations:** D13 (dual-write); D15 (the committed mock DB ships already migrated: `schema_history` records V001 and V002, the System user exists, and `db/schema.sql` creates `schema_history`); D16 (seed `availability_blocks` ids were remapped to valid hex); D17 (the spec's `AuditService.query` became `search`, `CATEGORY_DELETED` became `TICKET_CATEGORY_DELETED`, and the search was corrected to a contains-match with a 4-character minimum for id fragments).
 
+### 4.13 Account governance
+
+**Purpose:** let a support agent suspend and reactivate Guest and Host accounts, cascading a suspension to the account's upcoming bookings and listings atomically.
+
+**API**
+
+- [`AccountGovernanceService`](../src/main/java/com/snoozeshare/service/AccountGovernanceService.java), implemented by [`AccountGovernanceServiceImpl`](../src/main/java/com/snoozeshare/service/impl/AccountGovernanceServiceImpl.java): `listAccounts()` (every account except the System user, as [`AccountSummary`](../src/main/java/com/snoozeshare/service/AccountSummary.java) read models), `suspend(userId, agentId, reason)` and `reactivate(userId, agentId, reason)`.
+- `AccountStatusChangedEvent` ([`infra/events/events`](../src/main/java/com/snoozeshare/infra/events/events/AccountStatusChangedEvent.java)) is published after commit; the Accounts screen refreshes on it.
+- Supporting changes: `User.suspensionReason`, `UserRepository.findAll`, `BookingRepository.findByListing`, migration [`V003__suspension_reason.sql`](../src/main/resources/db/migration/V003__suspension_reason.sql), and a guard in `BookingServiceImpl.submitRequest` that refuses a guest whose account is not ACTIVE. The old `UserService.suspend` stub was removed (D19).
+
+**Depends on:** the user, booking, property, wallet, transaction and availability repositories, `TransactionManager`, `AuditService`, the event bus and `BookingStateMachine`.
+
+**Suspension flow** (a Host; a Guest skips the listing step and uses `findByGuest`):
+
+```mermaid
+sequenceDiagram
+  actor Agent
+  participant UI as AccountGovernanceController
+  participant Svc as AccountGovernanceServiceImpl
+  participant Repos as repositories
+  participant Audit as AuditService
+  participant Bus as EventBus
+  Agent->>UI: Suspend, enter reason
+  UI->>Svc: suspend(userId, agentId, reason)
+  Svc->>Svc: validate actor, target, reason
+  Svc->>Repos: save user SUSPENDED with reason
+  Svc->>Audit: ACCOUNT_SUSPENDED
+  loop each ACTIVE listing
+    Svc->>Repos: save property INACTIVE
+    Svc->>Audit: LISTING_STATUS_CASCADE
+  end
+  loop each PENDING or not-yet-started CONFIRMED booking
+    Svc->>Repos: save FORCE_CANCELLED, release blocks
+    Svc->>Repos: credit guest wallet, save refund transaction
+    Svc->>Audit: BOOKING_FORCE_CANCELLED, ESCROW_REFUND
+  end
+  Svc-->>UI: commit, return user
+  Svc->>Bus: AccountStatusChangedEvent and booking and wallet events
+  Bus-->>UI: refresh the list
+```
+
+1. The service checks that the actor is an active Agent, the target is a Guest or Host, the reason is not blank, and the target is ACTIVE (SUSPENDED for reactivation).
+2. Inside one `TransactionManager.inTransaction` call it saves the user with the new status and reason and writes `ACCOUNT_SUSPENDED`.
+3. For a Host it sets each ACTIVE listing INACTIVE and writes `LISTING_STATUS_CASCADE` rows.
+4. For each affected booking it moves the booking to `FORCE_CANCELLED` through `BookingStateMachine` (the agent role), releases the availability blocks and refunds the full booking amount to the guest's wallet with a ledger row, writing `BOOKING_FORCE_CANCELLED` and `ESCROW_REFUND` rows.
+5. Any failure rolls back everything and publishes nothing; after commit the events are published.
+
+**Invariants**
+
+- Affected bookings are PENDING, or CONFIRMED with a check-in date after today (the injected clock's zone). A stay that has started, including one checking in today, or ended is untouched (C36).
+- Reactivation only sets the status to ACTIVE, clears the reason and writes `ACCOUNT_REACTIVATED`. Nothing is restored (C34).
+- Wallet writes are inline in the transaction; `WalletLedgerWriter` is not used because it opens its own transaction (as in `BookingServiceImpl`).
+- Money is `BigDecimal`; tests compare it with `compareTo` because SQLite returns `REAL`.
+
+**Deviations:** D19 (`UserService.suspend` removed); D20 (the System user is hidden from the list; `BookingServiceImpl` gained a `UserRepository` parameter; the cascade refunds `totalAmount` without checking for an `ESCROW_HOLD` row).
+
 ---
 
 ## 5. Requirements
@@ -860,7 +934,9 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 - **F9.2.1** *Dropped.* Force Cancel / Force Complete was removed as redundant with ticket accept and reject (C22).
 - **F9.2.2** Agents resolve a dispute by settling the booking's full held escrow: accept the requested remedy, reject the ticket (host paid in full net of the 3% fee), or apply a manual adjustment (Full refund, Full payout, or a custom split). Guest refunds carry no fee. Resolution completes the booking (`CONFIRMED → COMPLETED`).
 - **F9.3.1** Agents can create, rename, activate/deactivate and delete the ticket categories guests choose from. Delete is beyond the backlog wording (C26): it is refused when any ticket was filed under the label, in which case the category must be deactivated instead.
-- **F11.1.1** The system provides an audit logging service and table and logs every booking state transition. Built as one typed row per change (4.13). Booking cancellation by a host and force cancellation are not written yet (see Known Limitations).
+- **F10.1.1** Agents suspend a Guest or Host account with a required reason; the reason is stored on the user and in the audit log. **Reactivate** is built beyond the backlog wording (C34). Agent accounts are listed but cannot be suspended.
+- **F10.1.2** Suspending an account force-cancels its PENDING and not-yet-started CONFIRMED bookings with a 100% refund and deactivates a Host's ACTIVE listings, atomically (C36). A suspended guest cannot submit a booking request.
+- **F11.1.1** The system provides an audit logging service and table and logs every booking state transition. Built as one typed row per change (4.13). Booking cancellation by a host is not written yet (see Known Limitations).
 - **F11.1.2** Audit logging covers wallet transactions (hold, refund, payout, remedy, override, top-up, withdrawal) and ticket resolutions.
 - **F11.1.3** Agents filter the audit log with one search (user name, or user / booking / ticket id), a set of action types, and a From and To date (4.8, 4.13).
 - **F12.1.1** A `MessageService` gives each dispute ticket a guest-to-agent and a host-to-agent thread. *(planned)*
@@ -882,7 +958,8 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 - **Chat is not persisted** — dispute chat uses `InMemoryMessageService` until the Messaging workstream supplies a persistent `MessageService` (C21).
 - **Host ticket-filing screens** — guests can file tickets through the delivered guest flow; a dedicated host response screen remains outside the current scope.
 - **Category renames do not update existing tickets** — `tickets.category` stores label text (D8).
-- **Accounts tab is a placeholder** — owned by the Account Governance feature (W11).
+- **Suspension refund is not checked against an escrow hold** — the cascade credits the booking's `totalAmount` without reading an `ESCROW_HOLD` row, as `BookingServiceImpl` does (D20).
+- **A stay checking in today counts as started** — a CONFIRMED booking with today's check-in is not cancelled by a suspension (C36). A suspended guest's in-progress stay is paid out by the normal settlement (`BookingService.completeEligibleBookings()`, run at startup, skipping bookings with an open ticket) or by an agent through a dispute ticket.
 - **Platform fees are informational** — `feeAmount` on `BOOKING_PAYOUT` rows records the fee, but there is no platform wallet and no double-entry transfer. Revisit only if the platform needs its own reportable balance (`PROJECT_STATE.md` § Known Gaps).
 - **Ticket categories are a lookup table, not a rules engine** — revisit only if workflow branching is needed (`PROJECT_STATE.md` § Known Gaps).
 - **Authentication is mocked** — login takes an email and checks no credential; role separation is enforced in service code (`PROJECT_STATE.md` § Known Gaps).
@@ -892,9 +969,9 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 - **Self-booking loses an update** — if guest and host are the same user, settlement reads that wallet once (D12 (c)).
 - **Escrow amount is `booking.totalAmount()`** — settlement does not read it from the `ESCROW_HOLD` row (D12 (e)).
 - **A load error can escape the detail screen's handler** — `DisputeDetailController.load()` calls `render()` outside the error handler (D12 (f)).
-- **Audit rows within one second can misorder** — timestamps are `Instant.toString()` text with a variable fractional part, so rows in the same second can sort out of order under `ORDER BY timestamp DESC` (`PROJECT_STATE.md` § Known Gaps).
+- **Audit rows within one second can misorder** — timestamps are `Instant.toString()` text with a variable fractional part, so rows in the same second can sort out of order under `ORDER BY timestamp DESC, rowid DESC` (`PROJECT_STATE.md` § Known Gaps).
 - **The platform fee is only reason text** — the host payout audit row's `reason` names the 3% fee; there is no platform wallet and no fee row until W14 (C30, C31).
-- **W11 governance rows are not emitted yet** — `ACCOUNT_SUSPENDED` and `ACCOUNT_REACTIVATED` exist in `AuditAction` and the schema fits them, but nothing writes them until W11 (C32). Likewise no service writes `BOOKING_CANCELLED_BY_HOST`, `BOOKING_FORCE_CANCELLED`, `TICKET_OPENED` or `LISTING_STATUS_CASCADE`, and W7 host calendar blocks are not audited.
+- **Some audit rows are not emitted yet** — no service writes `BOOKING_CANCELLED_BY_HOST` or `TICKET_OPENED`, and W7 host calendar blocks are not audited.
 - **Audit Log calendar differs from the board** — the date-picker popup keeps two month/year spinners and mixed-case weekday names, and the categories header sits about 5px left of its rows while the scroll bar shows (D18). The `REF` column truncates when a row has both a booking and a ticket.
 - **Wallet movements are written twice** — the ledger and the audit log both record them until W14 (D13).
 - **The Audit Log screen has not been run in the real app** — plan Task 10 Step 3 was not performed; FX smoke and snapshot tests cover the flows, and the manual check below remains (D14).
@@ -909,10 +986,12 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 - **Action type:** the kind of change an audit row records, one `AuditAction` constant (for example `TICKET_RESOLVED`, `ESCROW_HOLD`). The Audit Log filters by a set of them.
 - **Audit row / audit log:** the `audit_log` table. One row is one change, either a status change (`beforeState` / `afterState`) or a wallet adjustment, never both.
 - **BOOKING_PAYOUT:** wallet transaction type for money released to the host. On dispute settlement its `amount` is already net of the 3% fee and `feeAmount` records the fee.
+- **Cascade (suspension):** the bookings and listings changed in the same transaction as a suspension: force-cancelled bookings with refunds and a Host's deactivated listings.
 - **Dispute window:** the 7 days after checkout during which escrow stays held and a ticket can be opened (C17).
 - **Escrow:** the booking's `totalAmount`, held out of the guest's wallet from booking until it is refunded or paid out. It is "held" while a booking has an `ESCROW_HOLD` row and no releasing row.
 - **ESCROW_HOLD:** wallet transaction type that records the escrow being taken from the guest.
 - **Dual-write:** writing a wallet movement to both `wallet_transactions` and `audit_log` in one transaction, until W14 unifies them (D13).
+- **FORCE_CANCELLED:** booking status set by an agent-role transition; today only the suspension cascade produces it.
 - **Guest refund (`R`):** the part of the escrow returned to the guest; never charged a fee.
 - **Host share:** `escrow − R`, the gross amount owed to the host before the 3% fee.
 - **Id fragment:** four or more hex characters (and dashes) typed in the audit search, matched anywhere in an entity, booking, ticket, actor or subject id.
@@ -921,10 +1000,12 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 - **Manual adjustment:** an agent-chosen split of the held escrow (Full refund, Full payout or Custom), independent of the remedy the ticket asked for.
 - **Mock DB:** the committed reference database `db/snoozeshare-mock.db`, built from `db/schema.sql` and `db/seed-mock-data.sql`.
 - **REF:** the Audit Log column naming the booking and ticket a row concerns, by the last four characters of each id.
+- **Reactivation:** returning a SUSPENDED Guest or Host to ACTIVE and clearing the reason. It restores no bookings or listings.
 - **Remedy:** what the ticket raiser asks for: `FULL_REFUND`, `PARTIAL_REFUND`, `HOST_PAYOUT` or `OTHER`.
 - **Scrim:** the light-grey 50% overlay laid over the agent window while a modal dialog is open (C26).
 - **Settlement:** dividing a booking's whole held escrow between guest and host in one atomic transaction when an agent resolves a ticket.
 - **Subject user:** the user an audited change happened to (for example the guest whose wallet moved), as opposed to the actor who caused it.
+- **Suspension reason:** the required text an agent enters when suspending or reactivating; stored in `users.suspensionReason` while suspended and in the audit row.
 - **System user:** the seeded, suspended, non-loginable account (`AuditService.SYSTEM_ACTOR_ID`) that owns system-initiated audit rows.
 - **Ticket:** a dispute filed against a booking by its guest or host. It moves `OPEN → IN_REVIEW → RESOLVED_APPROVED` or `RESOLVED_REJECTED`.
 - **Ticket category:** an admin-managed label (`ticket_categories`) offered to guests when they file a ticket. A ticket stores the label text.
@@ -957,6 +1038,8 @@ measured for this guide.
 | Audit trail, unit and service: `AuditActionTest`, `AuditRecordTest`, `AuditServiceTest`, `WalletLedgerAuditTest`, `AuditLogFormattingTest` | The enum and wallet-type mapping, the one-row-one-change rule and builder, status-only rows with name snapshots, search by name (surviving a rename), id fragment, action set, inclusive dates and ordering, top-up and withdrawal money rows and rollback when the audit write fails, and the screen's status, amount and REF text. |
 | Audit trail, database: `JdbcAuditLogRepositoryTest`, `AuditTrailMigrationTest`, `MockAuditSeedTest`, `CommittedMockDbTest` | Repository round trips and search clauses; V002 adds the columns and the System user and is idempotent; the seeded audit rows (one money row per ledger row, the four rows of ticket `#0004`, governance rows in the shape W11 will write). `CommittedMockDbTest` opens the committed `db/snoozeshare-mock.db` **directly and read-only** (not a copy, and without `MigrationRunner`) and checks it already has the audit columns, the System user and migration version 2, so a stale committed file cannot hide behind a migrated copy (D15). |
 | Audit screen layout (FX toolkit): `MultiSelectMenuTest`, `AdminTableLayoutTest` | The multi-select control's behaviour; fixed table headers, shared control heights, hover without a hand cursor and the date-picker styling on the agent tables. They skip when the toolkit cannot start. |
+| Account governance: `AccountGovernanceServiceTest`, `AccountGovernanceCascadeTest`, `AccountGovernanceAtomicityTest`, `SuspensionReasonMigrationTest`, `BookingServiceTest` | Validation, audit rows and events; the cascade scope (PENDING and not-yet-started CONFIRMED), refunds and listing deactivation; rollback on failure; V003; the suspended-guest booking guard |
+| Accounts UI: `AccountTextTest`, `AccountSearchTest`, `SuspensionDialogFlowTest`, `AccountGovernanceUiTest` | Labels and dates, live-search matching, the modal's required reason, the screen's rows, actions and refresh |
 | Atomicity: `DisputeSettlementAtomicityTest` | A forced failure after the guest row rolls back everything and publishes nothing; the connection stays usable. |
 | Schema and migration: `SchemaParityTest`, `MockDbFixtureTest`, `MigrationRunnerReferenceDbTest` | `V001__foundation.sql` matches `db/schema.sql`; the mock DB opens and passes the ledger invariant; baseline adoption. |
 | End to end: `DisputeFlowEndToEndTest` | `AppContext` on a mock DB copy: agent works an open ticket from queue to resolution through the real services. |
@@ -983,8 +1066,9 @@ measured for this guide.
   3. Open ticket `#0002`. Check the booking summary shows the held escrow and "Stay ended — escrow held", that Accept, Reject dispute and Manual adjustment are disabled, and that no Force control exists.
   4. Press Assign to me (the button becomes Unassign and the actions enable). Type in the notes box, press Save, and drag the grips to resize the chat panes and notes box.
   5. Press Accept and enter a refund of `175`: the preview should read `Guest refund SGD 175.00 | Host payout SGD 679.00 (fee SGD 21.00)`. Leave the reason empty and confirm the dialog will not submit, then enter a reason and confirm.
-  6. Open the Categories tab: add, rename and deactivate a category, try a duplicate label, and delete one that no ticket uses.
-- **Expected:** the agent screens use the canvas tab strip and "Fall Light" palette; every modal dims the window behind it with a light-grey scrim; the resolved ticket shows escrow as "Settled" and its actions are disabled; a duplicate category label shows an error; a category used by a ticket cannot be deleted.
+  6. Open the Accounts tab and type part of a name, email, role or status: the list filters live, and a short result list shows in full with no scroll bar. Suspend a Guest with upcoming bookings (a reason is required): the banner shows the display name, email and role, the row turns SUSPENDED with its reason, and Audit Log shows `ACCOUNT_SUSPENDED` with the cancellation and refund rows. Reactivate the account: the status returns to ACTIVE and no booking or listing is restored. Agent rows show a dash.
+  7. Open the Categories tab: add, rename and deactivate a category, try a duplicate label, and delete one that no ticket uses.
+- **Expected:** the agent screens use the canvas tab strip and "Fall Light" palette; every modal dims the window behind it with a light-grey scrim; the resolved ticket shows escrow as "Settled" and its actions are disabled; a duplicate category label shows an error; a category used by a ticket cannot be deleted; the Accounts modals show a red (Suspend) or green (Reactivate) banner and refuse an empty reason.
 
 **Audit Log real-app check (D14).** Not yet performed; the FX smoke and snapshot tests cover the flows but nobody has driven the real app.
 

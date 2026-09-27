@@ -5,6 +5,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 import com.snoozeshare.app.AppContext;
+import com.snoozeshare.ui.admin.accounts.AccountGovernanceController;
 import com.snoozeshare.ui.admin.audit.AuditLogController;
 import com.snoozeshare.ui.admin.categories.CategoryAdminController;
 import com.snoozeshare.ui.admin.tickets.DisputeDetailController;
@@ -29,13 +30,9 @@ public final class AdminShellController extends NavShellController {
     @FXML private Label auditTab;
     @FXML private Label categoriesTab;
 
-    private Node defaultCenter;
     private DisputeQueueController queueController;
-
-    @FXML
-    private void initialize() {
-        defaultCenter = shellRoot.getCenter();
-    }
+    private AccountGovernanceController accountsController;
+    private DisputeDetailController detailController;
 
     @Override
     public void setContext(AppContext appContext) {
@@ -73,14 +70,23 @@ public final class AdminShellController extends NavShellController {
     @FXML
     private void showAccounts() {
         selectTab(accountsTab);
-        restoreDefaultCenter();
-        displayPage("Accounts", "Account governance is coming soon.");
+        disposeLiveViews();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/snoozeshare/ui/admin/accounts/account-governance.fxml"));
+            Node view = loader.load();
+            accountsController = loader.getController();
+            accountsController.setContext(getContext());
+            shellRoot.setCenter(view);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load account governance", exception);
+        }
     }
 
     @FXML
     private void showAuditLog() {
         selectTab(auditTab);
-        disposeQueue();
+        disposeLiveViews();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/admin/audit/audit-log.fxml"));
@@ -96,7 +102,7 @@ public final class AdminShellController extends NavShellController {
     @FXML
     private void showCategories() {
         selectTab(categoriesTab);
-        disposeQueue();
+        disposeLiveViews();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/admin/categories/category-admin.fxml"));
@@ -110,7 +116,7 @@ public final class AdminShellController extends NavShellController {
     }
 
     private void showQueue() {
-        disposeQueue();
+        disposeLiveViews();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/admin/tickets/dispute-queue.fxml"));
@@ -132,30 +138,33 @@ public final class AdminShellController extends NavShellController {
     }
 
     private void showDetail(UUID ticketId) {
-        disposeQueue();
+        disposeLiveViews();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/admin/tickets/dispute-detail.fxml"));
             Node view = loader.load();
-            DisputeDetailController controller = loader.getController();
-            controller.setContext(getContext());
-            controller.setOnBack(this::showQueue);
-            controller.load(ticketId);
+            detailController = loader.getController();
+            detailController.setContext(getContext());
+            detailController.setOnBack(this::showQueue);
+            detailController.load(ticketId);
             shellRoot.setCenter(view);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load dispute detail", exception);
         }
     }
 
-    private void restoreDefaultCenter() {
-        disposeQueue();
-        shellRoot.setCenter(defaultCenter);
-    }
-
-    private void disposeQueue() {
+    private void disposeLiveViews() {
         if (queueController != null) {
             queueController.dispose();
             queueController = null;
+        }
+        if (accountsController != null) {
+            accountsController.dispose();
+            accountsController = null;
+        }
+        if (detailController != null) {
+            detailController.dispose();
+            detailController = null;
         }
     }
 }

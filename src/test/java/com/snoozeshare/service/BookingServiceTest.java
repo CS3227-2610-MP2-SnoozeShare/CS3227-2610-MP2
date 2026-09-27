@@ -561,6 +561,28 @@ class BookingServiceTest {
         }
     }
 
+    @Test
+    void aSuspendedGuestCannotSubmitABookingRequest() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("500.00"));
+            var users = new JdbcUserRepository(connection);
+            User guest = users.findById(ctx.guestId).orElseThrow();
+            users.save(new User(guest.userId(), guest.role(), guest.displayName(), guest.email(),
+                    AccountStatus.SUSPENDED, null, guest.createdAt(), "policy breach"));
+            BookingService service = createService(connection);
+
+            var thrown = assertThrows(IllegalStateException.class, () -> service.submitRequest(ctx.guestId,
+                    ctx.propertyId, LocalDate.now().plusDays(10), LocalDate.now().plusDays(12)));
+
+            assertEquals("Account is not active", thrown.getMessage());
+            try (var statement = connection.createStatement();
+                 var rows = statement.executeQuery("SELECT COUNT(*) FROM bookings")) {
+                rows.next();
+                assertEquals(0, rows.getInt(1));
+            }
+        }
+    }
+
     // --- helpers ---
 
     private record TestContext(UUID guestId, UUID hostId, UUID propertyId) {

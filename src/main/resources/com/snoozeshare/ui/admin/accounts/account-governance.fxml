@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="16" styleClass="agent-content" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.snoozeshare.ui.admin.accounts.AccountGovernanceController">
+    <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
+
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <VBox spacing="2">
+            <Label text="Account governance" styleClass="page-title"/>
+            <Label text="Suspend or reactivate Guest and Host accounts" styleClass="small"/>
+        </VBox>
+        <Region HBox.hgrow="ALWAYS"/>
+        <TextField fx:id="searchField" promptText="Search..." prefWidth="260"/>
+    </HBox>
+
+    <VBox styleClass="agent-card">
+        <GridPane styleClass="agent-grid-header">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="17"/>
+                <ColumnConstraints percentWidth="24"/>
+                <ColumnConstraints percentWidth="12"/>
+                <ColumnConstraints percentWidth="15"/>
+                <ColumnConstraints percentWidth="20"/>
+                <ColumnConstraints percentWidth="12"/>
+            </columnConstraints>
+            <Label text="DISPLAY NAME" GridPane.columnIndex="0"/>
+            <Label text="EMAIL" GridPane.columnIndex="1"/>
+            <Label text="ROLE" GridPane.columnIndex="2"/>
+            <Label text="JOINED" GridPane.columnIndex="3"/>
+            <Label text="STATUS" GridPane.columnIndex="4"/>
+            <Label text="ACTION" GridPane.columnIndex="5"/>
+        </GridPane>
+        <ScrollPane fx:id="rowsScroll" fitToWidth="true" hbarPolicy="NEVER" styleClass="agent-rows-scroll">
+            <VBox fx:id="rows"/>
+        </ScrollPane>
+        <Label fx:id="emptyLabel" text="No accounts match your search" styleClass="agent-empty"/>
+    </VBox>
+    <Label fx:id="errorLabel" styleClass="error-message"/>
+</VBox>

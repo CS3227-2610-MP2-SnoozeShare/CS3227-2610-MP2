@@ -14,5 +14,8 @@ public interface UserRepository {
 
     List<User> findByRole(Role role);
 
+    /** Every user, oldest first (createdAt, then id). */
+    List<User> findAll();
+
     User save(User user);
 }

@@ -16,7 +16,8 @@ CREATE TABLE users (
     email               TEXT NOT NULL UNIQUE,
     accountStatus       TEXT NOT NULL CHECK (accountStatus IN ('ACTIVE','SUSPENDED')),
     registrationCode    TEXT,
-    createdAt           TEXT NOT NULL
+    createdAt           TEXT NOT NULL,
+    suspensionReason    TEXT
 );
 
 CREATE TABLE properties (
@@ -148,7 +149,43 @@ CREATE INDEX idx_audit_subject ON audit_log(subjectUserId);
 CREATE INDEX idx_audit_booking ON audit_log(bookingId);
 CREATE INDEX idx_audit_ticket ON audit_log(ticketId);
 
--- Migration bookkeeping, identical to what MigrationRunner creates. The seed records V001 and V002 as applied.
+CREATE TABLE messages (
+    messageId             TEXT PRIMARY KEY,
+    ticketId              TEXT NOT NULL REFERENCES tickets(ticketId),
+    channel               TEXT NOT NULL CHECK (channel IN ('GUEST','HOST')),
+    authorId              TEXT NOT NULL REFERENCES users(userId),
+    authorRole            TEXT NOT NULL CHECK (authorRole IN ('GUEST','HOST','AGENT')),
+    body                  TEXT NOT NULL,
+    sentAt                TEXT NOT NULL
+);
+CREATE INDEX idx_messages_thread ON messages(ticketId, channel);
+
+CREATE TABLE message_reads (
+    ticketId              TEXT NOT NULL REFERENCES tickets(ticketId),
+    channel               TEXT NOT NULL CHECK (channel IN ('GUEST','HOST')),
+    userId                TEXT NOT NULL REFERENCES users(userId),
+    lastReadMessageId     TEXT NOT NULL REFERENCES messages(messageId),
+    PRIMARY KEY (ticketId, channel, userId)
+);
+
+CREATE TABLE booking_messages (
+    messageId             TEXT PRIMARY KEY,
+    bookingId             TEXT NOT NULL REFERENCES bookings(bookingId),
+    authorId              TEXT NOT NULL REFERENCES users(userId),
+    authorRole            TEXT NOT NULL CHECK (authorRole IN ('GUEST','HOST')),
+    body                  TEXT NOT NULL,
+    sentAt                TEXT NOT NULL
+);
+CREATE INDEX idx_booking_messages_booking ON booking_messages(bookingId);
+
+CREATE TABLE booking_message_reads (
+    bookingId             TEXT NOT NULL REFERENCES bookings(bookingId),
+    userId                TEXT NOT NULL REFERENCES users(userId),
+    lastReadMessageId     TEXT NOT NULL REFERENCES booking_messages(messageId),
+    PRIMARY KEY (bookingId, userId)
+);
+
+-- Migration bookkeeping, identical to what MigrationRunner creates. The seed records V001 to V005 as applied.
 CREATE TABLE IF NOT EXISTS schema_history (
     version   INTEGER PRIMARY KEY,
     appliedAt TEXT NOT NULL

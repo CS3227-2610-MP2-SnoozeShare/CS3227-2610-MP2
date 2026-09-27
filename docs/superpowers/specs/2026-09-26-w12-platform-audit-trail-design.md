@@ -61,8 +61,8 @@ lose scale, so tests use `compareTo` per D4).
   written into `reason`, e.g. `Payout net of 3% platform fee (11.40)`; there is no platform wallet, C30).
 - **Non-status changes** (listing edit, category rename, note saved): states are null and `reason`
   describes the change without embedding content (note text is not logged).
-- Rows from one action share one `Instant`; ties are ordered by insertion (`rowid`), so a resolution
-  reads in causal order.
+- Rows from one action share one `Instant`; ties are ordered newest-inserted first (`rowid DESC`, operator change 2026-09-27), so the last
+  thing written is on top, like the rest of the list.
 - Append-only: no update/delete path exists in `AuditLogRepository`.
 
 ### Worked example — agent resolves ticket T (Accept, refund 100 of 480 escrow)
@@ -127,7 +127,7 @@ is added). The seeded suspension/cascade rows are written in this shape.
   case-insensitive contains match on display name/email, **resolved to user ids first** (current
   `users` names ∪ names recorded in the log), and the log is then queried by
   `actorUserId IN (...) OR subjectUserId IN (...)`, so a user's whole history appears even after a
-  rename. Date range is inclusive, in the app clock's zone. Order: `timestamp DESC, rowid ASC`.
+  rename. Date range is inclusive, in the app clock's zone. Order: `timestamp DESC, rowid DESC` (changed 2026-09-27 by operator: last written on top).
   Page size 200 with a "Load more" button.
 - **Instrumentation points** (all inside the existing `TransactionManager` lambdas):
   `BookingServiceImpl` submit/decide/cancel/complete; `TicketServiceImpl` create-path, assign,

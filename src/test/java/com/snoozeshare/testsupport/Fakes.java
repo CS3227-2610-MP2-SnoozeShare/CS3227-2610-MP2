@@ -72,6 +72,11 @@ public final class Fakes {
         }
 
         @Override
+        public List<Ticket> findByParty(UUID userId, Role role) {
+            return List.of();
+        }
+
+        @Override
         public Ticket save(Ticket ticket) {
             store.put(ticket.ticketId(), ticket);
             return ticket;
@@ -136,6 +141,13 @@ public final class Fakes {
         @Override
         public List<User> findByRole(Role role) {
             return store.values().stream().filter(u -> u.role() == role).toList();
+        }
+
+        @Override
+        public List<User> findAll() {
+            return store.values().stream()
+                    .sorted(java.util.Comparator.comparing(User::createdAt).thenComparing(User::userId))
+                    .toList();
         }
 
         @Override

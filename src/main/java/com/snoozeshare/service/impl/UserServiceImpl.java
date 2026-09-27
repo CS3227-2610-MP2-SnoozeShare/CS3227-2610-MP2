@@ -76,15 +76,6 @@ public final class UserServiceImpl implements UserService {
         return users.findByRole(role);
     }
 
-    @Override
-    public User suspend(UUID userId, UUID agentId) {
-        User user = users.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
-        User suspended = new User(user.userId(), user.role(), user.displayName(), user.email(),
-                AccountStatus.SUSPENDED, user.registrationCode(), user.createdAt());
-        return users.save(suspended);
-    }
-
     private static void validateRegistrationCode(Role role, String registrationCode) {
         if (role == Role.GUEST) {
             return;
