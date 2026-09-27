@@ -1327,6 +1327,8 @@ git commit -m "refactor(w14): WalletService writes through LedgerWriter"
 
 ### Task 8: `TransactionService` and `BookingService` use the writer
 
+**Executed 2026-09-27 with two follow-up fixes, both approved.** Review found that `LedgerWriter` rejecting a zero amount exposed a pre-existing gap: a $0-rate listing could be booked and its settlement (called from `AppContext` startup) would then throw uncaught. The operator chose to forbid degenerate rates (`ListingServiceImpl`/the host form now require `baseNightlyRate > 0` with at most 2 decimal places, C42) rather than build out free-stay support in settlement/`EscrowPolicy`/disputes. The plan's original unconditional Step 3 code (holds/refunds with no `signum()` guard) is correct as written once that validation exists.
+
 **Files:**
 - Modify: `service/impl/TransactionServiceImpl.java`, `service/impl/BookingServiceImpl.java`, `app/AppContext.java`
 - Modify tests: `TransactionServiceTest`, `BookingServiceTest` (+ any other constructing these; compiler lists them)
