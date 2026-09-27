@@ -45,6 +45,7 @@ class FileTicketTest {
     private final List<DomainEvent> publishedEvents = new ArrayList<>();
 
     private final UUID guestId = UUID.randomUUID();
+    private final UUID hostId = UUID.randomUUID();
     private final UUID listingId = UUID.randomUUID();
     // Clock fixed to Sep 10, 2026 — booking endDate Sep 5 is within the 7-day window
     private final Clock clock = Clock.fixed(
@@ -126,6 +127,32 @@ class FileTicketTest {
     void rejectsWhenGuestDoesNotOwnBooking() {
         UUID otherGuest = UUID.randomUUID();
         assertThrows(IllegalArgumentException.class, () -> service.fileTicket(validRequest(), otherGuest, Role.GUEST));
+    }
+
+    @Test
+    void hostCanFileTicketForTheirPropertyBooking() {
+        Ticket filed = service.fileTicket(validRequest(), hostId, Role.HOST);
+
+        assertEquals(hostId, filed.raisedByUserId());
+        assertEquals(Role.HOST, filed.raisedByRole());
+    }
+
+    @Test
+    void hostCannotFileTicketForAnotherHostsBooking() {
+        UUID anotherHost = UUID.randomUUID();
+        assertThrows(IllegalArgumentException.class,
+                () -> service.fileTicket(validRequest(), anotherHost, Role.HOST));
+    }
+
+    @Test
+    void hostTicketBookingOptionsContainOnlyEligibleUnusedBookings() {
+        List<HostTicketBookingOption> options = service.hostTicketBookingOptions(hostId);
+
+        assertEquals(List.of(validBooking.bookingId()), options.stream()
+                .map(option -> option.booking().bookingId()).toList());
+
+        service.fileTicket(validRequest(), hostId, Role.HOST);
+        assertTrue(service.hostTicketBookingOptions(hostId).isEmpty());
     }
 
     @Test
@@ -229,7 +256,7 @@ class FileTicketTest {
                 settlement, audit, clock, eventBus);
     }
 
-    private static BookingRepository stubBookings(Booking booking) {
+    private BookingRepository stubBookings(Booking booking) {
         return new BookingRepository() {
             @Override
             public Optional<Booking> findById(UUID id) {
@@ -254,6 +281,11 @@ class FileTicketTest {
             @Override
             public List<Booking> findByHostPending(UUID hostId) {
                 return List.of();
+            }
+
+            @Override
+            public List<Booking> findByHost(UUID hostId) {
+                return hostId.equals(FileTicketTest.this.hostId) ? List.of(booking) : List.of();
             }
 
             @Override

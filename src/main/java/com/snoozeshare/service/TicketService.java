@@ -12,8 +12,11 @@ import com.snoozeshare.service.requests.NewTicketRequest;
 import com.snoozeshare.service.requests.ResolutionRequest;
 
 public interface TicketService {
-    /** Owned by W4 (guest filing). */
+    /** Files a ticket for an authorized guest or host booking party. */
     Ticket fileTicket(NewTicketRequest request, UUID raisedByUserId, Role raisedByRole);
+
+    /** Returns host-owned bookings currently eligible for a new ticket, newest first. */
+    List<HostTicketBookingOption> hostTicketBookingOptions(UUID hostId);
 
     /** Returns all tickets filed by the given user, newest first. */
     List<Ticket> myTickets(UUID userId);
