@@ -201,5 +201,8 @@ public final class ListingServiceImpl implements ListingService {
             throw new IllegalArgumentException("Bathrooms must be non-negative");
         }
         DomainValidation.requirePositive(draft.baseNightlyRate(), "baseNightlyRate");
+        if (draft.baseNightlyRate().stripTrailingZeros().scale() > 2) {
+            throw new IllegalArgumentException("baseNightlyRate must have at most 2 decimal places");
+        }
     }
 }

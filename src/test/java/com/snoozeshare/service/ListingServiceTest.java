@@ -256,7 +256,11 @@ class ListingServiceTest {
                 Arguments.of(with(valid, valid.title(), valid.description(), valid.streetAddress(),
                         valid.city(), valid.region(), valid.postalCode(), valid.maxGuests(),
                         valid.bedrooms(), valid.bathrooms(), valid.baseNightlyRate(), null,
-                        valid.checkInTime(), valid.checkOutTime())));
+                        valid.checkInTime(), valid.checkOutTime())),
+                Arguments.of(with(valid, valid.title(), valid.description(), valid.streetAddress(),
+                        valid.city(), valid.region(), valid.postalCode(), valid.maxGuests(),
+                        valid.bedrooms(), valid.bathrooms(), new BigDecimal("0.005"),
+                        valid.propertyType(), valid.checkInTime(), valid.checkOutTime())));
     }
 
     @Test

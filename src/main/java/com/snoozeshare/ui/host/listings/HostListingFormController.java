@@ -208,6 +208,9 @@ public final class HostListingFormController {
             if (parsed.signum() <= 0) {
                 throw new IllegalArgumentException("Nightly rate must be greater than 0");
             }
+            if (parsed.stripTrailingZeros().scale() > 2) {
+                throw new IllegalArgumentException("Nightly rate must have at most 2 decimal places");
+            }
             return parsed;
         } catch (NumberFormatException exception) {
             throw new IllegalArgumentException("Nightly rate must be a number");
