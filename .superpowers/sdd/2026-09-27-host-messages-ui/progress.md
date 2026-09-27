@@ -6,3 +6,5 @@ HostConversationRow and booking bubble renderer; Tasks 3→4 share the New Ticke
 
 Task 1: complete (focused ticket-service tests pass; full suite has the pre-existing
 `AgentModalTest.escapeAndWindowCloseAlsoRemoveTheScrim` failure).
+Task 2: complete (focused projection and bubble tests pass; full suite has the same pre-existing
+`AgentModalTest.escapeAndWindowCloseAlsoRemoveTheScrim` failure).
