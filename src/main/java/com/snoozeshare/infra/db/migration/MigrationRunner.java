@@ -20,6 +20,11 @@ public final class MigrationRunner {
 
     public static void migrate(Connection connection) throws SQLException {
         boolean originalAutoCommit = connection.getAutoCommit();
+        // The pragma is a no-op inside a transaction, so it must be switched before setAutoCommit(false).
+        boolean restoreForeignKeys = originalAutoCommit && foreignKeysEnabled(connection);
+        if (restoreForeignKeys) {
+            setForeignKeys(connection, false);
+        }
         connection.setAutoCommit(false);
         try {
             createHistoryTable(connection);
@@ -69,6 +74,33 @@ public final class MigrationRunner {
             throw exception;
         } finally {
             connection.setAutoCommit(originalAutoCommit);
+            if (restoreForeignKeys) {
+                setForeignKeys(connection, true);
+            }
+        }
+    }
+
+    private static boolean foreignKeysEnabled(Connection connection) throws SQLException {
+        try (Statement statement = connection.createStatement();
+             var result = statement.executeQuery("PRAGMA foreign_keys")) {
+            return result.next() && result.getInt(1) == 1;
+        }
+    }
+
+    private static void setForeignKeys(Connection connection, boolean on) throws SQLException {
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("PRAGMA foreign_keys = " + (on ? "ON" : "OFF"));
+        }
+    }
+
+    /** Fails the migration if any row now points at a missing parent. */
+    private static void requireForeignKeysIntact(Connection connection) throws SQLException {
+        try (Statement statement = connection.createStatement();
+             var result = statement.executeQuery("PRAGMA foreign_key_check")) {
+            if (result.next()) {
+                throw new SQLException("Foreign key violation after migration in table "
+                        + result.getString("table") + " (row " + result.getLong("rowid") + ")");
+            }
         }
     }
 
