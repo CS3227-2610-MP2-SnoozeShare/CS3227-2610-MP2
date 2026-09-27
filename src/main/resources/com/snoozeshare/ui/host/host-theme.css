@@ -741,7 +741,7 @@
     -fx-border-radius: 10px;
     -fx-border-width: 1px;
     -fx-effect: dropshadow(gaussian, rgba(16, 6, 4, 0.08), 10, 0, 0, 2);
-    -fx-padding: 18px;
+    -fx-padding: 12px;
 }
 .host-root .listing-form-card-title {
     -fx-text-fill: accent;
@@ -759,7 +759,7 @@
     -fx-border-color: border;
     -fx-border-radius: 7px;
     -fx-background-radius: 7px;
-    -fx-padding: 8px 10px;
+    -fx-padding: 6px 8px;
 }
 .host-root .listing-form-card .text-field:focused,
 .host-root .listing-form-card .combo-box-base:focused {
@@ -774,16 +774,16 @@
     -fx-background-radius: 7px;
     -fx-border-color: border;
     -fx-border-radius: 7px;
-    -fx-padding: 8px 10px;
+    -fx-padding: 6px 8px;
 }
 .host-root .amenity-option .check-box { -fx-text-fill: fg; }
 .host-root .listing-form-action {
     -fx-min-width: 132px;
     -fx-pref-width: 132px;
     -fx-max-width: 132px;
-    -fx-min-height: 40px;
-    -fx-pref-height: 40px;
-    -fx-max-height: 40px;
+    -fx-min-height: 34px;
+    -fx-pref-height: 34px;
+    -fx-max-height: 34px;
 }
 .host-root .wallet-action-button {
     -fx-min-width: 118px;

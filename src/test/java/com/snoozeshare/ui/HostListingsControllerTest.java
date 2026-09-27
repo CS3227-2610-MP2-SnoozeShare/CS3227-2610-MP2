@@ -161,8 +161,10 @@ class HostListingsControllerTest {
 
         assertTrue(fxml.contains("styleClass=\"listing-form-action\""));
         assertTrue(fxml.contains("styleClass=\"outline-button, listing-form-action\""));
+        assertTrue(fxml.contains("<HBox alignment=\"CENTER_LEFT\" spacing=\"10\">"));
+        assertTrue(fxml.contains("<VBox fx:id=\"formRoot\" styleClass=\"listing-form-page\" spacing=\"12\">"));
         assertTrue(theme.contains(".host-root .listing-form-action"));
-        assertTrue(theme.contains("-fx-pref-height: 40px"));
+        assertTrue(theme.contains("-fx-pref-height: 34px"));
     }
 
     @Test
