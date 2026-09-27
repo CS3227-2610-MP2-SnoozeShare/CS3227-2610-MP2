@@ -98,7 +98,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W12 | F11 — Platform Audit Trail (Analytics half of the epic has no items, out of scope; W11 emits the account-governance rows, C32) | Done | [W12 design](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) | [W12 plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md) | Done | Documented 2026-09-26 |
 | W14 | Unified ledger — fold `wallet_transactions` into `audit_log`, `users.balance`, System account with a real wallet (C30, C31) | Not started | — | — | Not spec'd; reverses Known Gaps entry, C3, C9; runs after W12; touches W1/W3/W5/W6/W10 money paths | — |
 | W13 | F12 — Messaging (persistent ticket chat; `MessageService` replaces the in-memory seam; guest/host UI deferred, C37) | Building | [W13 design](docs/superpowers/specs/2026-09-27-w13-messaging-service-design.md) | [W13 plan](docs/superpowers/plans/2026-09-27-w13-messaging-service.md) | Service slice done (Tasks 1–7); guest/host Messages UI not started (C37); operator acceptance pending | — |
-| W14 | Host Listings Dashboard & Copy Refinement | Done | — | — | Live listing metrics, listing-card redesign, Requests/wallet copy, and layout updates complete; operator explicitly waived new spec/plan | — |
+| W15 | Host Listings Dashboard & Copy Refinement | Done | — | — | Live listing metrics, listing-card redesign, Requests/wallet copy, and layout updates complete; operator explicitly waived new spec/plan | — |
 
 **Handoffs into W3 (raised by W10, 2026-09-25; W3 reached `main` 2026-09-25, W10 merged `main` 2026-09-26 and the
 stubs below are still open)** — honour or reconcile these:
@@ -543,7 +543,7 @@ architecture area remain recorded in that area's table.
 
 ### D22 — W13 notes (2026-09-27)
 
-The `MessageService.thread` signature gained a viewer (`viewerId`, `viewerRole`) and the in-memory implementation was deleted, so any other branch calling the old `thread(ticketId, channel)` must update. Wrong-role and non-party calls throw `IllegalArgumentException`, unlike W10's in-memory service which trusted the caller. Schema parity, `DatabaseBootstrapTest`, `MigrationRunnerReferenceDbTest` and `CommittedMockDbTest` now expect V004. Still red and unrelated (D21): `FileTicketTest.successfullyFilesTicketAndPublishesEvent`, `ShellLayoutTest.hostWalletPageUsesTheSamePageInsetAsListingsAndBookings`. Note: § Workstreams has two rows numbered W14 (the unified ledger and the Host Listings Dashboard); left as found, it needs an ID decision from the operator.
+The `MessageService.thread` signature gained a viewer (`viewerId`, `viewerRole`) and the in-memory implementation was deleted, so any other branch calling the old `thread(ticketId, channel)` must update. Wrong-role and non-party calls throw `IllegalArgumentException`, unlike W10's in-memory service which trusted the caller. Schema parity, `DatabaseBootstrapTest`, `MigrationRunnerReferenceDbTest` and `CommittedMockDbTest` now expect V004. Still red and unrelated (D21): `FileTicketTest.successfullyFilesTicketAndPublishesEvent`, `ShellLayoutTest.hostWalletPageUsesTheSamePageInsetAsListingsAndBookings`. The duplicate W14 was resolved by the operator renaming the Host Listings Dashboard row to W15.
 
 ### D21 — Merge of `origin/main` into the W11 branch (2026-09-27)
 
