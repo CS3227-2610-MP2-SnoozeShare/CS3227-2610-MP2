@@ -11,6 +11,7 @@ import com.snoozeshare.infra.events.InProcessEventBus;
 import com.snoozeshare.repository.jdbc.JdbcAuditLogRepository;
 import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
+import com.snoozeshare.repository.jdbc.JdbcMessageRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
 import com.snoozeshare.repository.jdbc.JdbcReviewRepository;
 import com.snoozeshare.repository.jdbc.JdbcTicketCategoryRepository;
@@ -38,9 +39,9 @@ import com.snoozeshare.service.impl.AvailabilityServiceImpl;
 import com.snoozeshare.service.impl.BookingServiceImpl;
 import com.snoozeshare.service.impl.DisputeQueryServiceImpl;
 import com.snoozeshare.service.impl.DisputeSettlementServiceImpl;
-import com.snoozeshare.service.impl.InMemoryMessageService;
 import com.snoozeshare.service.impl.ListingMetricsServiceImpl;
 import com.snoozeshare.service.impl.ListingServiceImpl;
+import com.snoozeshare.service.impl.MessageServiceImpl;
 import com.snoozeshare.service.impl.ReviewServiceImpl;
 import com.snoozeshare.service.impl.TicketServiceImpl;
 import com.snoozeshare.service.impl.TransactionServiceImpl;
@@ -105,7 +106,8 @@ public final class AppContext implements AutoCloseable {
                 settlementService, auditService, clock, eventBus);
         this.disputeQueryService = new DisputeQueryServiceImpl(ticketRepo, bookingRepo, propertyRepo,
                 users, txnRepo, clock);
-        this.messageService = new InMemoryMessageService(clock);
+        this.messageService = new MessageServiceImpl(new JdbcMessageRepository(connection), ticketRepo,
+                bookingRepo, propertyRepo, users, eventBus, clock);
         this.reviewService = new ReviewServiceImpl(bookingRepo, reviewRepo, auditService, clock);
         this.accountGovernanceService = new AccountGovernanceServiceImpl(connection, users, bookingRepo,
                 propertyRepo, blockRepo, wallets, txnRepo, eventBus, auditService, Clock.systemDefaultZone());

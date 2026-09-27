@@ -25,7 +25,7 @@ class DatabaseBootstrapTest {
             assertEquals(Set.of(
                     "users", "properties", "availability_blocks", "bookings", "wallets",
                     "wallet_transactions", "ticket_categories", "tickets", "reviews",
-                    "audit_log"), tableNames(connection));
+                    "audit_log", "messages", "message_reads"), tableNames(connection));
         }
     }
 
@@ -35,7 +35,7 @@ class DatabaseBootstrapTest {
             MigrationRunner.migrate(connection);
             MigrationRunner.migrate(connection);
 
-            assertEquals(3, migrationCount(connection));
+            assertEquals(4, migrationCount(connection));
         }
     }
 

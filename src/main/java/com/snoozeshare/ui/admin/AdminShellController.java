@@ -32,6 +32,7 @@ public final class AdminShellController extends NavShellController {
 
     private DisputeQueueController queueController;
     private AccountGovernanceController accountsController;
+    private DisputeDetailController detailController;
 
     @Override
     public void setContext(AppContext appContext) {
@@ -142,10 +143,10 @@ public final class AdminShellController extends NavShellController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/admin/tickets/dispute-detail.fxml"));
             Node view = loader.load();
-            DisputeDetailController controller = loader.getController();
-            controller.setContext(getContext());
-            controller.setOnBack(this::showQueue);
-            controller.load(ticketId);
+            detailController = loader.getController();
+            detailController.setContext(getContext());
+            detailController.setOnBack(this::showQueue);
+            detailController.load(ticketId);
             shellRoot.setCenter(view);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load dispute detail", exception);
@@ -160,6 +161,10 @@ public final class AdminShellController extends NavShellController {
         if (accountsController != null) {
             accountsController.dispose();
             accountsController = null;
+        }
+        if (detailController != null) {
+            detailController.dispose();
+            detailController = null;
         }
     }
 }

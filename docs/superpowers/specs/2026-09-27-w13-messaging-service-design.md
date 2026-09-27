@@ -99,8 +99,8 @@ insert commits (`infra.events.events`), so every open screen can refresh without
 | Guest Messages tab (deferred) | `conversationsFor(guestId, GUEST)`, `thread(t, GUEST, guestId, GUEST)` | `post(t, GUEST, guestId, GUEST, body)`, `markRead` | `MessagePostedEvent`, `unreadCount` badge |
 | Host Messages tab (deferred) | `conversationsFor(hostId, HOST)`, `thread(t, HOST, hostId, HOST)` | `post(t, HOST, hostId, HOST, body)`, `markRead` | same |
 
-Shared UI piece (built now): `ui.common.messaging.ChatBubbles.render(VBox, List<Message>, UUID viewerId)`
-draws bubbles, own messages on the right. The agent page uses it; guest and host reuse it.
+Shared UI piece (built now): `ui.common.messaging.ChatBubbles.render(VBox, List<Message>, Predicate<Message> outgoing)`
+draws bubbles, outgoing ones on the right (the agent page passes "author is an agent"; guest and host pass "author is me"). The agent page uses it; guest and host reuse it.
 
 ## 6. Decisions
 

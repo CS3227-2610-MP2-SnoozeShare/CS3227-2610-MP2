@@ -51,7 +51,7 @@
                 </ScrollPane>
                 <HBox styleClass="agent-chat-footer" spacing="8" alignment="CENTER_LEFT">
                     <TextField fx:id="guestInput" promptText="Reply to guest…" styleClass="agent-input" HBox.hgrow="ALWAYS"/>
-                    <Button text="Send" onAction="#handleSendGuest" styleClass="button, agent-button-sm"/>
+                    <Button fx:id="guestSendButton" text="Send" onAction="#handleSendGuest" styleClass="button, agent-button-sm"/>
                 </HBox>
                 <StackPane fx:id="guestGrip" styleClass="agent-resize-grip"><Region styleClass="agent-resize-bar"/></StackPane>
             </VBox>
@@ -64,7 +64,7 @@
                 </ScrollPane>
                 <HBox styleClass="agent-chat-footer" spacing="8" alignment="CENTER_LEFT">
                     <TextField fx:id="hostInput" promptText="Reply to host…" styleClass="agent-input" HBox.hgrow="ALWAYS"/>
-                    <Button text="Send" onAction="#handleSendHost" styleClass="button, agent-button-sm"/>
+                    <Button fx:id="hostSendButton" text="Send" onAction="#handleSendHost" styleClass="button, agent-button-sm"/>
                 </HBox>
                 <StackPane fx:id="hostGrip" styleClass="agent-resize-grip"><Region styleClass="agent-resize-bar"/></StackPane>
             </VBox>

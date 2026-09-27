@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.snoozeshare.domain.enums.AssigneeFilter;
+import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.TicketStatus;
 import com.snoozeshare.domain.model.Ticket;
 
@@ -27,6 +28,9 @@ public interface TicketRepository {
 
     /** All tickets filed by the given user, newest first. */
     List<Ticket> findByRaisedByUserId(UUID userId);
+
+    /** Tickets on bookings the user guested (GUEST) or hosts (HOST), newest first; other roles are rejected. */
+    List<Ticket> findByParty(UUID userId, Role role);
 
     Ticket save(Ticket ticket);
 }

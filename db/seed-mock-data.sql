@@ -273,8 +273,22 @@ INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, en
 UPDATE users SET suspensionReason = 'Suspended by support agent pending review'
 WHERE userId IN ('c0000000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-000000000006');
 
+-- ============================== messages ==============================
+-- Ticket chat (W13). Ticket 2 is open with one guest message; ticket 3 is in review with a thread on each side.
+INSERT INTO messages (messageId, ticketId, channel, authorId, authorRole, body, sentAt) VALUES
+('90000000-0000-0000-0000-000000000001','d0000000-0000-0000-0000-000000000002','GUEST','c0000000-0000-0000-0000-000000000003','GUEST','The gate to the beach was locked for most of my stay. Can someone look into this?','2026-08-10T09:30:00Z'),
+('90000000-0000-0000-0000-000000000002','d0000000-0000-0000-0000-000000000003','GUEST','c0000000-0000-0000-0000-000000000005','GUEST','The AC broke on day 2 and I never heard back from the host.','2026-09-09T11:30:00Z'),
+('90000000-0000-0000-0000-000000000003','d0000000-0000-0000-0000-000000000003','GUEST','a0000000-0000-0000-0000-000000000002','AGENT','Thanks, I am looking into it and have contacted the host.','2026-09-13T09:00:00Z');
+INSERT INTO messages (messageId, ticketId, channel, authorId, authorRole, body, sentAt)
+SELECT '90000000-0000-0000-0000-000000000004','d0000000-0000-0000-0000-000000000003','HOST','a0000000-0000-0000-0000-000000000002','AGENT',
+       'The guest reports the AC failed on day 2 with no reply from you. Please respond with what happened.','2026-09-13T09:05:00Z';
+INSERT INTO messages (messageId, ticketId, channel, authorId, authorRole, body, sentAt)
+SELECT '90000000-0000-0000-0000-000000000005','d0000000-0000-0000-0000-000000000003','HOST',p.hostId,'HOST',
+       'I was travelling and missed the request. The unit was serviced as soon as I saw it.','2026-09-14T08:00:00Z'
+FROM bookings b JOIN properties p ON p.propertyId = b.listingId WHERE b.bookingId = '20000000-0000-0000-0000-000000000011';
+
 -- ============================== schema_history ==============================
--- The reference DB ships fully migrated (V001 + V002 + V003), so the app's MigrationRunner has nothing to apply.
-INSERT INTO schema_history (version, appliedAt) VALUES (1, '2026-09-26 00:00:00'), (2, '2026-09-26 00:00:00'), (3, '2026-09-26 00:00:00');
+-- The reference DB ships fully migrated (V001 to V004), so the app's MigrationRunner has nothing to apply.
+INSERT INTO schema_history (version, appliedAt) VALUES (1, '2026-09-26 00:00:00'), (2, '2026-09-26 00:00:00'), (3, '2026-09-26 00:00:00'), (4, '2026-09-27 00:00:00');
 
 PRAGMA foreign_keys = ON;

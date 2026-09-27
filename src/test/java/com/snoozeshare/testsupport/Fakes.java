@@ -72,6 +72,11 @@ public final class Fakes {
         }
 
         @Override
+        public List<Ticket> findByParty(UUID userId, Role role) {
+            return List.of();
+        }
+
+        @Override
         public Ticket save(Ticket ticket) {
             store.put(ticket.ticketId(), ticket);
             return ticket;

@@ -13,11 +13,13 @@ import com.snoozeshare.domain.enums.ListingStatus;
 import com.snoozeshare.domain.enums.PropertyType;
 import com.snoozeshare.domain.enums.RemedyType;
 import com.snoozeshare.domain.enums.Role;
+import com.snoozeshare.domain.enums.ThreadChannel;
 import com.snoozeshare.domain.enums.TicketStatus;
 import com.snoozeshare.domain.enums.WalletTransactionType;
 import com.snoozeshare.domain.model.AuditLogEntry;
 import com.snoozeshare.domain.model.AvailabilityBlock;
 import com.snoozeshare.domain.model.Booking;
+import com.snoozeshare.domain.model.Message;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.domain.model.Review;
 import com.snoozeshare.domain.model.Ticket;
@@ -176,6 +178,17 @@ public final class RowMappers {
                 result.getString("resolutionReason"),
                 JdbcCodecs.instant(result.getString("createdAt")),
                 JdbcCodecs.instant(result.getString("resolvedAt")));
+    }
+
+    public static Message message(ResultSet result) throws SQLException {
+        return new Message(
+                JdbcCodecs.uuid(result.getString("messageId")),
+                JdbcCodecs.uuid(result.getString("ticketId")),
+                ThreadChannel.valueOf(result.getString("channel")),
+                JdbcCodecs.uuid(result.getString("authorId")),
+                Role.valueOf(result.getString("authorRole")),
+                result.getString("body"),
+                JdbcCodecs.instant(result.getString("sentAt")));
     }
 
     public static TicketCategory ticketCategory(ResultSet result) throws SQLException {
