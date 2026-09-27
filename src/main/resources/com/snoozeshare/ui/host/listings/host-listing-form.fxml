@@ -19,11 +19,11 @@
             <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
 
             <HBox alignment="CENTER_LEFT" spacing="16">
-                <Hyperlink text="Listings" onAction="#handleListings" styleClass="agent-crumb-link"/>
-                <Label text="›" styleClass="agent-crumb"/>
+                <Hyperlink text="Listings" onAction="#handleListings" styleClass="host-crumb-link"/>
+                <Label text="›" styleClass="host-crumb"/>
                 <Hyperlink fx:id="listingCrumb" onAction="#handleListingDetail"
-                           styleClass="agent-crumb-link" visible="false" managed="false"/>
-                <Label fx:id="formBreadcrumb" text="Create" styleClass="agent-crumb-current"/>
+                           styleClass="host-crumb-link" visible="false" managed="false"/>
+                <Label fx:id="formBreadcrumb" text="Create" styleClass="host-crumb-current"/>
             </HBox>
 
             <GridPane hgap="16" vgap="16" styleClass="listing-form-grid" maxWidth="Infinity">

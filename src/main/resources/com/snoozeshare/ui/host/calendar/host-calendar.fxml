@@ -16,11 +16,11 @@
       styleClass="host-calendar-page" spacing="12">
     <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
     <HBox alignment="CENTER_LEFT" spacing="12">
-        <Hyperlink text="Listings" onAction="#handleBack" styleClass="agent-crumb-link"/>
-        <Label text="›" styleClass="agent-crumb"/>
-        <Hyperlink fx:id="listingCrumb" onAction="#handleListingDetail" styleClass="agent-crumb-link"/>
-        <Label text="›" styleClass="agent-crumb"/>
-        <Label text="Booking Calendar" styleClass="agent-crumb-current"/>
+        <Hyperlink text="Listings" onAction="#handleBack" styleClass="host-crumb-link"/>
+        <Label text="›" styleClass="host-crumb"/>
+        <Hyperlink fx:id="listingCrumb" onAction="#handleListingDetail" styleClass="host-crumb-link"/>
+        <Label text="›" styleClass="host-crumb"/>
+        <Label text="Booking Calendar" styleClass="host-crumb-current"/>
         <VBox HBox.hgrow="ALWAYS"/>
     </HBox>
     <BorderPane VBox.vgrow="ALWAYS">

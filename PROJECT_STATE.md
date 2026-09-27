@@ -8,7 +8,7 @@ every boundary, not at the end of the session.
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `w9` (W13 — Messaging; host Messages UI slice)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-27 by Codex — Host listing breadcrumb navigation implemented
+- **Last updated:** 2026-09-27 by Codex — Host breadcrumb styling decoupled from agent stylesheet
 - **Last verified against repo:** 2026-09-27
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, W6/W7 and others on `main`, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.14 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.13 Audit trail, two diagrams and the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented.
 
@@ -65,7 +65,7 @@ three iterations).
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 | S7 | 2026-09-27 | Claude Sonnet 5 | messaging-service | W13 | Paused | Service slice built and verified; host Messages UI continued on `w9` | 2026-09-27 |
-| S8 | 2026-09-27 | Codex | w9 | W6/W7 | Paused | Host listing detail, form, and calendar breadcrumb navigation implemented; focused tests pass | 2026-09-27 |
+| S8 | 2026-09-27 | Codex | w9 | W6/W7 | Paused | Host breadcrumbs use host-navigation.css; focused tests and Checkstyle pass | 2026-09-27 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -602,6 +602,14 @@ pattern. Detail shows `Listings > <listing>`; create shows `Listings > Create`; 
 Ancestor crumbs are clickable, while the redundant form title and calendar title/description/back
 button were removed. Focused navigation tests and Checkstyle pass; the full suite retains the
 unrelated `AgentModalTest.escapeAndWindowCloseAlsoRemoveTheScrim` failure.
+
+### D29 — Host breadcrumb styling ownership (2026-09-27)
+
+Host listing/detail/form/calendar breadcrumbs no longer use `agent-crumb-*` classes from
+`agent-theme.css`. They use Host-owned `host-crumb-*` classes defined in
+`src/main/resources/com/snoozeshare/ui/host/host-navigation.css`, loaded by the Host shell.
+Focused navigation tests and Checkstyle pass; the full suite retains the unrelated AgentModal
+failure.
 
 ### D21 — Merge of `origin/main` into the W11 branch (2026-09-27)
 

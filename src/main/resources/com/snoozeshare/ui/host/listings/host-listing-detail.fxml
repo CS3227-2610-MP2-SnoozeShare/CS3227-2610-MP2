@@ -21,9 +21,9 @@
         <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
 
         <HBox alignment="CENTER_LEFT" spacing="12" styleClass="listing-detail-actions">
-            <Hyperlink text="Listings" onAction="#handleBack" styleClass="agent-crumb-link"/>
-            <Label text="›" styleClass="agent-crumb"/>
-            <Label fx:id="titleCrumb" styleClass="agent-crumb-current"/>
+            <Hyperlink text="Listings" onAction="#handleBack" styleClass="host-crumb-link"/>
+            <Label text="›" styleClass="host-crumb"/>
+            <Label fx:id="titleCrumb" styleClass="host-crumb-current"/>
             <VBox HBox.hgrow="ALWAYS"/>
             <Button text="Open booking calendar" onAction="#handleOpenCalendar"
                     styleClass="outline-button"/>

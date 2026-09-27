@@ -138,7 +138,7 @@ class ShellNavigationTest {
 
         assertTrue(listings.contains("styleClass=\"page-title\""));
         assertTrue(detail.contains("styleClass=\"page-title\""));
-        assertTrue(form.contains("styleClass=\"agent-crumb-current\""));
+        assertTrue(form.contains("styleClass=\"host-crumb-current\""));
         assertTrue(calendar.contains("text=\"Booking Calendar\""));
         assertTrue(!calendar.contains("styleClass=\"page-title\""));
         assertTrue(wallet.contains("AVAILABLE BALANCE"));
