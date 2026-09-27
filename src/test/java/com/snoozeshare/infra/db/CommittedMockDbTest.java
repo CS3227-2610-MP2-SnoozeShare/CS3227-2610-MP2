@@ -3,6 +3,7 @@ package com.snoozeshare.infra.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -27,7 +28,7 @@ class CommittedMockDbTest {
     }
 
     @Test
-    void theCommittedFileHasTheAuditColumnsTheSystemUserAndMigrationVersionSix() throws Exception {
+    void theCommittedFileHasTheAuditColumnsTheSystemUserAndMigrationVersionSeven() throws Exception {
         try (Connection connection = openCommittedReadOnly();
              Statement statement = connection.createStatement()) {
             Set<String> columns = new HashSet<>();
@@ -37,7 +38,7 @@ class CommittedMockDbTest {
                 }
             }
             for (String column : new String[] {"actorName", "walletAdjustment", "reason", "subjectUserId",
-                "subjectName", "bookingId", "ticketId"}) {
+                "subjectName", "bookingId", "ticketId", "balanceAfter"}) {
                 assertTrue(columns.contains(column), "audit_log is missing " + column);
             }
             try (ResultSet result = statement.executeQuery("SELECT COUNT(*) FROM users WHERE userId = "
@@ -46,12 +47,18 @@ class CommittedMockDbTest {
                 result.next();
                 assertEquals(1, result.getInt(1), "System user");
             }
-            for (int version : new int[] {1, 2, 3, 4, 5, 6}) {
+            for (int version : new int[] {1, 2, 3, 4, 5, 6, 7}) {
                 try (ResultSet result = statement.executeQuery(
                         "SELECT COUNT(*) FROM schema_history WHERE version = " + version)) {
                     result.next();
                     assertEquals(1, result.getInt(1), "schema_history version " + version);
                 }
+            }
+            try (ResultSet result = statement.executeQuery("SELECT balance FROM wallets "
+                    + "WHERE userId = 'a0000000-0000-0000-0000-0000000000ff'")) {
+                assertTrue(result.next(), "System wallet");
+                assertEquals(0, new BigDecimal("16.35").compareTo(new BigDecimal(result.getString(1))),
+                        "the System wallet holds the two seeded platform fees");
             }
             try (ResultSet result = statement.executeQuery("SELECT COUNT(*) FROM users "
                     + "WHERE suspensionReason IS NOT NULL AND accountStatus = 'SUSPENDED'")) {

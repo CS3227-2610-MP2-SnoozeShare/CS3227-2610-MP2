@@ -39,7 +39,7 @@ public final class AuditServiceImpl implements AuditService {
                 record.action().name(), record.entityType(), record.entityId(), record.beforeState(),
                 record.afterState(), record.walletAdjustment(), record.reason(), record.subjectUserId(),
                 record.subjectUserId() == null ? null : nameOf(record.subjectUserId()), record.bookingId(),
-                record.ticketId(), at));
+                record.ticketId(), at, record.balanceAfter()));
     }
 
     @Override

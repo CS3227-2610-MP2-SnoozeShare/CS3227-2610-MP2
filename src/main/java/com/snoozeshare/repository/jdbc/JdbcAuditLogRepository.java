@@ -32,7 +32,8 @@ public final class JdbcAuditLogRepository implements AuditLogRepository {
         try (var statement = connection.prepareStatement(
                 "INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, "
                         + "beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, "
-                        + "bookingId, ticketId, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                        + "bookingId, ticketId, timestamp, balanceAfter) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             statement.setString(1, JdbcCodecs.uuid(entry.logId()));
             statement.setString(2, JdbcCodecs.uuid(entry.actorUserId()));
             statement.setString(3, entry.actorName());
@@ -48,6 +49,7 @@ public final class JdbcAuditLogRepository implements AuditLogRepository {
             statement.setString(13, JdbcCodecs.uuid(entry.bookingId()));
             statement.setString(14, JdbcCodecs.uuid(entry.ticketId()));
             statement.setString(15, JdbcCodecs.instant(entry.timestamp()));
+            statement.setString(16, JdbcCodecs.decimal(entry.balanceAfter()));
             statement.executeUpdate();
             return entry;
         } catch (SQLException exception) {

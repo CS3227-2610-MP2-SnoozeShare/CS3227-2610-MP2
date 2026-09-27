@@ -141,13 +141,15 @@ CREATE TABLE audit_log (
     subjectUserId         TEXT REFERENCES users(userId),
     subjectName           TEXT,
     bookingId             TEXT REFERENCES bookings(bookingId),
-    ticketId              TEXT REFERENCES tickets(ticketId)
+    ticketId              TEXT REFERENCES tickets(ticketId),
+    balanceAfter          REAL
 );
 CREATE INDEX idx_audit_timestamp ON audit_log(timestamp);
 CREATE INDEX idx_audit_actor ON audit_log(actorUserId);
 CREATE INDEX idx_audit_subject ON audit_log(subjectUserId);
 CREATE INDEX idx_audit_booking ON audit_log(bookingId);
 CREATE INDEX idx_audit_ticket ON audit_log(ticketId);
+CREATE INDEX idx_audit_money ON audit_log (subjectUserId, walletAdjustment);
 
 CREATE TABLE messages (
     messageId             TEXT PRIMARY KEY,
@@ -185,7 +187,7 @@ CREATE TABLE booking_message_reads (
     PRIMARY KEY (bookingId, userId)
 );
 
--- Migration bookkeeping, identical to what MigrationRunner creates. The seed records V001 to V006 as applied.
+-- Migration bookkeeping, identical to what MigrationRunner creates. The seed records V001 to V007 as applied.
 CREATE TABLE IF NOT EXISTS schema_history (
     version   INTEGER PRIMARY KEY,
     appliedAt TEXT NOT NULL

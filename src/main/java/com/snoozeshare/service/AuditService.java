@@ -24,7 +24,7 @@ public interface AuditService {
                                          BigDecimal applied, String reason) {
         record(AuditRecord.builder(actorId, AuditAction.forWallet(transaction.type()), "WalletTransaction",
                         transaction.transactionId())
-                .wallet(applied).reason(reason).subject(ownerUserId)
+                .wallet(applied, transaction.balanceAfter()).reason(reason).subject(ownerUserId)
                 .booking(transaction.relatedBookingId()).ticket(transaction.relatedTicketId())
                 .at(transaction.createdAt()).build());
     }

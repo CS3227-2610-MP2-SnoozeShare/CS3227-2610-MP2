@@ -90,7 +90,8 @@ public final class MockDbFixture implements AutoCloseable {
 
     /**
      * Every wallet balance equals the sum of its transactions, and every row's balanceAfter equals the
-     * chronological running sum.
+     * chronological running sum. The System wallet has no wallet_transactions rows (its PLATFORM_FEE rows
+     * live only in audit_log, W14 V007), so its balance must equal the sum of its audit money rows instead.
      */
     public void assertLedgerInvariant() throws SQLException {
         try (Statement statement = connection.createStatement()) {
@@ -98,10 +99,21 @@ public final class MockDbFixture implements AutoCloseable {
                     "SELECT w.walletId AS walletId, w.balance AS balance, "
                             + "COALESCE(SUM(t.amount), 0) AS total FROM wallets w "
                             + "LEFT JOIN wallet_transactions t ON t.walletId = w.walletId "
+                            + "WHERE w.userId NOT IN (SELECT userId FROM users WHERE role = 'SYSTEM') "
                             + "GROUP BY w.walletId")) {
                 while (result.next()) {
                     assertEquals(result.getDouble("total"), result.getDouble("balance"), 0.005,
                             "balance != sum(transactions) for wallet " + result.getString("walletId"));
+                }
+            }
+            try (ResultSet result = statement.executeQuery(
+                    "SELECT w.walletId AS walletId, w.balance AS balance, COALESCE((SELECT SUM(a.walletAdjustment) "
+                            + "FROM audit_log a WHERE a.subjectUserId = w.userId AND a.walletAdjustment IS NOT NULL), "
+                            + "0) AS total FROM wallets w JOIN users u ON u.userId = w.userId "
+                            + "WHERE u.role = 'SYSTEM'")) {
+                while (result.next()) {
+                    assertEquals(result.getDouble("total"), result.getDouble("balance"), 0.005,
+                            "balance != sum(money rows) for System wallet " + result.getString("walletId"));
                 }
             }
             try (ResultSet result = statement.executeQuery(

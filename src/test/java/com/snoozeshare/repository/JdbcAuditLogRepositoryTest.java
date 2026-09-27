@@ -41,7 +41,7 @@ class JdbcAuditLogRepositoryTest {
     private static AuditLogEntry entry(UUID actor, String actorName, String action, UUID entityId,
                                        UUID subject, String subjectName, String at) {
         return new AuditLogEntry(UUID.randomUUID(), actor, actorName, action, "Booking", entityId,
-                null, "PENDING", null, null, subject, subjectName, null, null, Instant.parse(at));
+                null, "PENDING", null, null, subject, subjectName, null, null, Instant.parse(at), null);
     }
 
     @Test
@@ -53,7 +53,7 @@ class JdbcAuditLogRepositoryTest {
             UUID entity = UUID.randomUUID();
             repository.save(new AuditLogEntry(UUID.randomUUID(), actor, "Ann Actor", "AGENT_OVERRIDE",
                     "WalletTransaction", entity, null, null, new BigDecimal("-12.50"), "why", subject,
-                    "Sue Subject", null, null, Instant.parse("2026-09-25T04:00:00Z")));
+                    "Sue Subject", null, null, Instant.parse("2026-09-25T04:00:00Z"), new BigDecimal("37.50")));
 
             AuditLogEntry read = repository.search(AuditCriteria.all(), 10, 0).get(0);
 
@@ -68,6 +68,7 @@ class JdbcAuditLogRepositoryTest {
             assertEquals(subject, read.subjectUserId());
             assertEquals("Sue Subject", read.subjectName());
             assertEquals(Instant.parse("2026-09-25T04:00:00Z"), read.timestamp());
+            assertEquals(0, new BigDecimal("37.50").compareTo(read.balanceAfter()));
         }
     }
 

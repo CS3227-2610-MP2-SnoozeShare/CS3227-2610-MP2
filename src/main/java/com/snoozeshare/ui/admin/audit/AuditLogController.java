@@ -234,7 +234,7 @@ public final class AuditLogController {
 
     static String pillClass(String actionType) {
         return switch (actionType) {
-            case "BOOKING_PAYOUT", "ESCROW_REFUND", "TICKET_REMEDY", "TOP_UP", "BOOKING_COMPLETED" ->
+            case "BOOKING_PAYOUT", "PLATFORM_FEE", "ESCROW_REFUND", "TICKET_REMEDY", "TOP_UP", "BOOKING_COMPLETED" ->
                 "agent-pill-success";
             case "AGENT_OVERRIDE", "TICKET_RESOLVED", "TICKET_OPENED", "TICKET_ASSIGNED", "TICKET_UNASSIGNED",
                 "TICKET_NOTE_SAVED" -> "agent-pill-accent";

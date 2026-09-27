@@ -159,7 +159,8 @@ public final class RowMappers {
                 result.getString("subjectName"),
                 JdbcCodecs.uuid(result.getString("bookingId")),
                 JdbcCodecs.uuid(result.getString("ticketId")),
-                JdbcCodecs.instant(result.getString("timestamp")));
+                JdbcCodecs.instant(result.getString("timestamp")),
+                JdbcCodecs.decimal(result.getString("balanceAfter")));
     }
 
     public static Ticket ticket(ResultSet result) throws SQLException {

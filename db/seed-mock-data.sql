@@ -254,13 +254,28 @@ SELECT '5d' || substr(t.ticketId, 3), t.assignedAgentId, a.displayName, 'TICKET_
 FROM tickets t JOIN users a ON a.userId = t.assignedAgentId JOIN users u ON u.userId = t.raisedByUserId
 WHERE t.status LIKE 'RESOLVED%';
 
-INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp)
+INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp, balanceAfter)
 SELECT '5a' || substr(t.transactionId, 3), actor.userId, actor.displayName, t.type, 'WalletTransaction', t.transactionId,
        NULL, NULL, t.amount,
        CASE WHEN t.feeAmount > 0 THEN 'Payout net of 3% platform fee (' || printf('%.2f', t.feeAmount) || ')' END,
-       w.userId, o.displayName, t.relatedBookingId, t.relatedTicketId, t.createdAt
+       w.userId, o.displayName, t.relatedBookingId, t.relatedTicketId, t.createdAt, t.balanceAfter
 FROM wallet_transactions t JOIN wallets w ON w.walletId = t.walletId JOIN users o ON o.userId = w.userId
-JOIN users actor ON actor.userId = COALESCE(t.initiatedBy, w.userId);
+JOIN users actor ON actor.userId = COALESCE(t.initiatedBy, w.userId)
+ORDER BY t.createdAt, t.transactionId;
+
+INSERT INTO wallets (walletId, userId, balance, currency, updatedAt) VALUES
+('30000000-0000-0000-0000-0000000000ff','a0000000-0000-0000-0000-0000000000ff',16.35,'SGD','2026-09-27T00:00:00Z');
+
+INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp, balanceAfter)
+SELECT '5f' || substr(t.transactionId, 3), actor.userId, actor.displayName, 'PLATFORM_FEE', 'WalletTransaction',
+       '4f' || substr(t.transactionId, 3), NULL, NULL, t.feeAmount, '3% platform fee on payout', sys.userId,
+       sys.displayName, t.relatedBookingId, t.relatedTicketId, t.createdAt,
+       SUM(t.feeAmount) OVER (ORDER BY t.createdAt, t.transactionId)
+FROM wallet_transactions t JOIN wallets w ON w.walletId = t.walletId
+JOIN users actor ON actor.userId = COALESCE(t.initiatedBy, w.userId)
+JOIN users sys ON sys.userId = 'a0000000-0000-0000-0000-0000000000ff'
+WHERE t.type = 'BOOKING_PAYOUT' AND COALESCE(t.feeAmount, 0) > 0
+ORDER BY t.createdAt, t.transactionId;
 
 INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, entityId, beforeState, afterState, walletAdjustment, reason, subjectUserId, subjectName, bookingId, ticketId, timestamp) VALUES
 ('50000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','Ben Alvarez','ACCOUNT_SUSPENDED','User','c0000000-0000-0000-0000-000000000006','ACTIVE','SUSPENDED',NULL,'Suspended by support agent pending review','c0000000-0000-0000-0000-000000000006','Kai Nakamura',NULL,NULL,'2026-09-09T08:30:00Z'),
@@ -368,6 +383,6 @@ JOIN properties p ON p.propertyId = b.listingId;
 
 -- ============================== schema_history ==============================
 -- The reference DB ships fully migrated (V001 to V005), so the app's MigrationRunner has nothing to apply.
-INSERT INTO schema_history (version, appliedAt) VALUES (1, '2026-09-26 00:00:00'), (2, '2026-09-26 00:00:00'), (3, '2026-09-26 00:00:00'), (4, '2026-09-27 00:00:00'), (5, '2026-09-27 00:00:00'), (6, '2026-09-27 00:00:00');
+INSERT INTO schema_history (version, appliedAt) VALUES (1, '2026-09-26 00:00:00'), (2, '2026-09-26 00:00:00'), (3, '2026-09-26 00:00:00'), (4, '2026-09-27 00:00:00'), (5, '2026-09-27 00:00:00'), (6, '2026-09-27 00:00:00'), (7, '2026-09-27 00:00:00');
 
 PRAGMA foreign_keys = ON;

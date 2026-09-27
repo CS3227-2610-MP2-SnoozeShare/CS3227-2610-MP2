@@ -15,6 +15,7 @@ public final class MigrationRunner {
     private static final int MESSAGING_VERSION = 4;
     private static final int BOOKING_MESSAGING_VERSION = 5;
     private static final int SYSTEM_ROLE_VERSION = 6;
+    private static final int UNIFIED_LEDGER_VERSION = 7;
 
     private MigrationRunner() {
     }
@@ -80,6 +81,13 @@ public final class MigrationRunner {
             }
             if (rebuilt) {
                 requireForeignKeysIntact(connection);
+            }
+            if (!migrationApplied(connection, UNIFIED_LEDGER_VERSION)) {
+                if (!columnExists(connection, "audit_log", "balanceAfter")) {
+                    applySqlMigration(connection, "/db/migration/V007__unified_ledger.sql");
+                }
+                // else: a reference database rebuilt from db/schema.sql already has the column.
+                recordMigration(connection, UNIFIED_LEDGER_VERSION);
             }
             connection.commit();
         } catch (SQLException | RuntimeException exception) {

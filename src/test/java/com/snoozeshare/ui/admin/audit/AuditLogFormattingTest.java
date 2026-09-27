@@ -15,7 +15,7 @@ class AuditLogFormattingTest {
     private static AuditLogEntry entry(String action, String before, String after, BigDecimal amount,
                                        UUID booking, UUID ticket) {
         return new AuditLogEntry(UUID.randomUUID(), UUID.randomUUID(), "Amy", action, "Ticket", UUID.randomUUID(),
-                before, after, amount, null, null, null, booking, ticket, Instant.parse("2026-09-25T04:00:00Z"));
+                before, after, amount, null, null, null, booking, ticket, Instant.parse("2026-09-25T04:00:00Z"), null);
     }
 
     @Test

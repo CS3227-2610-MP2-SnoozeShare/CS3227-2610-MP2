@@ -36,7 +36,7 @@ class DatabaseBootstrapTest {
             MigrationRunner.migrate(connection);
             MigrationRunner.migrate(connection);
 
-            assertEquals(6, migrationCount(connection));
+            assertEquals(7, migrationCount(connection));
         }
     }
 
