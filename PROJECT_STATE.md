@@ -6,9 +6,9 @@ every boundary, not at the end of the session.
 
 - **Phase:** W12 Platform Audit Trail done (merged in); W11 Account Governance implemented, awaiting operator acceptance
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `agent-account-governance` (W11 — Agent Account Governance; branched 2026-09-26 from the W10 branch tip, which already contains `main`)
+- **Branch:** `messaging-service` (W13 — Messaging; branched 2026-09-27 from the `agent-account-governance` tip, which contains `main`)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-27 by Claude Sonnet 5 — merged `origin/main` (W8, W4, W6, W7, guide checkpoint) into the W11 branch; W11 Done
+- **Last updated:** 2026-09-27 by Claude Sonnet 5 — W13 messaging service slice built on `messaging-service`
 - **Last verified against repo:** 2026-09-26
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, W6/W7 and others on `main`, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.13 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.9 Audit trail, two diagrams, the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented.
 
@@ -68,6 +68,7 @@ three iterations).
 | S8 | 2026-09-26 | Codex | w7 | W7 | Paused | W7 complete: host calendar, inclusive manual blocks, removal, validation, and layout delivered; full tests/build pass | 2026-09-26 |
 | S9 | 2026-09-26 | Codex | w8 | Host portal UI refinement | Paused | Completed wallet/listing layout, copy, metrics, action sizing, and status-control spacing; focused tests, XML validation, Checkstyle, and diff checks pass; full suite retains two unrelated UI failures | 2026-09-26 |
 | S14 | 2026-09-26 | Codex | w8 | W8 — Host Request Queue, Earnings & Disputes | Paused | PR #11 open against main; W8 implementation, review fixes, and Developer Guide handoff complete | 2026-09-27 |
+| S15 | 2026-09-27 | Claude Sonnet 5 | messaging-service | W13 | Paused | Service slice built and verified (see Done ledger); next: operator runs the agent page on a mock-DB copy, then the guest/host Messages tabs get their own slice | 2026-09-27 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -96,8 +97,8 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W11 | F10 — Agent Account Governance (F10.1.1 suspend, F10.1.2 cascade; Reactivate added, C34) | Done | [W11 design](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) | [W11 plan](docs/superpowers/plans/2026-09-26-w11-account-governance.md) | 14/14 tasks; operator accepted real-app run 2026-09-27 | Documented 2026-09-27 |
 | W12 | F11 — Platform Audit Trail (Analytics half of the epic has no items, out of scope; W11 emits the account-governance rows, C32) | Done | [W12 design](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) | [W12 plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md) | Done | Documented 2026-09-26 |
 | W14 | Unified ledger — fold `wallet_transactions` into `audit_log`, `users.balance`, System account with a real wallet (C30, C31) | Not started | — | — | Not spec'd; reverses Known Gaps entry, C3, C9; runs after W12; touches W1/W3/W5/W6/W10 money paths | — |
-| W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
-| W14 | Host Listings Dashboard & Copy Refinement | Done | — | — | Live listing metrics, listing-card redesign, Requests/wallet copy, and layout updates complete; operator explicitly waived new spec/plan | — |
+| W13 | F12 — Messaging (persistent ticket chat; `MessageService` replaces the in-memory seam; guest/host UI deferred, C37) | Building | [W13 design](docs/superpowers/specs/2026-09-27-w13-messaging-service-design.md) | [W13 plan](docs/superpowers/plans/2026-09-27-w13-messaging-service.md) | Ticket and booking chat services done (Tasks 1–8); guest/host Messages UI not started (C37, C38) | — |
+| W15 | Host Listings Dashboard & Copy Refinement | Done | — | — | Live listing metrics, listing-card redesign, Requests/wallet copy, and layout updates complete; operator explicitly waived new spec/plan | — |
 
 **Handoffs into W3 (raised by W10, 2026-09-25; W3 reached `main` 2026-09-25, W10 merged `main` 2026-09-26 and the
 stubs below are still open)** — honour or reconcile these:
@@ -270,10 +271,12 @@ net host payout settlement after the 7-day dispute window.
 
 **W11 adds:** `AccountGovernanceServiceImpl` (`listAccounts`, `suspend`, `reactivate`): one `TransactionManager` transaction that flips the status, force-cancels the target's PENDING and not-yet-started CONFIRMED bookings with a full refund and block release, deactivates a host's ACTIVE listings (C36), and writes W12 audit rows (`ACCOUNT_SUSPENDED`, `BOOKING_FORCE_CANCELLED`, `ESCROW_REFUND`, `ACCOUNT_REACTIVATED`); the event is published after commit. `BookingServiceImpl` refuses bookings from a suspended guest. `UserService.suspend` was removed (D19 resolved).
 
+**W13 adds:** `MessageServiceImpl` and `JdbcMessageRepository` replace `InMemoryMessageService` (see § 4.6a).
+
 **W10 adds:** `TicketServiceImpl` (queue, assign, notes, resolve, category admin),
 `DisputeSettlementServiceImpl` (atomic full-escrow two-sided settlement, C20),
 `DisputeQueryServiceImpl` (queue/detail read models for the Agent UI) and a temporary
-`InMemoryMessageService` (session-only chat; W13 replaces it).
+`InMemoryMessageService` (session-only chat; replaced by W13's persistent `MessageServiceImpl`).
 
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
@@ -355,6 +358,16 @@ refresh (e.g. Guest Trip Hub reflecting a Host decision) doesn't require the pub
 the subscriber exists.
 
 **W11 adds:** `AccountStatusChangedEvent`, published after an account suspend or reactivate commits so the Accounts screen refreshes.
+
+### 4.6a Messaging (W13)
+
+**Now:** `MessageService` (F12) is persistent. Tables `messages` and `message_reads` (migration `V004__messaging.sql`; `MigrationRunner` applies or adopts it; the mock DB ships with seeded threads on tickets 2 and 3) hold one GUEST and one HOST thread per ticket. `MessageServiceImpl` checks every call against ticket → booking → property: a guest reads and posts only the GUEST thread, a host only the HOST thread, any agent both; posting to a resolved ticket throws `IllegalStateException`. Order is insertion order (`rowid`), not `sentAt` text. `post` publishes `MessagePostedEvent` after the insert. `conversationsFor`, `unreadCount` and `markRead` are the contract for the guest and host Messages tabs, which are **not built** (C37). The agent dispute page reads and writes through it, refreshes on `MessagePostedEvent`, and disables chat inputs on resolved tickets; `ui.common.messaging.ChatBubbles` draws bubbles and is meant to be reused by the guest and host tabs (it uses `agent-theme.css` classes, so those themes need equivalents). `TicketRepository.findByParty` backs the inbox.
+
+**Booking conversations (C38):** a second, private host↔guest chat scoped to a booking. `BookingConversationService` (`thread`, `post`, `conversationsFor`, `unreadCount`, `markRead`) over tables `booking_messages` and `booking_message_reads` (migration V005) publishes `BookingMessagePostedEvent`. Writable while the booking is `CONFIRMED` and up to check-out + 7 days, read-only afterwards; only the booking's guest and host take part (agents may not read it, decided in C38 and spec § 9). Text only, no edit/delete. Service and seed data exist; the guest and host Messages tabs do not. The mock DB has a chat on every ticket and on bookings 3, 4, 9, 10, 11, 14.
+
+| ID | Date | Decision | Why / who asked | Source |
+|---|---|---|---|---|
+| C37 | 2026-09-27 | Recorded in full in § Decisions | Operator | [W13 spec](docs/superpowers/specs/2026-09-27-w13-messaging-service-design.md) |
 
 ### 4.7 Session
 
@@ -477,6 +490,8 @@ architecture area remain recorded in that area's table.
 | C34 | 2026-09-26 | W11 scope: (a) **Reactivate** is built although F10.1.1 says only suspend (new capability, like C26 delete); (b) the F10.1.2 cascade (pending bookings force-cancelled with 100% refund, host's active listings set inactive; CONFIRMED stays untouched) is in W11; (c) Agent accounts are listed with no action, and agents cannot be suspended or self-suspend; (d) suspension reason lives in a nullable `users.suspensionReason` column (migration V003), **reversing the no-column part of C32**; operator: "logs are not meant to be data storage"; the reason is also written to the audit row | Operator answers while scoping W11. Rejected: a `suspensions` table (overkill), deriving from `audit_log` (slow, coupled to W12), suspend-only, cascade deferred, hiding or suspending agent rows | Operator conversation, 2026-09-26; [W11 spec](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) |
 | C36 | 2026-09-26 | W11 cascade scope widened: suspension force-cancels `PENDING` **and not-yet-started `CONFIRMED`** bookings (100% refund), matching W12 § 4a and seed booking 12; started/ended `CONFIRMED` stays are untouched (W10). Reason column kept (C34(d) reverses part of C32). Accounts search matches display name, email, role, joined, status (placeholder `Search...`). Spec follows W12 audit shapes and fixed-header table pattern (C33) | Operator answers to Q3 | Operator conversation, 2026-09-26; [W11 spec](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) |
 | C35 | 2026-09-26 | W11 UI deltas from the canvas: first column "Display Name" plus a new Email column; dates (Joined, both modals) as `DD MMM YYYY`; Suspend modal banner shows display name large with the full email beneath; Reactivate modal banner uses `#40680C` (from the Force Complete mock-up); modals use `AgentModal` scrim (C26) | Operator, 2026-09-26 | Operator conversation; [W11 spec](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) § 2 |
+| C37 | 2026-09-27 | W13 scope: replace `InMemoryMessageService` with a persistent `MessageService` (tables `messages`, `message_reads`, migration V004), move the agent dispute page onto it, and define the guest/host contract (`conversationsFor`, `unreadCount`, `markRead`, `MessagePostedEvent`); guest/host Messages UI deferred. Resolved tickets become read-only. F7.2.2 stays deferred (C29). | Operator, 2026-09-27: "the actual implementation and UI of the messaging service on host and guest can be deferred"; chose service + agent page over interfaces-only | Operator conversation; [W13 spec](docs/superpowers/specs/2026-09-27-w13-messaging-service-design.md) |
+| C38 | 2026-09-27 | **Reverses the W13 spec's exclusion of chat outside tickets.** Add a booking-scoped host↔guest chat, a copy of the ticket chat without the agent: text only, no attachments, no edit/delete, no typing indicator, writable from confirmation to check-out + 7 days (the dispute period), read-only after. Now: schema, contract, service and seed data; the guest/host UI stays deferred. Agents are not participants and may not read it, even as dispute evidence (operator confirmed 2026-09-27). | Operator, 2026-09-27, when asked to keep or reverse the exclusion while requesting host-guest sample data | Operator conversation; [W13 spec § 8a](docs/superpowers/specs/2026-09-27-w13-messaging-service-design.md) |
 | C15 | 2026-09-23 | Execute W1 natively in the existing `w1` checkout rather than creating a separate worktree | Operator explicitly selected the current checkout for execution | Operator conversation, 2026-09-23 |
 | C28 | 2026-09-26 | Proceed with Host Listings Dashboard & Copy Refinement without a new design spec or implementation plan | Operator explicitly requested the earlier spec be undone and then asked to carry on; implementation records this waiver | Operator conversation, 2026-09-26 |
 | C29 | 2026-09-26 | Defer F7.2.2 structured host dispute response notes/evidence from W8 to W13 Messaging | Operator chose to defer the formal host response path to W13; W8 will not add ticket response fields or conflate the flow with chat | Operator conversation, 2026-09-26 |
@@ -528,6 +543,10 @@ architecture area remain recorded in that area's table.
 ### D2 — Two schema gaps found while grounding the UI mockups against `db/schema.sql` (RESOLVED 2026-09-26 by W12: point 1 by C32, point 2 by C28)
 
 **Resolution (2026-09-26):** point 2 — audit status/reason/amount are now real columns (`walletAdjustment`, `reason`, ...; C28), so no JSON projection layer exists. Point 1 — the suspension reason is stored as `reason` on the `ACCOUNT_SUSPENDED` audit row (C32), no `users.suspensionReason` column; W11 emits that row. Original notes below kept for history.
+
+### D22 — W13 notes (2026-09-27)
+
+The `MessageService.thread` signature gained a viewer (`viewerId`, `viewerRole`) and the in-memory implementation was deleted, so any other branch calling the old `thread(ticketId, channel)` must update. Wrong-role and non-party calls throw `IllegalArgumentException`, unlike W10's in-memory service which trusted the caller. Schema parity, `DatabaseBootstrapTest`, `MigrationRunnerReferenceDbTest` and `CommittedMockDbTest` now expect V004. Still red and unrelated (D21): `FileTicketTest.successfullyFilesTicketAndPublishesEvent`, `ShellLayoutTest.hostWalletPageUsesTheSamePageInsetAsListingsAndBookings`. The duplicate W14 was resolved by the operator renaming the Host Listings Dashboard row to W15.
 
 ### D21 — Merge of `origin/main` into the W11 branch (2026-09-27)
 

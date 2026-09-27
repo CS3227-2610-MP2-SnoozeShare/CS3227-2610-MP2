@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.snoozeshare.domain.enums.AssigneeFilter;
+import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.TicketStatus;
 import com.snoozeshare.domain.model.Ticket;
 import com.snoozeshare.repository.TicketRepository;
@@ -51,6 +52,30 @@ public final class JdbcTicketRepository implements TicketRepository {
     @Override
     public List<Ticket> findByStatus(TicketStatus status) {
         return findQueue(status, AssigneeFilter.ALL, null);
+    }
+
+    @Override
+    public List<Ticket> findByParty(UUID userId, Role role) {
+        String sql = switch (role) {
+            case GUEST -> "SELECT t.* FROM tickets t JOIN bookings b ON b.bookingId = t.bookingId "
+                    + "WHERE b.guestId = ? ORDER BY t.createdAt DESC, t.ticketId";
+            case HOST -> "SELECT t.* FROM tickets t JOIN bookings b ON b.bookingId = t.bookingId "
+                    + "JOIN properties p ON p.propertyId = b.listingId "
+                    + "WHERE p.hostId = ? ORDER BY t.createdAt DESC, t.ticketId";
+            default -> throw new IllegalArgumentException("Only guests and hosts are ticket parties");
+        };
+        try (var statement = connection.prepareStatement(sql)) {
+            statement.setString(1, JdbcCodecs.uuid(userId));
+            try (var result = statement.executeQuery()) {
+                List<Ticket> tickets = new ArrayList<>();
+                while (result.next()) {
+                    tickets.add(RowMappers.ticket(result));
+                }
+                return tickets;
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to query tickets for party", exception);
+        }
     }
 
     @Override

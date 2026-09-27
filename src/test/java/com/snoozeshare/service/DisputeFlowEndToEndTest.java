@@ -42,7 +42,8 @@ class DisputeFlowEndToEndTest {
 
             context.messageService().post(MockIds.TICKET_2, ThreadChannel.GUEST, amy.userId(),
                     Role.AGENT, "Could you send a photo of the gate?");
-            assertEquals(1, context.messageService().thread(MockIds.TICKET_2, ThreadChannel.GUEST).size());
+            assertEquals(2, context.messageService().thread(MockIds.TICKET_2, ThreadChannel.GUEST,
+                    amy.userId(), Role.AGENT).size());
 
             context.ticketService().assignToMe(MockIds.TICKET_2, amy.userId());
             context.ticketService().resolve(MockIds.TICKET_2,

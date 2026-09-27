@@ -84,6 +84,20 @@ class JdbcTicketRepositoryTest {
     }
 
     @Test
+    void findsTicketsByTheGuestOrHostOfTheirBooking(@TempDir Path directory) throws Exception {
+        try (MockDbFixture db = MockDbFixture.open(directory)) {
+            JdbcTicketRepository repository = new JdbcTicketRepository(db.connection());
+
+            assertEquals(List.of(MockIds.TICKET_3), ids(repository.findByParty(MockIds.GUEST_SOPHIA, Role.GUEST)));
+            assertEquals(List.of(MockIds.TICKET_3), ids(repository.findByParty(MockIds.HOST_DIEGO, Role.HOST)));
+            assertEquals(List.of(MockIds.TICKET_2), ids(repository.findByParty(MockIds.HOST_PRIYA, Role.HOST)));
+            assertEquals(List.of(), ids(repository.findByParty(MockIds.HOST_PRIYA, Role.GUEST)));
+            assertThrows(IllegalArgumentException.class, () ->
+                    repository.findByParty(MockIds.AGENT_AMY, Role.AGENT));
+        }
+    }
+
+    @Test
     void mineWithoutAnAgentIdIsRejected(@TempDir Path directory) throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
             JdbcTicketRepository repository = new JdbcTicketRepository(db.connection());

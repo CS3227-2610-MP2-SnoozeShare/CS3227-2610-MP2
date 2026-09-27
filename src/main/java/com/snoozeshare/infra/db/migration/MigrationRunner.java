@@ -12,6 +12,8 @@ public final class MigrationRunner {
     private static final int FOUNDATION_VERSION = 1;
     private static final int AUDIT_TRAIL_VERSION = 2;
     private static final int SUSPENSION_REASON_VERSION = 3;
+    private static final int MESSAGING_VERSION = 4;
+    private static final int BOOKING_MESSAGING_VERSION = 5;
 
     private MigrationRunner() {
     }
@@ -46,6 +48,20 @@ public final class MigrationRunner {
                 }
                 // else: a reference database rebuilt from db/schema.sql already has the column.
                 recordMigration(connection, SUSPENSION_REASON_VERSION);
+            }
+            if (!migrationApplied(connection, MESSAGING_VERSION)) {
+                if (!tableExists(connection, "messages")) {
+                    applySqlMigration(connection, "/db/migration/V004__messaging.sql");
+                }
+                // else: a reference database rebuilt from db/schema.sql already has the tables.
+                recordMigration(connection, MESSAGING_VERSION);
+            }
+            if (!migrationApplied(connection, BOOKING_MESSAGING_VERSION)) {
+                if (!tableExists(connection, "booking_messages")) {
+                    applySqlMigration(connection, "/db/migration/V005__booking_messaging.sql");
+                }
+                // else: a reference database rebuilt from db/schema.sql already has the tables.
+                recordMigration(connection, BOOKING_MESSAGING_VERSION);
             }
             connection.commit();
         } catch (SQLException | RuntimeException exception) {

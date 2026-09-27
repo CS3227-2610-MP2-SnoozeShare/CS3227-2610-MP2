@@ -63,7 +63,7 @@ class MigrationRunnerReferenceDbTest {
 
             MigrationRunner.migrate(connection);
 
-            assertEquals(3L, scalar(connection, "SELECT COUNT(*) FROM schema_history"));
+            assertEquals(5L, scalar(connection, "SELECT COUNT(*) FROM schema_history"));
             assertEquals(1L, scalar(connection,
                     "SELECT COUNT(*) FROM pragma_table_info('audit_log') WHERE name = 'walletAdjustment'"));
         }

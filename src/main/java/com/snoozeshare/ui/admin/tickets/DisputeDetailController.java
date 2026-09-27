@@ -3,7 +3,6 @@ package com.snoozeshare.ui.admin.tickets;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
@@ -16,24 +15,25 @@ import com.snoozeshare.domain.enums.ThreadChannel;
 import com.snoozeshare.domain.enums.TicketStatus;
 import com.snoozeshare.domain.model.Message;
 import com.snoozeshare.domain.model.Ticket;
+import com.snoozeshare.infra.events.Subscription;
+import com.snoozeshare.infra.events.events.MessagePostedEvent;
 import com.snoozeshare.service.DisputeDetail;
 import com.snoozeshare.ui.admin.HeightGrip;
+import com.snoozeshare.ui.common.messaging.ChatBubbles;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 public final class DisputeDetailController {
 
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH);
-    private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("MMM d, h:mm a", Locale.ENGLISH);
-    private static final double BUBBLE_SHARE = 0.85;
     private static final double CHAT_MIN_HEIGHT = 240;
     private static final double CHAT_MAX_HEIGHT = 900;
     private static final double NOTES_MIN_HEIGHT = 56;
@@ -59,6 +59,8 @@ public final class DisputeDetailController {
     @FXML private VBox hostThread;
     @FXML private TextField guestInput;
     @FXML private TextField hostInput;
+    @FXML private Button guestSendButton;
+    @FXML private Button hostSendButton;
     @FXML private TextArea notesArea;
     @FXML private Button saveNotesButton;
     @FXML private Button acceptButton;
@@ -70,6 +72,7 @@ public final class DisputeDetailController {
     private UUID ticketId;
     private DisputeDetail detail;
     private Runnable onBack = () -> { };
+    private Subscription subscription;
 
     @FXML
     private void initialize() {
@@ -89,7 +92,29 @@ public final class DisputeDetailController {
 
     public void load(UUID id) {
         ticketId = id;
+        dispose();
+        subscription = context.eventBus().subscribe(MessagePostedEvent.class, event -> {
+            if (event.message().ticketId().equals(ticketId)) {
+                Platform.runLater(this::refreshThreads);
+            }
+        });
         render();
+    }
+
+    public void dispose() {
+        if (subscription != null) {
+            subscription.unsubscribe();
+            subscription = null;
+        }
+    }
+
+    private void refreshThreads() {
+        try {
+            renderThread(guestThread, ThreadChannel.GUEST);
+            renderThread(hostThread, ThreadChannel.HOST);
+        } catch (RuntimeException exception) {
+            errorLabel.setText(exception.getMessage());
+        }
     }
 
     private UUID me() {
@@ -128,36 +153,16 @@ public final class DisputeDetailController {
         acceptButton.setDisable(!canResolve);
         rejectButton.setDisable(!canResolve);
         manualButton.setDisable(!canResolve);
-        renderThread(guestThread, ThreadChannel.GUEST);
-        renderThread(hostThread, ThreadChannel.HOST);
+        boolean chatOpen = open || inReview;
+        for (var control : new Node[] {guestInput, hostInput, guestSendButton, hostSendButton}) {
+            control.setDisable(!chatOpen);
+        }
+        refreshThreads();
     }
 
     private void renderThread(VBox box, ThreadChannel channel) {
-        box.getChildren().clear();
-        List<Message> messages = context.messageService().thread(ticketId, channel);
-        if (messages.isEmpty()) {
-            Label empty = new Label("No messages yet.");
-            empty.getStyleClass().add("small");
-            box.getChildren().add(empty);
-        }
-        for (Message message : messages) {
-            box.getChildren().add(bubble(box, message));
-        }
-    }
-
-    private static HBox bubble(VBox thread, Message message) {
-        boolean agent = message.authorRole() == Role.AGENT;
-        Label body = new Label(message.body());
-        body.setWrapText(true);
-        body.getStyleClass().add("agent-bubble-body");
-        Label time = new Label(STAMP.format(message.sentAt().atZone(ZoneId.systemDefault())));
-        time.getStyleClass().add("agent-chat-time");
-        VBox card = new VBox(3, body, time);
-        card.getStyleClass().addAll("agent-bubble-box", agent ? "agent-bubble-out" : "agent-bubble-in");
-        card.maxWidthProperty().bind(thread.widthProperty().multiply(BUBBLE_SHARE));
-        HBox row = new HBox(card);
-        row.setAlignment(agent ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
-        return row;
+        List<Message> messages = context.messageService().thread(ticketId, channel, me(), Role.AGENT);
+        ChatBubbles.render(box, messages, message -> message.authorRole() == Role.AGENT);
     }
 
     @FXML

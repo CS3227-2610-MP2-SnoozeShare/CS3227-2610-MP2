@@ -27,7 +27,7 @@ class CommittedMockDbTest {
     }
 
     @Test
-    void theCommittedFileHasTheAuditColumnsTheSystemUserAndMigrationVersionThree() throws Exception {
+    void theCommittedFileHasTheAuditColumnsTheSystemUserAndMigrationVersionFive() throws Exception {
         try (Connection connection = openCommittedReadOnly();
              Statement statement = connection.createStatement()) {
             Set<String> columns = new HashSet<>();
@@ -46,7 +46,7 @@ class CommittedMockDbTest {
                 result.next();
                 assertEquals(1, result.getInt(1), "System user");
             }
-            for (int version : new int[] {1, 2, 3}) {
+            for (int version : new int[] {1, 2, 3, 4, 5}) {
                 try (ResultSet result = statement.executeQuery(
                         "SELECT COUNT(*) FROM schema_history WHERE version = " + version)) {
                     result.next();
