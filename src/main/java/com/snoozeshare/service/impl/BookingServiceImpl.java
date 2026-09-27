@@ -299,7 +299,8 @@ public final class BookingServiceImpl implements BookingService {
         if (hoursUntilCheckIn > 48) {
             return booking.totalAmount();
         }
-        return booking.totalAmount().divide(BigDecimal.valueOf(2));
+        return booking.totalAmount().divide(BigDecimal.valueOf(2))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     @Override

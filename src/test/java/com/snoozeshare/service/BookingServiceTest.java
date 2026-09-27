@@ -268,6 +268,36 @@ class BookingServiceTest {
     }
 
     @Test
+    void cancelWithin48hOnAnOddCentTotalRoundsTheRefundToTwoDecimalPlaces() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            // 100.01/night for 3 nights = 300.03, an odd cent whose unrounded half is 150.015.
+            var ctx = seedContext(connection, new BigDecimal("500.00"), new BigDecimal("100.01"));
+            BookingService service = createService(connection);
+            LocalDate start = LocalDate.now().plusDays(1);
+            LocalDate end = LocalDate.now().plusDays(4);
+
+            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId, start, end);
+            new JdbcBookingRepository(connection).save(new Booking(
+                    booking.bookingId(), booking.listingId(), booking.guestId(),
+                    booking.startDate(), booking.endDate(), BookingStatus.CONFIRMED,
+                    booking.nightlyRateSnapshot(), booking.totalAmount(),
+                    booking.createdAt(), Instant.now(), null));
+
+            Booking cancelled = service.cancel(booking.bookingId(), ctx.guestId);
+
+            assertEquals(BookingStatus.CANCELLED_BY_GUEST, cancelled.status());
+            var refunds = new JdbcLedgerRepository(connection).entriesForBooking(booking.bookingId()).stream()
+                    .filter(txn -> txn.type() == WalletTransactionType.ESCROW_REFUND)
+                    .toList();
+            assertEquals(1, refunds.size());
+            BigDecimal refundAmount = refunds.get(0).amount();
+            assertTrue(refundAmount.scale() <= 2, "refund must not carry more than 2 decimal places: "
+                    + refundAmount);
+            assertEquals(0, new BigDecimal("150.02").compareTo(refundAmount));
+        }
+    }
+
+    @Test
     void cancelFailsForCompletedBooking() throws Exception {
         try (Connection connection = migratedConnection()) {
             var ctx = seedContext(connection, new BigDecimal("500.00"));
@@ -615,6 +645,10 @@ class BookingServiceTest {
     }
 
     static TestContext seedContext(Connection connection, BigDecimal walletBalance) {
+        return seedContext(connection, walletBalance, new BigDecimal("100.00"));
+    }
+
+    static TestContext seedContext(Connection connection, BigDecimal walletBalance, BigDecimal nightlyRate) {
         var users = new JdbcUserRepository(connection);
         var properties = new JdbcPropertyRepository(connection);
         var walletRepo = new JdbcWalletRepository(connection);
@@ -636,7 +670,7 @@ class BookingServiceTest {
         Property property = new Property(UUID.randomUUID(), host.userId(), ListingStatus.ACTIVE,
                 "Test Property", "A nice place", PropertyType.APARTMENT,
                 "123 Street", "Singapore", "Central", "123456",
-                4, 2, 1.0, new BigDecimal("100.00"),
+                4, 2, 1.0, nightlyRate,
                 LocalTime.of(14, 0), LocalTime.of(11, 0), Set.of(), now);
         properties.save(property);
 
