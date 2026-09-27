@@ -4,13 +4,13 @@
 anything, then run `git log --oneline -20` to confirm it still matches reality. Update it at
 every boundary, not at the end of the session.
 
-- **Phase:** W12 Platform Audit Trail — in review
+- **Phase:** W12 Platform Audit Trail done (merged in); W11 Account Governance implemented, awaiting operator acceptance
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `w8`
+- **Branch:** `agent-account-governance` (W11 — Agent Account Governance; branched 2026-09-26 from the W10 branch tip, which already contains `main`)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-27 by Codex — W8 pushed and PR #11 opened for review
-- **Last verified against repo:** 2026-09-27
-- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 on 2026-09-26 (first write + W10 checkpoint, operator-approved); W1/W2 are `Awaiting confirmation` and not yet documented.
+- **Last updated:** 2026-09-27 by Claude Sonnet 5 — merged `origin/main` (W8, W4, W6, W7, guide checkpoint) into the W11 branch; W11 Done
+- **Last verified against repo:** 2026-09-26
+- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, W6/W7 and others on `main`, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.13 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.9 Audit trail, two diagrams, the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented.
 
 Sections are ordered by how often they are needed: **1–3 say where we are, 4–5 say what the
 system is, 6–7 say what not to touch and what is stuck, 8–10 are the record.** Cite sections by
@@ -93,7 +93,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W8 | F7 — Host Request Queue, Earnings & Disputes | In review | [host requests/earnings design](docs/superpowers/specs/2026-09-26-w8-host-requests-earnings-design.md) | [host requests/earnings plan](docs/superpowers/plans/2026-09-26-w8-host-requests-earnings.md) | PR #11 open against main; review fixes complete; broader F7.2.2 deferred to W13 | Documented 2026-09-27 |
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
 | W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
-| W11 | F10 — Agent Account Governance | Not started | — | — | Backlog only: §5 | — |
+| W11 | F10 — Agent Account Governance (F10.1.1 suspend, F10.1.2 cascade; Reactivate added, C34) | Done | [W11 design](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) | [W11 plan](docs/superpowers/plans/2026-09-26-w11-account-governance.md) | 14/14 tasks; operator accepted real-app run 2026-09-27 | Documented 2026-09-27 |
 | W12 | F11 — Platform Audit Trail (Analytics half of the epic has no items, out of scope; W11 emits the account-governance rows, C32) | Done | [W12 design](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) | [W12 plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md) | Done | Documented 2026-09-26 |
 | W14 | Unified ledger — fold `wallet_transactions` into `audit_log`, `users.balance`, System account with a real wallet (C30, C31) | Not started | — | — | Not spec'd; reverses Known Gaps entry, C3, C9; runs after W12; touches W1/W3/W5/W6/W10 money paths | — |
 | W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
@@ -227,6 +227,8 @@ meant to depend only on `service.*` interfaces, never `repository.*` or `infra.d
 
 **W10 Agent screens (built):** `ui.admin` has the canvas-style agent shell (top bar + tab strip: Disputes / Accounts / Audit Log / Categories; Accounts and Audit Log are placeholders) in the "Fall Light" palette (`agent-theme.css`, agent scene only; C24). Screens: `DisputeQueueController` (oldest-first table, All/Unassigned/Mine chips, width-fitted status dropdown, unassigned badge), `DisputeDetailController` (summary card, resizable guest/host chat boxes, one persisted internal-notes field with Save, Assign/Unassign, Accept / Reject / Manual actions; C25), `ResolutionDialogController` and `CategoryDialogController` (modal cards built on `AgentModal` with a 50% grey scrim; live refund/payout preview, reason required; category Add/Edit/Delete; C26) and `CategoryAdminController`. To try it on a copy of the mock DB, set env `SNOOZESHARE_DB_URL` (e.g. `jdbc:sqlite:build/acceptance.db`); `Main` passes it to `AppContext.create(jdbcUrl)`. **W12 adds the Audit Log tab** (`ui.admin.audit.AuditLogController`, read-only): one search box + action-type multi-select + separate From/To date pickers + Apply filters + a red-outline Clear button, a table with a `REF` column (`Booking #0009` / `Ticket #0004`), `Before → After` status cell and signed wallet-adjustment cell, and pagination via `AuditService.search` (C29, C32, C33). **Fixed table headers (C33):** in every agent table the header row stays put and only the rows scroll, with a slim scroll bar that starts below the header: the dispute-queue and audit `TableView`s size to their rows but shrink to the window and scroll internally (no outer `ScrollPane`), and the categories list scrolls inside a `ScrollPane` under its fixed header (`.agent-rows-scroll`). Audit rows share the queue's grey hover but keep the default cursor. The date pickers and the `MultiSelectMenu` popup are styled in `agent-theme.css` after the board's Date picker component. `AdminUiSmokeTest` and the snapshot tests exercise the screens on the FX toolkit and write `build/ui-snapshots/*.png`.
 
+**W11 Accounts screen (built):** `ui.admin.accounts` holds `AccountGovernanceController` + `account-governance.fxml` (fixed-header table like Categories: only rows scroll; columns Display Name, Email, Role, Joined, Status pill with suspension reason, Action; Agent rows show a dash and the System user is hidden; grey row hover), a live search box (placeholder `Search...`, `AccountSearch` matches name, email, role, joined, status), and `SuspensionDialogController` + `suspension-dialog.fxml`, one `AgentModal` card for both Suspend (name large, email beneath, required reason) and Reactivate (banner `#40680C`). `AccountText` formats dates as `DD MMM YYYY`. `AdminShellController.showAccounts()` loads the screen and disposes its event subscription. Styles are in `agent-theme.css`. Smoke and snapshot tests write `build/ui-snapshots/agent-accounts.png` and modal PNGs.
+
 **Visual design (S2, branch `ui-mockup`):** fully spec'd. The design spec is
 [`docs/superpowers/specs/2026-09-23-ui-design-system-design.md`](docs/superpowers/specs/2026-09-23-ui-design-system-design.md)
 — design tokens, the AtlantaFX theming mechanism, the component library mapping, app shell/nav,
@@ -265,6 +267,8 @@ zero-value fallbacks for listings without activity.
 
 **W8 adds:** host booking row projections, message-aware host decisions, guarded completion and
 net host payout settlement after the 7-day dispute window.
+
+**W11 adds:** `AccountGovernanceServiceImpl` (`listAccounts`, `suspend`, `reactivate`): one `TransactionManager` transaction that flips the status, force-cancels the target's PENDING and not-yet-started CONFIRMED bookings with a full refund and block release, deactivates a host's ACTIVE listings (C36), and writes W12 audit rows (`ACCOUNT_SUSPENDED`, `BOOKING_FORCE_CANCELLED`, `ESCROW_REFUND`, `ACCOUNT_REACTIVATED`); the event is published after commit. `BookingServiceImpl` refuses bookings from a suspended guest. `UserService.suspend` was removed (D19 resolved).
 
 **W10 adds:** `TicketServiceImpl` (queue, assign, notes, resolve, category admin),
 `DisputeSettlementServiceImpl` (atomic full-escrow two-sided settlement, C20),
@@ -322,6 +326,12 @@ into a **shared, committed reference DB** — `db/schema.sql` / `db/seed-mock-da
 `db/snoozeshare-mock.db` — for the team to query together; it is a dev/reference artifact only,
 not loaded by the application at startup. See § Record.
 
+**W11 adds:** nullable `users.suspensionReason` (migration `V003__suspension_reason.sql`, applied or adopted by `MigrationRunner`; mock DB rebuilt with v3 history and seeded reasons), `UserRepository.findAll()`, `BookingRepository.findByListing(UUID)`, and a `suspensionReason` component on `User` (7-arg constructor kept).
+
+**W10 adds:** `JdbcTicketRepository` and `JdbcTicketCategoryRepository`, and `MigrationRunner` now
+adopts a pre-provisioned database (one with tables but no `schema_history`, such as the mock DB) by
+recording the baseline (D10).
+
 **W8 adds:** migration V002 for `bookings.hostDecisionMessage`; `MigrationRunner` applies it to
 fresh and adopted databases, while JDBC booking reads/writes remain compatible with older
 pre-provisioned copies. **W10 adds:** `JdbcTicketRepository` and `JdbcTicketCategoryRepository`,
@@ -343,6 +353,8 @@ Specified as a simple `Consumer<Event>` pub/sub
 `WalletTransactionRecordedEvent`, `ListingAvailabilityChangedEvent`), used so cross-role UI
 refresh (e.g. Guest Trip Hub reflecting a Host decision) doesn't require the publisher to know
 the subscriber exists.
+
+**W11 adds:** `AccountStatusChangedEvent`, published after an account suspend or reactivate commits so the Accounts screen refreshes.
 
 ### 4.7 Session
 
@@ -429,7 +441,7 @@ boundaries, JPA/Hibernate, a separate DTO layer distinct from domain records.
 
 | ID | What is needed | What it blocks | Raised |
 |---|---|---|---|
-| — | No outstanding questions | — | — |
+| — | No outstanding questions (Q3 resolved 2026-09-26 as C36 and the C34(d) amendment) | — | — |
 
 ---
 
@@ -462,6 +474,9 @@ architecture area remain recorded in that area's table.
 | C31 | 2026-09-26 | **Planned reversal (W14, not yet executed):** fold `wallet_transactions` into `audit_log` (it already functions as a log), add a balance to `users`, and create a System account with a real wallet. Reverses the Known Gaps entry, C3 (WalletService/TransactionService split), C9 (single-sided rows) and the `wallets.balance` cache convention when W14 runs. Until then W12 dual-writes wallet rows (ledger + audit) in one transaction. Split from W12 because it touches 36 main / 18 test files and the open W3 merge handoffs. | Operator; recommended split accepted over doing it inside W12 | Operator conversation, 2026-09-26; W12 spec § 2, § 8 |
 | C32 | 2026-09-26 | W12 spec approved with its § 10 defaults: `REF` column added to the Audit Log table; System user is role `AGENT` + `SUSPENDED`; Status cell shows `Before → After`; W7 blocks not audited. **Account-governance actions must also be audit-logged: the W12 schema/`AuditAction` accommodate them (spec § 4a), implementation is reserved for W11.** The suspension reason is stored as `reason` on the `ACCOUNT_SUSPENDED` row, which resolves D2 point 1 without a `users.suspensionReason` column. | Operator | Operator conversation, 2026-09-26; W12 spec § 4a, § 10 |
 | C33 | 2026-09-26 | **Operator UI amendments to the W12 Audit Log (supersede C29's single action combo and parts of the spec § 5-6):** (1) the action type is a MULTI-select (`MultiSelectMenu`, empty = all actions) with the same 34px height as the other filter controls, so `AuditFilter.actions` / `AuditCriteria.actionTypes` are sets and the repository binds an `IN` clause; (2) From and To stay two separate date pickers (no range), one border each, popup styled after the board's *Date picker* component (artifact `PWBCxbfv9e9FGVvY6RKUwd`, `Main.dc.html` Date picker), no Clear/Apply inside the picker, click selects; (3) the master Clear is a real red-outline button (`agent-button-danger`); the **Apply filters button is kept** (the spec does not remove it, selecting does not auto-apply); (4) **fixed table headers apply to ALL agent tables**: only the rows scroll, scroll bar starts below the header; (5) audit rows get the ticket queue's grey hover with no hand cursor (rows are not clickable). | Operator, reviewing the built Audit Log screen. Rejected: an auto-applying filter; removing Apply; a range picker. | Operator conversation, 2026-09-26; [W12 spec § 5–6](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) |
+| C34 | 2026-09-26 | W11 scope: (a) **Reactivate** is built although F10.1.1 says only suspend (new capability, like C26 delete); (b) the F10.1.2 cascade (pending bookings force-cancelled with 100% refund, host's active listings set inactive; CONFIRMED stays untouched) is in W11; (c) Agent accounts are listed with no action, and agents cannot be suspended or self-suspend; (d) suspension reason lives in a nullable `users.suspensionReason` column (migration V003), **reversing the no-column part of C32**; operator: "logs are not meant to be data storage"; the reason is also written to the audit row | Operator answers while scoping W11. Rejected: a `suspensions` table (overkill), deriving from `audit_log` (slow, coupled to W12), suspend-only, cascade deferred, hiding or suspending agent rows | Operator conversation, 2026-09-26; [W11 spec](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) |
+| C36 | 2026-09-26 | W11 cascade scope widened: suspension force-cancels `PENDING` **and not-yet-started `CONFIRMED`** bookings (100% refund), matching W12 § 4a and seed booking 12; started/ended `CONFIRMED` stays are untouched (W10). Reason column kept (C34(d) reverses part of C32). Accounts search matches display name, email, role, joined, status (placeholder `Search...`). Spec follows W12 audit shapes and fixed-header table pattern (C33) | Operator answers to Q3 | Operator conversation, 2026-09-26; [W11 spec](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) |
+| C35 | 2026-09-26 | W11 UI deltas from the canvas: first column "Display Name" plus a new Email column; dates (Joined, both modals) as `DD MMM YYYY`; Suspend modal banner shows display name large with the full email beneath; Reactivate modal banner uses `#40680C` (from the Force Complete mock-up); modals use `AgentModal` scrim (C26) | Operator, 2026-09-26 | Operator conversation; [W11 spec](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) § 2 |
 | C15 | 2026-09-23 | Execute W1 natively in the existing `w1` checkout rather than creating a separate worktree | Operator explicitly selected the current checkout for execution | Operator conversation, 2026-09-23 |
 | C28 | 2026-09-26 | Proceed with Host Listings Dashboard & Copy Refinement without a new design spec or implementation plan | Operator explicitly requested the earlier spec be undone and then asked to carry on; implementation records this waiver | Operator conversation, 2026-09-26 |
 | C29 | 2026-09-26 | Defer F7.2.2 structured host dispute response notes/evidence from W8 to W13 Messaging | Operator chose to defer the formal host response path to W13; W8 will not add ticket response fields or conflate the flow with chat | Operator conversation, 2026-09-26 |
@@ -493,7 +508,7 @@ architecture area remain recorded in that area's table.
 
 ### W12 deviations (2026-09-26) — see the [W12 spec](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) and [plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md)
 
-- **D13 — Wallet rows are dual-written until W14.** Every wallet movement writes `wallet_transactions` and an `audit_log` money row in one transaction (C31). Deliberate; W14 removes the duplication.
+- **D13.5 — Wallet rows are dual-written until W14.** Every wallet movement writes `wallet_transactions` and an `audit_log` money row in one transaction (C31). Deliberate; W14 removes the duplication.
 - **D14 — RESOLVED 2026-09-26 (operator verified the real-app run).** Originally: real-app manual run not done. Plan Task 10 Step 3 (launch the app on a copy of the mock DB, log in as `amy.tanaka@snoozeshare.test`, exercise Audit Log) was not performed. FX smoke and snapshot tests cover the flows; this stays as operator acceptance. Open UI polish is listed in § Known Gaps.
 - **D15 — Mock DB now ships migrated.** `MockDbFixture` no longer migrates its copy; the committed `db/snoozeshare-mock.db` already has `schema_history` v1+v2 and the System user, `CommittedMockDbTest` guards it, and `db/schema.sql` now contains `CREATE TABLE IF NOT EXISTS schema_history`. Rebuild the `.db` from schema + seed after seed edits, as before.
 - **D16 — Seed `availability_blocks` ids remapped** to valid hex prefixes (`60…`/`10…`/`20…`) because the old seed did not rebuild cleanly.
@@ -501,9 +516,27 @@ architecture area remain recorded in that area's table.
 
 - **D18 — C33 styling limits (accepted).** The JavaFX calendar cannot be restructured by CSS: the popup keeps its two separate month/year spinners (the board has one title with two arrows), weekday names stay mixed-case (no text-transform in JavaFX CSS), and no unavailable-day state exists. On the categories screen the header columns sit about 5px left of the row columns while the scroll bar is showing. Revisit only with a custom `DatePickerSkin`.
 
+### D20 — W11 deviations and accepted limitations (2026-09-26)
+
+- The Accounts list hides the System user. `BookingServiceImpl` gained a `UserRepository` constructor parameter and a suspended-guest guard. `MigrationRunner` now handles V003.
+- **Refund without an escrow check (accepted):** the suspension cascade credits the booking's `totalAmount` without checking that an `ESCROW_HOLD` row exists, consistent with `BookingServiceImpl`.
+- **Test fixture:** `AccountFixture.START_BALANCE` was raised from 1000 to 5000 so the cascade test can hold several escrows.
+- **UI polish (fixed after operator acceptance run, 2026-09-27):** status pill vertically centred, Reactivate and Suspend buttons share one size, search field uses the white input fill.
+- **C36 boundary:** a stay whose check-in is today counts as started, so its CONFIRMED booking is not cancelled.
+- **Operator acceptance (done 2026-09-27, after polish fixes):** the real-app GUI run (plan Task 14 Step 2) was not performed by the agent (no GUI driving available). Instead `AccountGovernanceService` was driven headlessly against a copy of the mock DB: suspending Noah Kim force-cancelled 2 PENDING bookings (`FORCE_CANCELLED`) with 2 `ESCROW_REFUND` rows, wrote `ACCOUNT_SUSPENDED`, and reactivating wrote `ACCOUNT_REACTIVATED` and flipped the status back. FX smoke/snapshot tests cover the screens. Operator should run the app on `build/acceptance.db` to accept.
+
 ### D2 — Two schema gaps found while grounding the UI mockups against `db/schema.sql` (RESOLVED 2026-09-26 by W12: point 1 by C32, point 2 by C28)
 
 **Resolution (2026-09-26):** point 2 — audit status/reason/amount are now real columns (`walletAdjustment`, `reason`, ...; C28), so no JSON projection layer exists. Point 1 — the suspension reason is stored as `reason` on the `ACCOUNT_SUSPENDED` audit row (C32), no `users.suspensionReason` column; W11 emits that row. Original notes below kept for history.
+
+### D21 — Merge of `origin/main` into the W11 branch (2026-09-27)
+
+Resolved by keeping both sides. `BookingServiceImpl` already had a `UserRepository` from W8, so W11's extra constructor parameter was dropped and only the suspended-guest guard remains. `AppContext` builds `AccountGovernanceService` after the W8 wiring. The W8 `hostDecisionMessage` column and W11's V003 both live in `MigrationRunner`; `SchemaParityTest` applies both. The guide's audit trail section is now § 4.12 on `main`, so W11's is § 4.13. W8 auto-completion (`completeEligibleBookings`, run at startup) now settles a suspended guest's in-progress stay. **Pre-existing red on `main`, not from W11:** `FileTicketTest.successfullyFilesTicketAndPublishesEvent` and `ShellLayoutTest.hostWalletPageUsesTheSamePageInsetAsListingsAndBookings` fail on `origin/main` too; I fixed the checkstyle violations `main` carried (`ReviewServiceImpl` import order, `FileTicketTest` line wraps). **Re-check after the merge (2026-09-27):** the app launched on a copy of the mock DB with no startup errors and its window opened; a headless drive of `AccountGovernanceService` on that copy suspended Noah Kim (1 `ACCOUNT_SUSPENDED`, 3 `BOOKING_FORCE_CANCELLED`, refund rows) and reactivated him. Nobody clicked through the merged Accounts screen; the UI tests cover it. Note W8 also numbered a deviation D13, colliding with W12's D13 (resolved by renaming W12's to D13.5).
+
+### D19 — `UserService.suspend` replaced by `AccountGovernanceService` (W11, RESOLVED 2026-09-26: stub removed)
+
+The W1 stub `UserService.suspend(userId, agentId)` only flips the status. W11 removes it in favour of `AccountGovernanceService.suspend/reactivate` (reason, cascade, audit). D2 item 1 (reason column) is resolved by C34(d); D2 item 2 stays with W12. See the [W11 spec § 6](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md).
+
 
 While extending the Design canvas (C11) to show every field the operator asked for, checking
 each field against `db/schema.sql` / the architecture proposal §4 turned up two things the
@@ -585,6 +618,6 @@ The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-st
 — every change, big or small, newest first.
 
 - **Latest entry:** 2026-09-26
-- **Entries:** 76 (4 backfilled coarsely from git history)
+- **Entries:** 77 (4 backfilled coarsely from git history)
 
 Deviations stay in § Deviations above: those are read every session.

@@ -119,15 +119,13 @@ class FileTicketTest {
     void rejectsWhenBookingDoesNotExist() {
         var request = new NewTicketRequest(UUID.randomUUID(), "Cleanliness",
                 "Title", "Desc", RemedyType.FULL_REFUND, null);
-        assertThrows(IllegalArgumentException.class,
-                () -> service.fileTicket(request, guestId, Role.GUEST));
+        assertThrows(IllegalArgumentException.class, () -> service.fileTicket(request, guestId, Role.GUEST));
     }
 
     @Test
     void rejectsWhenGuestDoesNotOwnBooking() {
         UUID otherGuest = UUID.randomUUID();
-        assertThrows(IllegalArgumentException.class,
-                () -> service.fileTicket(validRequest(), otherGuest, Role.GUEST));
+        assertThrows(IllegalArgumentException.class, () -> service.fileTicket(validRequest(), otherGuest, Role.GUEST));
     }
 
     @Test
@@ -140,8 +138,7 @@ class FileTicketTest {
         service = rebuildService(futureBooking);
         var request = new NewTicketRequest(futureBooking.bookingId(), "Cleanliness",
                 "Title", "Desc", RemedyType.FULL_REFUND, null);
-        assertThrows(IllegalStateException.class,
-                () -> service.fileTicket(request, guestId, Role.GUEST));
+        assertThrows(IllegalStateException.class, () -> service.fileTicket(request, guestId, Role.GUEST));
     }
 
     @Test
@@ -155,8 +152,7 @@ class FileTicketTest {
         service = rebuildService(oldBooking);
         var request = new NewTicketRequest(oldBooking.bookingId(), "Cleanliness",
                 "Title", "Desc", RemedyType.FULL_REFUND, null);
-        assertThrows(IllegalStateException.class,
-                () -> service.fileTicket(request, guestId, Role.GUEST));
+        assertThrows(IllegalStateException.class, () -> service.fileTicket(request, guestId, Role.GUEST));
     }
 
     @Test
@@ -169,39 +165,34 @@ class FileTicketTest {
         service = rebuildService(pending);
         var request = new NewTicketRequest(pending.bookingId(), "Cleanliness",
                 "Title", "Desc", RemedyType.FULL_REFUND, null);
-        assertThrows(IllegalStateException.class,
-                () -> service.fileTicket(request, guestId, Role.GUEST));
+        assertThrows(IllegalStateException.class, () -> service.fileTicket(request, guestId, Role.GUEST));
     }
 
     @Test
     void rejectsWhenCategoryIsInvalid() {
         var request = new NewTicketRequest(validBooking.bookingId(), "NonExistent",
                 "Title", "Desc", RemedyType.FULL_REFUND, null);
-        assertThrows(IllegalArgumentException.class,
-                () -> service.fileTicket(request, guestId, Role.GUEST));
+        assertThrows(IllegalArgumentException.class, () -> service.fileTicket(request, guestId, Role.GUEST));
     }
 
     @Test
     void rejectsBlankTitle() {
         var request = new NewTicketRequest(validBooking.bookingId(), "Cleanliness",
                 "  ", "Desc", RemedyType.FULL_REFUND, null);
-        assertThrows(IllegalArgumentException.class,
-                () -> service.fileTicket(request, guestId, Role.GUEST));
+        assertThrows(IllegalArgumentException.class, () -> service.fileTicket(request, guestId, Role.GUEST));
     }
 
     @Test
     void rejectsBlankDescription() {
         var request = new NewTicketRequest(validBooking.bookingId(), "Cleanliness",
                 "Title", "", RemedyType.FULL_REFUND, null);
-        assertThrows(IllegalArgumentException.class,
-                () -> service.fileTicket(request, guestId, Role.GUEST));
+        assertThrows(IllegalArgumentException.class, () -> service.fileTicket(request, guestId, Role.GUEST));
     }
 
     @Test
     void rejectsDuplicateTicketOnSameBooking() {
         service.fileTicket(validRequest(), guestId, Role.GUEST);
-        assertThrows(IllegalStateException.class,
-                () -> service.fileTicket(validRequest(), guestId, Role.GUEST));
+        assertThrows(IllegalStateException.class, () -> service.fileTicket(validRequest(), guestId, Role.GUEST));
     }
 
     @Test
@@ -253,6 +244,11 @@ class FileTicketTest {
             @Override
             public List<Booking> findByGuest(UUID guestId) {
                 return List.of(booking);
+            }
+
+            @Override
+            public List<Booking> findByListing(UUID propertyId) {
+                return List.of();
             }
 
             @Override

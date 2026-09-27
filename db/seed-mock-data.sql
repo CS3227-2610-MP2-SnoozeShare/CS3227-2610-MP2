@@ -268,8 +268,13 @@ INSERT INTO audit_log (logId, actorUserId, actorName, actionType, entityType, en
 ('50000000-0000-0000-0000-000000000003','a0000000-0000-0000-0000-000000000003','Chen Wu','ACCOUNT_SUSPENDED','User','b0000000-0000-0000-0000-000000000006','ACTIVE','SUSPENDED',NULL,'Suspended by support agent pending review','b0000000-0000-0000-0000-000000000006','Sam O''Connor',NULL,NULL,'2026-07-20T10:00:00Z'),
 ('50000000-0000-0000-0000-000000000004','a0000000-0000-0000-0000-000000000003','Chen Wu','LISTING_STATUS_CASCADE','Property','10000000-0000-0000-0000-000000000010','ACTIVE','INACTIVE',NULL,'Host suspended','b0000000-0000-0000-0000-000000000006','Sam O''Connor',NULL,NULL,'2026-07-20T10:05:00Z');
 
+-- ============================== suspension reasons ==============================
+-- The two seeded suspended accounts show the same reason their ACCOUNT_SUSPENDED audit rows carry (W11, C34).
+UPDATE users SET suspensionReason = 'Suspended by support agent pending review'
+WHERE userId IN ('c0000000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-000000000006');
+
 -- ============================== schema_history ==============================
--- The reference DB ships fully migrated (V001 + V002), so the app's MigrationRunner has nothing to apply.
-INSERT INTO schema_history (version, appliedAt) VALUES (1, '2026-09-26 00:00:00'), (2, '2026-09-26 00:00:00');
+-- The reference DB ships fully migrated (V001 + V002 + V003), so the app's MigrationRunner has nothing to apply.
+INSERT INTO schema_history (version, appliedAt) VALUES (1, '2026-09-26 00:00:00'), (2, '2026-09-26 00:00:00'), (3, '2026-09-26 00:00:00');
 
 PRAGMA foreign_keys = ON;

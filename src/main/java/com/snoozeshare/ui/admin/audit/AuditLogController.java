@@ -69,7 +69,9 @@ public final class AuditLogController {
         table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         table.prefHeightProperty().bind(Bindings.max(1, Bindings.size(table.getItems()))
                 .multiply(ROW_HEIGHT).add(HEADER_HEIGHT));
-        table.minHeightProperty().set(MIN_ROWS * ROW_HEIGHT + HEADER_HEIGHT);
+        // A short window may squeeze the table down to MIN_ROWS, but never taller than its own rows.
+        table.minHeightProperty().bind(Bindings.min(table.prefHeightProperty(),
+                MIN_ROWS * ROW_HEIGHT + HEADER_HEIGHT));
         table.maxHeightProperty().bind(table.prefHeightProperty());
         table.getColumns().add(textColumn("TIMESTAMP", 1.1,
                 entry -> TIME.format(entry.timestamp().atZone(ZoneId.systemDefault())), null));

@@ -11,6 +11,7 @@ public final class MigrationRunner {
 
     private static final int FOUNDATION_VERSION = 1;
     private static final int AUDIT_TRAIL_VERSION = 2;
+    private static final int SUSPENSION_REASON_VERSION = 3;
 
     private MigrationRunner() {
     }
@@ -38,6 +39,13 @@ public final class MigrationRunner {
             }
             if (!migrationApplied(connection, AUDIT_TRAIL_VERSION)) {
                 recordMigration(connection, AUDIT_TRAIL_VERSION);
+            }
+            if (!migrationApplied(connection, SUSPENSION_REASON_VERSION)) {
+                if (!columnExists(connection, "users", "suspensionReason")) {
+                    applySqlMigration(connection, "/db/migration/V003__suspension_reason.sql");
+                }
+                // else: a reference database rebuilt from db/schema.sql already has the column.
+                recordMigration(connection, SUSPENSION_REASON_VERSION);
             }
             connection.commit();
         } catch (SQLException | RuntimeException exception) {

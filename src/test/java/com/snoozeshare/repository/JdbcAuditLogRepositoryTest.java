@@ -72,7 +72,7 @@ class JdbcAuditLogRepositoryTest {
     }
 
     @Test
-    void searchIsNewestFirstAndKeepsInsertionOrderWithinOneInstant() throws Exception {
+    void searchIsNewestFirstAndPutsTheLastWrittenFirstWithinOneInstant() throws Exception {
         try (Connection connection = open()) {
             UUID actor = user(connection, "Ann Actor");
             var repository = new JdbcAuditLogRepository(connection);
@@ -86,7 +86,7 @@ class JdbcAuditLogRepositoryTest {
             List<String> actions = repository.search(AuditCriteria.all(), 10, 0).stream()
                     .map(AuditLogEntry::actionType).toList();
 
-            assertEquals(List.of("TOP_UP", "TICKET_RESOLVED", "BOOKING_COMPLETED"), actions);
+            assertEquals(List.of("TOP_UP", "BOOKING_COMPLETED", "TICKET_RESOLVED"), actions);
         }
     }
 

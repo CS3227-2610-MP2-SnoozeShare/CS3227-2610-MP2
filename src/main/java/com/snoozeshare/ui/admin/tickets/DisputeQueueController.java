@@ -89,7 +89,9 @@ public final class DisputeQueueController {
         table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         table.prefHeightProperty().bind(Bindings.max(1, Bindings.size(table.getItems()))
                 .multiply(ROW_HEIGHT).add(HEADER_HEIGHT));
-        table.minHeightProperty().set(MIN_ROWS * ROW_HEIGHT + HEADER_HEIGHT);
+        // A short window may squeeze the table down to MIN_ROWS, but never taller than its own rows.
+        table.minHeightProperty().bind(Bindings.min(table.prefHeightProperty(),
+                MIN_ROWS * ROW_HEIGHT + HEADER_HEIGHT));
         table.maxHeightProperty().bind(table.prefHeightProperty());
         table.getColumns().add(column("TICKET", 0.6, DisputeSummary::ticketLabel, "cell-id"));
         table.getColumns().add(column("SUBJECT", 1.4, DisputeSummary::title, "cell-strong"));

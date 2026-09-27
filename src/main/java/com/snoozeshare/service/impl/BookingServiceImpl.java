@@ -10,12 +10,14 @@ import java.util.List;
 import java.util.OptionalDouble;
 import java.util.UUID;
 
+import com.snoozeshare.domain.enums.AccountStatus;
 import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.WalletTransactionType;
 import com.snoozeshare.domain.model.AvailabilityBlock;
 import com.snoozeshare.domain.model.Booking;
 import com.snoozeshare.domain.model.Property;
+import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.domain.model.WalletTransaction;
 import com.snoozeshare.domain.statemachine.BookingStateMachine;
@@ -79,6 +81,11 @@ public final class BookingServiceImpl implements BookingService {
     public Booking submitRequest(UUID guestId, UUID propertyId,
                                   LocalDate start, LocalDate end) {
         DomainValidation.requireDateRange(start, end);
+        User guest = users.findById(guestId)
+                .orElseThrow(() -> new IllegalArgumentException("Guest does not exist"));
+        if (guest.accountStatus() != AccountStatus.ACTIVE) {
+            throw new IllegalStateException("Account is not active");
+        }
         try {
             Booking booking = new TransactionManager(connection).inTransaction(conn -> {
                 Property property = properties.findById(propertyId)

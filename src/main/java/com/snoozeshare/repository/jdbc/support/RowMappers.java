@@ -39,7 +39,8 @@ public final class RowMappers {
                 result.getString("email"),
                 AccountStatus.valueOf(result.getString("accountStatus")),
                 result.getString("registrationCode"),
-                JdbcCodecs.instant(result.getString("createdAt")));
+                JdbcCodecs.instant(result.getString("createdAt")),
+                result.getString("suspensionReason"));
     }
 
     public static Wallet wallet(ResultSet result) throws SQLException {

@@ -14,6 +14,4 @@ public interface UserService {
     User findById(UUID userId);
 
     List<User> listByRole(Role role);
-
-    User suspend(UUID userId, UUID agentId);
 }

@@ -112,4 +112,25 @@ class AdminFxmlLayoutTest {
         assertFalse(audit.toLowerCase().contains("force"));
         assertTrue(controller("AdminShellController.java").contains("audit-log.fxml"));
     }
+
+    @Test
+    void accountsScreenAndDialogHaveTheSpecifiedControls() throws Exception {
+        String screen = read("accounts/account-governance.fxml");
+        for (String id : new String[] {"searchField", "rows", "emptyLabel", "errorLabel"}) {
+            assertTrue(screen.contains("fx:id=\"" + id + "\""), id);
+        }
+        for (String header : new String[] {"DISPLAY NAME", "EMAIL", "ROLE", "JOINED", "STATUS", "ACTION"}) {
+            assertTrue(screen.contains("text=\"" + header + "\""), header);
+        }
+        assertTrue(screen.contains("promptText=\"Search...\""));
+        assertTrue(screen.contains("agent-rows-scroll"), "fixed header, only rows scroll (C33)");
+        assertFalse(screen.contains("Username"));
+
+        String dialog = read("accounts/suspension-dialog.fxml");
+        for (String id : new String[] {"titleLabel", "bannerBox", "nameLabel", "emailLabel", "metaLabel",
+            "noteLabel", "reasonArea", "errorLabel", "cancelButton", "confirmButton"}) {
+            assertTrue(dialog.contains("fx:id=\"" + id + "\""), id);
+        }
+        assertTrue(dialog.contains("Reason (required, written to the audit log)"));
+    }
 }
