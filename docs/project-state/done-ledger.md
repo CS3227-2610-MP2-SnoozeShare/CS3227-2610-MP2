@@ -6,6 +6,7 @@ why, with a commit, plan or artifact as the reference. Not a copy of `git log`.
 | Date | What changed | Workstream | Ref |
 |---|---|---|---|
 | 2026-09-27 | W11 acceptance-run polish: status pill vertically centred, equal-size Suspend/Reactivate buttons, white search fill | W11 | `AccountGovernanceController`, `agent-theme.css` |
+| 2026-09-27 | Agent tables (dispute queue, audit log, accounts) no longer keep a 3-row minimum height: with one or two records there are no empty rows below them; the floor only applies when a short window squeezes the table | W10, W11, W12 | `AdminTableLayoutTest` |
 | 2026-09-27 | Developer Guide checkpoint for W11 (operator-approved): § 4.13 Account governance with a sequence diagram, Accounts screen in § 4.8, F10 requirements, V003 in § 4.9, glossary, tests and the manual check folded into the agent-screens check | W11 | `docs/DeveloperGuide.md` |
 | 2026-09-27 | W11 Agent Account Governance marked Done on operator confirmation after the real-app acceptance run; Guide set to Awaiting confirmation | W11 | `PROJECT_STATE.md` § Workstreams |
 | 2026-09-27 | Audit list ties now newest-written first (`timestamp DESC, rowid DESC`, was `rowid ASC`; W12 test updated); Accounts scroll area sizes to its laid-out rows so a filtered list is not squeezed into a scrollbar | W11, W12 | `JdbcAuditLogRepository`, `AccountGovernanceController` |

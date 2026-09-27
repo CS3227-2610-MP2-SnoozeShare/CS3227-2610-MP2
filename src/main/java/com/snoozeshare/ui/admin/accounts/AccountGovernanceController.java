@@ -48,7 +48,8 @@ public final class AccountGovernanceController {
         errorLabel.managedProperty().bind(errorLabel.textProperty().isNotEmpty());
         // Fit the scroll area to the laid-out rows (wrapped reasons included); the card still shrinks with the window.
         rowsScroll.prefHeightProperty().bind(rows.heightProperty().add(2));
-        rowsScroll.setMinHeight(60);
+        rowsScroll.minHeightProperty().bind(rowsScroll.prefHeightProperty()
+                .map(height -> Math.min(height.doubleValue(), 60)));
         searchField.textProperty().addListener((observable, previous, text) -> render());
     }
 

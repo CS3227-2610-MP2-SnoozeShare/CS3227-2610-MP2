@@ -266,6 +266,29 @@ class AdminTableLayoutTest {
         }
     }
 
+    @Test
+    void aTableWithOneOrTwoRecordsHasNoEmptyRowsBelowThem(@TempDir Path directory) throws Exception {
+        assumeTrue(toolkitAvailable, "JavaFX toolkit unavailable");
+        try (MockDbFixture db = MockDbFixture.open(directory);
+             AppContext context = AppContext.create(db.jdbcUrl())) {
+            context.session().loginAs(context.userService().authenticate("amy.tanaka@snoozeshare.test"));
+            onFx(() -> {
+                for (String screen : new String[] {null, "showAuditLog"}) {
+                    Parent root = show(context, screen);
+                    TableView<Object> table = (TableView<Object>) root.lookup(".agent-table");
+                    table.getItems().setAll(new java.util.ArrayList<>(table.getItems().subList(0, 2)));
+                    root.applyCss();
+                    root.layout();
+                    assertEquals(34 + 2 * 47, table.getHeight(), 0.5, "no empty rows below two records");
+                    table.getItems().setAll(new java.util.ArrayList<>(table.getItems().subList(0, 1)));
+                    root.layout();
+                    assertEquals(34 + 47, table.getHeight(), 0.5, "no empty rows below one record");
+                }
+                return null;
+            });
+        }
+    }
+
     private static TableRow<?> firstFilledRow(Parent root, String selector) {
         TableView<?> table = (TableView<?>) root.lookup(selector);
         return (TableRow<?>) table.lookupAll(".table-row-cell").stream()
