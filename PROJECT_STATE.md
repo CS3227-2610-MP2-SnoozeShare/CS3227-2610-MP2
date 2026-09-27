@@ -4,13 +4,13 @@
 anything, then run `git log --oneline -20` to confirm it still matches reality. Update it at
 every boundary, not at the end of the session.
 
-- **Phase:** W14 Unified Ledger — all 12 tasks done and independently reviewed on `unified-ledger`, awaiting operator acceptance; W12 Platform Audit Trail done (merged in); W11 Account Governance implemented, awaiting operator acceptance
+- **Phase:** W14 Unified Ledger — all 12 tasks done and independently reviewed on `unified-ledger`, PR open against `main`, awaiting operator acceptance; W13 Messaging (service + host Messages UI) done and merged to `main`; W9 Host Wallet Management done and merged; W12 Platform Audit Trail done (merged); W11 Account Governance implemented, awaiting operator acceptance
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `unified-ledger` (W14 spec; branched 2026-09-27 from the `messaging-service` tip, which carries W11–W13 and is not yet in `main`). W13 work continues on `messaging-service`.
+- **Branch:** `unified-ledger` (W14; opened as PR #16 against `main`), merged up to date with `main` (which now carries W9's and W13's host-UI work, previously tracked separately on `w9`/`messaging-service`)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-27 by Claude Sonnet 5 — W14 Task 12 (final): full build verified, spec deviation recorded, state and Done ledger brought current; workstream set to `In review`, awaiting operator acceptance
+- **Last updated:** 2026-09-27 by Claude Sonnet 5 — merged `main` into `unified-ledger` to open PR #16 (resolved conflicts in `WalletServiceImpl`/`WalletLedgerTest`/two W9 UI files against the ledger rewrite; renumbered a W9 decision-ID collision, see C43/C44)
 - **Last verified against repo:** 2026-09-27
-- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, W6/W7 and others on `main`, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.13 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.9 Audit trail, two diagrams, the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented.
+- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, W6/W7 and others on `main`, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.13/4.14 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.9/4.13 Audit trail, two diagrams, the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented; W9/W13/W14 not yet in the guide.
 
 Sections are ordered by how often they are needed: **1–3 say where we are, 4–5 say what the
 system is, 6–7 say what not to touch and what is stuck, 8–10 are the record.** Cite sections by
@@ -64,12 +64,8 @@ three iterations).
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
-| S7 | 2026-09-25 | Codex | w7 | W7 scope assessment | Paused | `w7` created from `w6`; booking display maps to W8/F7.1, while W7 remains calendar/date overrides | 2026-09-25 |
-| S8 | 2026-09-26 | Codex | w7 | W7 | Paused | W7 complete: host calendar, inclusive manual blocks, removal, validation, and layout delivered; full tests/build pass | 2026-09-26 |
-| S9 | 2026-09-26 | Codex | w8 | Host portal UI refinement | Paused | Completed wallet/listing layout, copy, metrics, action sizing, and status-control spacing; focused tests, XML validation, Checkstyle, and diff checks pass; full suite retains two unrelated UI failures | 2026-09-26 |
 | S14 | 2026-09-26 | Codex | w8 | W8 — Host Request Queue, Earnings & Disputes | Paused | PR #11 open against main; W8 implementation, review fixes, and Developer Guide handoff complete | 2026-09-27 |
-| S15 | 2026-09-27 | Claude Sonnet 5 | messaging-service | W13 | Paused | Service slice built and verified (see Done ledger); next: operator runs the agent page on a mock-DB copy, then the guest/host Messages tabs get their own slice | 2026-09-27 |
-| S16 | 2026-09-27 | Claude Sonnet 5 (subagent-driven) | unified-ledger | W14 | Paused | Plan execution complete: all 12 tasks done and reviewed (Task 11 conservation invariants passed first try; Task 12 verified the full build and brought state/ledger/spec current). Awaiting operator acceptance, then a merge decision to `main` | 2026-09-27 |
+| S16 | 2026-09-27 | Claude Sonnet 5 (subagent-driven) | unified-ledger | W14 | Paused | Plan execution complete: all 12 tasks done and reviewed. Merged `main` into `unified-ledger` (bringing in W9/W13 host-UI work that had landed on `main` via `w9`/`messaging-service`, both now fully merged and their session rows retired), resolved the wallet-code and decision-ID conflicts (C43/C44), and opened PR #16. Awaiting operator review/merge | 2026-09-27 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -78,27 +74,27 @@ question ID, same as a workstream row).
 
 ## 3. Workstreams
 
-W1 has completed its shared-foundation implementation and is awaiting operator confirmation. The rows below are the backlog's epics (§2 of the architecture proposal is
+W1 has completed its shared-foundation implementation and is documented in the Developer Guide. The rows below are the backlog's epics (§2 of the architecture proposal is
 their shared design; `docs/ProductBacklog.md` is their shared spec source) reframed as
 workstreams so future sessions have somewhere to record status. Each started workstream must link
 its spec and plan before feature implementation, per AGENTS.md § 3.
 
 | ID | Workstream | Status | Spec | Plan | Progress | Guide |
 |---|---|---|---|---|---|---|
-| W1 | F0 — Auth, Registration & Wallet Provisioning | Done | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | W1 implementation and verification complete; guide confirmation pending | Awaiting confirmation |
+| W1 | F0 — Auth, Registration & Wallet Provisioning | Done | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | W1 implementation and verification complete; Developer Guide updated with shared-foundation coverage | Documented 2026-09-27 |
 | W2 | F1 — Listing Search & Property Discovery | Done | [listing-search design](docs/superpowers/specs/2026-09-24-w2-listing-search-design.md) | [listing-search plan](docs/superpowers/plans/2026-09-24-w2-listing-search.md) | Implementation complete: search/filter, detail modal, price breakdown | Awaiting confirmation |
 | W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Building | [booking-execution design](docs/superpowers/specs/2026-09-24-w3-booking-execution-design.md) | [booking-execution plan](docs/superpowers/plans/2026-09-24-w3-booking-execution.md) | All 9 tasks complete: TransactionServiceImpl, BookingServiceImpl (submit/cancel/decide), AppContext wiring, Trip Hub UI, Book Now button | — |
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Done | [guest-feedback design](docs/superpowers/specs/2026-09-26-w4-guest-feedback-disputes-reviews-design.md) | [guest-feedback plan](docs/superpowers/plans/2026-09-26-w4-guest-feedback-disputes-reviews.md) | All 8 tasks complete: fileTicket, ReviewService, AppContext wiring, ticket filing modal, review modal, Support tab, Trip Hub buttons | Awaiting confirmation |
 | W5 | F4 — Guest Wallet Management (top-up/withdraw) | Done | [wallet-management design](docs/superpowers/specs/2026-09-25-w5-wallet-management-design.md) | [wallet-management plan](docs/superpowers/plans/2026-09-25-w5-wallet-management.md) | All 6 tasks complete: dashboard, modal, navigation, CSS, sidebar refresh | Awaiting confirmation |
 | W6 | F5 — Host Listing Management & Publishing | Done | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md) | [listing-management plan](docs/superpowers/plans/2026-09-25-w6-listing-management.md) | Implementation complete: listing CRUD/status/detail flows, host wallet/navigation refinements, wallet refresh fix, and clean build verification | Documented 2026-09-27 |
 | W7 | F6 — Host Calendar & Date Overrides | Done | [host-calendar design](docs/superpowers/specs/2026-09-26-w7-host-calendar-design.md) | [host-calendar plan](docs/superpowers/plans/2026-09-26-w7-host-calendar.md) | Complete: listing calendar, month navigation, colors, all-month overrides, inclusive/single-date blocking, removal, validation, and layout; full tests/build pass | Documented 2026-09-27 |
-| W8 | F7 — Host Request Queue, Earnings & Disputes | In review | [host requests/earnings design](docs/superpowers/specs/2026-09-26-w8-host-requests-earnings-design.md) | [host requests/earnings plan](docs/superpowers/plans/2026-09-26-w8-host-requests-earnings.md) | PR #11 open against main; review fixes complete; broader F7.2.2 deferred to W13 | Documented 2026-09-27 |
-| W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
+| W8 | F7 — Host Request Queue, Earnings & Disputes | Done | [host requests/earnings design](docs/superpowers/specs/2026-09-26-w8-host-requests-earnings-design.md) | [host requests/earnings plan](docs/superpowers/plans/2026-09-26-w8-host-requests-earnings.md) | PR #11 open against main; review fixes complete; broader F7.2.2 deferred to W13 | Documented 2026-09-27 |
+| W9 | F8 — Host Wallet Management | Done | [host wallet management design](docs/superpowers/specs/2026-09-27-w9-host-wallet-management-design.md) | [host wallet management plan](docs/superpowers/plans/2026-09-27-w9-host-wallet-management.md) | Complete: wallet-owned statement styling, dynamic escrow display, directional badges, and native Host Booking-style modals | Documented 2026-09-27 |
 | W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
 | W11 | F10 — Agent Account Governance (F10.1.1 suspend, F10.1.2 cascade; Reactivate added, C34) | Done | [W11 design](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) | [W11 plan](docs/superpowers/plans/2026-09-26-w11-account-governance.md) | 14/14 tasks; operator accepted real-app run 2026-09-27 | Documented 2026-09-27 |
 | W12 | F11 — Platform Audit Trail (Analytics half of the epic has no items, out of scope; W11 emits the account-governance rows, C32) | Done | [W12 design](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) | [W12 plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md) | Done | Documented 2026-09-26 |
-| W14 | Unified ledger — fold `wallet_transactions` into `audit_log`, System account (role SYSTEM) with a real wallet; `wallets` table kept (C30, C31, C39, C40) | In review | [W14 design](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md) | [W14 plan](docs/superpowers/plans/2026-09-27-w14-unified-ledger.md) | All 12 tasks done & reviewed; C42 fixed a settlement crash; awaiting operator acceptance | — |
-| W13 | F12 — Messaging (persistent ticket chat; `MessageService` replaces the in-memory seam; guest/host UI deferred, C37) | Building | [W13 design](docs/superpowers/specs/2026-09-27-w13-messaging-service-design.md) | [W13 plan](docs/superpowers/plans/2026-09-27-w13-messaging-service.md) | Ticket and booking chat services done (Tasks 1–8); guest/host Messages UI not started (C37, C38) | — |
+| W13 | F12 — Messaging (persistent ticket chat; `MessageService` replaces the in-memory seam; Host UI slice, C37/C38) | Done | [W13 service design](docs/superpowers/specs/2026-09-27-w13-messaging-service-design.md); [Host Messages design](docs/superpowers/specs/2026-09-27-host-messages-ui-design.md) | [W13 service plan](docs/superpowers/plans/2026-09-27-w13-messaging-service.md); [Host Messages plan](docs/superpowers/plans/2026-09-27-host-messages-ui.md) | Host ticket creation removed per reversed C39 (the messaging-branch one, distinct from W14's C39); Hosts can only reply to existing agent-managed tickets; guide checkpoint awaiting confirmation | Awaiting confirmation |
+| W14 | Unified ledger — fold `wallet_transactions` into `audit_log`, System account (role SYSTEM) with a real wallet; `wallets` table kept (C30, C31, C39, C40) | In review | [W14 design](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md) | [W14 plan](docs/superpowers/plans/2026-09-27-w14-unified-ledger.md) | All 12 tasks done & reviewed; C42 fixed a settlement crash; PR #16 open against `main`, awaiting operator review | — |
 | W15 | Host Listings Dashboard & Copy Refinement | Done | — | — | Live listing metrics, listing-card redesign, Requests/wallet copy, and layout updates complete; operator explicitly waived new spec/plan | — |
 
 **Handoffs into W3 (raised by W10, 2026-09-25; W3 reached `main` 2026-09-25, W10 merged `main` 2026-09-26 and the
@@ -204,8 +200,9 @@ W6 adds the Host Listings page, separate create/edit form flow, clickable listin
 host-facing detail page, listing status toggles, and owner-authorized listing updates.
 The Guest and Host shells now expose separate wallet pages while sharing wallet dashboard logic;
 the live balance is displayed in each header instead of a right-side panel.
-Host navigation starts on Listings and includes a non-interactive Messages placeholder; Guest
-navigation labels the existing search page as Search and loads it immediately after login.
+Host navigation starts on Listings and exposes Requests, Messages, and Wallet; the Host Messages
+page merges private booking chat with host-side ticket chat. Guest navigation labels the existing
+search page as Search and loads it immediately after login.
 Host Wallet now replaces the shell center directly, matching Guest Wallet’s full available wallet
 area and modal-overlay behavior.
 Booking escrow publishes `WalletTransactionRecordedEvent` after its transaction commits, keeping
@@ -221,6 +218,12 @@ and create/edit-specific action labels.
 The Host Listings page uses a `My listings` heading, wide metric/action cards, and `Requests`
 navigation; Host Wallet actions use equal-width `Top up` and `Withdraw` buttons.
 Host shell FXML is well-formed and loads successfully through `SceneRouter` after authentication.
+W9 moves the Guest/Host wallet dashboard and action-dialog controllers and FXML into
+`ui.common.wallet`, renders the complete wallet statement in a mockup-based table, and
+supports top-up presets plus full-balance withdrawal selection for both roles. The wallet table
+uses the Host Booking/Agent table rhythm; its balance separates large black dollar amount from
+smaller grey `SGD`, and wallet action/modals use contained green confirmations with outlined
+secondary actions.
 Per the proposal,
 each role gets its own FXML+Controller tree under `ui.<role>`, and `ui.common` holds shared
 pieces (`WalletPanelController`, `NavShell`, formatting/validation helpers, shared components)
@@ -272,7 +275,9 @@ net host payout settlement after the 7-day dispute window.
 
 **W11 adds:** `AccountGovernanceServiceImpl` (`listAccounts`, `suspend`, `reactivate`): one `TransactionManager` transaction that flips the status, force-cancels the target's PENDING and not-yet-started CONFIRMED bookings with a full refund and block release, deactivates a host's ACTIVE listings (C36), and writes W12 audit rows (`ACCOUNT_SUSPENDED`, `BOOKING_FORCE_CANCELLED`, `ESCROW_REFUND`, `ACCOUNT_REACTIVATED`); the event is published after commit. `BookingServiceImpl` refuses bookings from a suspended guest. `UserService.suspend` was removed (D19 resolved).
 
-**W13 adds:** `MessageServiceImpl` and `JdbcMessageRepository` replace `InMemoryMessageService` (see § 4.6a).
+**W13 adds:** `MessageServiceImpl` and `JdbcMessageRepository` replace `InMemoryMessageService`.
+Hosts use the persistent host-side ticket thread to respond to agent-managed tickets; ticket filing
+remains guest-only.
 
 **W10 adds:** `TicketServiceImpl` (queue, assign, notes, resolve, category admin),
 `DisputeSettlementServiceImpl` (atomic full-escrow two-sided settlement, C20),
@@ -406,9 +411,9 @@ the subscriber exists.
 
 ### 4.6a Messaging (W13)
 
-**Now:** `MessageService` (F12) is persistent. Tables `messages` and `message_reads` (migration `V004__messaging.sql`; `MigrationRunner` applies or adopts it; the mock DB ships with seeded threads on tickets 2 and 3) hold one GUEST and one HOST thread per ticket. `MessageServiceImpl` checks every call against ticket → booking → property: a guest reads and posts only the GUEST thread, a host only the HOST thread, any agent both; posting to a resolved ticket throws `IllegalStateException`. Order is insertion order (`rowid`), not `sentAt` text. `post` publishes `MessagePostedEvent` after the insert. `conversationsFor`, `unreadCount` and `markRead` are the contract for the guest and host Messages tabs, which are **not built** (C37). The agent dispute page reads and writes through it, refreshes on `MessagePostedEvent`, and disables chat inputs on resolved tickets; `ui.common.messaging.ChatBubbles` draws bubbles and is meant to be reused by the guest and host tabs (it uses `agent-theme.css` classes, so those themes need equivalents). `TicketRepository.findByParty` backs the inbox.
+**Now:** `MessageService` (F12) is persistent. Tables `messages` and `message_reads` (migration `V004__messaging.sql`; `MigrationRunner` applies or adopts it; the mock DB ships with seeded threads on tickets 2 and 3) hold one GUEST and one HOST thread per ticket. `MessageServiceImpl` checks every call against ticket → booking → property: a guest reads and posts only the GUEST thread, a host only the HOST thread, any agent both; posting to a resolved ticket throws `IllegalStateException`. Order is insertion order (`rowid`), not `sentAt` text. `post` publishes `MessagePostedEvent` after the insert. `conversationsFor`, `unreadCount` and `markRead` back the Host Messages tab and remain the contract for the deferred Guest tab. The Host page merges ticket summaries with booking summaries, renders the selected thread through `ChatBubbles`, marks rows read, refreshes on both message events, and disables chat inputs on resolved tickets. `TicketRepository.findByParty` backs the inbox.
 
-**Booking conversations (C38):** a second, private host↔guest chat scoped to a booking. `BookingConversationService` (`thread`, `post`, `conversationsFor`, `unreadCount`, `markRead`) over tables `booking_messages` and `booking_message_reads` (migration V005) publishes `BookingMessagePostedEvent`. Writable while the booking is `CONFIRMED` and up to check-out + 7 days, read-only afterwards; only the booking's guest and host take part (agents may not read it, decided in C38 and spec § 9). Text only, no edit/delete. Service and seed data exist; the guest and host Messages tabs do not. The mock DB has a chat on every ticket and on bookings 3, 4, 9, 10, 11, 14.
+**Booking conversations (C38):** a second, private host↔guest chat scoped to a booking. `BookingConversationService` (`thread`, `post`, `conversationsFor`, `unreadCount`, `markRead`) over tables `booking_messages` and `booking_message_reads` (migration V005) publishes `BookingMessagePostedEvent`. Writable while the booking is `CONFIRMED` and up to check-out + 7 days, read-only afterwards; only the booking's guest and host take part (agents may not read it, decided in C38 and spec § 9). Text only, no edit/delete. The Host Messages tab consumes it; the Guest tab remains deferred. The mock DB has a chat on every ticket and on bookings 3, 4, 9, 10, 11, 14.
 
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
@@ -556,6 +561,7 @@ architecture area remain recorded in that area's table.
 | C35 | 2026-09-26 | W11 UI deltas from the canvas: first column "Display Name" plus a new Email column; dates (Joined, both modals) as `DD MMM YYYY`; Suspend modal banner shows display name large with the full email beneath; Reactivate modal banner uses `#40680C` (from the Force Complete mock-up); modals use `AgentModal` scrim (C26) | Operator, 2026-09-26 | Operator conversation; [W11 spec](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) § 2 |
 | C37 | 2026-09-27 | W13 scope: replace `InMemoryMessageService` with a persistent `MessageService` (tables `messages`, `message_reads`, migration V004), move the agent dispute page onto it, and define the guest/host contract (`conversationsFor`, `unreadCount`, `markRead`, `MessagePostedEvent`); guest/host Messages UI deferred. Resolved tickets become read-only. F7.2.2 stays deferred (C29). | Operator, 2026-09-27: "the actual implementation and UI of the messaging service on host and guest can be deferred"; chose service + agent page over interfaces-only | Operator conversation; [W13 spec](docs/superpowers/specs/2026-09-27-w13-messaging-service-design.md) |
 | C38 | 2026-09-27 | **Reverses the W13 spec's exclusion of chat outside tickets.** Add a booking-scoped host↔guest chat, a copy of the ticket chat without the agent: text only, no attachments, no edit/delete, no typing indicator, writable from confirmation to check-out + 7 days (the dispute period), read-only after. Now: schema, contract, service and seed data; the guest/host UI stays deferred. Agents are not participants and may not read it, even as dispute evidence (operator confirmed 2026-09-27). | Operator, 2026-09-27, when asked to keep or reverse the exclusion while requesting host-guest sample data | Operator conversation; [W13 spec § 8a](docs/superpowers/specs/2026-09-27-w13-messaging-service-design.md) |
+| C40 | 2026-09-27 | Reverse the former Host Messages ticket-filing decision: Hosts cannot create tickets and may only respond in existing agent-managed ticket threads. Remove the Host `+ New Ticket` UI, callback/dialog, host candidate query, and Host filing authorization; keep Guest filing unchanged. | Operator: "Host should not be able to create new tickets, they can only respond to agents working on the ticket"; confirmed "Yes, reverse C39 and remove C39" | Host Messages design/plan revision; response-only Host Messages implementation |
 | C15 | 2026-09-23 | Execute W1 natively in the existing `w1` checkout rather than creating a separate worktree | Operator explicitly selected the current checkout for execution | Operator conversation, 2026-09-23 |
 | C28 | 2026-09-26 | Proceed with Host Listings Dashboard & Copy Refinement without a new design spec or implementation plan | Operator explicitly requested the earlier spec be undone and then asked to carry on; implementation records this waiver | Operator conversation, 2026-09-26 |
 | C29 | 2026-09-26 | Defer F7.2.2 structured host dispute response notes/evidence from W8 to W13 Messaging | Operator chose to defer the formal host response path to W13; W8 will not add ticket response fields or conflate the flow with chat | Operator conversation, 2026-09-26 |
@@ -565,6 +571,8 @@ architecture area remain recorded in that area's table.
 | C40 | 2026-09-27 | W14 refinements: (a) the `wallets` table stays, so **no `users.balance`** (reverses that part of C31); only `wallet_transactions` is folded into `audit_log`. (b) The System user gets a real **`SYSTEM` role** by rebuilding `users` (new CHECK; migration V006, which `MigrationRunner` must run with foreign keys off), reversing C32's `AGENT` + `SUSPENDED`; the ledger fold is V007. Spec § 8 and § 10 updated. (Executed by W14, 2026-09-27.) | Operator: "for security and maybe less changes, lets keep the dedicated wallets table"; the SYSTEM role "should be a small addition". Rejected: `users.balance`; keeping the System user as a suspended agent | Operator conversation; [W14 spec](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md) |
 | C41 | 2026-09-27 | W14 spec § 10 defaults accepted as written: keep `WalletService` and `TransactionService`; balance stays a stored cache on `wallets`; no escrow account; legacy payouts get backfilled `PLATFORM_FEE` rows. Ledger fold is split into V006 (SYSTEM role), V007 (add and backfill) and V008 (drop table) so code can leave `wallet_transactions` before it is dropped. The Known Gaps platform-fee entry, C9 and C3-storage reversals are approved and take effect as the plan executes. (Executed by W14, 2026-09-27; the V007/V008 split happened exactly as anticipated here, see § Deviations.) | Operator: "Accept defaults. Write plan" | Operator conversation; [W14 spec](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md), [W14 plan](docs/superpowers/plans/2026-09-27-w14-unified-ledger.md) |
 | C42 | 2026-09-27 | W14 Task 8 review found $0/sub-cent listing rates crashed booking settlement (and app startup, via the startup completion sweep) once `LedgerWriter` rejects a zero-amount payout. Operator chose to **forbid degenerate listing rates** rather than support free/sub-cent stays end-to-end: `ListingServiceImpl`/the host form now require `baseNightlyRate` to be positive and have at most 2 decimal places (smallest legal total is $0.01, which always settles to a positive net). Reverses nothing recorded; this is new validation, not a reversal. (Executed by W14, 2026-09-27; verified accurate on final review — no further changes needed.) | Operator, asked to choose between forbidding $0 listings or building out free-stay support in escrow/settlement/disputes; chose to forbid | Operator conversation; [W14 plan](docs/superpowers/plans/2026-09-27-w14-unified-ledger.md) Task 8, commits cb9e1d0, a93f41e |
+| C43 | 2026-09-27 | **Renumbered from a colliding `C32` on the `w9`/`main` side while merging `unified-ledger` into `main` (merging-across-branches: append-only, renumber, don't drop).** W9 host wallet statements show every wallet transaction type (`TOP_UP`, `WITHDRAWAL`, escrow rows, payouts, ticket remedies, and agent overrides); payout creation remains W8/W10-owned | Operator confirmed “Yes, all types” when choosing the W9 statement scope | Operator conversation, 2026-09-27 |
+| C44 | 2026-09-27 | **Renumbered from a colliding `C33` on the `w9`/`main` side, same merge as C43.** W9 uses one common Guest/Host wallet page and action-dialog flow matching the supplied mockups; top-up presets populate the amount field and withdrawal's full-balance link populates the current balance | Operator approved the common-wallet direction and supplied the UI interaction requirements | Operator conversation, 2026-09-27; [W9 design](docs/superpowers/specs/2026-09-27-w9-host-wallet-management-design.md) |
 
 ---
 
@@ -622,11 +630,41 @@ architecture area remain recorded in that area's table.
 
 ### D22 — W13 notes (2026-09-27)
 
-The `MessageService.thread` signature gained a viewer (`viewerId`, `viewerRole`) and the in-memory implementation was deleted, so any other branch calling the old `thread(ticketId, channel)` must update. Wrong-role and non-party calls throw `IllegalArgumentException`, unlike W10's in-memory service which trusted the caller. Schema parity, `DatabaseBootstrapTest`, `MigrationRunnerReferenceDbTest` and `CommittedMockDbTest` now expect V004. Still red and unrelated (D21): `FileTicketTest.successfullyFilesTicketAndPublishesEvent`, `ShellLayoutTest.hostWalletPageUsesTheSamePageInsetAsListingsAndBookings`. The duplicate W14 was resolved by the operator renaming the Host Listings Dashboard row to W15.
+The `MessageService.thread` signature gained a viewer (`viewerId`, `viewerRole`) and the in-memory implementation was deleted, so any other branch calling the old `thread(ticketId, channel)` must update. Wrong-role and non-party calls throw `IllegalArgumentException`, unlike W10's in-memory service which trusted the caller. Schema parity, `DatabaseBootstrapTest`, `MigrationRunnerReferenceDbTest` and `CommittedMockDbTest` now expect V004. The baseline failures observed during the original W13 service slice were tracked there; the current verification result is recorded in D23.
+
+### D23 — Host Messages verification baseline (2026-09-27)
+
+The Host Messages implementation passes its focused tests, Checkstyle, and packaging build. The full
+suite completes 442 tests with one pre-existing failure, `AgentModalTest.escapeAndWindowCloseAlsoRemoveTheScrim`
+at line 100; it is unrelated to the messaging changes. Java 25 native-access warnings from SQLite and
+JavaFX remain environmental.
+
+### D24 — Host Messages list layout refinement (2026-09-27)
+
+The Host Messages inbox uses a fixed 380px sidebar. Conversation titles and subtitles use JavaFX
+ellipsis overrun, while the conversation copy expands to keep any OPEN/RESOLVED badge right-aligned.
+Focused layout/controller tests and Checkstyle pass. The full suite remains at 442 passing and one
+unrelated pre-existing `AgentModalTest.escapeAndWindowCloseAlsoRemoveTheScrim` failure; the app
+launched against `build/acceptance-host-messages-olivia.db`, and the Olivia host authentication path
+passed in `HostMessagesControllerTest`.
+
+### D25 — Host Messages horizontal overflow refinement (2026-09-27)
+
+The Host Messages ListView constrains each conversation row to the fixed sidebar width, allows
+title/subtitle text to shrink and ellipsize, and removes the horizontal scrollbar from the list
+skin so OPEN/RESOLVED badges remain visible at the right edge. Focused UI tests and Checkstyle
+pass; the app relaunches cleanly against a fresh disposable mock DB copy.
+
+### D26 — Host ticket creation reversed (2026-09-27)
+
+The former C39 Host ticket-filing decision was removed and replaced by C40. Host Messages no longer
+shows `+ New Ticket`, exposes a ticket-filing callback or dialog, or offers a host booking-candidate
+query. `TicketService.fileTicket` rejects `Role.HOST`; Guest ticket filing remains unchanged. The
+focused Host Messages, controller, and ticket-service tests pass.
 
 ### D21 — Merge of `origin/main` into the W11 branch (2026-09-27)
 
-Resolved by keeping both sides. `BookingServiceImpl` already had a `UserRepository` from W8, so W11's extra constructor parameter was dropped and only the suspended-guest guard remains. `AppContext` builds `AccountGovernanceService` after the W8 wiring. The W8 `hostDecisionMessage` column and W11's V003 both live in `MigrationRunner`; `SchemaParityTest` applies both. The guide's audit trail section is now § 4.12 on `main`, so W11's is § 4.13. W8 auto-completion (`completeEligibleBookings`, run at startup) now settles a suspended guest's in-progress stay. **Pre-existing red on `main`, not from W11:** `FileTicketTest.successfullyFilesTicketAndPublishesEvent` and `ShellLayoutTest.hostWalletPageUsesTheSamePageInsetAsListingsAndBookings` fail on `origin/main` too; I fixed the checkstyle violations `main` carried (`ReviewServiceImpl` import order, `FileTicketTest` line wraps). **Re-check after the merge (2026-09-27):** the app launched on a copy of the mock DB with no startup errors and its window opened; a headless drive of `AccountGovernanceService` on that copy suspended Noah Kim (1 `ACCOUNT_SUSPENDED`, 3 `BOOKING_FORCE_CANCELLED`, refund rows) and reactivated him. Nobody clicked through the merged Accounts screen; the UI tests cover it. Note W8 also numbered a deviation D13, colliding with W12's D13 (resolved by renaming W12's to D13.5).
+Resolved by keeping both sides. `BookingServiceImpl` already had a `UserRepository` from W8, so W11's extra constructor parameter was dropped and only the suspended-guest guard remains. `AppContext` builds `AccountGovernanceService` after the W8 wiring. The W8 `hostDecisionMessage` column and W11's V003 both live in `MigrationRunner`; `SchemaParityTest` applies both. The guide's audit trail section is § 4.13, so W11's account-governance section is § 4.14. W8 auto-completion (`completeEligibleBookings`, run at startup) now settles a suspended guest's in-progress stay. **Pre-existing red on `main`, not from W11:** `FileTicketTest.successfullyFilesTicketAndPublishesEvent` and `ShellLayoutTest.hostWalletPageUsesTheSamePageInsetAsListingsAndBookings` fail on `origin/main` too; I fixed the checkstyle violations `main` carried (`ReviewServiceImpl` import order, `FileTicketTest` line wraps). **Re-check after the merge (2026-09-27):** the app launched on a copy of the mock DB with no startup errors and its window opened; a headless drive of `AccountGovernanceService` on that copy suspended Noah Kim (1 `ACCOUNT_SUSPENDED`, 3 `BOOKING_FORCE_CANCELLED`, refund rows) and reactivated him. Nobody clicked through the merged Accounts screen; the UI tests cover it. Note W8 also numbered a deviation D13, colliding with W12's D13 (resolved by renaming W12's to D13.5).
 
 ### D19 — `UserService.suspend` replaced by `AccountGovernanceService` (W11, RESOLVED 2026-09-26: stub removed)
 
@@ -713,6 +751,6 @@ The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-st
 — every change, big or small, newest first.
 
 - **Latest entry:** 2026-09-27
-- **Entries:** 105 (4 backfilled coarsely from git history; the prior count of 77 recorded here had already drifted behind the ledger's actual row count — not re-audited beyond adding this session's one new row, flagged for a future reconciliation pass)
+- **Entries:** 107 + this branch's W14 rows (4 backfilled coarsely from git history; drifted from the ledger's actual row count more than once now — not re-audited, flagged for a future reconciliation pass)
 
 Deviations stay in § Deviations above: those are read every session.

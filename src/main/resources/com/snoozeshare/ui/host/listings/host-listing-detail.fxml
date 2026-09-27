@@ -1,44 +1,91 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.FlowPane?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
 <ScrollPane fitToWidth="true" xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.snoozeshare.ui.host.listings.HostListingDetailController">
-    <VBox spacing="16" styleClass="detail-modal">
+    <stylesheets>
+        <URL value="@host-listing-detail.css"/>
+    </stylesheets>
+    <VBox spacing="20" styleClass="host-listing-detail-page">
         <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
 
-        <HBox alignment="CENTER_LEFT" spacing="12">
+        <HBox alignment="CENTER_LEFT" spacing="12" styleClass="listing-detail-actions">
             <Button text="Back" onAction="#handleBack" styleClass="outline-button"/>
-            <Label fx:id="titleLabel" styleClass="page-title"/>
+            <VBox HBox.hgrow="ALWAYS"/>
+            <Button text="Open booking calendar" onAction="#handleOpenCalendar"
+                    styleClass="outline-button"/>
+            <Button text="Edit" onAction="#handleEdit"
+                    styleClass="listing-detail-action-edit"/>
         </HBox>
 
-        <Label fx:id="typeLabel" styleClass="small"/>
-        <Label fx:id="addressLabel"/>
-        <Label fx:id="descriptionLabel" wrapText="true"/>
+        <StackPane prefHeight="300" maxWidth="Infinity"
+                   styleClass="listing-detail-image-placeholder"/>
 
-        <GridPane hgap="24" vgap="10">
-            <Label text="Capacity" styleClass="card-title" GridPane.columnIndex="0"/>
-            <Label fx:id="capacityLabel" GridPane.columnIndex="1"/>
-            <Label text="Bedrooms" styleClass="card-title" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-            <Label fx:id="bedroomsLabel" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-            <Label text="Bathrooms" styleClass="card-title" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-            <Label fx:id="bathroomsLabel" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-            <Label text="Status" styleClass="card-title" GridPane.columnIndex="2"/>
-            <Label fx:id="statusLabel" GridPane.columnIndex="3"/>
-            <Label text="Nightly rate" styleClass="card-title" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
-            <Label fx:id="rateLabel" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
-            <Label fx:id="checkInLabel" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
-            <Label fx:id="checkOutLabel" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
-        </GridPane>
+        <HBox spacing="36" alignment="TOP_LEFT">
+            <VBox spacing="14" HBox.hgrow="ALWAYS">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label fx:id="titleLabel" styleClass="page-title"/>
+                    <Label fx:id="typeLabel" styleClass="listing-detail-type-badge"/>
+                    <Label fx:id="statusLabel" styleClass="listing-detail-status-badge"/>
+                </HBox>
+                <Label fx:id="addressLabel" styleClass="listing-detail-address"/>
 
-        <Label text="Amenities" styleClass="card-title"/>
-        <FlowPane fx:id="amenitiesPane" hgap="8" vgap="8"/>
+                <HBox spacing="24" styleClass="listing-detail-stats">
+                    <VBox styleClass="listing-detail-stat">
+                        <Label fx:id="capacityLabel" styleClass="listing-detail-stat-value"/>
+                        <Label text="MAX GUESTS" styleClass="listing-detail-stat-caption"/>
+                    </VBox>
+                    <VBox styleClass="listing-detail-stat">
+                        <Label fx:id="bedroomsLabel" styleClass="listing-detail-stat-value"/>
+                        <Label text="BEDROOMS" styleClass="listing-detail-stat-caption"/>
+                    </VBox>
+                    <VBox styleClass="listing-detail-stat">
+                        <Label fx:id="bathroomsLabel" styleClass="listing-detail-stat-value"/>
+                        <Label text="BATHROOMS" styleClass="listing-detail-stat-caption"/>
+                    </VBox>
+                    <VBox styleClass="listing-detail-stat">
+                        <Label fx:id="rateLabel" styleClass="listing-detail-stat-value"/>
+                        <Label text="PER NIGHT" styleClass="listing-detail-stat-caption"/>
+                    </VBox>
+                    <VBox styleClass="listing-detail-stat">
+                        <Label fx:id="checkInLabel" styleClass="listing-detail-stat-value"/>
+                        <Label text="CHECK-IN" styleClass="listing-detail-stat-caption"/>
+                    </VBox>
+                    <VBox styleClass="listing-detail-stat">
+                        <Label fx:id="checkOutLabel" styleClass="listing-detail-stat-value"/>
+                        <Label text="CHECK-OUT" styleClass="listing-detail-stat-caption"/>
+                    </VBox>
+                </HBox>
+
+                <Label fx:id="descriptionLabel" wrapText="true"
+                       styleClass="listing-detail-description"/>
+                <Label text="AMENITIES" styleClass="listing-detail-section-title"/>
+                <FlowPane fx:id="amenitiesPane" hgap="8" vgap="8"/>
+            </VBox>
+
+            <VBox spacing="16" prefWidth="300" maxWidth="300"
+                  styleClass="listing-detail-performance">
+                <Label text="Performance" styleClass="listing-detail-performance-title"/>
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Total bookings" styleClass="listing-detail-performance-label"/>
+                    <VBox HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="bookingCountLabel" styleClass="listing-detail-performance-value"/>
+                </HBox>
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Average rating" styleClass="listing-detail-performance-label"/>
+                    <VBox HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="ratingLabel" styleClass="listing-detail-performance-value"/>
+                </HBox>
+            </VBox>
+        </HBox>
     </VBox>
 </ScrollPane>

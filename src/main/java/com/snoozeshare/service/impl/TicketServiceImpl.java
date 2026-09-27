@@ -74,20 +74,16 @@ public final class TicketServiceImpl implements TicketService {
         Booking booking = bookings.findById(request.bookingId())
                 .orElseThrow(() -> new IllegalArgumentException("Booking does not exist"));
 
+        if (raisedByRole != Role.GUEST) {
+            throw new IllegalArgumentException("Only guests may file a ticket");
+        }
         if (!booking.guestId().equals(raisedByUserId)) {
             throw new IllegalArgumentException("Only the booking guest may file a ticket");
         }
 
         LocalDate today = LocalDate.now(clock);
-        boolean stayEnded = !booking.endDate().isAfter(today);
-        boolean statusEligible = booking.status() == BookingStatus.CONFIRMED
-                || booking.status() == BookingStatus.COMPLETED;
-        if (!statusEligible || (booking.status() == BookingStatus.CONFIRMED && !stayEnded)) {
+        if (!ticketWindowOpen(booking, today)) {
             throw new IllegalStateException("Booking is not eligible for a dispute");
-        }
-
-        if (today.isAfter(booking.endDate().plusDays(7))) {
-            throw new IllegalStateException("Dispute window has closed (7 days after stay end)");
         }
 
         String category = DomainValidation.requireText(request.category(), "category");
@@ -117,6 +113,14 @@ public final class TicketServiceImpl implements TicketService {
                 .subject(raisedByUserId).booking(saved.bookingId()).ticket(saved.ticketId()).at(now).build());
         eventBus.publish(new TicketOpenedEvent(saved.ticketId(), raisedByUserId, now));
         return saved;
+    }
+
+    private static boolean ticketWindowOpen(Booking booking, LocalDate today) {
+        boolean stayEnded = !booking.endDate().isAfter(today);
+        boolean statusEligible = booking.status() == BookingStatus.CONFIRMED
+                || booking.status() == BookingStatus.COMPLETED;
+        return statusEligible && (booking.status() != BookingStatus.CONFIRMED || stayEnded)
+                && !today.isAfter(booking.endDate().plusDays(7));
     }
 
     @Override

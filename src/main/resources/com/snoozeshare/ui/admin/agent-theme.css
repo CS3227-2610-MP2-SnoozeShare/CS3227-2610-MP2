@@ -1165,3 +1165,69 @@
     -fx-text-fill: #fdf8f0;
     -fx-font-weight: bold;
 }
+
+.agent-root .host-messages-root { -fx-background-color: #fcf8f1; }
+.agent-root .host-message-sidebar {
+    -fx-background-color: #fffdf9;
+    -fx-border-color: #ddc3a5;
+    -fx-border-width: 0 1px 0 0;
+    -fx-min-width: 380px;
+    -fx-pref-width: 380px;
+    -fx-max-width: 380px;
+}
+.agent-root .host-message-sidebar-title,
+.agent-root .host-message-header-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f1713;
+}
+.agent-root .host-message-sidebar-title { -fx-padding: 0 24px 18px 24px; }
+.agent-root .host-message-header {
+    -fx-padding: 20px 28px;
+    -fx-border-color: #ddc3a5;
+    -fx-border-width: 0 0 1px 0;
+}
+.agent-root .host-message-header-subtitle,
+.agent-root .host-message-row-subtitle { -fx-text-fill: #704d3b; }
+.agent-root .host-message-header-subtitle { -fx-font-size: 15px; }
+.agent-root .host-message-sidebar .list-view {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+.agent-root .host-message-sidebar .list-view .scroll-bar:horizontal {
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-opacity: 0;
+}
+.agent-root .host-message-sidebar .list-cell {
+    -fx-padding: 16px 18px 16px 24px;
+    -fx-background-color: transparent;
+    -fx-border-color: #ead7c0;
+    -fx-border-width: 1px 0 0 0;
+}
+.agent-root .host-message-sidebar .list-cell:selected { -fx-background-color: #fce5d4; }
+.agent-root .host-message-row { -fx-alignment: center-left; -fx-spacing: 10px; }
+.agent-root .host-message-row-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f1713;
+}
+.agent-root .host-message-row-subtitle { -fx-font-size: 13px; }
+.agent-root .host-message-status {
+    -fx-padding: 4px 10px;
+    -fx-background-radius: 12px;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+.agent-root .host-message-status-open { -fx-background-color: #fff1cf; -fx-text-fill: #805c00; }
+.agent-root .host-message-status-resolved { -fx-background-color: #e3f4c7; -fx-text-fill: #40680c; }
+.agent-root .agent-bubble-author { -fx-font-weight: bold; -fx-text-fill: #381a10; }
+.agent-root .host-message-thread-scroll,
+.agent-root .host-message-thread-scroll > .viewport,
+.agent-root .host-message-thread { -fx-background-color: #fcf8f1; }
+.agent-root .host-message-composer {
+    -fx-padding: 16px 28px 22px 28px;
+    -fx-border-color: #ddc3a5;
+    -fx-border-width: 1px 0 0 0;
+}
