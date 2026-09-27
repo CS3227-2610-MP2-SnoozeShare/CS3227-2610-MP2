@@ -200,6 +200,6 @@ public final class ListingServiceImpl implements ListingService {
         if (!Double.isFinite(draft.bathrooms()) || draft.bathrooms() < 0) {
             throw new IllegalArgumentException("Bathrooms must be non-negative");
         }
-        DomainValidation.requireNonNegative(draft.baseNightlyRate(), "baseNightlyRate");
+        DomainValidation.requirePositive(draft.baseNightlyRate(), "baseNightlyRate");
     }
 }

@@ -131,7 +131,7 @@ public final class HostListingFormController {
                 cityField.getText(), regionField.getText(), postalCodeField.getText(),
                 parseInteger(maxGuestsField.getText(), "Max guests", 1),
                 parseInteger(bedroomsField.getText(), "Bedrooms", 0),
-                Double.parseDouble(bathroomsField.getText()), new BigDecimal(rateField.getText()),
+                Double.parseDouble(bathroomsField.getText()), parseRate(rateField.getText()),
                 checkIn, checkOut,
                 selectedAmenities(), property == null ? Instant.now() : property.createdAt());
     }
@@ -199,6 +199,18 @@ public final class HostListingFormController {
             return parsed;
         } catch (NumberFormatException exception) {
             throw new IllegalArgumentException(fieldName + " must be a whole number");
+        }
+    }
+
+    private static BigDecimal parseRate(String value) {
+        try {
+            BigDecimal parsed = new BigDecimal(value);
+            if (parsed.signum() <= 0) {
+                throw new IllegalArgumentException("Nightly rate must be greater than 0");
+            }
+            return parsed;
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("Nightly rate must be a number");
         }
     }
 

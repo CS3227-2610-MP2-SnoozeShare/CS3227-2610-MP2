@@ -116,13 +116,10 @@ public final class BookingServiceImpl implements BookingService {
                         start, end, "BOOKING", bookingId, null));
 
                 // The writer joins this transaction, so the hold commits or rolls back with the booking.
-                // A free (zero-rate) stay holds nothing and needs no ledger row; the writer rejects zero.
                 Wallet wallet = wallets.findByUserId(guestId)
                         .orElseThrow(() -> new IllegalArgumentException("Guest wallet does not exist"));
-                if (totalAmount.signum() > 0) {
-                    ledger.post(wallet.walletId(), WalletTransactionType.ESCROW_HOLD, totalAmount.negate(),
-                            guestId, bookingId, null, null, now);
-                }
+                ledger.post(wallet.walletId(), WalletTransactionType.ESCROW_HOLD, totalAmount.negate(),
+                        guestId, bookingId, null, null, now);
 
                 return newBooking;
             });
@@ -137,12 +134,12 @@ public final class BookingServiceImpl implements BookingService {
         if (eventBus == null) {
             return;
         }
-        // A zero-total booking writes no hold row, so there is nothing to announce.
-        ledgerEntries.entriesForBooking(booking.bookingId()).stream()
+        var transaction = ledgerEntries.entriesForBooking(booking.bookingId()).stream()
                 .filter(entry -> entry.type() == WalletTransactionType.ESCROW_HOLD)
                 .findFirst()
-                .ifPresent(transaction -> eventBus.publish(new WalletTransactionRecordedEvent(
-                        transaction.transactionId(), transaction.walletId(), transaction.createdAt())));
+                .orElseThrow(() -> new IllegalStateException("Escrow hold row is missing"));
+        eventBus.publish(new WalletTransactionRecordedEvent(
+                transaction.transactionId(), transaction.walletId(), transaction.createdAt()));
     }
 
     @Override
@@ -230,10 +227,8 @@ public final class BookingServiceImpl implements BookingService {
                     blocks.deleteByBookingId(bookingId);
                     Wallet wallet = wallets.findByUserId(booking.guestId())
                             .orElseThrow(() -> new IllegalArgumentException("Guest wallet does not exist"));
-                    if (booking.totalAmount().signum() > 0) {
-                        ledger.post(wallet.walletId(), WalletTransactionType.ESCROW_REFUND, booking.totalAmount(),
-                                hostId, bookingId, null, null, now);
-                    }
+                    ledger.post(wallet.walletId(), WalletTransactionType.ESCROW_REFUND, booking.totalAmount(),
+                            hostId, bookingId, null, null, now);
                 }
 
                 return updated;
@@ -277,13 +272,10 @@ public final class BookingServiceImpl implements BookingService {
 
                 blocks.deleteByBookingId(bookingId);
 
-                // A zero refund needs no ledger row (operator, 2026-09-27); the writer rejects zero amounts.
                 Wallet wallet = wallets.findByUserId(actingGuestId)
                         .orElseThrow(() -> new IllegalArgumentException("Guest wallet does not exist"));
-                if (refundAmount.signum() > 0) {
-                    ledger.post(wallet.walletId(), WalletTransactionType.ESCROW_REFUND, refundAmount,
-                            actingGuestId, bookingId, null, null, now);
-                }
+                ledger.post(wallet.walletId(), WalletTransactionType.ESCROW_REFUND, refundAmount,
+                        actingGuestId, bookingId, null, null, now);
 
                 return updated;
             });

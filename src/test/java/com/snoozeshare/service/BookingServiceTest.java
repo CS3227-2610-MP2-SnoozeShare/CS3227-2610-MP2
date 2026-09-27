@@ -268,32 +268,6 @@ class BookingServiceTest {
     }
 
     @Test
-    void aFreeStayWritesNoLedgerRowsOnSubmitOrCancel() throws Exception {
-        try (Connection connection = migratedConnection()) {
-            var ctx = seedContext(connection, new BigDecimal("500.00"));
-            var properties = new JdbcPropertyRepository(connection);
-            Property paid = properties.findById(ctx.propertyId).orElseThrow();
-            properties.save(new Property(paid.propertyId(), paid.hostId(), paid.status(), paid.title(),
-                    paid.description(), paid.propertyType(), paid.streetAddress(), paid.city(), paid.region(),
-                    paid.postalCode(), paid.maxGuests(), paid.bedrooms(), paid.bathrooms(), BigDecimal.ZERO,
-                    paid.checkInTime(), paid.checkOutTime(), paid.amenities(), paid.createdAt()));
-            var events = new InProcessEventBus();
-            List<WalletTransactionRecordedEvent> recorded = new ArrayList<>();
-            events.subscribe(WalletTransactionRecordedEvent.class, recorded::add);
-            BookingService service = createService(connection, events);
-
-            Booking booking = service.submitRequest(ctx.guestId, ctx.propertyId,
-                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(13));
-            service.cancel(booking.bookingId(), ctx.guestId);
-
-            assertTrue(new JdbcLedgerRepository(connection).entriesForBooking(booking.bookingId()).isEmpty());
-            assertTrue(recorded.isEmpty());
-            assertEquals(0, new BigDecimal("500.00").compareTo(new JdbcWalletRepository(connection)
-                    .findByUserId(ctx.guestId).orElseThrow().balance()));
-        }
-    }
-
-    @Test
     void cancelFailsForCompletedBooking() throws Exception {
         try (Connection connection = migratedConnection()) {
             var ctx = seedContext(connection, new BigDecimal("500.00"));
