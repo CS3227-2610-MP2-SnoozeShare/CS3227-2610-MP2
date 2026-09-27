@@ -50,6 +50,8 @@ Two migrations, so the risky table rebuild is isolated.
 
 `db/schema.sql` mirrors the result; `SchemaParityTest` stays green; `MigrationRunner` applies both to fresh, migrated and adopted databases (as for V003 to V005).
 
+**Deviation from this draft (executed, Tasks 4 and 10):** step 4 above (`DROP TABLE wallet_transactions`) was pulled out into its own `V008__drop_wallet_transactions.sql` instead of running inside V007. This let every caller (`WalletService`, `TransactionService`, `BookingService`, dispute settlement, account governance) move onto `LedgerWriter`/`LedgerRepository` across Tasks 6-9 while the old table still existed to be read as a safety net, then drop it once nothing referenced it (Task 10). V007 now ends after step 3 (System wallet + legacy fee backfill) plus the index in step 5; V008 is exactly the old step 4. Recorded as C41 in `PROJECT_STATE.md` and in the Done ledger.
+
 **Mock DB.** `db/seed-mock-data.sql` today derives its audit money rows *from* `wallet_transactions`. That inverts: the 35 money rows, plus a `PLATFORM_FEE` row for each of transactions 29 and 35 (16.35 in total for the System wallet), are written straight into `audit_log` with `balanceAfter`; `wallets` keeps its rows and gains the System wallet; the System user row becomes `SYSTEM` / `ACTIVE`. Rebuild `db/snoozeshare-mock.db` from schema + seed with `schema_history` v6 and v7, keeping the ID and timestamp rules in `PROJECT_STATE.md` § Orientation. The two seed rows whose `balanceAfter` chain looks wrong (Sophia Rossi, transactions 19 to 21) must be re-checked, not copied.
 
 ## 4. Code changes
