@@ -10,3 +10,5 @@ Task 2: complete (focused projection and bubble tests pass; full suite has the s
 `AgentModalTest.escapeAndWindowCloseAlsoRemoveTheScrim` failure).
 Task 3: complete (Host Messages controller/FXML tests pass; full suite has the same pre-existing
 `AgentModalTest.escapeAndWindowCloseAlsoRemoveTheScrim` failure).
+Task 4: complete (Host ticket dialog tests pass; full suite has the same pre-existing
+`AgentModalTest.escapeAndWindowCloseAlsoRemoveTheScrim` failure).
