@@ -50,7 +50,7 @@ Two migrations, so the risky table rebuild is isolated.
 
 `db/schema.sql` mirrors the result; `SchemaParityTest` stays green; `MigrationRunner` applies both to fresh, migrated and adopted databases (as for V003 to V005).
 
-**Mock DB.** `db/seed-mock-data.sql` today derives its audit money rows *from* `wallet_transactions`. That inverts: the 36 money rows, plus a `PLATFORM_FEE` row for each of transactions 29 and 35 (16.35 in total for the System wallet), are written straight into `audit_log` with `balanceAfter`; `wallets` keeps its rows and gains the System wallet; the System user row becomes `SYSTEM` / `ACTIVE`. Rebuild `db/snoozeshare-mock.db` from schema + seed with `schema_history` v6 and v7, keeping the ID and timestamp rules in `PROJECT_STATE.md` § Orientation. The two seed rows whose `balanceAfter` chain looks wrong (Sophia Rossi, transactions 19 to 21) must be re-checked, not copied.
+**Mock DB.** `db/seed-mock-data.sql` today derives its audit money rows *from* `wallet_transactions`. That inverts: the 35 money rows, plus a `PLATFORM_FEE` row for each of transactions 29 and 35 (16.35 in total for the System wallet), are written straight into `audit_log` with `balanceAfter`; `wallets` keeps its rows and gains the System wallet; the System user row becomes `SYSTEM` / `ACTIVE`. Rebuild `db/snoozeshare-mock.db` from schema + seed with `schema_history` v6 and v7, keeping the ID and timestamp rules in `PROJECT_STATE.md` § Orientation. The two seed rows whose `balanceAfter` chain looks wrong (Sophia Rossi, transactions 19 to 21) must be re-checked, not copied.
 
 ## 4. Code changes
 

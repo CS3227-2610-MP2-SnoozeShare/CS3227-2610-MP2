@@ -1710,7 +1710,7 @@ PYEOF
 python "$TEMP/dump_money.py"
 ```
 
-Expected: `38 money rows` (36 ledger rows + 2 fee rows). In `db/seed-mock-data.sql`: delete the `wallet_transactions` INSERT block, the derived money-row `INSERT INTO audit_log ... SELECT '5a' ...` statement and the derived fee-row statement from Task 4 (keep the System wallet insert), and put the contents of `db/money-rows.sql.tmp` in their place under the same `audit_log` heading. Delete the temp file afterwards. Remove the `-- ====== wallet_transactions ======` section header and fix the `wallets` comment ("balance = the owner's newest money row's balanceAfter in audit_log"). Add `(8, '2026-09-27 00:00:00')` to `schema_history`. In `db/schema.sql` remove the `wallet_transactions` table and update the history comment to "V001 to V008".
+Expected: `37 money rows` (35 ledger rows, transaction 32 does not exist, + 2 fee rows). In `db/seed-mock-data.sql`: delete the `wallet_transactions` INSERT block, the derived money-row `INSERT INTO audit_log ... SELECT '5a' ...` statement and the derived fee-row statement from Task 4 (keep the System wallet insert), and put the contents of `db/money-rows.sql.tmp` in their place under the same `audit_log` heading. Delete the temp file afterwards. Remove the `-- ====== wallet_transactions ======` section header and fix the `wallets` comment ("balance = the owner's newest money row's balanceAfter in audit_log"). Add `(8, '2026-09-27 00:00:00')` to `schema_history`. In `db/schema.sql` remove the `wallet_transactions` table and update the history comment to "V001 to V008".
 
 Caveat: the seed's `wallets` balances and the money rows must still agree (the chain was preserved by the dump).
 
@@ -1762,7 +1762,7 @@ Caveat: the seed's `wallets` balances and the money rows must still agree (the c
     }
 ```
 
-- `MockAuditSeedTest`, `JdbcRepositoryIntegrationTest`, `MockDbFixtureTest`: replace any `wallet_transactions` query with the equivalent over `audit_log WHERE walletAdjustment IS NOT NULL`; expected counts: 38 money rows.
+- `MockAuditSeedTest`, `JdbcRepositoryIntegrationTest`, `MockDbFixtureTest`: replace any `wallet_transactions` query with the equivalent over `audit_log WHERE walletAdjustment IS NOT NULL`; expected counts: 37 money rows.
 
 - [ ] **Step 7: Rebuild the mock DB and run everything**
 
@@ -1771,7 +1771,7 @@ rm -f db/snoozeshare-mock.db && sqlite3 db/snoozeshare-mock.db < db/schema.sql &
 sqlite3 db/snoozeshare-mock.db "PRAGMA foreign_key_check; SELECT COUNT(*) FROM audit_log WHERE walletAdjustment IS NOT NULL; SELECT COUNT(*) FROM sqlite_master WHERE name='wallet_transactions'; SELECT MAX(version) FROM schema_history;"
 ```
 
-Expected: no FK rows, `38`, `0`, `8`.
+Expected: no FK rows, `37`, `0`, `8`.
 
 Run: `./gradlew test`
 Expected: PASS (D21 pair aside).
