@@ -17,7 +17,7 @@ class EscrowPolicyTest {
 
     private static WalletTransaction tx(WalletTransactionType type) {
         return new WalletTransaction(UUID.randomUUID(), UUID.randomUUID(), type,
-                BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, UUID.randomUUID(), null, null,
+                BigDecimal.TEN, BigDecimal.TEN, UUID.randomUUID(), null, null,
                 Instant.parse("2026-09-25T00:00:00Z"));
     }
 

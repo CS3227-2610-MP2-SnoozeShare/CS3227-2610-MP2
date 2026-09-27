@@ -1,6 +1,5 @@
 package com.snoozeshare.repository.jdbc;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -47,7 +46,6 @@ public final class JdbcLedgerRepository implements LedgerRepository {
                             JdbcCodecs.uuid(result.getString("walletId")),
                             WalletTransactionType.valueOf(result.getString("type")),
                             JdbcCodecs.decimal(result.getString("amount")),
-                            BigDecimal.ZERO,
                             JdbcCodecs.decimal(result.getString("balanceAfter")),
                             JdbcCodecs.uuid(result.getString("relatedBookingId")),
                             JdbcCodecs.uuid(result.getString("relatedTicketId")),

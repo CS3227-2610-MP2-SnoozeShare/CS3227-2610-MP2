@@ -105,7 +105,6 @@ class DisputeSettlementServiceTest {
             assertNull(result.hostTransaction());
             assertEquals(WalletTransactionType.TICKET_REMEDY, result.guestTransaction().type());
             assertMoney("210", result.guestTransaction().amount());
-            assertMoney("0", result.guestTransaction().feeAmount());
             assertMoney("1000", result.guestTransaction().balanceAfter());
             assertMoney("1000", db.walletBalance(MockIds.WALLET_SOPHIA));
             assertMoney("150", db.walletBalance(MockIds.WALLET_DIEGO));

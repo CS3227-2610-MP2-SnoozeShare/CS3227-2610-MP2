@@ -16,6 +16,7 @@ public final class MigrationRunner {
     private static final int BOOKING_MESSAGING_VERSION = 5;
     private static final int SYSTEM_ROLE_VERSION = 6;
     private static final int UNIFIED_LEDGER_VERSION = 7;
+    private static final int DROP_LEDGER_TABLE_VERSION = 8;
 
     private MigrationRunner() {
     }
@@ -88,6 +89,13 @@ public final class MigrationRunner {
                 }
                 // else: a reference database rebuilt from db/schema.sql already has the column.
                 recordMigration(connection, UNIFIED_LEDGER_VERSION);
+            }
+            if (!migrationApplied(connection, DROP_LEDGER_TABLE_VERSION)) {
+                if (tableExists(connection, "wallet_transactions")) {
+                    applySqlMigration(connection, "/db/migration/V008__drop_wallet_transactions.sql");
+                }
+                // else: a reference database rebuilt from db/schema.sql never had the table.
+                recordMigration(connection, DROP_LEDGER_TABLE_VERSION);
             }
             connection.commit();
         } catch (SQLException | RuntimeException exception) {

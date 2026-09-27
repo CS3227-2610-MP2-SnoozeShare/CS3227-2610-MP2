@@ -50,7 +50,7 @@ public final class LedgerWriter {
         audit.record(AuditRecord.builder(actorId, AuditAction.forWallet(type), "WalletTransaction", transactionId)
                 .wallet(amount, balanceAfter).reason(reason).subject(wallet.userId())
                 .booking(bookingId).ticket(ticketId).at(at).build());
-        return new WalletTransaction(transactionId, walletId, type, amount, BigDecimal.ZERO, balanceAfter,
+        return new WalletTransaction(transactionId, walletId, type, amount, balanceAfter,
                 bookingId, ticketId, actorId, at);
     }
 

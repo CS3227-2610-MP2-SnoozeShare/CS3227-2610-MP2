@@ -76,21 +76,6 @@ CREATE TABLE wallets (
     updatedAt             TEXT NOT NULL
 );
 
-CREATE TABLE wallet_transactions (
-    transactionId         TEXT PRIMARY KEY,
-    walletId              TEXT NOT NULL REFERENCES wallets(walletId),
-    type                  TEXT NOT NULL CHECK (type IN
-        ('TOP_UP','WITHDRAWAL','ESCROW_HOLD','ESCROW_REFUND','BOOKING_PAYOUT',
-         'TICKET_REMEDY','AGENT_OVERRIDE')),
-    amount                REAL NOT NULL,        -- signed: positive = credit, negative = debit
-    feeAmount             REAL,
-    balanceAfter          REAL NOT NULL,
-    relatedBookingId      TEXT REFERENCES bookings(bookingId),
-    relatedTicketId       TEXT REFERENCES tickets(ticketId),
-    initiatedBy           TEXT REFERENCES users(userId),
-    createdAt             TEXT NOT NULL
-);
-
 CREATE TABLE ticket_categories (
     categoryId            TEXT PRIMARY KEY,
     label                 TEXT NOT NULL,
@@ -187,7 +172,7 @@ CREATE TABLE booking_message_reads (
     PRIMARY KEY (bookingId, userId)
 );
 
--- Migration bookkeeping, identical to what MigrationRunner creates. The seed records V001 to V007 as applied.
+-- Migration bookkeeping, identical to what MigrationRunner creates. The seed records V001 to V008 as applied.
 CREATE TABLE IF NOT EXISTS schema_history (
     version   INTEGER PRIMARY KEY,
     appliedAt TEXT NOT NULL

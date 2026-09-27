@@ -15,7 +15,6 @@ import com.snoozeshare.domain.enums.RemedyType;
 import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.enums.ThreadChannel;
 import com.snoozeshare.domain.enums.TicketStatus;
-import com.snoozeshare.domain.enums.WalletTransactionType;
 import com.snoozeshare.domain.model.AuditLogEntry;
 import com.snoozeshare.domain.model.AvailabilityBlock;
 import com.snoozeshare.domain.model.Booking;
@@ -27,7 +26,6 @@ import com.snoozeshare.domain.model.Ticket;
 import com.snoozeshare.domain.model.TicketCategory;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.model.Wallet;
-import com.snoozeshare.domain.model.WalletTransaction;
 
 public final class RowMappers {
 
@@ -53,20 +51,6 @@ public final class RowMappers {
                 JdbcCodecs.decimal(result.getString("balance")),
                 result.getString("currency"),
                 JdbcCodecs.instant(result.getString("updatedAt")));
-    }
-
-    public static WalletTransaction walletTransaction(ResultSet result) throws SQLException {
-        return new WalletTransaction(
-                JdbcCodecs.uuid(result.getString("transactionId")),
-                JdbcCodecs.uuid(result.getString("walletId")),
-                WalletTransactionType.valueOf(result.getString("type")),
-                JdbcCodecs.decimal(result.getString("amount")),
-                JdbcCodecs.decimal(result.getString("feeAmount")),
-                JdbcCodecs.decimal(result.getString("balanceAfter")),
-                JdbcCodecs.uuid(result.getString("relatedBookingId")),
-                JdbcCodecs.uuid(result.getString("relatedTicketId")),
-                JdbcCodecs.uuid(result.getString("initiatedBy")),
-                JdbcCodecs.instant(result.getString("createdAt")));
     }
 
     public static Property property(ResultSet result) throws SQLException {

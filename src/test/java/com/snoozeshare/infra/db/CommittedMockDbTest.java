@@ -28,7 +28,7 @@ class CommittedMockDbTest {
     }
 
     @Test
-    void theCommittedFileHasTheAuditColumnsTheSystemUserAndMigrationVersionSeven() throws Exception {
+    void theCommittedFileHasTheAuditColumnsTheSystemUserAndMigrationVersionEight() throws Exception {
         try (Connection connection = openCommittedReadOnly();
              Statement statement = connection.createStatement()) {
             Set<String> columns = new HashSet<>();
@@ -47,12 +47,17 @@ class CommittedMockDbTest {
                 result.next();
                 assertEquals(1, result.getInt(1), "System user");
             }
-            for (int version : new int[] {1, 2, 3, 4, 5, 6, 7}) {
+            for (int version : new int[] {1, 2, 3, 4, 5, 6, 7, 8}) {
                 try (ResultSet result = statement.executeQuery(
                         "SELECT COUNT(*) FROM schema_history WHERE version = " + version)) {
                     result.next();
                     assertEquals(1, result.getInt(1), "schema_history version " + version);
                 }
+            }
+            try (ResultSet result = statement.executeQuery(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE name = 'wallet_transactions'")) {
+                result.next();
+                assertEquals(0, result.getInt(1), "the old ledger table is gone (V008)");
             }
             try (ResultSet result = statement.executeQuery("SELECT balance FROM wallets "
                     + "WHERE userId = 'a0000000-0000-0000-0000-0000000000ff'")) {
