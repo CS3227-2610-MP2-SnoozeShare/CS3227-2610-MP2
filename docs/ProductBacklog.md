@@ -87,7 +87,7 @@ The Host backlog covers property publishing, calendar date blocking, booking req
 |  |  | F6.1.1 | The system shall allow hosts to select date ranges and set them as blocked for private maintenance or use. | High | 1 |
 |  |  | F6.1.2 | The system shall reject a host manual date-block request if a confirmed guest booking already exists for any date in that range. | Medium | 2 |
 | **F7** | **Host Reservation Queue, Earnings & Disputes** |  |  | **High** | **1** |
-|  | **F77.1** | **Request Decision Queue** |  |  |  |
+|  | **F7.1** | **Request Decision Queue** |  |  |  |
 |  |  | F7.1.1 | The system shall display pending guest booking requests with guest identity, requested dates, and stay length. | High | 1 |
 |  |  | F7.1.2 | The system shall allow hosts to approve or decline requests, transitioning state to Confirmed or Rejected. | High | 1 |
 |  |  | F7.1.3 | The system shall display a projected net earnings figure (gross minus 3% platform fee) alongside each pending request. | Medium | 2 |
