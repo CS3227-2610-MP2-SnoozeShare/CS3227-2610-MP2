@@ -41,9 +41,9 @@ class HostMessagesLayoutTest {
         assertTrue(controller.contains("OverrunStyle.ELLIPSIS"));
         assertTrue(controller.contains("HBox.setHgrow(copy, Priority.ALWAYS)"));
         assertTrue(controller.contains("copy.setMinWidth(0)"));
-        assertTrue(controller.contains("HBox titleLine = new HBox(8)"));
-        assertTrue(controller.contains("titleLine.getChildren().add(status)"));
-        assertTrue(controller.contains("content.prefWidthProperty().bind(widthProperty().subtract(24))"));
+        assertTrue(controller.contains("BorderPane titleLine = new BorderPane()"));
+        assertTrue(controller.contains("titleLine.setRight(status)"));
+        assertTrue(controller.contains("content.prefWidthProperty().bind(widthProperty().subtract(42))"));
         assertTrue(!fxml.contains("newTicketButton"));
         assertTrue(!controller.contains("setOnNewTicket"));
         assertTrue(!shellController.contains("setOnNewTicket"));
