@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -16,8 +16,9 @@ import com.snoozeshare.domain.enums.Role;
 import com.snoozeshare.domain.model.BookingMessage;
 
 import javafx.application.Platform;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 class ChatBubblesTest {
 
@@ -48,13 +49,16 @@ class ChatBubblesTest {
                     new BookingMessage(UUID.randomUUID(), bookingId, UUID.randomUUID(), Role.HOST,
                             "Welcome", Instant.parse("2026-09-24T11:00:00Z")));
 
-            ChatBubbles.renderBooking(thread, messages, message -> message.authorRole() == Role.HOST);
+            ChatBubbles.renderBooking(thread, messages, message -> message.authorRole() == Role.HOST,
+                    message -> message.authorRole() == Role.HOST ? "You" : "Sophia G.");
 
             HBox incoming = (HBox) thread.getChildren().get(0);
             HBox outgoing = (HBox) thread.getChildren().get(1);
+            VBox incomingCard = (VBox) incoming.getChildren().get(0);
             result.complete(thread.getChildren().size() == 2
                     && incoming.getChildren().get(0).getStyleClass().contains("agent-bubble-in")
-                    && outgoing.getChildren().get(0).getStyleClass().contains("agent-bubble-out"));
+                    && outgoing.getChildren().get(0).getStyleClass().contains("agent-bubble-out")
+                    && ((Label) incomingCard.getChildren().get(0)).getText().equals("Sophia G."));
         });
         assertEquals(true, result.get(20, TimeUnit.SECONDS));
     }

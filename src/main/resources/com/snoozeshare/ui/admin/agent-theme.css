@@ -1213,6 +1213,7 @@
 }
 .agent-root .host-message-status-open { -fx-background-color: #fff1cf; -fx-text-fill: #805c00; }
 .agent-root .host-message-status-resolved { -fx-background-color: #e3f4c7; -fx-text-fill: #40680c; }
+.agent-root .agent-bubble-author { -fx-font-weight: bold; -fx-text-fill: #381a10; }
 .agent-root .host-message-thread-scroll,
 .agent-root .host-message-thread-scroll > .viewport,
 .agent-root .host-message-thread { -fx-background-color: #fcf8f1; }

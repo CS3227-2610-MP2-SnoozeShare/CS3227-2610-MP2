@@ -140,8 +140,7 @@ class FileTicketTest {
     @Test
     void hostCannotFileTicketForAnotherHostsBooking() {
         UUID anotherHost = UUID.randomUUID();
-        assertThrows(IllegalArgumentException.class,
-                () -> service.fileTicket(validRequest(), anotherHost, Role.HOST));
+        assertThrows(IllegalArgumentException.class, () -> service.fileTicket(validRequest(), anotherHost, Role.HOST));
     }
 
     @Test

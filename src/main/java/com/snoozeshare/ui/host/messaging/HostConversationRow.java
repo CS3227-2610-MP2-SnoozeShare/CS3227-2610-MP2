@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-import com.snoozeshare.domain.model.BookingMessage;
-import com.snoozeshare.domain.model.Message;
 import com.snoozeshare.service.BookingConversationSummary;
 import com.snoozeshare.service.ConversationSummary;
 

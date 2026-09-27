@@ -160,18 +160,21 @@ public final class HostMessagesController {
         }
         headerTitle.setText(selected.title());
         headerSubtitle.setText(selected.kind() == HostConversationRow.Kind.BOOKING
-                ? "Direct message with " + selected.counterpartName() + " (Guest)"
+                ? "Direct message with " + selected.counterpartName() + " (Guest) · Booking #"
+                        + shortId(selected.sourceId())
                 : selected.subtitle());
         statusLabel.setVisible(false);
         if (selected.kind() == HostConversationRow.Kind.BOOKING) {
             List<BookingMessage> messages = context.bookingConversationService()
                     .thread(selected.sourceId(), hostId, Role.HOST);
-            ChatBubbles.renderBooking(thread, messages, message -> message.authorId().equals(hostId));
+            ChatBubbles.renderBooking(thread, messages, message -> message.authorId().equals(hostId),
+                    message -> message.authorId().equals(hostId) ? "You" : selected.counterpartName());
             context.bookingConversationService().markRead(selected.sourceId(), hostId, Role.HOST);
         } else {
             List<Message> messages = context.messageService()
                     .thread(selected.sourceId(), ThreadChannel.HOST, hostId, Role.HOST);
-            ChatBubbles.render(thread, messages, message -> message.authorId().equals(hostId));
+            ChatBubbles.render(thread, messages, message -> message.authorId().equals(hostId),
+                    message -> message.authorId().equals(hostId) ? "You" : selected.counterpartName());
             context.messageService().markRead(selected.sourceId(), ThreadChannel.HOST, hostId, Role.HOST);
         }
         replyField.setDisable(!selected.open());
@@ -200,6 +203,11 @@ public final class HostMessagesController {
             }
         }
         return -1;
+    }
+
+    private static String shortId(UUID id) {
+        String text = id.toString();
+        return text.substring(text.length() - 4);
     }
 
     private static final class ConversationCell extends ListCell<HostConversationRow> {

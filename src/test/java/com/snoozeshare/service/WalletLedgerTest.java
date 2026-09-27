@@ -19,8 +19,8 @@ import com.snoozeshare.infra.db.migration.MigrationRunner;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
-import com.snoozeshare.service.impl.WalletLedgerWriter;
 import com.snoozeshare.service.impl.NoOpAuditService;
+import com.snoozeshare.service.impl.WalletLedgerWriter;
 import com.snoozeshare.service.impl.WalletServiceImpl;
 
 class WalletLedgerTest {

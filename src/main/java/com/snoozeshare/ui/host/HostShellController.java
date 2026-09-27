@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.Property;
-import com.snoozeshare.ui.common.NavShellController;
 import com.snoozeshare.ui.admin.AgentModal;
+import com.snoozeshare.ui.common.NavShellController;
 import com.snoozeshare.ui.common.wallet.WalletDashboardController;
 import com.snoozeshare.ui.host.bookings.HostBookingsController;
 import com.snoozeshare.ui.host.calendar.HostCalendarController;
@@ -193,12 +193,11 @@ public final class HostShellController extends NavShellController {
             Parent card = loader.load();
             HostTicketFilingController controller = loader.getController();
             AgentModal modal = AgentModal.create(card, "File a support ticket");
-            controller.configure(getContext(), preselectedBookingId, modal::close,
-                    () -> {
-                        if (messagesController != null) {
-                            messagesController.reload();
-                        }
-                    });
+            controller.configure(getContext(), preselectedBookingId, modal::close, () -> {
+                if (messagesController != null) {
+                    messagesController.reload();
+                }
+            });
             modal.showAndWait();
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to open host ticket dialog", exception);
