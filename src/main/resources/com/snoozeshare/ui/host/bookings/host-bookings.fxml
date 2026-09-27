@@ -1,11 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="12" xmlns:fx="http://javafx.com/fxml/1">
-    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
-    <Label text="Bookings" styleClass="page-title"/>
-    <Label text="Review booking requests and upcoming stays." styleClass="small"/>
+<VBox spacing="16" styleClass="host-bookings-page" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.snoozeshare.ui.host.bookings.HostBookingsController">
+    <stylesheets>
+        <URL value="@host-bookings.css"/>
+    </stylesheets>
+    <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Booking requests" styleClass="page-title"/>
+        <Label fx:id="pendingCountLabel" text="0 pending" styleClass="host-bookings-count-pill"/>
+        <Region HBox.hgrow="ALWAYS"/>
+    </HBox>
+    <VBox styleClass="host-bookings-table-card">
+        <TableView fx:id="pendingTable" styleClass="host-bookings-table" prefHeight="220">
+            <columns>
+                <TableColumn fx:id="pendingGuestColumn" text="Guest" prefWidth="150"/>
+                <TableColumn fx:id="pendingListingColumn" text="Listing" prefWidth="190"/>
+                <TableColumn fx:id="pendingDatesColumn" text="Dates" prefWidth="130"/>
+                <TableColumn fx:id="pendingNightsColumn" text="Nights" prefWidth="90"/>
+                <TableColumn fx:id="pendingGrossColumn" text="Gross" prefWidth="130"/>
+                <TableColumn fx:id="pendingNetColumn" text="Net earning" prefWidth="120"/>
+                <TableColumn fx:id="pendingRatingColumn" text="Guest rating" prefWidth="125"/>
+                <TableColumn fx:id="pendingActionColumn" text="Action" prefWidth="190"/>
+            </columns>
+        </TableView>
+    </VBox>
+    <Label fx:id="feedbackLabel" styleClass="host-bookings-feedback"/>
+    <Label text="Net earning = gross - 3% platform fee. Guest rating is their average review score, or No ratings yet."
+           styleClass="host-bookings-note" wrapText="true"/>
+    <Label text="Past requests" styleClass="host-bookings-section-title"/>
+    <VBox styleClass="host-bookings-table-card">
+        <TableView fx:id="pastTable" styleClass="host-bookings-table" prefHeight="180">
+            <columns>
+                <TableColumn fx:id="pastGuestColumn" text="Guest" prefWidth="150"/>
+                <TableColumn fx:id="pastListingColumn" text="Listing" prefWidth="190"/>
+                <TableColumn fx:id="pastDatesColumn" text="Dates" prefWidth="130"/>
+                <TableColumn fx:id="pastNightsColumn" text="Nights" prefWidth="90"/>
+                <TableColumn fx:id="pastTotalColumn" text="Total" prefWidth="130"/>
+                <TableColumn fx:id="pastStatusColumn" text="Status" prefWidth="150"/>
+            </columns>
+        </TableView>
+    </VBox>
 </VBox>

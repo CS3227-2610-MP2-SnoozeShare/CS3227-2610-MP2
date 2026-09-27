@@ -8,9 +8,9 @@ every boundary, not at the end of the session.
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `agent-account-governance` (W11 — Agent Account Governance; branched 2026-09-26 from the W10 branch tip, which already contains `main`)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-27 by Claude Sonnet 5 — W11 accepted by the operator and marked Done; Guide awaiting confirmation
+- **Last updated:** 2026-09-27 by Claude Sonnet 5 — merged `origin/main` (W8, W4, W6, W7, guide checkpoint) into the W11 branch; W11 Done
 - **Last verified against repo:** 2026-09-26
-- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.10 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.9 Audit trail, two diagrams, the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented.
+- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, W6/W7 and others on `main`, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.13 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.9 Audit trail, two diagrams, the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented.
 
 Sections are ordered by how often they are needed: **1–3 say where we are, 4–5 say what the
 system is, 6–7 say what not to touch and what is stuck, 8–10 are the record.** Cite sections by
@@ -66,6 +66,8 @@ three iterations).
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 | S7 | 2026-09-25 | Codex | w7 | W7 scope assessment | Paused | `w7` created from `w6`; booking display maps to W8/F7.1, while W7 remains calendar/date overrides | 2026-09-25 |
 | S8 | 2026-09-26 | Codex | w7 | W7 | Paused | W7 complete: host calendar, inclusive manual blocks, removal, validation, and layout delivered; full tests/build pass | 2026-09-26 |
+| S9 | 2026-09-26 | Codex | w8 | Host portal UI refinement | Paused | Completed wallet/listing layout, copy, metrics, action sizing, and status-control spacing; focused tests, XML validation, Checkstyle, and diff checks pass; full suite retains two unrelated UI failures | 2026-09-26 |
+| S14 | 2026-09-26 | Codex | w8 | W8 — Host Request Queue, Earnings & Disputes | Paused | PR #11 open against main; W8 implementation, review fixes, and Developer Guide handoff complete | 2026-09-27 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -84,17 +86,18 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W1 | F0 — Auth, Registration & Wallet Provisioning | Done | [shared-foundation design](docs/superpowers/specs/2026-09-23-w1-shared-foundation-design.md) | [shared-foundation plan](docs/superpowers/plans/2026-09-23-w1-shared-foundation.md) | W1 implementation and verification complete; guide confirmation pending | Awaiting confirmation |
 | W2 | F1 — Listing Search & Property Discovery | Done | [listing-search design](docs/superpowers/specs/2026-09-24-w2-listing-search-design.md) | [listing-search plan](docs/superpowers/plans/2026-09-24-w2-listing-search.md) | Implementation complete: search/filter, detail modal, price breakdown | Awaiting confirmation |
 | W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Building | [booking-execution design](docs/superpowers/specs/2026-09-24-w3-booking-execution-design.md) | [booking-execution plan](docs/superpowers/plans/2026-09-24-w3-booking-execution.md) | All 9 tasks complete: TransactionServiceImpl, BookingServiceImpl (submit/cancel/decide), AppContext wiring, Trip Hub UI, Book Now button | — |
-| W4 | F3 — Guest Feedback, Disputes & Reviews | Not started | — | — | Backlog only: §3 | — |
+| W4 | F3 — Guest Feedback, Disputes & Reviews | Done | [guest-feedback design](docs/superpowers/specs/2026-09-26-w4-guest-feedback-disputes-reviews-design.md) | [guest-feedback plan](docs/superpowers/plans/2026-09-26-w4-guest-feedback-disputes-reviews.md) | All 8 tasks complete: fileTicket, ReviewService, AppContext wiring, ticket filing modal, review modal, Support tab, Trip Hub buttons | Awaiting confirmation |
 | W5 | F4 — Guest Wallet Management (top-up/withdraw) | Done | [wallet-management design](docs/superpowers/specs/2026-09-25-w5-wallet-management-design.md) | [wallet-management plan](docs/superpowers/plans/2026-09-25-w5-wallet-management.md) | All 6 tasks complete: dashboard, modal, navigation, CSS, sidebar refresh | Awaiting confirmation |
-| W6 | F5 — Host Listing Management & Publishing | Done | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md) | [listing-management plan](docs/superpowers/plans/2026-09-25-w6-listing-management.md) | Implementation complete: listing CRUD/status/detail flows, host wallet/navigation refinements, wallet refresh fix, and clean build verification | Awaiting confirmation |
-| W7 | F6 — Host Calendar & Date Overrides | Done | [host-calendar design](docs/superpowers/specs/2026-09-26-w7-host-calendar-design.md) | [host-calendar plan](docs/superpowers/plans/2026-09-26-w7-host-calendar.md) | Complete: listing calendar, month navigation, colors, all-month overrides, inclusive/single-date blocking, removal, validation, and layout; full tests/build pass | Awaiting confirmation |
-| W8 | F7 — Host Request Queue, Earnings & Disputes | Not started | — | — | Backlog only: §4 | — |
+| W6 | F5 — Host Listing Management & Publishing | Done | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md) | [listing-management plan](docs/superpowers/plans/2026-09-25-w6-listing-management.md) | Implementation complete: listing CRUD/status/detail flows, host wallet/navigation refinements, wallet refresh fix, and clean build verification | Documented 2026-09-27 |
+| W7 | F6 — Host Calendar & Date Overrides | Done | [host-calendar design](docs/superpowers/specs/2026-09-26-w7-host-calendar-design.md) | [host-calendar plan](docs/superpowers/plans/2026-09-26-w7-host-calendar.md) | Complete: listing calendar, month navigation, colors, all-month overrides, inclusive/single-date blocking, removal, validation, and layout; full tests/build pass | Documented 2026-09-27 |
+| W8 | F7 — Host Request Queue, Earnings & Disputes | In review | [host requests/earnings design](docs/superpowers/specs/2026-09-26-w8-host-requests-earnings-design.md) | [host requests/earnings plan](docs/superpowers/plans/2026-09-26-w8-host-requests-earnings.md) | PR #11 open against main; review fixes complete; broader F7.2.2 deferred to W13 | Documented 2026-09-27 |
 | W9 | F8 — Host Wallet Management | Not started | — | — | Backlog only: §4 | — |
 | W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
 | W11 | F10 — Agent Account Governance (F10.1.1 suspend, F10.1.2 cascade; Reactivate added, C34) | Done | [W11 design](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) | [W11 plan](docs/superpowers/plans/2026-09-26-w11-account-governance.md) | 14/14 tasks; operator accepted real-app run 2026-09-27 | Documented 2026-09-27 |
 | W12 | F11 — Platform Audit Trail (Analytics half of the epic has no items, out of scope; W11 emits the account-governance rows, C32) | Done | [W12 design](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) | [W12 plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md) | Done | Documented 2026-09-26 |
 | W14 | Unified ledger — fold `wallet_transactions` into `audit_log`, `users.balance`, System account with a real wallet (C30, C31) | Not started | — | — | Not spec'd; reverses Known Gaps entry, C3, C9; runs after W12; touches W1/W3/W5/W6/W10 money paths | — |
 | W13 | Messaging (ticket chat threads; general `MessageService`) — no backlog epic yet, raised by W10 (C21) | Not started | — | — | Not spec'd; W10 depends on its interface only | — |
+| W14 | Host Listings Dashboard & Copy Refinement | Done | — | — | Live listing metrics, listing-card redesign, Requests/wallet copy, and layout updates complete; operator explicitly waived new spec/plan | — |
 
 **Handoffs into W3 (raised by W10, 2026-09-25; W3 reached `main` 2026-09-25, W10 merged `main` 2026-09-26 and the
 stubs below are still open)** — honour or reconcile these:
@@ -207,6 +210,14 @@ Booking escrow publishes `WalletTransactionRecordedEvent` after its transaction 
 wallet headers and wallet dashboards synchronized with the persisted balance.
 Host Listings, Bookings, listing details, and listing forms now also replace the shell center
 directly; their page titles and descriptions are defined inside each page view.
+W8 adds the native Host Booking requests page with host-owned active/past tables styled similarly to the agent table, gross/net/rating
+projections, approve/reject confirmation modals, optional persisted host rejection messages, and
+startup/page-load completion sweeps.
+The Host listing create/edit form uses a responsive two-column, four-card layout with
+human-readable property/status dropdowns, text-field capacity inputs, two-column amenity tiles,
+and create/edit-specific action labels.
+The Host Listings page uses a `My listings` heading, wide metric/action cards, and `Requests`
+navigation; Host Wallet actions use equal-width `Top up` and `Withdraw` buttons.
 Host shell FXML is well-formed and loads successfully through `SceneRouter` after authentication.
 Per the proposal,
 each role gets its own FXML+Controller tree under `ui.<role>`, and `ui.common` holds shared
@@ -239,8 +250,8 @@ of this becomes code — not yet started. Two schema gaps found while grounding 
 atomic wallet ledger, and audit implementation exist. W2 adds `AvailabilityServiceImpl` and
 `ListingServiceImpl`. W3 adds `BookingServiceImpl` (submitRequest with atomic escrow+block,
 cancel with 48h refund policy, decide for host approve/reject, tripsFor/pendingRequestsFor
-queries) and `TransactionServiceImpl` (holdEscrow, refundEscrow, historyFor — with
-settleBookingCompletion/applyTicketRemedy/manualOverride stubbed for W8/W10). `UserService`
+queries) and `TransactionServiceImpl` (holdEscrow, refundEscrow, historyFor, and atomic
+normal booking settlement; `applyTicketRemedy`/`manualOverride` remain owned by W10). `UserService`
 gained a `findById(UUID)` method. The proposal specifies nine service interfaces
 (`ListingService`, `AvailabilityService`, `BookingService`, `TicketService`, `WalletService`,
 `TransactionService`, `UserService`, `ReviewService`, `AuditService`) with full method
@@ -248,6 +259,14 @@ signatures — see [architecture proposal §3.1](docs/SnoozeShare-Architecture-P
 exact contracts, including which backlog item (F-number) each method backs.
 W6 extends `ListingServiceImpl` with host-authorized listing creation, detail updates, and
 status changes, with validation and audit records.
+`ListingMetricsService` supplies host dashboard booking counts and average review ratings with
+zero-value fallbacks for listings without activity.
+
+**W4 adds:** `TicketServiceImpl.fileTicket()` (8 validation rules, event publishing, 7-day window),
+`TicketServiceImpl.myTickets()`, `ReviewServiceImpl` (submit + hasReview), `JdbcReviewRepository`.
+
+**W8 adds:** host booking row projections, message-aware host decisions, guarded completion and
+net host payout settlement after the 7-day dispute window.
 
 **W11 adds:** `AccountGovernanceServiceImpl` (`listAccounts`, `suspend`, `reactivate`): one `TransactionManager` transaction that flips the status, force-cancels the target's PENDING and not-yet-started CONFIRMED bookings with a full refund and block release, deactivates a host's ACTIVE listings (C36), and writes W12 audit rows (`ACCOUNT_SUSPENDED`, `BOOKING_FORCE_CANCELLED`, `ESCROW_REFUND`, `ACCOUNT_REACTIVATED`); the event is published after commit. `BookingServiceImpl` refuses bookings from a suspended guest. `UserService.suspend` was removed (D19 resolved).
 
@@ -289,7 +308,9 @@ through (guest cancel, host approve/reject, agent force-override all call the sa
 `User`, `Wallet`, `WalletTransaction`, and `AuditLog` JDBC adapters. W2 adds
 `JdbcPropertyRepository` (dynamic WHERE clause building for search, UPSERT for save),
 `JdbcAvailabilityBlockRepository` (overlap detection: `startDate < ? AND endDate > ?`), and
-`JdbcBookingRepository` (overlap detection filtering PENDING+CONFIRMED only). Shared `RowMappers`
+`JdbcBookingRepository` (overlap detection filtering PENDING+CONFIRMED only, host/history and
+completion projections), `JdbcReviewRepository`, and `JdbcTicketRepository` booking lookup.
+Shared `RowMappers`
 centralizes result-set-to-record mapping with graceful unknown-amenity handling. Remaining
 feature-specific aggregate adapters are owned by the workstreams that implement those features. The proposal specifies one
 repository interface per aggregate (`UserRepository`,
@@ -298,7 +319,7 @@ repository interface per aggregate (`UserRepository`,
 each returning/consuming domain records — only `repository.jdbc.*` may import `java.sql.*`.
 Schema is specified table-by-table in
 [architecture proposal §4](docs/SnoozeShare-Architecture-Proposal.md) (users, properties,
-availability_blocks, bookings, wallets, wallet_transactions — an append-only ledger, tickets,
+availability_blocks, bookings (including nullable `hostDecisionMessage`), wallets, wallet_transactions — an append-only ledger, tickets,
 ticket_categories, reviews, audit_log). No migrations exist yet (`infra.db.migration` is still
 unbuilt). A hand-written (non-Flyway) copy of this schema plus a full mock dataset has been built
 into a **shared, committed reference DB** — `db/schema.sql` / `db/seed-mock-data.sql` /
@@ -310,6 +331,11 @@ not loaded by the application at startup. See § Record.
 **W10 adds:** `JdbcTicketRepository` and `JdbcTicketCategoryRepository`, and `MigrationRunner` now
 adopts a pre-provisioned database (one with tables but no `schema_history`, such as the mock DB) by
 recording the baseline (D10).
+
+**W8 adds:** migration V002 for `bookings.hostDecisionMessage`; `MigrationRunner` applies it to
+fresh and adopted databases, while JDBC booking reads/writes remain compatible with older
+pre-provisioned copies. **W10 adds:** `JdbcTicketRepository` and `JdbcTicketCategoryRepository`,
+and `MigrationRunner` adopts a pre-provisioned database (D10).
 
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
@@ -452,6 +478,10 @@ architecture area remain recorded in that area's table.
 | C36 | 2026-09-26 | W11 cascade scope widened: suspension force-cancels `PENDING` **and not-yet-started `CONFIRMED`** bookings (100% refund), matching W12 § 4a and seed booking 12; started/ended `CONFIRMED` stays are untouched (W10). Reason column kept (C34(d) reverses part of C32). Accounts search matches display name, email, role, joined, status (placeholder `Search...`). Spec follows W12 audit shapes and fixed-header table pattern (C33) | Operator answers to Q3 | Operator conversation, 2026-09-26; [W11 spec](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) |
 | C35 | 2026-09-26 | W11 UI deltas from the canvas: first column "Display Name" plus a new Email column; dates (Joined, both modals) as `DD MMM YYYY`; Suspend modal banner shows display name large with the full email beneath; Reactivate modal banner uses `#40680C` (from the Force Complete mock-up); modals use `AgentModal` scrim (C26) | Operator, 2026-09-26 | Operator conversation; [W11 spec](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) § 2 |
 | C15 | 2026-09-23 | Execute W1 natively in the existing `w1` checkout rather than creating a separate worktree | Operator explicitly selected the current checkout for execution | Operator conversation, 2026-09-23 |
+| C28 | 2026-09-26 | Proceed with Host Listings Dashboard & Copy Refinement without a new design spec or implementation plan | Operator explicitly requested the earlier spec be undone and then asked to carry on; implementation records this waiver | Operator conversation, 2026-09-26 |
+| C29 | 2026-09-26 | Defer F7.2.2 structured host dispute response notes/evidence from W8 to W13 Messaging | Operator chose to defer the formal host response path to W13; W8 will not add ticket response fields or conflate the flow with chat | Operator conversation, 2026-09-26 |
+| C30 | 2026-09-27 | Host booking approve/reject actions require confirmation modals matching the supplied mockups | Operator requested centered AgentModal-style dialogs with scrim, booking summary cards, explanatory notices, and modal-specific confirm/cancel actions | Operator conversation, 2026-09-27 |
+| C31 | 2026-09-27 | W8 persists the optional host rejection message on the booking and exposes it to guest booking/trip views; broader F7.2.2 response notes/evidence remains deferred to W13 | Operator confirmed the proposed nullable `hostDecisionMessage` behavior | Operator conversation, 2026-09-27 |
 
 ---
 
@@ -470,6 +500,11 @@ architecture area remain recorded in that area's table.
 - **Found during W10 execution (2026-09-25, all fixed, each in the ledger):** (a) mock seed timestamps lacked the trailing `Z`, so `JdbcCodecs.instant` rejected them; (b) mock seed IDs used non-hex prefixes, so `UUID.fromString` threw (rule now in § Orientation repo map); (c) the baseline build was red from 7 pre-existing W2 checkstyle violations.
 - **Backlog edits made 2026-09-25 (operator approved):** `docs/ProductBacklog.md` — F9.2.1 struck as dropped; F9.2.2 reworded to full-escrow settlement; F9.1.1 gains chat threads; F7.3.1 gains the open-ticket guard; new epic F12 Messaging (W13); changelog entry added.
 - **Cross-workstream requirements:** listed under § Workstreams → *Handoffs into W3*.
+- **D13 (W8, resolved 2026-09-27)** — The committed reference/mock database predates V002 and
+  some tests open it without running migrations. W8 maps a missing `hostDecisionMessage` as null
+  and uses a legacy-column save shape when needed; migrated application databases still receive
+  V002 normally. Full verification retains three pre-existing UI failures in `ShellLayoutTest`
+  and `AgentModalTest`, unrelated to W8; all W8-focused tests and Checkstyle pass.
 
 ### W12 deviations (2026-09-26) — see the [W12 spec](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) and [plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md)
 
@@ -493,6 +528,10 @@ architecture area remain recorded in that area's table.
 ### D2 — Two schema gaps found while grounding the UI mockups against `db/schema.sql` (RESOLVED 2026-09-26 by W12: point 1 by C32, point 2 by C28)
 
 **Resolution (2026-09-26):** point 2 — audit status/reason/amount are now real columns (`walletAdjustment`, `reason`, ...; C28), so no JSON projection layer exists. Point 1 — the suspension reason is stored as `reason` on the `ACCOUNT_SUSPENDED` audit row (C32), no `users.suspensionReason` column; W11 emits that row. Original notes below kept for history.
+
+### D21 — Merge of `origin/main` into the W11 branch (2026-09-27)
+
+Resolved by keeping both sides. `BookingServiceImpl` already had a `UserRepository` from W8, so W11's extra constructor parameter was dropped and only the suspended-guest guard remains. `AppContext` builds `AccountGovernanceService` after the W8 wiring. The W8 `hostDecisionMessage` column and W11's V003 both live in `MigrationRunner`; `SchemaParityTest` applies both. The guide's audit trail section is now § 4.12 on `main`, so W11's is § 4.13. W8 auto-completion (`completeEligibleBookings`, run at startup) now settles a suspended guest's in-progress stay. **Pre-existing red on `main`, not from W11:** `FileTicketTest.successfullyFilesTicketAndPublishesEvent` and `ShellLayoutTest.hostWalletPageUsesTheSamePageInsetAsListingsAndBookings` fail on `origin/main` too; I fixed the checkstyle violations `main` carried (`ReviewServiceImpl` import order, `FileTicketTest` line wraps). Note W8 also numbered a deviation D13, colliding with W12's D13.
 
 ### D19 — `UserService.suspend` replaced by `AccountGovernanceService` (W11, RESOLVED 2026-09-26: stub removed)
 

@@ -16,39 +16,18 @@ import com.snoozeshare.testsupport.MockDbFixture;
 
 class MigrationRunnerReferenceDbTest {
 
-    private static long scalar(Connection connection, String sql) throws Exception {
-        try (Statement statement = connection.createStatement();
-             ResultSet result = statement.executeQuery(sql)) {
-            result.next();
-            return result.getLong(1);
-        }
-    }
-
-    private static void runScript(Connection connection, Path file) throws Exception {
-        String sql = Files.readString(file).lines().map(line -> line.replaceAll("--.*", ""))
-                .reduce("", (left, right) -> left + "\n" + right);
-        for (String statementSql : sql.split(";")) {
-            if (!statementSql.isBlank()) {
-                try (Statement statement = connection.createStatement()) {
-                    statement.executeUpdate(statementSql);
-                }
-            }
-        }
-    }
-
     @Test
-    void theShippedReferenceDatabaseIsAlreadyMigratedSoMigrateChangesNothing(@TempDir Path directory)
+    void adoptsAPreProvisionedReferenceDatabaseWithoutReapplyingTheFoundation(@TempDir Path directory)
             throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
-            long historyBefore = db.scalarLong("SELECT COUNT(*) FROM schema_history");
-
             MigrationRunner.migrate(db.connection());
             MigrationRunner.migrate(db.connection());
 
-            assertEquals(historyBefore, db.scalarLong("SELECT COUNT(*) FROM schema_history"));
             assertEquals(1L, db.scalarLong("SELECT COUNT(*) FROM schema_history WHERE version = 1"));
             assertEquals(1L, db.scalarLong("SELECT COUNT(*) FROM schema_history WHERE version = 2"));
             assertEquals(1L, db.scalarLong("SELECT COUNT(*) FROM schema_history WHERE version = 3"));
+            assertEquals(1L, db.scalarLong("SELECT COUNT(*) FROM pragma_table_info('bookings') "
+                    + "WHERE name = 'hostDecisionMessage'"));
             assertEquals(17L, db.scalarLong("SELECT COUNT(*) FROM users"));
         }
     }
@@ -87,6 +66,26 @@ class MigrationRunnerReferenceDbTest {
             assertEquals(3L, scalar(connection, "SELECT COUNT(*) FROM schema_history"));
             assertEquals(1L, scalar(connection,
                     "SELECT COUNT(*) FROM pragma_table_info('audit_log') WHERE name = 'walletAdjustment'"));
+        }
+    }
+
+    private static long scalar(Connection connection, String sql) throws Exception {
+        try (Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery(sql)) {
+            result.next();
+            return result.getLong(1);
+        }
+    }
+
+    private static void runScript(Connection connection, Path file) throws Exception {
+        String sql = Files.readString(file).lines().map(line -> line.replaceAll("--.*", ""))
+                .reduce("", (left, right) -> left + "\n" + right);
+        for (String statementSql : sql.split(";")) {
+            if (!statementSql.isBlank()) {
+                try (Statement statement = connection.createStatement()) {
+                    statement.executeUpdate(statementSql);
+                }
+            }
         }
     }
 }

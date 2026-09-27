@@ -11,7 +11,7 @@
 <StackPane fx:id="dashboardRoot" xmlns:fx="http://javafx.com/fxml"
            fx:controller="com.snoozeshare.ui.guest.wallet.WalletDashboardController">
     <VBox spacing="20">
-        <padding><Insets top="8" right="24" bottom="24" left="24"/></padding>
+        <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
 
         <Label text="Wallet" styleClass="page-title"/>
 
@@ -22,8 +22,8 @@
         </VBox>
 
         <HBox spacing="12">
-            <Button text="Top Up" styleClass="button" onAction="#handleTopUp"/>
-            <Button text="Withdraw" styleClass="outline-button" onAction="#handleWithdraw"/>
+            <Button text="Top up" styleClass="button, wallet-action-button" onAction="#handleTopUp"/>
+            <Button text="Withdraw" styleClass="outline-button, wallet-action-button" onAction="#handleWithdraw"/>
         </HBox>
 
         <Label text="Transaction History" styleClass="card-title"/>

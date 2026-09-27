@@ -4,56 +4,145 @@
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Spinner?>
-<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<VBox xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.snoozeshare.ui.host.listings.HostListingFormController" spacing="12">
-    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
-    <HBox spacing="10">
-        <Button text="Back" onAction="#handleBack" styleClass="outline-button"/>
-        <Label fx:id="formTitle" text="Create Listing" styleClass="page-title"/>
-    </HBox>
-    <GridPane hgap="10" vgap="8" styleClass="listing-form">
-        <Label text="Title" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-        <TextField fx:id="titleField" promptText="e.g. Bright city apartment" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-        <Label text="Description" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-        <TextArea fx:id="descriptionField" styleClass="listing-description" promptText="Describe the space" prefRowCount="4" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-        <Label text="Address" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-        <TextField fx:id="streetAddressField" promptText="Street address" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-        <Label text="City" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-        <TextField fx:id="cityField" promptText="City" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-        <Label text="Region" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
-        <TextField fx:id="regionField" promptText="Region" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
-        <Label text="Postal code" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
-        <TextField fx:id="postalCodeField" promptText="Postal code" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
-        <Label text="Property type" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
-        <ComboBox fx:id="propertyTypeCombo" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
-        <Label text="Max guests" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
-        <Spinner fx:id="maxGuestsSpinner" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
-        <Label text="Bedrooms" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
-        <TextField fx:id="bedroomsField" promptText="e.g. 2" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
-        <Label text="Bathrooms" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
-        <TextField fx:id="bathroomsField" promptText="e.g. 1.5" GridPane.columnIndex="3" GridPane.rowIndex="3"/>
-        <Label text="Nightly rate" GridPane.columnIndex="2" GridPane.rowIndex="4"/>
-        <TextField fx:id="rateField" promptText="SGD" GridPane.columnIndex="3" GridPane.rowIndex="4"/>
-        <Label text="Check-in" GridPane.columnIndex="2" GridPane.rowIndex="5"/>
-        <TextField fx:id="checkInField" promptText="HH:mm" GridPane.columnIndex="3" GridPane.rowIndex="5"/>
-        <Label text="Check-out" GridPane.columnIndex="2" GridPane.rowIndex="6"/>
-        <TextField fx:id="checkOutField" promptText="HH:mm" GridPane.columnIndex="3" GridPane.rowIndex="6"/>
-    </GridPane>
-    <HBox spacing="10">
-        <Label text="Amenities"/>
-        <CheckBox fx:id="wifiBox" text="Wi-Fi"/>
-        <CheckBox fx:id="parkingBox" text="Parking"/>
-        <CheckBox fx:id="airConditioningBox" text="Air conditioning"/>
-        <CheckBox fx:id="kitchenBox" text="Kitchen"/>
-        <CheckBox fx:id="washerBox" text="Washer"/>
-        <CheckBox fx:id="workDeskBox" text="Work desk"/>
-    </HBox>
-    <Label fx:id="errorLabel" styleClass="form-error"/>
-    <Button fx:id="saveButton" text="Create Listing" onAction="#handleSave"/>
-</VBox>
+<ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="listing-form-scroll"
+            fx:controller="com.snoozeshare.ui.host.listings.HostListingFormController"
+            xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+    <content>
+        <VBox fx:id="formRoot" styleClass="listing-form-page" spacing="16">
+            <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
+
+            <HBox alignment="CENTER_LEFT" spacing="16">
+                <Button text="Back" onAction="#handleBack" styleClass="outline-button"/>
+                <Label fx:id="formTitle" text="Create listing" styleClass="page-title"/>
+            </HBox>
+
+            <GridPane hgap="16" vgap="16" styleClass="listing-form-grid" maxWidth="Infinity">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="50" hgrow="SOMETIMES"/>
+                    <ColumnConstraints percentWidth="50" hgrow="SOMETIMES"/>
+                </columnConstraints>
+
+                <VBox styleClass="listing-form-card" spacing="12" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <Label text="Basic details" styleClass="listing-form-card-title"/>
+                    <Label text="Title" styleClass="listing-form-label"/>
+                    <TextField fx:id="titleField" promptText="e.g. Bright city apartment"/>
+                    <Label text="Description" styleClass="listing-form-label"/>
+                    <TextField fx:id="descriptionField" styleClass="listing-description"
+                               promptText="Describe the space" prefHeight="48"/>
+                    <HBox spacing="12" fillHeight="true">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Property type" styleClass="listing-form-label"/>
+                            <ComboBox fx:id="propertyTypeCombo" maxWidth="Infinity"/>
+                        </VBox>
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Status" styleClass="listing-form-label"/>
+                            <ComboBox fx:id="statusCombo" maxWidth="Infinity"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <VBox styleClass="listing-form-card" spacing="12" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                    <Label text="Location" styleClass="listing-form-card-title"/>
+                    <Label text="Street address" styleClass="listing-form-label"/>
+                    <TextField fx:id="streetAddressField" promptText="Street address"/>
+                    <HBox spacing="12" fillHeight="true">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="City" styleClass="listing-form-label"/>
+                            <TextField fx:id="cityField" promptText="City"/>
+                        </VBox>
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Region" styleClass="listing-form-label"/>
+                            <TextField fx:id="regionField" promptText="Region"/>
+                        </VBox>
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Postal code" styleClass="listing-form-label"/>
+                            <TextField fx:id="postalCodeField" promptText="Postal code"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <VBox styleClass="listing-form-card" spacing="12" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                    <Label text="Capacity &amp; Pricing" styleClass="listing-form-card-title"/>
+                    <HBox spacing="12" fillHeight="true">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Max guests" styleClass="listing-form-label"/>
+                            <TextField fx:id="maxGuestsField" promptText="e.g. 4"/>
+                        </VBox>
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Bedrooms" styleClass="listing-form-label"/>
+                            <TextField fx:id="bedroomsField" promptText="e.g. 2"/>
+                        </VBox>
+                    </HBox>
+                    <HBox spacing="12" fillHeight="true">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Bathrooms" styleClass="listing-form-label"/>
+                            <TextField fx:id="bathroomsField" promptText="e.g. 1.5"/>
+                        </VBox>
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Rate / night ($)" styleClass="listing-form-label"/>
+                            <TextField fx:id="rateField" promptText="SGD"/>
+                        </VBox>
+                    </HBox>
+                    <HBox spacing="12" fillHeight="true">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Check-in time" styleClass="listing-form-label"/>
+                            <TextField fx:id="checkInField" promptText="HH:mm"/>
+                        </VBox>
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Check-out time" styleClass="listing-form-label"/>
+                            <TextField fx:id="checkOutField" promptText="HH:mm"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <VBox styleClass="listing-form-card" spacing="12" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                    <Label text="Amenities" styleClass="listing-form-card-title"/>
+                    <GridPane hgap="10" vgap="10">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="50" hgrow="SOMETIMES"/>
+                            <ColumnConstraints percentWidth="50" hgrow="SOMETIMES"/>
+                        </columnConstraints>
+                        <HBox styleClass="amenity-option" alignment="CENTER_LEFT" spacing="8"
+                              GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <CheckBox fx:id="wifiBox" text="Wi-Fi"/>
+                        </HBox>
+                        <HBox styleClass="amenity-option" alignment="CENTER_LEFT" spacing="8"
+                              GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <CheckBox fx:id="parkingBox" text="Parking"/>
+                        </HBox>
+                        <HBox styleClass="amenity-option" alignment="CENTER_LEFT" spacing="8"
+                              GridPane.columnIndex="0" GridPane.rowIndex="1">
+                            <CheckBox fx:id="airConditioningBox" text="Air conditioning"/>
+                        </HBox>
+                        <HBox styleClass="amenity-option" alignment="CENTER_LEFT" spacing="8"
+                              GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <CheckBox fx:id="kitchenBox" text="Kitchen"/>
+                        </HBox>
+                        <HBox styleClass="amenity-option" alignment="CENTER_LEFT" spacing="8"
+                              GridPane.columnIndex="0" GridPane.rowIndex="2">
+                            <CheckBox fx:id="washerBox" text="Washer"/>
+                        </HBox>
+                        <HBox styleClass="amenity-option" alignment="CENTER_LEFT" spacing="8"
+                              GridPane.columnIndex="1" GridPane.rowIndex="2">
+                            <CheckBox fx:id="workDeskBox" text="Work desk"/>
+                        </HBox>
+                    </GridPane>
+                </VBox>
+            </GridPane>
+
+            <Label fx:id="errorLabel" styleClass="form-error" wrapText="true"/>
+            <HBox alignment="CENTER_RIGHT" spacing="10">
+                <Button fx:id="saveButton" text="Create listing" onAction="#handleSave"
+                        styleClass="listing-form-action"/>
+                <Button text="Cancel" onAction="#handleBack"
+                        styleClass="outline-button, listing-form-action"/>
+            </HBox>
+        </VBox>
+    </content>
+</ScrollPane>

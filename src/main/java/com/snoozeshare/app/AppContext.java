@@ -12,6 +12,7 @@ import com.snoozeshare.repository.jdbc.JdbcAuditLogRepository;
 import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
+import com.snoozeshare.repository.jdbc.JdbcReviewRepository;
 import com.snoozeshare.repository.jdbc.JdbcTicketCategoryRepository;
 import com.snoozeshare.repository.jdbc.JdbcTicketRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
@@ -23,8 +24,10 @@ import com.snoozeshare.service.AvailabilityService;
 import com.snoozeshare.service.BookingService;
 import com.snoozeshare.service.DisputeQueryService;
 import com.snoozeshare.service.DisputeSettlementService;
+import com.snoozeshare.service.ListingMetricsService;
 import com.snoozeshare.service.ListingService;
 import com.snoozeshare.service.MessageService;
+import com.snoozeshare.service.ReviewService;
 import com.snoozeshare.service.TicketService;
 import com.snoozeshare.service.TransactionService;
 import com.snoozeshare.service.UserService;
@@ -36,7 +39,9 @@ import com.snoozeshare.service.impl.BookingServiceImpl;
 import com.snoozeshare.service.impl.DisputeQueryServiceImpl;
 import com.snoozeshare.service.impl.DisputeSettlementServiceImpl;
 import com.snoozeshare.service.impl.InMemoryMessageService;
+import com.snoozeshare.service.impl.ListingMetricsServiceImpl;
 import com.snoozeshare.service.impl.ListingServiceImpl;
+import com.snoozeshare.service.impl.ReviewServiceImpl;
 import com.snoozeshare.service.impl.TicketServiceImpl;
 import com.snoozeshare.service.impl.TransactionServiceImpl;
 import com.snoozeshare.service.impl.UserServiceImpl;
@@ -52,6 +57,7 @@ public final class AppContext implements AutoCloseable {
     private final WalletService walletService;
     private final AuditService auditService;
     private final ListingService listingService;
+    private final ListingMetricsService listingMetricsService;
     private final AvailabilityService availabilityService;
     private final BookingService bookingService;
     private final AccountGovernanceService accountGovernanceService;
@@ -60,6 +66,7 @@ public final class AppContext implements AutoCloseable {
     private final TicketService ticketService;
     private final DisputeQueryService disputeQueryService;
     private final MessageService messageService;
+    private final ReviewService reviewService;
     private final SceneRouter sceneRouter;
 
     private AppContext(Connection connection) throws SQLException {
@@ -77,28 +84,33 @@ public final class AppContext implements AutoCloseable {
         JdbcPropertyRepository propertyRepo = new JdbcPropertyRepository(connection);
         JdbcAvailabilityBlockRepository blockRepo = new JdbcAvailabilityBlockRepository(connection);
         JdbcBookingRepository bookingRepo = new JdbcBookingRepository(connection);
+        JdbcReviewRepository reviewRepo = new JdbcReviewRepository(connection);
         this.availabilityService = new AvailabilityServiceImpl(propertyRepo, blockRepo, bookingRepo);
         this.listingService = new ListingServiceImpl(propertyRepo, availabilityService,
                 userService, auditService);
+        this.listingMetricsService = new ListingMetricsServiceImpl(connection);
         JdbcWalletTransactionRepository txnRepo = new JdbcWalletTransactionRepository(connection);
         this.transactionService = new TransactionServiceImpl(connection, bookingRepo,
-                wallets, txnRepo, eventBus, auditService);
-        this.bookingService = new BookingServiceImpl(connection, bookingRepo, users, propertyRepo,
-                blockRepo, wallets, txnRepo, eventBus, auditService);
-        this.accountGovernanceService = new AccountGovernanceServiceImpl(connection, users, bookingRepo,
-                propertyRepo, blockRepo, wallets, txnRepo, eventBus, auditService, Clock.systemDefaultZone());
+                propertyRepo, wallets, txnRepo, eventBus, auditService);
         JdbcTicketRepository ticketRepo = new JdbcTicketRepository(connection);
+        this.bookingService = new BookingServiceImpl(connection, bookingRepo, propertyRepo,
+                blockRepo, wallets, txnRepo, users, reviewRepo, eventBus, transactionService,
+                ticketRepo);
         JdbcTicketCategoryRepository categoryRepo = new JdbcTicketCategoryRepository(connection);
         Clock clock = Clock.systemUTC();
         DisputeSettlementService settlementService = new DisputeSettlementServiceImpl(connection,
                 ticketRepo, bookingRepo, propertyRepo, users, wallets, txnRepo, auditService,
                 eventBus, clock);
         this.ticketService = new TicketServiceImpl(ticketRepo, categoryRepo, bookingRepo, users,
-                settlementService, auditService, clock);
+                settlementService, auditService, clock, eventBus);
         this.disputeQueryService = new DisputeQueryServiceImpl(ticketRepo, bookingRepo, propertyRepo,
                 users, txnRepo, clock);
         this.messageService = new InMemoryMessageService(clock);
+        this.reviewService = new ReviewServiceImpl(bookingRepo, reviewRepo, auditService, clock);
+        this.accountGovernanceService = new AccountGovernanceServiceImpl(connection, users, bookingRepo,
+                propertyRepo, blockRepo, wallets, txnRepo, eventBus, auditService, Clock.systemDefaultZone());
         this.sceneRouter = new SceneRouter();
+        bookingService.completeEligibleBookings();
     }
 
     public static AppContext create() throws SQLException {
@@ -121,6 +133,10 @@ public final class AppContext implements AutoCloseable {
         return messageService;
     }
 
+    public ReviewService reviewService() {
+        return reviewService;
+    }
+
     public SessionContext session() {
         return session;
     }
@@ -141,12 +157,20 @@ public final class AppContext implements AutoCloseable {
         return listingService;
     }
 
+    public ListingMetricsService listingMetricsService() {
+        return listingMetricsService;
+    }
+
     public AvailabilityService availabilityService() {
         return availabilityService;
     }
 
     public BookingService bookingService() {
         return bookingService;
+    }
+
+    public int runBookingCompletionSweep() {
+        return bookingService.completeEligibleBookings();
     }
 
     public AccountGovernanceService accountGovernanceService() {

@@ -36,6 +36,7 @@ class ShellNavigationTest {
         assertTrue(guestPage.contains("text=\"Search\""));
         assertTrue(hostPage.contains("text=\"Listings\""));
         assertTrue(!hostPage.contains("text=\"Dashboard\""));
+        assertTrue(hostPage.contains("text=\"Requests\""));
         assertTrue(hostPage.contains("</center>"));
     }
 
@@ -60,9 +61,9 @@ class ShellNavigationTest {
 
         assertTrue(shell.contains("fx:id=\"shellRoot\""));
         assertTrue(page.contains("HostListingsController"));
-        assertTrue(page.contains("Create Listing"));
+        assertTrue(page.contains("+ New listing"));
         assertTrue(page.contains("listingCards"));
-        assertTrue(page.contains("statusLabel"));
+        assertTrue(!page.contains("statusLabel"));
         assertTrue(!page.contains("descriptionField"));
         assertTrue(controller.contains("setContext"));
         assertTrue(controller.contains("reload"));
@@ -92,6 +93,10 @@ class ShellNavigationTest {
         assertTrue(guestController.contains("showExplore();"));
         assertTrue(hostController.contains("void setContext(AppContext"));
         assertTrue(hostController.contains("showListings();"));
+        assertTrue(hostController.contains("runBookingCompletionSweep()"));
+        String tripsController = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/guest/trips/TripDashboardController.java"));
+        assertTrue(tripsController.contains("runBookingCompletionSweep()"));
     }
 
     @Test
