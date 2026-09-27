@@ -23,8 +23,10 @@ class HostMessagesLayoutTest {
         assertTrue(fxml.contains("maxWidth=\"380\""));
         assertTrue(css.contains("-fx-min-width: 380px;"));
         assertTrue(css.contains("-fx-max-width: 380px;"));
+        assertTrue(css.contains(".host-message-sidebar .list-view .scroll-bar:horizontal"));
         assertTrue(controller.contains("OverrunStyle.ELLIPSIS"));
         assertTrue(controller.contains("HBox.setHgrow(copy, Priority.ALWAYS)"));
+        assertTrue(controller.contains("copy.setMinWidth(0)"));
         assertTrue(controller.contains("content.prefWidthProperty().bind(widthProperty().subtract(24))"));
     }
 }

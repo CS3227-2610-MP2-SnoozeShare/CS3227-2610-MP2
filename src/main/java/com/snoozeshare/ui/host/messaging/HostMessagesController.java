@@ -223,13 +223,16 @@ public final class HostMessagesController {
             }
             Label title = new Label(row.title());
             title.getStyleClass().add("host-message-row-title");
+            title.setMinWidth(0);
             title.setMaxWidth(Double.MAX_VALUE);
             title.setTextOverrun(OverrunStyle.ELLIPSIS);
             Label subtitle = new Label(row.subtitle());
             subtitle.getStyleClass().add("host-message-row-subtitle");
+            subtitle.setMinWidth(0);
             subtitle.setMaxWidth(Double.MAX_VALUE);
             subtitle.setTextOverrun(OverrunStyle.ELLIPSIS);
             VBox copy = new VBox(4, title, subtitle);
+            copy.setMinWidth(0);
             copy.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(copy, Priority.ALWAYS);
             HBox content = new HBox(copy);

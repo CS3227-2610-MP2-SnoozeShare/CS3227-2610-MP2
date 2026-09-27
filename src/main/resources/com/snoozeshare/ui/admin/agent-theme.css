@@ -1194,6 +1194,12 @@
     -fx-background-color: transparent;
     -fx-border-color: transparent;
 }
+.agent-root .host-message-sidebar .list-view .scroll-bar:horizontal {
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-opacity: 0;
+}
 .agent-root .host-message-sidebar .list-cell {
     -fx-padding: 16px 18px 16px 24px;
     -fx-background-color: transparent;
