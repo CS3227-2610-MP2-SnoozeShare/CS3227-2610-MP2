@@ -37,6 +37,9 @@ class ShellNavigationTest {
         assertTrue(hostPage.contains("text=\"Listings\""));
         assertTrue(!hostPage.contains("text=\"Dashboard\""));
         assertTrue(hostPage.contains("text=\"Requests\""));
+        assertTrue(hostPage.contains("text=\"Messages\""));
+        assertTrue(hostPage.indexOf("text=\"Requests\"") < hostPage.indexOf("text=\"Messages\""));
+        assertTrue(hostPage.indexOf("text=\"Messages\"") < hostPage.indexOf("text=\"Wallet\""));
         assertTrue(hostPage.contains("</center>"));
     }
 
@@ -45,7 +48,8 @@ class ShellNavigationTest {
         assertControllerMethods("guest/GuestShellController.java", "showExplore",
                 "showMyTrips", "showWallet", "showSupport");
         assertControllerMethods("host/HostShellController.java", "showListings",
-                "showBookings", "showWallet", "cleanupWalletController");
+                "showBookings", "showMessages", "showWallet", "cleanupWalletController",
+                "cleanupMessagesController");
         assertControllerMethods("admin/AdminShellController.java", "showOperations",
                 "showDisputes", "showAccounts");
     }

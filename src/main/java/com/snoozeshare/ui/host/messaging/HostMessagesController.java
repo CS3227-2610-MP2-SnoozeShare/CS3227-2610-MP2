@@ -112,6 +112,10 @@ public final class HostMessagesController {
         disposed = true;
     }
 
+    public void reload() {
+        refreshInbox();
+    }
+
     private void refreshInbox() {
         if (context == null || disposed) {
             return;
