@@ -25,6 +25,15 @@ class AccountGovernanceAtomicityTest {
 
     @Test
     void anAuditFailureDuringTheCascadeRollsBackStatusBookingsWalletsAndListings() throws Exception {
+        // Calls: 1 ACCOUNT_SUSPENDED, 2 LISTING_STATUS_CASCADE, 3 BOOKING_FORCE_CANCELLED, 4 ESCROW_REFUND
+        // (the money row, written by the ledger on the same audit service).
+        for (int failingCall = 3; failingCall <= 4; failingCall++) {
+            assertCascadeRollsBack(failingCall);
+        }
+    }
+
+    private static void assertCascadeRollsBack(int failingCall) throws Exception {
+        String label = "failing audit call " + failingCall;
         try (AccountFixture fixture = new AccountFixture()) {
             User host = fixture.user(Role.HOST, "Marcus", "marcus@test.com", "2026-02-02T10:00:00Z");
             User guest = fixture.user(Role.GUEST, "Priya", "priya@test.com", "2026-03-05T08:00:00Z");
@@ -32,22 +41,25 @@ class AccountGovernanceAtomicityTest {
             Booking pending = fixture.booking(guest, loft, BookingStatus.PENDING,
                     LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 7));
             BigDecimal balance = fixture.balance(guest);
+            int auditBefore = fixture.audit.search(AuditFilter.none(), 50, 0).size();
             List<Object> events = new ArrayList<>();
             fixture.bus.subscribe(AccountStatusChangedEvent.class, events::add);
-            // Calls: 1 ACCOUNT_SUSPENDED, 2 LISTING_STATUS_CASCADE, 3 BOOKING_FORCE_CANCELLED (fails).
-            var service = fixture.service(new FailingAuditService(fixture.audit, 3));
+            var service = fixture.service(new FailingAuditService(fixture.audit, failingCall));
 
-            assertThrows(RuntimeException.class, () -> service.suspend(host.userId(), fixture.agent.userId(), "fraud"));
+            assertThrows(RuntimeException.class, () -> service.suspend(host.userId(), fixture.agent.userId(), "fraud"),
+                    label);
 
             User stored = fixture.users.findById(host.userId()).orElseThrow();
-            assertEquals(AccountStatus.ACTIVE, stored.accountStatus());
-            assertNull(stored.suspensionReason());
-            assertEquals(ListingStatus.ACTIVE, fixture.properties.findById(loft.propertyId()).orElseThrow().status());
+            assertEquals(AccountStatus.ACTIVE, stored.accountStatus(), label);
+            assertNull(stored.suspensionReason(), label);
+            assertEquals(ListingStatus.ACTIVE, fixture.properties.findById(loft.propertyId()).orElseThrow().status(),
+                    label);
             assertEquals(BookingStatus.PENDING, fixture.bookings.findById(pending.bookingId()).orElseThrow()
-                    .status());
-            assertEquals(0, balance.compareTo(fixture.balance(guest)), "no refund was kept");
-            assertEquals(0, fixture.audit.search(AuditFilter.none(), 50, 0).size(), "no audit row was kept");
-            assertEquals(0, events.size(), "nothing is published for a rolled-back change");
+                    .status(), label);
+            assertEquals(0, balance.compareTo(fixture.balance(guest)), "no refund was kept: " + label);
+            assertEquals(auditBefore, fixture.audit.search(AuditFilter.none(), 50, 0).size(),
+                    "no audit row was kept: " + label);
+            assertEquals(0, events.size(), "nothing is published for a rolled-back change: " + label);
         }
     }
 

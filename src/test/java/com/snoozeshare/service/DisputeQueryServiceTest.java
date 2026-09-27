@@ -18,10 +18,10 @@ import com.snoozeshare.domain.enums.AssigneeFilter;
 import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.domain.enums.TicketStatus;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
+import com.snoozeshare.repository.jdbc.JdbcLedgerRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
 import com.snoozeshare.repository.jdbc.JdbcTicketRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
-import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
 import com.snoozeshare.service.impl.DisputeQueryServiceImpl;
 import com.snoozeshare.testsupport.MockDbFixture;
 import com.snoozeshare.testsupport.MockIds;
@@ -32,7 +32,7 @@ class DisputeQueryServiceTest {
         var c = db.connection();
         return new DisputeQueryServiceImpl(new JdbcTicketRepository(c), new JdbcBookingRepository(c),
                 new JdbcPropertyRepository(c), new JdbcUserRepository(c),
-                new JdbcWalletTransactionRepository(c), SettlementFixtures.CLOCK);
+                new JdbcLedgerRepository(c), SettlementFixtures.CLOCK);
     }
 
     @Test

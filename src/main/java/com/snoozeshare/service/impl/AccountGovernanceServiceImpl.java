@@ -1,6 +1,5 @@
 package com.snoozeshare.service.impl;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Clock;
@@ -33,7 +32,6 @@ import com.snoozeshare.repository.BookingRepository;
 import com.snoozeshare.repository.PropertyRepository;
 import com.snoozeshare.repository.UserRepository;
 import com.snoozeshare.repository.WalletRepository;
-import com.snoozeshare.repository.WalletTransactionRepository;
 import com.snoozeshare.service.AccountGovernanceService;
 import com.snoozeshare.service.AccountSummary;
 import com.snoozeshare.service.AuditRecord;
@@ -50,14 +48,14 @@ public final class AccountGovernanceServiceImpl implements AccountGovernanceServ
     private final PropertyRepository properties;
     private final AvailabilityBlockRepository blocks;
     private final WalletRepository wallets;
-    private final WalletTransactionRepository transactions;
+    private final LedgerWriter ledger;
     private final EventBus eventBus;
     private final AuditService audit;
     private final Clock clock;
 
     public AccountGovernanceServiceImpl(Connection connection, UserRepository users, BookingRepository bookings,
                                         PropertyRepository properties, AvailabilityBlockRepository blocks,
-                                        WalletRepository wallets, WalletTransactionRepository transactions,
+                                        WalletRepository wallets, LedgerWriter ledger,
                                         EventBus eventBus, AuditService audit, Clock clock) {
         this.connection = connection;
         this.users = users;
@@ -65,7 +63,7 @@ public final class AccountGovernanceServiceImpl implements AccountGovernanceServ
         this.properties = properties;
         this.blocks = blocks;
         this.wallets = wallets;
-        this.transactions = transactions;
+        this.ledger = ledger;
         this.eventBus = eventBus;
         this.audit = audit;
         this.clock = clock;
@@ -173,15 +171,10 @@ public final class AccountGovernanceServiceImpl implements AccountGovernanceServ
                         booking.bookingId())
                 .status(booking.status(), BookingStatus.FORCE_CANCELLED).reason(CASCADE_BOOKING_REASON)
                 .subject(suspended.userId()).booking(booking.bookingId()).at(now).build());
-        // Inline wallet write: WalletLedgerWriter opens its own transaction, which would commit early here.
         Wallet wallet = wallets.findByUserId(booking.guestId())
                 .orElseThrow(() -> new IllegalArgumentException("Guest wallet does not exist"));
-        BigDecimal balanceAfter = wallet.balance().add(booking.totalAmount());
-        wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter, wallet.currency(), now));
-        WalletTransaction refund = transactions.save(new WalletTransaction(UUID.randomUUID(), wallet.walletId(),
-                WalletTransactionType.ESCROW_REFUND, booking.totalAmount(), BigDecimal.ZERO, balanceAfter,
-                booking.bookingId(), null, agentId, now));
-        audit.recordWalletTransaction(agentId, booking.guestId(), refund, refund.amount(), null);
+        WalletTransaction refund = ledger.post(wallet.walletId(), WalletTransactionType.ESCROW_REFUND,
+                booking.totalAmount(), agentId, booking.bookingId(), null, null, now);
         events.add(new WalletTransactionRecordedEvent(refund.transactionId(), refund.walletId(), now));
         events.add(new BookingCancelledEvent(booking.bookingId(), agentId, now));
     }

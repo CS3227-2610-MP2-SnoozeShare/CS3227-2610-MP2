@@ -20,7 +20,6 @@ import com.snoozeshare.repository.jdbc.JdbcTicketCategoryRepository;
 import com.snoozeshare.repository.jdbc.JdbcTicketRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
-import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
 import com.snoozeshare.service.AccountGovernanceService;
 import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.AvailabilityService;
@@ -97,7 +96,6 @@ public final class AppContext implements AutoCloseable {
         this.listingService = new ListingServiceImpl(propertyRepo, availabilityService,
                 userService, auditService);
         this.listingMetricsService = new ListingMetricsServiceImpl(connection);
-        JdbcWalletTransactionRepository txnRepo = new JdbcWalletTransactionRepository(connection);
         this.transactionService = new TransactionServiceImpl(connection, bookingRepo,
                 propertyRepo, wallets, ledgerWriter, ledgerRepository, eventBus);
         JdbcTicketRepository ticketRepo = new JdbcTicketRepository(connection);
@@ -107,19 +105,19 @@ public final class AppContext implements AutoCloseable {
         JdbcTicketCategoryRepository categoryRepo = new JdbcTicketCategoryRepository(connection);
         Clock clock = Clock.systemUTC();
         DisputeSettlementService settlementService = new DisputeSettlementServiceImpl(connection,
-                ticketRepo, bookingRepo, propertyRepo, users, wallets, txnRepo, auditService,
+                ticketRepo, bookingRepo, propertyRepo, users, wallets, ledgerWriter, ledgerRepository, auditService,
                 eventBus, clock);
         this.ticketService = new TicketServiceImpl(ticketRepo, categoryRepo, bookingRepo, users,
                 settlementService, auditService, clock, eventBus);
         this.disputeQueryService = new DisputeQueryServiceImpl(ticketRepo, bookingRepo, propertyRepo,
-                users, txnRepo, clock);
+                users, ledgerRepository, clock);
         this.messageService = new MessageServiceImpl(new JdbcMessageRepository(connection), ticketRepo,
                 bookingRepo, propertyRepo, users, eventBus, clock);
         this.bookingConversationService = new BookingConversationServiceImpl(
                 new JdbcBookingMessageRepository(connection), bookingRepo, propertyRepo, users, eventBus, clock);
         this.reviewService = new ReviewServiceImpl(bookingRepo, reviewRepo, auditService, clock);
         this.accountGovernanceService = new AccountGovernanceServiceImpl(connection, users, bookingRepo,
-                propertyRepo, blockRepo, wallets, txnRepo, eventBus, auditService, Clock.systemDefaultZone());
+                propertyRepo, blockRepo, wallets, ledgerWriter, eventBus, auditService, Clock.systemDefaultZone());
         this.sceneRouter = new SceneRouter();
         bookingService.completeEligibleBookings();
     }

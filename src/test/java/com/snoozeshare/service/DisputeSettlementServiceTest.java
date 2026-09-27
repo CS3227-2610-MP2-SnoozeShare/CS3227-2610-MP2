@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -22,8 +23,10 @@ import com.snoozeshare.infra.events.DomainEvent;
 import com.snoozeshare.infra.events.InProcessEventBus;
 import com.snoozeshare.infra.events.events.TicketResolvedEvent;
 import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
-import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
+import com.snoozeshare.repository.jdbc.JdbcLedgerRepository;
+import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
 import com.snoozeshare.service.impl.DisputeSettlementServiceImpl;
+import com.snoozeshare.testsupport.LedgerTestSupport;
 import com.snoozeshare.testsupport.MockDbFixture;
 import com.snoozeshare.testsupport.MockIds;
 
@@ -31,10 +34,17 @@ class DisputeSettlementServiceTest {
 
     private static final UUID BEN = MockIds.AGENT_BEN;
     private static final String NOW = "2026-09-25T04:00:00Z";
+    /** The mock DB's System wallet already holds two seeded platform fees. */
+    private static final BigDecimal SEEDED_FEES = new BigDecimal("16.35");
+    private static final String MONEY_ROWS = "SELECT COUNT(*) FROM audit_log WHERE walletAdjustment IS NOT NULL";
 
     private static DisputeSettlementServiceImpl service(MockDbFixture db, InProcessEventBus bus) {
-        return SettlementFixtures.settlement(db, bus,
-                new JdbcWalletTransactionRepository(db.connection()));
+        return SettlementFixtures.settlement(db, bus, LedgerTestSupport.writer(db.connection()));
+    }
+
+    private static BigDecimal systemBalance(MockDbFixture db) {
+        return new JdbcWalletRepository(db.connection()).findByUserId(AuditService.SYSTEM_ACTOR_ID)
+                .orElseThrow().balance();
     }
 
     private static void assertMoney(String expected, BigDecimal actual) {
@@ -55,7 +65,7 @@ class DisputeSettlementServiceTest {
             assertNull(result.guestTransaction());
             assertEquals(WalletTransactionType.BOOKING_PAYOUT, result.hostTransaction().type());
             assertMoney("203.70", result.hostTransaction().amount());
-            assertMoney("6.30", result.hostTransaction().feeAmount());
+            assertMoney("6.30", result.breakdown().fee());
             assertMoney("353.70", result.hostTransaction().balanceAfter());
             assertEquals(MockIds.TICKET_3, result.hostTransaction().relatedTicketId());
             assertEquals(BEN, result.hostTransaction().initiatedBy());
@@ -70,7 +80,17 @@ class DisputeSettlementServiceTest {
                     "SELECT status FROM bookings WHERE bookingId = ?", MockIds.BOOKING_11));
             assertEquals(1L, db.scalarLong("SELECT COUNT(*) FROM audit_log "
                     + "WHERE actionType = 'TICKET_RESOLVED' AND entityId = ?", MockIds.TICKET_3));
-            assertEquals(2, events.size());
+            assertEquals(2, events.size(), "the System wallet's fee row publishes nothing");
+            var system = new JdbcWalletRepository(db.connection()).findByUserId(AuditService.SYSTEM_ACTOR_ID)
+                    .orElseThrow();
+            var fees = new JdbcLedgerRepository(db.connection()).entriesForWallet(system.walletId());
+            BigDecimal expectedFee = result.breakdown().fee();
+            assertEquals(0, expectedFee.compareTo(system.balance().subtract(SEEDED_FEES)));
+            var feeRow = fees.get(fees.size() - 1);
+            assertEquals(WalletTransactionType.PLATFORM_FEE, feeRow.type());
+            assertMoney("6.30", feeRow.amount());
+            assertEquals(MockIds.BOOKING_11, feeRow.relatedBookingId());
+            assertEquals(MockIds.TICKET_3, feeRow.relatedTicketId());
             db.assertLedgerInvariant();
         }
     }
@@ -90,6 +110,9 @@ class DisputeSettlementServiceTest {
             assertMoney("1000", db.walletBalance(MockIds.WALLET_SOPHIA));
             assertMoney("150", db.walletBalance(MockIds.WALLET_DIEGO));
             assertEquals(TicketStatus.RESOLVED_APPROVED, result.ticket().status());
+            assertEquals(0, SEEDED_FEES.compareTo(systemBalance(db)), "a full refund charges no fee");
+            assertEquals(0L, db.scalarLong("SELECT COUNT(*) FROM audit_log WHERE actionType = 'PLATFORM_FEE' "
+                    + "AND ticketId = ?", MockIds.TICKET_3));
             db.assertLedgerInvariant();
         }
     }
@@ -111,12 +134,13 @@ class DisputeSettlementServiceTest {
             assertMoney("850", result.guestTransaction().balanceAfter());
             assertEquals(WalletTransactionType.BOOKING_PAYOUT, result.hostTransaction().type());
             assertMoney("145.50", result.hostTransaction().amount());
-            assertMoney("4.50", result.hostTransaction().feeAmount());
+            assertMoney("4.50", result.breakdown().fee());
             assertMoney("295.50", result.hostTransaction().balanceAfter());
             assertMoney("850", db.walletBalance(MockIds.WALLET_SOPHIA));
             assertMoney("295.50", db.walletBalance(MockIds.WALLET_DIEGO));
             assertEquals(TicketStatus.RESOLVED_APPROVED, result.ticket().status());
             assertEquals(3, events.size());
+            assertEquals(0, SEEDED_FEES.add(new BigDecimal("4.50")).compareTo(systemBalance(db)));
             db.assertLedgerInvariant();
         }
     }
@@ -138,7 +162,7 @@ class DisputeSettlementServiceTest {
     void refundAboveTheEscrowIsRejectedAndNothingChanges(@TempDir Path directory) throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
             DisputeSettlementServiceImpl service = service(db, new InProcessEventBus());
-            long before = db.scalarLong("SELECT COUNT(*) FROM wallet_transactions");
+            long before = db.scalarLong(MONEY_ROWS);
 
             assertThrows(IllegalArgumentException.class, () ->
                     service.settle(MockIds.TICKET_3, ResolutionMode.MANUAL, new BigDecimal("210.01"),
@@ -152,7 +176,7 @@ class DisputeSettlementServiceTest {
     void rejectWithARefundIsRejectedAndNothingChanges(@TempDir Path directory) throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
             DisputeSettlementServiceImpl service = service(db, new InProcessEventBus());
-            long before = db.scalarLong("SELECT COUNT(*) FROM wallet_transactions");
+            long before = db.scalarLong(MONEY_ROWS);
 
             assertThrows(IllegalArgumentException.class, () ->
                     service.settle(MockIds.TICKET_3, ResolutionMode.REJECT, new BigDecimal("50.00"),
@@ -168,7 +192,7 @@ class DisputeSettlementServiceTest {
             db.execute("UPDATE tickets SET requestedRemedy = 'FULL_REFUND' WHERE ticketId = ?",
                     MockIds.TICKET_3);
             DisputeSettlementServiceImpl service = service(db, new InProcessEventBus());
-            long before = db.scalarLong("SELECT COUNT(*) FROM wallet_transactions");
+            long before = db.scalarLong(MONEY_ROWS);
 
             assertThrows(IllegalArgumentException.class, () ->
                     service.settle(MockIds.TICKET_3, ResolutionMode.ACCEPT, BigDecimal.ZERO, BEN,
@@ -189,7 +213,7 @@ class DisputeSettlementServiceTest {
     void aBlankReasonIsRejected(@TempDir Path directory) throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
             DisputeSettlementServiceImpl service = service(db, new InProcessEventBus());
-            long before = db.scalarLong("SELECT COUNT(*) FROM wallet_transactions");
+            long before = db.scalarLong(MONEY_ROWS);
 
             assertThrows(IllegalArgumentException.class, () ->
                     service.settle(MockIds.TICKET_3, ResolutionMode.REJECT, BigDecimal.ZERO, BEN, "   "));
@@ -202,7 +226,7 @@ class DisputeSettlementServiceTest {
     void onlyAnAgentAssignedToTheTicketMaySettleIt(@TempDir Path directory) throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
             DisputeSettlementServiceImpl service = service(db, new InProcessEventBus());
-            long before = db.scalarLong("SELECT COUNT(*) FROM wallet_transactions");
+            long before = db.scalarLong(MONEY_ROWS);
 
             assertThrows(IllegalStateException.class, () ->
                     service.settle(MockIds.TICKET_3, ResolutionMode.REJECT, BigDecimal.ZERO,
@@ -220,13 +244,13 @@ class DisputeSettlementServiceTest {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
             DisputeSettlementServiceImpl service = service(db, new InProcessEventBus());
             service.settle(MockIds.TICKET_3, ResolutionMode.REJECT, BigDecimal.ZERO, BEN, "first");
-            long afterFirst = db.scalarLong("SELECT COUNT(*) FROM wallet_transactions");
+            long afterFirst = db.scalarLong(MONEY_ROWS);
 
             assertThrows(IllegalStateException.class, () ->
                     service.settle(MockIds.TICKET_3, ResolutionMode.REJECT, BigDecimal.ZERO, BEN,
                             "second"));
 
-            assertEquals(afterFirst, db.scalarLong("SELECT COUNT(*) FROM wallet_transactions"));
+            assertEquals(afterFirst, db.scalarLong(MONEY_ROWS));
         }
     }
 
@@ -236,7 +260,7 @@ class DisputeSettlementServiceTest {
             db.execute("UPDATE bookings SET status = 'CANCELLED_BY_HOST' WHERE bookingId = ?",
                     MockIds.BOOKING_11);
             DisputeSettlementServiceImpl service = service(db, new InProcessEventBus());
-            long before = db.scalarLong("SELECT COUNT(*) FROM wallet_transactions");
+            long before = db.scalarLong(MONEY_ROWS);
 
             assertThrows(IllegalStateException.class, () ->
                     service.settle(MockIds.TICKET_3, ResolutionMode.REJECT, BigDecimal.ZERO, BEN,
@@ -249,14 +273,11 @@ class DisputeSettlementServiceTest {
     @Test
     void escrowThatWasAlreadyReleasedCannotBeSettled(@TempDir Path directory) throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
-            db.execute("INSERT INTO wallet_transactions (transactionId, walletId, type, amount, "
-                    + "feeAmount, balanceAfter, relatedBookingId, relatedTicketId, initiatedBy, "
-                    + "createdAt) VALUES ('f0000000-0000-0000-0000-000000000001', ?, "
-                    + "'ESCROW_REFUND', 0.01, NULL, 790.01, ?, NULL, NULL, '2026-09-24T00:00:00Z')",
-                    MockIds.WALLET_SOPHIA, MockIds.BOOKING_11);
-            db.execute("UPDATE wallets SET balance = 790.01 WHERE walletId = ?", MockIds.WALLET_SOPHIA);
+            LedgerTestSupport.writer(db.connection()).post(MockIds.WALLET_SOPHIA,
+                    WalletTransactionType.ESCROW_REFUND, new BigDecimal("0.01"), BEN, MockIds.BOOKING_11, null,
+                    null, Instant.parse("2026-09-24T00:00:00Z"));
             DisputeSettlementServiceImpl service = service(db, new InProcessEventBus());
-            long before = db.scalarLong("SELECT COUNT(*) FROM wallet_transactions");
+            long before = db.scalarLong(MONEY_ROWS);
 
             assertThrows(IllegalStateException.class, () ->
                     service.settle(MockIds.TICKET_3, ResolutionMode.REJECT, BigDecimal.ZERO, BEN,
@@ -303,8 +324,9 @@ class DisputeSettlementServiceTest {
             service(db, new InProcessEventBus()).settle(MockIds.TICKET_3, ResolutionMode.MANUAL,
                     new BigDecimal("60.00"), BEN, "split");
 
-            assertEquals(List.of("TICKET_RESOLVED", "BOOKING_COMPLETED", "AGENT_OVERRIDE", "BOOKING_PAYOUT"),
-                    resolutionActions(db, MockIds.TICKET_3));
+            assertEquals(List.of("TICKET_RESOLVED", "BOOKING_COMPLETED", "AGENT_OVERRIDE", "BOOKING_PAYOUT",
+                    "PLATFORM_FEE"), resolutionActions(db, MockIds.TICKET_3));
+            assertMoney("4.50", adjustment(db, MockIds.TICKET_3, "PLATFORM_FEE"));
             assertMoney("60", adjustment(db, MockIds.TICKET_3, "AGENT_OVERRIDE"));
             assertMoney("145.50", adjustment(db, MockIds.TICKET_3, "BOOKING_PAYOUT"));
             assertEquals("IN_REVIEW", db.scalarString("SELECT beforeState FROM audit_log "
@@ -335,7 +357,7 @@ class DisputeSettlementServiceTest {
             service(db, new InProcessEventBus()).settle(MockIds.TICKET_3, ResolutionMode.REJECT,
                     BigDecimal.ZERO, BEN, "No evidence of a violation");
 
-            assertEquals(List.of("TICKET_RESOLVED", "BOOKING_COMPLETED", "BOOKING_PAYOUT"),
+            assertEquals(List.of("TICKET_RESOLVED", "BOOKING_COMPLETED", "BOOKING_PAYOUT", "PLATFORM_FEE"),
                     resolutionActions(db, MockIds.TICKET_3));
             assertMoney("203.70", adjustment(db, MockIds.TICKET_3, "BOOKING_PAYOUT"));
         }
@@ -343,7 +365,7 @@ class DisputeSettlementServiceTest {
 
     private static void assertUnchanged(MockDbFixture db, long transactionCount, String bookingStatus)
             throws Exception {
-        assertEquals(transactionCount, db.scalarLong("SELECT COUNT(*) FROM wallet_transactions"));
+        assertEquals(transactionCount, db.scalarLong(MONEY_ROWS));
         assertEquals("IN_REVIEW", db.scalarString(
                 "SELECT status FROM tickets WHERE ticketId = ?", MockIds.TICKET_3));
         assertEquals(bookingStatus, db.scalarString(

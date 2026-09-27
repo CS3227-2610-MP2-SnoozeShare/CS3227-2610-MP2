@@ -19,10 +19,10 @@ import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
 import com.snoozeshare.repository.jdbc.JdbcTicketCategoryRepository;
 import com.snoozeshare.repository.jdbc.JdbcTicketRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
-import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
 import com.snoozeshare.service.impl.AuditServiceImpl;
 import com.snoozeshare.service.impl.TicketServiceImpl;
 import com.snoozeshare.service.requests.ResolutionRequest;
+import com.snoozeshare.testsupport.LedgerTestSupport;
 import com.snoozeshare.testsupport.MockDbFixture;
 import com.snoozeshare.testsupport.MockIds;
 
@@ -31,7 +31,7 @@ class TicketServiceIntegrationTest {
     private static TicketServiceImpl service(MockDbFixture db) {
         var connection = db.connection();
         var settlement = SettlementFixtures.settlement(db, new InProcessEventBus(),
-                new JdbcWalletTransactionRepository(connection));
+                LedgerTestSupport.writer(connection));
         var eventBus = new InProcessEventBus();
         return new TicketServiceImpl(new JdbcTicketRepository(connection),
                 new JdbcTicketCategoryRepository(connection), new JdbcBookingRepository(connection),
@@ -112,13 +112,13 @@ class TicketServiceIntegrationTest {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
             TicketServiceImpl service = service(db);
             service.assignToMe(MockIds.TICKET_2, MockIds.AGENT_AMY);
-            long before = db.scalarLong("SELECT COUNT(*) FROM wallet_transactions");
+            long before = db.scalarLong("SELECT COUNT(*) FROM audit_log WHERE walletAdjustment IS NOT NULL");
 
             assertThrows(IllegalArgumentException.class, () -> service.resolve(MockIds.TICKET_2,
                     new ResolutionRequest(ResolutionMode.ACCEPT, null, "no amount"),
                     MockIds.AGENT_AMY));
 
-            assertEquals(before, db.scalarLong("SELECT COUNT(*) FROM wallet_transactions"));
+            assertEquals(before, db.scalarLong("SELECT COUNT(*) FROM audit_log WHERE walletAdjustment IS NOT NULL"));
             assertEquals("IN_REVIEW", db.scalarString(
                     "SELECT status FROM tickets WHERE ticketId = ?", MockIds.TICKET_2));
         }
