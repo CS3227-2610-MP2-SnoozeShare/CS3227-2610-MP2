@@ -39,6 +39,19 @@ class MessagingMigrationTest {
     }
 
     @Test
+    void freshDatabaseGetsTheBookingChatTablesAndVersionFiveOnce() throws Exception {
+        try (Connection connection = DatabaseTestSupport.openIsolatedDatabase()) {
+            MigrationRunner.migrate(connection);
+            MigrationRunner.migrate(connection);
+
+            assertEquals(1, count(connection, "SELECT COUNT(*) FROM sqlite_master WHERE name = 'booking_messages'"));
+            assertEquals(1, count(connection,
+                    "SELECT COUNT(*) FROM sqlite_master WHERE name = 'booking_message_reads'"));
+            assertEquals(1, count(connection, "SELECT COUNT(*) FROM schema_history WHERE version = 5"));
+        }
+    }
+
+    @Test
     void messagesRejectAnUnknownChannel() throws Exception {
         try (Connection connection = DatabaseTestSupport.openIsolatedDatabase()) {
             MigrationRunner.migrate(connection);

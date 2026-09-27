@@ -19,6 +19,7 @@ import com.snoozeshare.domain.enums.WalletTransactionType;
 import com.snoozeshare.domain.model.AuditLogEntry;
 import com.snoozeshare.domain.model.AvailabilityBlock;
 import com.snoozeshare.domain.model.Booking;
+import com.snoozeshare.domain.model.BookingMessage;
 import com.snoozeshare.domain.model.Message;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.domain.model.Review;
@@ -178,6 +179,16 @@ public final class RowMappers {
                 result.getString("resolutionReason"),
                 JdbcCodecs.instant(result.getString("createdAt")),
                 JdbcCodecs.instant(result.getString("resolvedAt")));
+    }
+
+    public static BookingMessage bookingMessage(ResultSet result) throws SQLException {
+        return new BookingMessage(
+                JdbcCodecs.uuid(result.getString("messageId")),
+                JdbcCodecs.uuid(result.getString("bookingId")),
+                JdbcCodecs.uuid(result.getString("authorId")),
+                Role.valueOf(result.getString("authorRole")),
+                result.getString("body"),
+                JdbcCodecs.instant(result.getString("sentAt")));
     }
 
     public static Message message(ResultSet result) throws SQLException {

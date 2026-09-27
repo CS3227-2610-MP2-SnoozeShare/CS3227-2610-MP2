@@ -17,7 +17,8 @@ the guest and host interfaces but defer their UI (Messages tabs, chat panes) to 
 
 - Guest Messages tab and host Messages tab UI. Only the contract they need is built (§ 5).
 - Structured host dispute response notes/evidence, F7.2.2 (C29). It stays deferred; chat is not that flow.
-- Chat outside tickets (guest↔host booking chat), attachments, edit/delete, typing indicators.
+- Attachments, message edit/delete and typing indicators, for both kinds of chat.
+- Agent access to the private host↔guest booking chat (§ 9).
 - Restyling chat bubbles for the guest/host themes (`agent-theme.css` classes are reused as-is).
 
 ## 3. Model
@@ -118,6 +119,29 @@ stranger cannot read or post), resolved-ticket rejection, blank body, ordering, 
 Repository and migration: fresh, adopted and mock-DB paths; `SchemaParityTest`;
 `CommittedMockDbTest`. UI: agent page renders seeded messages, sends, disables input on resolved
 tickets, refreshes on `MessagePostedEvent`.
+
+## 8a. Booking conversations (added 2026-09-27, C38)
+
+Operator reversed the original exclusion of host↔guest chat. A second, **booking-scoped** chat is a copy of the
+ticket chat minus the agent: text only, no edit/delete, no typing indicator.
+
+- **Window.** Writable while the booking is `CONFIRMED` and today is no later than check-out + 7 days (the
+  dispute period). Pending, rejected and cancelled bookings, completed bookings and anything past the window
+  are read-only; history stays readable. Posting outside the window throws
+  `IllegalStateException("Chat is closed for this booking")`.
+- **Parties.** Only the booking's guest and its property's host. Agents are rejected (§ 9).
+- **Storage.** Migration `V005__booking_messaging.sql`: `booking_messages` and `booking_message_reads`, same
+  `rowid` ordering and last-read-message unread rule as the ticket chat.
+- **Contract.** `BookingConversationService` (`thread`, `post`, `conversationsFor`, `unreadCount`, `markRead`),
+  `BookingConversationSummary`, `BookingMessagePostedEvent`. `conversationsFor` lists a booking when it is open or
+  has messages. Guest and host Messages tabs (UI) remain deferred and will show ticket and booking chats.
+- **Seed data.** The mock DB has a chat on every ticket and on bookings 3, 4, 14 (open), 9, 10, 11 (closed), with
+  a mix of read and unread so each role has something to display.
+
+## 9. Open question
+
+Should an agent be able to read a booking chat as evidence when resolving a dispute? Not built; the chat is
+private to guest and host until the operator decides.
 
 ## 8. Acceptance
 

@@ -287,8 +287,87 @@ SELECT '90000000-0000-0000-0000-000000000005','d0000000-0000-0000-0000-000000000
        'I was travelling and missed the request. The unit was serviced as soon as I saw it.','2026-09-14T08:00:00Z'
 FROM bookings b JOIN properties p ON p.propertyId = b.listingId WHERE b.bookingId = '20000000-0000-0000-0000-000000000011';
 
+-- More ticket chat (W13): a thread on every ticket so each agent, host and guest screen has something to show.
+-- Author ids come from the ticket: guest and host through its booking and property, the agent from the assignee.
+WITH s(id, ticketNo, channel, who, body, sentAt) AS (VALUES
+('90000000-0000-0000-0000-000000000006','1','GUEST','GUEST','I have attached photos of the bathroom and floors from check-in. It was not cleaned before we arrived.','2026-08-18T10:20:00Z'),
+('90000000-0000-0000-0000-000000000007','1','GUEST','AGENT','Thank you, the photos are clear. I am contacting the host for their side and will update you.','2026-08-19T09:00:00Z'),
+('90000000-0000-0000-0000-000000000008','1','HOST','AGENT','A guest reports the unit was not cleaned before check-in on 10 August and sent photos. Can you respond?','2026-08-19T09:05:00Z'),
+('90000000-0000-0000-0000-000000000009','1','HOST','HOST','Housekeeping ran late that day and I should have told the guest. I am happy to see a partial refund agreed.','2026-08-20T07:45:00Z'),
+('90000000-0000-0000-0000-000000000010','1','GUEST','AGENT','The host acknowledged the lapse. I am approving a partial refund; it will show in your wallet shortly.','2026-08-28T13:55:00Z'),
+('90000000-0000-0000-0000-000000000011','2','HOST','HOST','The beach gate is normally open during the day. I have asked my caretaker to check whether it was locked.','2026-08-11T08:10:00Z'),
+('90000000-0000-0000-0000-000000000012','4','GUEST','GUEST','My host stopped replying after checkout and the deposit was never released. Can support help?','2026-07-22T10:30:00Z'),
+('90000000-0000-0000-0000-000000000013','4','GUEST','AGENT','I have looked into this. The host account has been suspended, so I will settle the held escrow manually.','2026-07-25T15:40:00Z'),
+('90000000-0000-0000-0000-000000000014','4','HOST','AGENT','We tried to reach you about the deposit on this booking and could not. The escrow is being settled by support.','2026-07-24T11:00:00Z'),
+('90000000-0000-0000-0000-000000000015','5','HOST','HOST','A burst pipe flooded the unit, so I had to cancel the booking. Photos from the plumber are attached.','2026-09-18T13:20:00Z'),
+('90000000-0000-0000-0000-000000000016','5','HOST','AGENT','Photos received and the emergency is confirmed. The guest was already refunded in full, so no further action is needed.','2026-09-19T09:50:00Z'),
+('90000000-0000-0000-0000-000000000017','5','GUEST','AGENT','Your booking was cancelled by the host because of a plumbing emergency. Your payment was fully refunded.','2026-09-18T15:00:00Z'),
+('90000000-0000-0000-0000-000000000018','6','GUEST','GUEST','Was I refunded correctly? I cancelled about a week before check-in.','2026-09-06T10:15:00Z'),
+('90000000-0000-0000-0000-000000000019','6','GUEST','AGENT','Yes. You cancelled more than 48 hours before check-in, so the full amount was refunded on the day.','2026-09-07T08:55:00Z')
+)
+INSERT INTO messages (messageId, ticketId, channel, authorId, authorRole, body, sentAt)
+SELECT s.id, t.ticketId, s.channel,
+       CASE s.who WHEN 'GUEST' THEN b.guestId WHEN 'HOST' THEN p.hostId ELSE t.assignedAgentId END,
+       s.who, s.body, s.sentAt
+FROM s
+JOIN tickets t ON t.ticketId = 'd0000000-0000-0000-0000-00000000000' || s.ticketNo
+JOIN bookings b ON b.bookingId = t.bookingId
+JOIN properties p ON p.propertyId = b.listingId
+ORDER BY s.id;
+
+-- ============================== booking messages ==============================
+-- Host and guest chat on a booking (W13). Open from confirmation until 7 days after check-out; read-only afterwards.
+-- Bookings 3, 4 and 14 are inside that window, 9, 10 and 11 are past it (9 and 11 also have a dispute ticket).
+WITH s(id, bookingNo, who, body, sentAt) AS (VALUES
+('91000000-0000-0000-0000-000000000001','03','GUEST','Hi Marcus, thanks for accepting! We land around 2pm on the 10th. Is an early check-in possible?','2026-09-21T10:05:00Z'),
+('91000000-0000-0000-0000-000000000002','03','HOST','Hi Aria, happy to have you. Check-in is from 3pm, but I can usually have it ready by 2. I will confirm the week before.','2026-09-21T11:20:00Z'),
+('91000000-0000-0000-0000-000000000003','03','GUEST','Perfect, thank you. Is there parking on site?','2026-09-21T11:32:00Z'),
+('91000000-0000-0000-0000-000000000004','03','HOST','Yes, one covered space is included. I will send the access code closer to the date.','2026-09-21T12:00:00Z'),
+('91000000-0000-0000-0000-000000000005','04','GUEST','Hello Diego, is the casa suitable for a stroller? Are there steps at the entrance?','2026-09-24T08:15:00Z'),
+('91000000-0000-0000-0000-000000000006','04','HOST','Two shallow steps at the front, and there is a ramp at the side gate that I can unlock for you.','2026-09-24T09:40:00Z'),
+('91000000-0000-0000-0000-000000000007','14','GUEST','Hi Diego! Looking forward to the stay. What is the Wi-Fi network?','2026-09-15T18:00:00Z'),
+('91000000-0000-0000-0000-000000000008','14','HOST','The network and password are on the card on the fridge. I will also message them on the day.','2026-09-15T18:30:00Z'),
+('91000000-0000-0000-0000-000000000009','14','GUEST','Quick note: the hot water was cold this evening.','2026-09-22T20:10:00Z'),
+('91000000-0000-0000-0000-000000000010','14','HOST','Sorry about that, I am resetting the boiler remotely now. Could you try again in ten minutes?','2026-09-22T20:25:00Z'),
+('91000000-0000-0000-0000-000000000011','14','GUEST','Working now, thank you!','2026-09-22T20:50:00Z'),
+('91000000-0000-0000-0000-000000000012','14','HOST','Thanks for staying, Maya. Checkout is by 11am; just leave the keys on the table.','2026-09-25T09:00:00Z'),
+('91000000-0000-0000-0000-000000000013','09','GUEST','Hi Priya, could you confirm the beach access is open? It is a big reason we booked.','2026-07-20T09:00:00Z'),
+('91000000-0000-0000-0000-000000000014','09','HOST','Yes, the gate to the beach path is open during the day.','2026-07-20T10:10:00Z'),
+('91000000-0000-0000-0000-000000000015','09','GUEST','The gate has been locked since we arrived. Could you send someone?','2026-08-03T15:30:00Z'),
+('91000000-0000-0000-0000-000000000016','09','HOST','I am away this week. I will ask the caretaker to look into it.','2026-08-03T16:45:00Z'),
+('91000000-0000-0000-0000-000000000017','09','GUEST','Still locked. I am going to raise this with support.','2026-08-05T11:00:00Z'),
+('91000000-0000-0000-0000-000000000018','10','GUEST','Hi Olivia, we arrive on the 10th around noon. Is that OK?','2026-08-08T09:00:00Z'),
+('91000000-0000-0000-0000-000000000019','10','HOST','Noon is early because housekeeping finishes at 2pm. Could you drop your bags with me first?','2026-08-08T09:30:00Z'),
+('91000000-0000-0000-0000-000000000020','10','GUEST','Checked out, thanks. We will follow up on the cleanliness issue through support.','2026-08-14T12:00:00Z'),
+('91000000-0000-0000-0000-000000000021','11','GUEST','The AC stopped working tonight. Can you send someone?','2026-09-02T19:00:00Z'),
+('91000000-0000-0000-0000-000000000022','11','HOST','Sorry, I only just saw this. I will arrange a technician today.','2026-09-03T08:00:00Z')
+)
+INSERT INTO booking_messages (messageId, bookingId, authorId, authorRole, body, sentAt)
+SELECT s.id, b.bookingId, CASE s.who WHEN 'GUEST' THEN b.guestId ELSE p.hostId END, s.who, s.body, s.sentAt
+FROM s
+JOIN bookings b ON b.bookingId = '20000000-0000-0000-0000-0000000000' || s.bookingNo
+JOIN properties p ON p.propertyId = b.listingId
+ORDER BY s.id;
+
+-- Read state: some participants are caught up, others have unread messages.
+WITH r(bookingNo, who, lastId) AS (VALUES
+('03','GUEST','91000000-0000-0000-0000-000000000002'),
+('03','HOST','91000000-0000-0000-0000-000000000001'),
+('14','GUEST','91000000-0000-0000-0000-000000000010'),
+('14','HOST','91000000-0000-0000-0000-000000000011'),
+('09','GUEST','91000000-0000-0000-0000-000000000017'),
+('09','HOST','91000000-0000-0000-0000-000000000015'),
+('10','GUEST','91000000-0000-0000-0000-000000000020'),
+('10','HOST','91000000-0000-0000-0000-000000000020')
+)
+INSERT INTO booking_message_reads (bookingId, userId, lastReadMessageId)
+SELECT b.bookingId, CASE r.who WHEN 'GUEST' THEN b.guestId ELSE p.hostId END, r.lastId
+FROM r
+JOIN bookings b ON b.bookingId = '20000000-0000-0000-0000-0000000000' || r.bookingNo
+JOIN properties p ON p.propertyId = b.listingId;
+
 -- ============================== schema_history ==============================
--- The reference DB ships fully migrated (V001 to V004), so the app's MigrationRunner has nothing to apply.
-INSERT INTO schema_history (version, appliedAt) VALUES (1, '2026-09-26 00:00:00'), (2, '2026-09-26 00:00:00'), (3, '2026-09-26 00:00:00'), (4, '2026-09-27 00:00:00');
+-- The reference DB ships fully migrated (V001 to V005), so the app's MigrationRunner has nothing to apply.
+INSERT INTO schema_history (version, appliedAt) VALUES (1, '2026-09-26 00:00:00'), (2, '2026-09-26 00:00:00'), (3, '2026-09-26 00:00:00'), (4, '2026-09-27 00:00:00'), (5, '2026-09-27 00:00:00');
 
 PRAGMA foreign_keys = ON;

@@ -2,7 +2,6 @@ package com.snoozeshare.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -139,7 +138,8 @@ class MessageServiceTest {
                     service.post(MockIds.TICKET_1, ThreadChannel.GUEST, MockIds.AGENT_AMY, Role.AGENT, "Any update?"));
 
             assertEquals("Ticket is resolved", failure.getMessage());
-            assertTrue(service.thread(MockIds.TICKET_1, ThreadChannel.GUEST, MockIds.AGENT_AMY, Role.AGENT).isEmpty());
+            assertEquals(3, service.thread(MockIds.TICKET_1, ThreadChannel.GUEST, MockIds.AGENT_AMY,
+                    Role.AGENT).size(), "the history stays readable");
         }
     }
 
@@ -194,7 +194,7 @@ class MessageServiceTest {
             ConversationSummary priya = service.conversationsFor(MockIds.HOST_PRIYA, Role.HOST).get(0);
             assertEquals(MockIds.TICKET_2, priya.ticketId());
             assertEquals("Support team", priya.counterpartName(), "unassigned ticket");
-            assertNull(priya.lastMessage(), "the host thread is empty");
+            assertEquals(Role.HOST, priya.lastMessage().authorRole(), "the host has replied on the open ticket");
         }
     }
 

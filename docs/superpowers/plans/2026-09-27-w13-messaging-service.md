@@ -40,3 +40,12 @@ Run tests with `.\gradlew test --tests <Class>`; finish with `.\gradlew build`.
 - `PROJECT_STATE.md` (W13 row, § Architecture messaging area, session row, decisions), Done ledger,
   `docs/ProductBacklog.md` unchanged. Developer guide untouched (checkpoint-only, § 5 of AGENTS.md).
 - `.\gradlew build`; note any pre-existing red tests (D21) rather than masking them.
+
+### Task 8: Booking conversations and richer seed data (C38)
+- `V005__booking_messaging.sql`, `db/schema.sql`, `MigrationRunner` version 5; `BookingMessage`,
+  `BookingMessageRepository` / `JdbcBookingMessageRepository`, `RowMappers.bookingMessage`.
+- `BookingConversationService` + `BookingConversationServiceImpl` (window rule: CONFIRMED and today <= check-out + 7),
+  `BookingConversationSummary`, `BookingMessagePostedEvent`; `AppContext.bookingConversationService()`.
+- Seed a chat on every ticket and on bookings 3, 4, 9, 10, 11, 14 with read/unread state; rebuild the mock DB.
+- Tests: `BookingConversationServiceTest` (party checks, window boundary, read-only history, unread, inboxes),
+  migration/parity/committed-DB tests for V005.
