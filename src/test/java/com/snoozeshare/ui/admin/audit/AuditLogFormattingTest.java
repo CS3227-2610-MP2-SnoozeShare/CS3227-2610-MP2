@@ -37,15 +37,38 @@ class AuditLogFormattingTest {
         assertEquals("\u2014", AuditLogController.amountText(entry("TICKET_RESOLVED", "A", "B", null, null, null)));
     }
 
+    private static AuditLogEntry target(String entityType, UUID entityId, UUID subjectId, String subjectName) {
+        return new AuditLogEntry(UUID.randomUUID(), UUID.randomUUID(), "Amy", "X", entityType, entityId,
+                null, null, null, null, subjectId, subjectName, UUID.randomUUID(), UUID.randomUUID(),
+                Instant.parse("2026-09-25T04:00:00Z"), null);
+    }
+
     @Test
-    void refShowsTheLastFourOfBookingAndTicketIds() {
+    void targetIsOnlyTheDirectEntityNotTheRelatedRecords() {
         UUID booking = UUID.fromString("20000000-0000-0000-0000-000000000009");
         UUID ticket = UUID.fromString("d0000000-0000-0000-0000-000000000004");
-        assertEquals("Booking #0009 \u00b7 Ticket #0004",
-                AuditLogController.refText(entry("TICKET_RESOLVED", null, null, null, booking, ticket)));
-        assertEquals("Booking #0009", AuditLogController.refText(entry("BOOKING_REQUESTED", null, "PENDING", null,
-                booking, null)));
-        assertEquals("\u2014", AuditLogController.refText(entry("LISTING_UPDATED", null, null, null, null, null)));
+        UUID property = UUID.fromString("10000000-0000-0000-0000-000000000010");
+        // A ticket resolution names the ticket only, although the row also carries a booking id.
+        assertEquals("Ticket #0004", AuditLogController.targetText(target("Ticket", ticket, null, "Wei")));
+        assertEquals("Booking #0009", AuditLogController.targetText(target("Booking", booking, null, "Wei")));
+        assertEquals("Property #0010", AuditLogController.targetText(target("Property", property, null, null)));
+    }
+
+    @Test
+    void targetOfAUserActionOrWalletMovementIsThatUser() {
+        UUID user = UUID.fromString("c0000000-0000-0000-0000-000000000006");
+        assertEquals("Kai Nakamura", AuditLogController.targetText(target("User", user, user, "Kai Nakamura")));
+        assertEquals("SnoozeShare System", AuditLogController.targetText(
+                target("WalletTransaction", UUID.randomUUID(), user, "SnoozeShare System")));
+        assertEquals("User #0006", AuditLogController.targetText(target("User", user, null, null)));
+        assertEquals("User #0006", AuditLogController.targetText(
+                target("WalletTransaction", UUID.randomUUID(), user, null)));
+    }
+
+    @Test
+    void timestampIsDayMonthYearWithA24HourClock() {
+        assertEquals("25/09/2026 04:00", AuditLogController.timeText(entry("X", null, null, null, null, null),
+                java.time.ZoneOffset.UTC));
     }
 
     @Test
