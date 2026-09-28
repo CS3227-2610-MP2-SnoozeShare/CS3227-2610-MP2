@@ -65,7 +65,7 @@ three iterations).
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 | S7 | 2026-09-27 | Claude Sonnet 5 | messaging-service | W13 | Paused | Service slice built and verified; host Messages UI continued on `w9` | 2026-09-27 |
-| S8 | 2026-09-27 | Codex | host-ui-touchup | W6/W7/W13 + GitHub Pages docs | Active | Docs links now target repository files on GitHub; docs-source Jekyll build passes; Host UI touch-up branch remains active | 2026-09-29 |
+| S8 | 2026-09-27 | Codex | host-ui-touchup | W6/W7/W13 + GitHub Pages docs | Paused | Session interaction log recorded for this chat; docs links target repository files on GitHub and docs-source Jekyll build passes | 2026-09-29 |
 | S14 | 2026-09-26 | Codex | w8 | W8 — Host Request Queue, Earnings & Disputes | Paused | PR #11 open against main; W8 implementation, review fixes, and Developer Guide handoff complete | 2026-09-27 |
 | S16 | 2026-09-27 | Claude Sonnet 5 (subagent-driven) | unified-ledger | W14 | Paused | Plan execution complete: all 12 tasks done and reviewed. Merged `main` into `unified-ledger` (bringing in W9/W13 host-UI work that had landed on `main` via `w9`/`messaging-service`, both now fully merged and their session rows retired), resolved the wallet-code and decision-ID conflicts (C43/C44), and opened PR #16. Awaiting operator review/merge | 2026-09-27 |
 
