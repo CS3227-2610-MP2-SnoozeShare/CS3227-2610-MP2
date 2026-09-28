@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
@@ -8,12 +7,11 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import java.net.URL?>
 
 <VBox spacing="16" styleClass="host-bookings-page" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.snoozeshare.ui.host.bookings.HostBookingsController">
-    <stylesheets>
-        <URL value="@host-bookings.css"/>
-    </stylesheets>
+    <stylesheets><URL value="@../host-theme.css"/></stylesheets>
     <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
     <HBox spacing="10" alignment="CENTER_LEFT">
         <Label text="Booking requests" styleClass="page-title"/>

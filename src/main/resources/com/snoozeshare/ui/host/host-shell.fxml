@@ -11,7 +11,6 @@
             fx:controller="com.snoozeshare.ui.host.HostShellController" minWidth="1280" minHeight="800">
     <stylesheets>
         <URL value="@host-theme.css"/>
-        <URL value="@host-navigation.css"/>
     </stylesheets>
     <top>
         <VBox>

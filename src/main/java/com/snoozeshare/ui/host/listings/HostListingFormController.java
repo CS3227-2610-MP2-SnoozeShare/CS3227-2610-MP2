@@ -21,13 +21,14 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.util.StringConverter;
 
 public final class HostListingFormController {
 
     @FXML private TextField titleField;
-    @FXML private TextField descriptionField;
+    @FXML private TextArea descriptionField;
     @FXML private TextField streetAddressField;
     @FXML private TextField cityField;
     @FXML private TextField regionField;

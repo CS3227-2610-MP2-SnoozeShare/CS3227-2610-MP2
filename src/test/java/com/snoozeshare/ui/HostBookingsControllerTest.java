@@ -1,5 +1,6 @@
 package com.snoozeshare.ui;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,7 +25,7 @@ class HostBookingsControllerTest {
         assertTrue(fxml.contains("Past requests"));
         assertTrue(fxml.contains("host-bookings-table"));
         assertTrue(fxml.contains("host-bookings-table-card"));
-        assertTrue(fxml.contains("@host-bookings.css"));
+        assertFalse(fxml.contains("host-bookings.css"));
         assertTrue(!fxml.contains("agent-theme.css"));
         assertTrue(!fxml.contains("agent-table"));
         assertTrue(!fxml.contains("agent-card"));

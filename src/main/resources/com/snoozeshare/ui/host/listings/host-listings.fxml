@@ -8,16 +8,15 @@
 <?import java.net.URL?>
 <VBox xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.snoozeshare.ui.host.listings.HostListingsController"
-      styleClass="host-listings-page" spacing="16">
-    <stylesheets>
-        <URL value="@host-listings.css"/>
-    </stylesheets>
+      styleClass="host-listings-page" spacing="10">
+    <stylesheets><URL value="@../host-theme.css"/></stylesheets>
     <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
     <HBox alignment="CENTER_LEFT" spacing="12" styleClass="host-listings-header">
         <Label text="My listings" styleClass="page-title"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Button text="+ New listing" onAction="#handleCreateListing"/>
     </HBox>
-    <Label fx:id="feedbackLabel" styleClass="form-error" wrapText="true"/>
+    <Label fx:id="feedbackLabel" styleClass="form-error" wrapText="true"
+           visible="false" managed="false"/>
     <VBox fx:id="listingCards" spacing="12" maxWidth="Infinity"/>
 </VBox>

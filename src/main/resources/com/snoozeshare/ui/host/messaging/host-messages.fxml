@@ -15,7 +15,6 @@
             fx:controller="com.snoozeshare.ui.host.messaging.HostMessagesController">
     <stylesheets>
         <URL value="@../host-theme.css"/>
-        <URL value="@../host-navigation.css"/>
     </stylesheets>
     <left>
         <VBox minWidth="380" prefWidth="380" maxWidth="380" styleClass="host-message-sidebar">

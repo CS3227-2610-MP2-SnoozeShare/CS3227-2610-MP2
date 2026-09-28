@@ -45,7 +45,7 @@ class HostBreadcrumbNavigationTest {
     @Test
     void listingFormOwnsItsPageStylesheet() throws Exception {
         String fxml = read("src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.fxml");
-        assertTrue(fxml.contains("@host-listing-form.css"));
+        assertFalse(fxml.contains("host-listing-form.css"));
         assertFalse(fxml.contains("agent-theme.css"));
     }
 
@@ -68,7 +68,7 @@ class HostBreadcrumbNavigationTest {
     @Test
     void calendarOwnsItsPageStylesheet() throws Exception {
         String fxml = read("src/main/resources/com/snoozeshare/ui/host/calendar/host-calendar.fxml");
-        assertTrue(fxml.contains("@host-calendar.css"));
+        assertFalse(fxml.contains("host-calendar.css"));
         assertFalse(fxml.contains("agent-theme.css"));
     }
 
@@ -76,13 +76,13 @@ class HostBreadcrumbNavigationTest {
     void shellWiresListingBreadcrumbTargets() throws Exception {
         String source = read("src/main/java/com/snoozeshare/ui/host/HostShellController.java");
         String shell = read("src/main/resources/com/snoozeshare/ui/host/host-shell.fxml");
-        String css = read("src/main/resources/com/snoozeshare/ui/host/host-navigation.css");
+        String css = read("src/main/resources/com/snoozeshare/ui/host/host-theme.css");
 
         assertTrue(source.contains("controller.setOnListings(this::showListings)"));
         assertTrue(source.contains("controller.setOnListingDetail"));
         assertTrue(shell.contains("host-theme.css"));
         assertTrue(!shell.contains("agent-theme.css"));
-        assertTrue(shell.contains("host-navigation.css"));
+        assertFalse(shell.contains("host-navigation.css"));
         assertTrue(css.contains(".host-crumb-link"));
     }
 

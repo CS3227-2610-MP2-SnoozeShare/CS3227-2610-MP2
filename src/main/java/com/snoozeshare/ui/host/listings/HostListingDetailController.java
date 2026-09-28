@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.function.Consumer;
 
 import com.snoozeshare.domain.enums.AmenityType;
+import com.snoozeshare.domain.enums.ListingStatus;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.service.ListingMetrics;
 import com.snoozeshare.service.ListingReview;
@@ -70,6 +71,10 @@ public final class HostListingDetailController {
         checkOutLabel.setText(property.checkOutTime().format(TIME_FORMAT));
         rateLabel.setText("$" + property.baseNightlyRate().toPlainString());
         statusLabel.setText(property.status().name());
+        statusLabel.getStyleClass().removeAll("listing-detail-status-active",
+                "listing-detail-status-inactive");
+        statusLabel.getStyleClass().add(property.status() == ListingStatus.ACTIVE
+                ? "listing-detail-status-active" : "listing-detail-status-inactive");
 
         amenitiesPane.getChildren().clear();
         for (AmenityType amenity : property.amenities()) {

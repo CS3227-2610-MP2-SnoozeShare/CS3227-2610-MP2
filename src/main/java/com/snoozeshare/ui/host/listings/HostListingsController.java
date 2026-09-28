@@ -137,7 +137,7 @@ public final class HostListingsController {
         editButton.setAccessibleText("Edit listing " + property.title());
         editButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> event.consume());
         editButton.setOnAction(event -> onEditListing.accept(property));
-        Button calendarButton = new Button("Calendar");
+        Button calendarButton = new Button("Open Booking Calendar");
         calendarButton.getStyleClass().add("listing-card-action");
         calendarButton.setAccessibleText("Open booking calendar for " + property.title());
         calendarButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> event.consume());
@@ -165,7 +165,7 @@ public final class HostListingsController {
             toggle.setAlignment(toggle.isSelected()
                     ? javafx.geometry.Pos.CENTER_RIGHT : javafx.geometry.Pos.CENTER_LEFT);
             updateToggleText(toggle, statusText);
-            feedbackLabel.setText(exception.getMessage());
+            showFeedback(exception.getMessage());
         }
     }
 
@@ -173,9 +173,15 @@ public final class HostListingsController {
         try {
             return context.listingMetricsService().metricsFor(property.propertyId());
         } catch (IllegalArgumentException | IllegalStateException exception) {
-            feedbackLabel.setText(exception.getMessage());
+            showFeedback(exception.getMessage());
             return new ListingMetrics(0, 0.0);
         }
+    }
+
+    private void showFeedback(String message) {
+        feedbackLabel.setText(message);
+        feedbackLabel.setVisible(true);
+        feedbackLabel.setManaged(true);
     }
 
     private static VBox metric(String value, String caption) {

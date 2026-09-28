@@ -6,6 +6,7 @@
 <?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -15,12 +16,10 @@
 <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="listing-form-scroll"
             fx:controller="com.snoozeshare.ui.host.listings.HostListingFormController"
             xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
-    <stylesheets>
-        <URL value="@host-listing-form.css"/>
-    </stylesheets>
+    <stylesheets><URL value="@../host-theme.css"/></stylesheets>
     <content>
-        <VBox fx:id="formRoot" styleClass="listing-form-page" spacing="10">
-            <padding><Insets top="12" right="32" bottom="20" left="32"/></padding>
+        <VBox fx:id="formRoot" styleClass="listing-form-page" spacing="8">
+            <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
 
             <HBox alignment="CENTER_LEFT" spacing="16">
                 <Hyperlink text="Listings" onAction="#handleListings" styleClass="host-crumb-link"/>
@@ -39,26 +38,30 @@
                     <ColumnConstraints percentWidth="50" hgrow="SOMETIMES"/>
                 </columnConstraints>
 
-                <VBox styleClass="listing-form-card" spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                <VBox styleClass="listing-form-column" spacing="16" GridPane.columnIndex="0">
+                <VBox styleClass="listing-form-card" spacing="8">
                     <Label text="Basic details" styleClass="listing-form-card-title"/>
                     <Label text="Title" styleClass="listing-form-label"/>
                     <TextField fx:id="titleField" styleClass="listing-form-field" promptText="e.g. Sunset Loft"/>
                     <Label text="Description" styleClass="listing-form-label"/>
-                    <TextField fx:id="descriptionField" styleClass="listing-description, listing-form-field"
-                               promptText="Describe what makes this space special" prefHeight="48"/>
+                    <TextArea fx:id="descriptionField" styleClass="listing-description, listing-form-field"
+                              promptText="Describe what makes this space special" prefRowCount="3"
+                              wrapText="true"/>
                     <HBox spacing="10" fillHeight="true">
                         <VBox styleClass="listing-form-field" spacing="4" HBox.hgrow="ALWAYS">
                             <Label text="Property type" styleClass="listing-form-label"/>
-                            <ComboBox fx:id="propertyTypeCombo" maxWidth="Infinity"/>
+                            <ComboBox fx:id="propertyTypeCombo" styleClass="listing-form-control"
+                                      maxWidth="Infinity"/>
                         </VBox>
                         <VBox styleClass="listing-form-field" spacing="4" HBox.hgrow="ALWAYS">
                             <Label text="Status" styleClass="listing-form-label"/>
-                            <ComboBox fx:id="statusCombo" maxWidth="Infinity"/>
+                            <ComboBox fx:id="statusCombo" styleClass="listing-form-control"
+                                      maxWidth="Infinity"/>
                         </VBox>
                     </HBox>
                 </VBox>
 
-                <VBox styleClass="listing-form-card" spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                <VBox styleClass="listing-form-card" spacing="8">
                     <Label text="Location" styleClass="listing-form-card-title"/>
                     <Label text="Street address" styleClass="listing-form-label"/>
                     <TextField fx:id="streetAddressField" styleClass="listing-form-field" promptText="e.g. 12 Rua das Flores"/>
@@ -77,8 +80,10 @@
                         </VBox>
                     </HBox>
                 </VBox>
+                </VBox>
 
-                <VBox styleClass="listing-form-card" spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                <VBox styleClass="listing-form-column" spacing="16" GridPane.columnIndex="1">
+                <VBox styleClass="listing-form-card" spacing="8">
                     <Label text="Capacity &amp; Pricing" styleClass="listing-form-card-title"/>
                     <HBox spacing="10" fillHeight="true">
                         <VBox styleClass="listing-form-field" spacing="4" HBox.hgrow="ALWAYS">
@@ -112,7 +117,7 @@
                     </HBox>
                 </VBox>
 
-                <VBox styleClass="listing-form-card" spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                <VBox styleClass="listing-form-card" spacing="8">
                     <HBox alignment="CENTER_LEFT" spacing="6">
                         <Label text="Amenities" styleClass="listing-form-card-title"/>
                         <Label text="Optional" styleClass="listing-form-card-subtitle"/>
@@ -124,29 +129,30 @@
                         </columnConstraints>
                         <HBox styleClass="amenity-option" alignment="CENTER_LEFT" spacing="8"
                               GridPane.columnIndex="0" GridPane.rowIndex="0">
-                            <CheckBox fx:id="wifiBox" text="Wi-Fi"/>
+                            <CheckBox fx:id="wifiBox" text="Wi-Fi" styleClass="agent-multi-option"/>
                         </HBox>
                         <HBox styleClass="amenity-option" alignment="CENTER_LEFT" spacing="8"
                               GridPane.columnIndex="1" GridPane.rowIndex="0">
-                            <CheckBox fx:id="parkingBox" text="Parking"/>
+                            <CheckBox fx:id="parkingBox" text="Parking" styleClass="agent-multi-option"/>
                         </HBox>
                         <HBox styleClass="amenity-option" alignment="CENTER_LEFT" spacing="8"
                               GridPane.columnIndex="0" GridPane.rowIndex="1">
-                            <CheckBox fx:id="airConditioningBox" text="Air conditioning"/>
+                            <CheckBox fx:id="airConditioningBox" text="Air conditioning" styleClass="agent-multi-option"/>
                         </HBox>
                         <HBox styleClass="amenity-option" alignment="CENTER_LEFT" spacing="8"
                               GridPane.columnIndex="1" GridPane.rowIndex="1">
-                            <CheckBox fx:id="kitchenBox" text="Kitchen"/>
+                            <CheckBox fx:id="kitchenBox" text="Kitchen" styleClass="agent-multi-option"/>
                         </HBox>
                         <HBox styleClass="amenity-option" alignment="CENTER_LEFT" spacing="8"
                               GridPane.columnIndex="0" GridPane.rowIndex="2">
-                            <CheckBox fx:id="washerBox" text="Washer"/>
+                            <CheckBox fx:id="washerBox" text="Washer" styleClass="agent-multi-option"/>
                         </HBox>
                         <HBox styleClass="amenity-option" alignment="CENTER_LEFT" spacing="8"
                               GridPane.columnIndex="1" GridPane.rowIndex="2">
-                            <CheckBox fx:id="workDeskBox" text="Work desk"/>
+                            <CheckBox fx:id="workDeskBox" text="Work desk" styleClass="agent-multi-option"/>
                         </HBox>
                     </GridPane>
+                </VBox>
                 </VBox>
             </GridPane>
 

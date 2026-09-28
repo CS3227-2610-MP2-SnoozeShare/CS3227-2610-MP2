@@ -1,6 +1,7 @@
 package com.snoozeshare.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -80,6 +81,7 @@ class HostListingsControllerTest {
                 "src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java"));
 
         assertTrue(source.contains("setOnOpenCalendar"));
+        assertTrue(source.contains("new Button(\"Open Booking Calendar\")"));
         assertTrue(source.contains("Open booking calendar"));
         assertTrue(source.contains("onOpenCalendar.accept"));
         assertTrue(source.contains("event.consume()"));
@@ -102,9 +104,9 @@ class HostListingsControllerTest {
         String fxml = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/listings/host-listings.fxml"));
         String css = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/listings/host-listings.css"));
+                "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
 
-        assertTrue(fxml.contains("@host-listings.css"));
+        assertFalse(fxml.contains("host-listings.css"));
         assertTrue(fxml.contains("styleClass=\"host-listings-page\""));
         assertTrue(fxml.contains("styleClass=\"host-listings-header\""));
         assertTrue(css.contains(".host-listings-page"));
@@ -134,7 +136,7 @@ class HostListingsControllerTest {
         String source = Files.readString(Path.of(
                 "src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java"));
         String css = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/listings/host-listings.css"));
+                "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
 
         assertTrue(source.contains("new Region()"));
         assertTrue(source.contains("listing-status-toggle-knob"));
@@ -150,7 +152,7 @@ class HostListingsControllerTest {
         String fxml = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.fxml"));
         String css = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.css"));
+                "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
 
         assertTrue(fxml.contains("text=\"Optional\""));
         assertTrue(fxml.contains("promptText=\"e.g. Sunset Loft\""));
@@ -180,6 +182,13 @@ class HostListingsControllerTest {
         assertTrue(source.contains("\"★\""));
         assertTrue(theme.contains(".listing-card"));
         assertTrue(theme.contains("dropshadow"));
+        assertTrue(theme.contains(".host-listings-page .listing-card-action {"));
+        assertTrue(theme.contains(".host-listings-page .listing-card-action {\n"
+                + "    -fx-background-color: transparent;"));
+        assertTrue(theme.contains(".host-listings-page .listing-card-action {\n"
+                + "    -fx-background-color: transparent;\n"
+                + "    -fx-background-radius: 8px;"));
+        assertTrue(theme.contains("-fx-font-weight: bold;"));
     }
 
     @Test
@@ -235,7 +244,7 @@ class HostListingsControllerTest {
         assertTrue(fxml.contains("styleClass=\"outline-button, listing-form-action\""));
         assertTrue(fxml.contains("<HBox alignment=\"CENTER_LEFT\" spacing=\"10\""
                 + " styleClass=\"listing-form-actions\">"));
-        assertTrue(fxml.contains("<VBox fx:id=\"formRoot\" styleClass=\"listing-form-page\" spacing=\"10\">"));
+        assertTrue(fxml.contains("<VBox fx:id=\"formRoot\" styleClass=\"listing-form-page\" spacing=\"8\">"));
         assertTrue(theme.contains(".host-root .listing-form-action"));
         assertTrue(theme.contains("-fx-pref-height: 34px"));
     }
@@ -264,7 +273,7 @@ class HostListingsControllerTest {
         String fxml = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
         String css = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.css"));
+                "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
 
         assertTrue(source.contains("setOnEdit"));
         assertTrue(source.contains("setOnOpenCalendar"));
@@ -272,6 +281,9 @@ class HostListingsControllerTest {
         assertTrue(source.contains("bedroomsLabel.setText(Integer.toString(property.bedrooms()))"));
         assertTrue(source.contains("bathroomsLabel.setText(formatNumber(property.bathrooms()))"));
         assertTrue(source.contains("rateLabel.setText(\"$\""));
+        assertTrue(source.contains("statusLabel.getStyleClass().removeAll"));
+        assertTrue(source.contains("listing-detail-status-active"));
+        assertTrue(source.contains("listing-detail-status-inactive"));
         assertTrue(!source.contains(" + \" guests\""));
         assertTrue(!source.contains(" + \" bedrooms\""));
         assertTrue(!source.contains(" + \" bathrooms\""));
@@ -285,6 +297,11 @@ class HostListingsControllerTest {
         assertTrue(css.contains("linear-gradient"));
         assertTrue(css.contains(".listing-detail-action-edit"));
         assertTrue(css.contains(".listing-detail-performance"));
+        assertTrue(css.contains(".host-listings-page .listing-image-placeholder {\n"
+                + "    -fx-background-color: linear-gradient(to right, #e06830, #c0a080, #a07c5c);"));
+        assertTrue(css.contains(".listing-detail-status-inactive"));
+        assertTrue(css.contains("-fx-background-color: #fcd8da;"));
+        assertTrue(css.contains("-fx-text-fill: #980c1c;"));
         assertTrue(!source.contains("Check-in: "));
         assertTrue(!source.contains("Check-out: "));
         assertTrue(source.contains("\"$\" + property.baseNightlyRate()"));
@@ -296,7 +313,7 @@ class HostListingsControllerTest {
         String fxml = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
         String css = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.css"));
+                "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
 
         assertTrue(fxml.contains("<VBox spacing=\"18\" styleClass=\"host-listing-detail-page\">"));
         assertTrue(fxml.contains("prefHeight=\"200\""));
@@ -313,7 +330,7 @@ class HostListingsControllerTest {
         String fxml = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
         String css = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.css"));
+                "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
 
         assertTrue(fxml.contains("fx:id=\"reviewsTitleLabel\""));
         assertTrue(fxml.contains("styleClass=\"listing-detail-reviews\""));
@@ -364,6 +381,11 @@ class HostListingsControllerTest {
         assertTrue(fxml.contains("text=\"Amenities\""));
         assertTrue(fxml.contains("fx:id=\"statusCombo\""));
         assertTrue(fxml.contains("fx:id=\"maxGuestsField\""));
+        assertTrue(fxml.contains("<?import javafx.scene.control.TextArea?>"));
+        assertTrue(fxml.contains("<TextArea fx:id=\"descriptionField\""));
+        assertTrue(fxml.contains("wrapText=\"true\""));
+        assertTrue(fxml.contains("prefRowCount=\"3\""));
+        assertTrue(fxml.contains("styleClass=\"listing-form-column\""));
         assertTrue(fxml.contains("text=\"Create listing\""));
         assertTrue(source.contains("saveButton.setText(\"Save listing\")"));
         assertTrue(fxml.contains("text=\"Cancel\""));
@@ -376,17 +398,20 @@ class HostListingsControllerTest {
         String fxml = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.fxml"));
         String css = Files.readString(Path.of(
-                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.css"));
+                "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
 
-        assertTrue(fxml.contains("@host-listing-form.css"));
+        assertFalse(fxml.contains("host-listing-form.css"));
         assertTrue(fxml.contains("styleClass=\"listing-form-page\""));
         assertTrue(fxml.contains("percentWidth=\"50\""));
         assertTrue(fxml.contains("styleClass=\"listing-form-actions\""));
         assertTrue(fxml.contains("styleClass=\"amenity-option\""));
         assertTrue(css.contains(".listing-form-page"));
         assertTrue(css.contains(".listing-form-card"));
+        assertTrue(css.contains(".listing-form-column"));
+        assertTrue(css.contains(".listing-form-page .listing-description .content"));
+        assertTrue(css.contains("-fx-padding: 0;"));
         assertTrue(css.contains(".listing-form-actions"));
-        assertTrue(css.contains("-fx-padding: 16px"));
+        assertTrue(css.contains("-fx-padding: 20px"));
         assertTrue(!fxml.contains("agent-theme.css"));
         assertTrue(!css.contains("agent-theme.css"));
     }
