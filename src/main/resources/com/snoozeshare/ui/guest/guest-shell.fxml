@@ -19,7 +19,7 @@
                 <Label fx:id="roleLabel" text="Guest Portal" styleClass="agent-workspace-pill"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Label fx:id="walletAmount" text="SGD 0.00" styleClass="wallet-amount"/>
-                <Button text="Log out" styleClass="outline-button" onAction="#logout"/>
+                <Button fx:id="logoutButton" text="Log out" styleClass="outline-button" onAction="#logout"/>
                 <Label fx:id="avatarLabel" text="G" styleClass="agent-avatar"/>
             </HBox>
             <HBox styleClass="agent-tabstrip" spacing="4" alignment="CENTER_LEFT">
