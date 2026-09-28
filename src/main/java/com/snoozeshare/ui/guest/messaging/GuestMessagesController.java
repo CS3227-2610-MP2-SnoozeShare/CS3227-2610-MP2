@@ -1,22 +1,29 @@
 package com.snoozeshare.ui.guest.messaging;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.enums.Role;
+import com.snoozeshare.domain.enums.ThreadChannel;
 import com.snoozeshare.domain.model.BookingMessage;
+import com.snoozeshare.domain.model.Message;
 import com.snoozeshare.infra.events.Subscription;
 import com.snoozeshare.infra.events.events.BookingMessagePostedEvent;
+import com.snoozeshare.infra.events.events.MessagePostedEvent;
+import com.snoozeshare.infra.events.events.TicketOpenedEvent;
 import com.snoozeshare.service.BookingConversationSummary;
+import com.snoozeshare.service.ConversationSummary;
 import com.snoozeshare.ui.common.messaging.ChatBubbles;
+import com.snoozeshare.ui.guest.tickets.TicketFilingController;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -25,13 +32,13 @@ import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 public final class GuestMessagesController {
 
-    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH);
-
-    @FXML private ListView<BookingConversationSummary> conversationList;
+    @FXML private StackPane rootStack;
+    @FXML private ListView<GuestConversationRow> conversationList;
     @FXML private Label headerTitle;
     @FXML private Label headerSubtitle;
     @FXML private Label statusLabel;
@@ -39,11 +46,12 @@ public final class GuestMessagesController {
     @FXML private VBox thread;
     @FXML private TextField replyField;
     @FXML private Button sendButton;
+    @FXML private Button newTicketButton;
 
     private final List<Subscription> subscriptions = new ArrayList<>();
     private AppContext context;
     private UUID guestId;
-    private BookingConversationSummary selected;
+    private GuestConversationRow selected;
     private boolean disposed;
 
     @FXML
@@ -56,6 +64,7 @@ public final class GuestMessagesController {
             }
         });
         sendButton.setOnAction(event -> handleSend());
+        newTicketButton.setOnAction(event -> showTicketFilingModal());
     }
 
     public void setContext(AppContext appContext) {
@@ -64,7 +73,11 @@ public final class GuestMessagesController {
         context = appContext;
         guestId = context.session().currentUser().orElseThrow().userId();
         subscriptions.add(context.eventBus().subscribe(BookingMessagePostedEvent.class,
-                event -> refreshFor(event.message().bookingId())));
+                event -> refreshFor(event.message().bookingId(), GuestConversationRow.Kind.BOOKING)));
+        subscriptions.add(context.eventBus().subscribe(MessagePostedEvent.class,
+                event -> refreshFor(event.message().ticketId(), GuestConversationRow.Kind.TICKET)));
+        subscriptions.add(context.eventBus().subscribe(TicketOpenedEvent.class,
+                event -> runOnFx(this::refreshInbox)));
         refreshInbox();
     }
 
@@ -79,7 +92,13 @@ public final class GuestMessagesController {
             return;
         }
         try {
-            context.bookingConversationService().post(selected.bookingId(), guestId, Role.GUEST, body.trim());
+            if (selected.kind() == GuestConversationRow.Kind.BOOKING) {
+                context.bookingConversationService()
+                        .post(selected.sourceId(), guestId, Role.GUEST, body.trim());
+            } else {
+                context.messageService()
+                        .post(selected.sourceId(), ThreadChannel.GUEST, guestId, Role.GUEST, body.trim());
+            }
             replyField.clear();
             statusLabel.setVisible(false);
             refreshInbox();
@@ -98,9 +117,12 @@ public final class GuestMessagesController {
         if (context == null || disposed) {
             return;
         }
-        UUID selectedId = selected == null ? null : selected.bookingId();
-        List<BookingConversationSummary> rows = context.bookingConversationService()
+        UUID selectedId = selected == null ? null : selected.sourceId();
+        List<BookingConversationSummary> bookingRows = context.bookingConversationService()
                 .conversationsFor(guestId, Role.GUEST);
+        List<ConversationSummary> ticketRows = context.messageService()
+                .conversationsFor(guestId, Role.GUEST);
+        List<GuestConversationRow> rows = GuestConversationRow.merge(bookingRows, ticketRows);
         conversationList.getItems().setAll(rows);
         emptyLabel.setVisible(rows.isEmpty());
         emptyLabel.setManaged(rows.isEmpty());
@@ -112,33 +134,72 @@ public final class GuestMessagesController {
         conversationList.getSelectionModel().select(index < 0 ? 0 : index);
     }
 
-    private void refreshFor(UUID bookingId) {
+    private void refreshFor(UUID sourceId, GuestConversationRow.Kind kind) {
         if (disposed) {
             return;
         }
-        Runnable refresh = this::refreshInbox;
-        if (Platform.isFxApplicationThread()) {
-            refresh.run();
-        } else {
-            Platform.runLater(refresh);
-        }
+        runOnFx(this::refreshInbox);
     }
 
     private void loadSelected() {
         if (selected == null || context == null) {
             return;
         }
-        headerTitle.setText(selected.listingTitle());
-        headerSubtitle.setText("Direct message with " + selected.counterpartName() + " (Host) · "
-                + dateRange(selected.startDate(), selected.endDate()));
+        headerTitle.setText(selected.title());
         statusLabel.setVisible(false);
-        List<BookingMessage> messages = context.bookingConversationService()
-                .thread(selected.bookingId(), guestId, Role.GUEST);
-        ChatBubbles.renderBooking(thread, messages, message -> message.authorId().equals(guestId),
-                message -> message.authorId().equals(guestId) ? "You" : selected.counterpartName());
-        context.bookingConversationService().markRead(selected.bookingId(), guestId, Role.GUEST);
+        boolean isBooking = selected.kind() == GuestConversationRow.Kind.BOOKING;
+        newTicketButton.setVisible(isBooking);
+        newTicketButton.setManaged(isBooking);
+        if (isBooking) {
+            headerSubtitle.setText("Direct message with " + selected.counterpartName()
+                    + " (Host) \u00b7 Booking #" + shortId(selected.sourceId()));
+            List<BookingMessage> messages = context.bookingConversationService()
+                    .thread(selected.sourceId(), guestId, Role.GUEST);
+            ChatBubbles.renderBooking(thread, messages,
+                    message -> message.authorId().equals(guestId),
+                    message -> message.authorId().equals(guestId) ? "You" : selected.counterpartName());
+            context.bookingConversationService().markRead(selected.sourceId(), guestId, Role.GUEST);
+        } else {
+            headerSubtitle.setText(selected.subtitle());
+            List<Message> messages = context.messageService()
+                    .thread(selected.sourceId(), ThreadChannel.GUEST, guestId, Role.GUEST);
+            ChatBubbles.render(thread, messages,
+                    message -> message.authorId().equals(guestId),
+                    message -> message.authorId().equals(guestId) ? "You" : selected.counterpartName());
+            context.messageService().markRead(selected.sourceId(), ThreadChannel.GUEST, guestId, Role.GUEST);
+        }
         replyField.setDisable(!selected.open());
         sendButton.setDisable(!selected.open());
+    }
+
+    private void showTicketFilingModal() {
+        if (selected == null || selected.kind() != GuestConversationRow.Kind.BOOKING) {
+            return;
+        }
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/snoozeshare/ui/guest/tickets/ticket-filing.fxml"));
+            Node dialogView = loader.load();
+            TicketFilingController controller = loader.getController();
+
+            StackPane overlay = new StackPane();
+            overlay.getStyleClass().add("modal-overlay");
+            overlay.getChildren().add(dialogView);
+            StackPane.setAlignment(dialogView, Pos.CENTER);
+            overlay.setOnMouseClicked(event -> {
+                if (event.getTarget() == overlay) {
+                    rootStack.getChildren().remove(overlay);
+                }
+            });
+
+            rootStack.getChildren().add(overlay);
+            controller.configure(context, selected.sourceId(), () -> {
+                rootStack.getChildren().remove(overlay);
+                refreshInbox();
+            });
+        } catch (IOException exception) {
+            showStatus("Unable to open ticket filing form.");
+        }
     }
 
     private void clearThread() {
@@ -148,6 +209,8 @@ public final class GuestMessagesController {
         thread.getChildren().clear();
         replyField.setDisable(true);
         sendButton.setDisable(true);
+        newTicketButton.setVisible(false);
+        newTicketButton.setManaged(false);
     }
 
     private void showStatus(String message) {
@@ -156,37 +219,43 @@ public final class GuestMessagesController {
         statusLabel.setManaged(true);
     }
 
-    private static int findRow(List<BookingConversationSummary> rows, UUID bookingId) {
+    private static void runOnFx(Runnable action) {
+        if (Platform.isFxApplicationThread()) {
+            action.run();
+        } else {
+            Platform.runLater(action);
+        }
+    }
+
+    private static int findRow(List<GuestConversationRow> rows, UUID sourceId) {
         for (int i = 0; i < rows.size(); i++) {
-            if (rows.get(i).bookingId().equals(bookingId)) {
+            if (rows.get(i).sourceId().equals(sourceId)) {
                 return i;
             }
         }
         return -1;
     }
 
-    private static String dateRange(LocalDate start, LocalDate end) {
-        String endText = start.getMonth() == end.getMonth() && start.getYear() == end.getYear()
-                ? Integer.toString(end.getDayOfMonth()) : DATE.format(end);
-        return DATE.format(start) + "\u2013" + endText;
+    private static String shortId(UUID id) {
+        String text = id.toString();
+        return text.substring(text.length() - 4);
     }
 
-    private static final class ConversationCell extends ListCell<BookingConversationSummary> {
+    private static final class ConversationCell extends ListCell<GuestConversationRow> {
         @Override
-        protected void updateItem(BookingConversationSummary row, boolean empty) {
+        protected void updateItem(GuestConversationRow row, boolean empty) {
             super.updateItem(row, empty);
             if (empty || row == null) {
                 setText(null);
                 setGraphic(null);
                 return;
             }
-            Label title = new Label(row.listingTitle() + " \u00b7 "
-                    + dateRange(row.startDate(), row.endDate()));
+            Label title = new Label(row.title());
             title.getStyleClass().add("host-message-row-title");
             title.setMinWidth(0);
             title.setMaxWidth(Double.MAX_VALUE);
             title.setTextOverrun(OverrunStyle.ELLIPSIS);
-            Label subtitle = new Label("Direct message \u00b7 " + row.counterpartName() + " (Host)");
+            Label subtitle = new Label(row.subtitle());
             subtitle.getStyleClass().add("host-message-row-subtitle");
             subtitle.setMinWidth(0);
             subtitle.setMaxWidth(Double.MAX_VALUE);
@@ -199,6 +268,12 @@ public final class GuestMessagesController {
             content.setMaxWidth(Double.MAX_VALUE);
             content.prefWidthProperty().bind(widthProperty().subtract(24));
             content.getStyleClass().add("host-message-row");
+            if (row.statusLabel() != null) {
+                Label status = new Label(row.statusLabel());
+                status.getStyleClass().addAll("host-message-status", row.open()
+                        ? "host-message-status-open" : "host-message-status-resolved");
+                content.getChildren().add(status);
+            }
             setGraphic(content);
         }
     }

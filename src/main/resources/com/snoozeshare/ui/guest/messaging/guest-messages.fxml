@@ -9,51 +9,56 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<BorderPane styleClass="host-messages-root" xmlns="http://javafx.com/javafx/25"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.snoozeshare.ui.guest.messaging.GuestMessagesController">
-    <stylesheets>
-        <URL value="@../../admin/agent-theme.css"/>
-    </stylesheets>
-    <left>
-        <VBox minWidth="380" prefWidth="380" maxWidth="380" styleClass="host-message-sidebar">
-            <padding><Insets top="18" right="0" bottom="0" left="0"/></padding>
-            <Label text="Messages" styleClass="host-message-sidebar-title"/>
-            <ListView fx:id="conversationList" VBox.vgrow="ALWAYS"/>
-            <Label fx:id="emptyLabel" text="No conversations yet." visible="false" managed="false"
-                   styleClass="small"/>
-        </VBox>
-    </left>
-    <center>
-        <BorderPane>
-            <top>
-                <HBox styleClass="host-message-header" alignment="CENTER_LEFT" spacing="12">
-                    <VBox spacing="3">
-                        <Label fx:id="headerTitle" text="Messages" styleClass="host-message-header-title"/>
-                        <Label fx:id="headerSubtitle" styleClass="host-message-header-subtitle"/>
-                    </VBox>
-                    <Region HBox.hgrow="ALWAYS"/>
-                </HBox>
-            </top>
-            <center>
-                <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="host-message-thread-scroll">
-                    <content>
-                        <VBox fx:id="thread" spacing="18" styleClass="host-message-thread">
-                            <padding><Insets top="28" right="28" bottom="28" left="28"/></padding>
+<StackPane fx:id="rootStack" xmlns="http://javafx.com/javafx/25"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.snoozeshare.ui.guest.messaging.GuestMessagesController">
+    <BorderPane styleClass="host-messages-root">
+        <stylesheets>
+            <URL value="@../../admin/agent-theme.css"/>
+        </stylesheets>
+        <left>
+            <VBox minWidth="380" prefWidth="380" maxWidth="380" styleClass="host-message-sidebar">
+                <padding><Insets top="18" right="0" bottom="0" left="0"/></padding>
+                <Label text="Messages" styleClass="host-message-sidebar-title"/>
+                <ListView fx:id="conversationList" VBox.vgrow="ALWAYS"/>
+                <Label fx:id="emptyLabel" text="No conversations yet." visible="false" managed="false"
+                       styleClass="small"/>
+            </VBox>
+        </left>
+        <center>
+            <BorderPane>
+                <top>
+                    <HBox styleClass="host-message-header" alignment="CENTER_LEFT" spacing="12">
+                        <VBox spacing="3">
+                            <Label fx:id="headerTitle" text="Messages" styleClass="host-message-header-title"/>
+                            <Label fx:id="headerSubtitle" styleClass="host-message-header-subtitle"/>
                         </VBox>
-                    </content>
-                </ScrollPane>
-            </center>
-            <bottom>
-                <VBox spacing="8" styleClass="host-message-composer">
-                    <Label fx:id="statusLabel" visible="false" managed="false" styleClass="error-message"/>
-                    <HBox spacing="12" alignment="CENTER_RIGHT">
-                        <TextField fx:id="replyField" promptText="Write a message..." HBox.hgrow="ALWAYS"/>
-                        <Button fx:id="sendButton" text="Send" styleClass="button"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="newTicketButton" text="+ New Ticket" styleClass="button"
+                                visible="false" managed="false"/>
                     </HBox>
-                </VBox>
-            </bottom>
-        </BorderPane>
-    </center>
-</BorderPane>
+                </top>
+                <center>
+                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="host-message-thread-scroll">
+                        <content>
+                            <VBox fx:id="thread" spacing="18" styleClass="host-message-thread">
+                                <padding><Insets top="28" right="28" bottom="28" left="28"/></padding>
+                            </VBox>
+                        </content>
+                    </ScrollPane>
+                </center>
+                <bottom>
+                    <VBox spacing="8" styleClass="host-message-composer">
+                        <Label fx:id="statusLabel" visible="false" managed="false" styleClass="error-message"/>
+                        <HBox spacing="12" alignment="CENTER_RIGHT">
+                            <TextField fx:id="replyField" promptText="Write a reply..." HBox.hgrow="ALWAYS"/>
+                            <Button fx:id="sendButton" text="Send" styleClass="button"/>
+                        </HBox>
+                    </VBox>
+                </bottom>
+            </BorderPane>
+        </center>
+    </BorderPane>
+</StackPane>
