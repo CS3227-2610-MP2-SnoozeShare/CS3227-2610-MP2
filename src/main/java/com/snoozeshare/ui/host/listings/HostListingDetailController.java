@@ -61,7 +61,7 @@ public final class HostListingDetailController {
         titleLabel.setText(property.title());
         typeLabel.setText(property.propertyType().name().replace('_', ' '));
         addressLabel.setText(String.join(", ", property.streetAddress(), property.city(),
-                property.region(), property.postalCode()));
+                property.region(), Integer.toString(property.postalCode())));
         descriptionLabel.setText(property.description());
         capacityLabel.setText(Integer.toString(property.maxGuests()));
         bedroomsLabel.setText(Integer.toString(property.bedrooms()));

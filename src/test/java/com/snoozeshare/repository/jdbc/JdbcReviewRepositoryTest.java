@@ -43,7 +43,7 @@ class JdbcReviewRepositoryTest {
             UUID propertyId = UUID.randomUUID();
             new JdbcPropertyRepository(connection).save(new Property(propertyId, hostId,
                     ListingStatus.ACTIVE, "Test", "Description", PropertyType.APARTMENT,
-                    "Street", "City", "Region", "000000", 2, 1, 1.0,
+                    "Street", "City", "Region", 0, 2, 1, 1,
                     new BigDecimal("100.00"), LocalTime.NOON, LocalTime.of(11, 0), Set.of(),
                     Instant.now()));
             UUID bookingId = UUID.randomUUID();

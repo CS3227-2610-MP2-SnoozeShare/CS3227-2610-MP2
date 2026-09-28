@@ -1,9 +1,12 @@
 package com.snoozeshare.ui;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalTime;
@@ -56,7 +59,7 @@ class HostListingsControllerTest {
         assertTrue(fxml.contains("onAction=\"#handleListings\""));
         assertTrue(fxml.contains("onAction=\"#handleListingDetail\""));
         assertTrue(fxml.contains("onAction=\"#handleSave\""));
-        assertTrue(fxml.contains("styleClass=\"listing-description\""));
+        assertTrue(fxml.contains("styleClass=\"listing-description, listing-form-field\""));
         assertTrue(fxml.contains("fx:id=\"formBreadcrumb\""));
     }
 
@@ -124,6 +127,43 @@ class HostListingsControllerTest {
         assertTrue(source.contains("listing-metric-caption"));
         assertTrue(source.contains("listing-status-control"));
         assertTrue(source.contains("listing-card-action"));
+    }
+
+    @Test
+    void activeListingToggleUsesAgentStyleKnob() throws Exception {
+        String source = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java"));
+        String css = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listings.css"));
+
+        assertTrue(source.contains("new Region()"));
+        assertTrue(source.contains("listing-status-toggle-knob"));
+        assertTrue(source.contains("setContentDisplay(ContentDisplay.GRAPHIC_ONLY)"));
+        assertTrue(css.contains(".listing-status-toggle-knob"));
+        assertTrue(css.contains("-fx-alignment: CENTER_LEFT"));
+        assertTrue(css.contains(".listing-status-toggle:selected"));
+        assertTrue(css.contains("-fx-alignment: CENTER_RIGHT"));
+    }
+
+    @Test
+    void listingFormUsesHelpfulPlaceholdersAndOptionalAgentStyleAmenities() throws Exception {
+        String fxml = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.fxml"));
+        String css = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.css"));
+
+        assertTrue(fxml.contains("text=\"Optional\""));
+        assertTrue(fxml.contains("promptText=\"e.g. Sunset Loft\""));
+        assertTrue(fxml.contains("promptText=\"e.g. 12 Rua das Flores\""));
+        assertTrue(fxml.contains("promptText=\"e.g. 1200\""));
+        assertTrue(fxml.contains("promptText=\"e.g. 1\""));
+        assertTrue(fxml.contains("promptText=\"e.g. 120.00\""));
+        assertTrue(fxml.contains("promptText=\"e.g. 15:00\""));
+        assertTrue(fxml.contains("styleClass=\"listing-form-field\""));
+        assertTrue(css.contains(".amenity-option"));
+        assertTrue(css.contains("-fx-padding: 7px 10px 7px 10px"));
+        assertTrue(css.contains("-fx-spacing: 4px"));
+        assertTrue(css.contains(".listing-form-card"));
     }
 
     @Test
@@ -195,7 +235,7 @@ class HostListingsControllerTest {
         assertTrue(fxml.contains("styleClass=\"outline-button, listing-form-action\""));
         assertTrue(fxml.contains("<HBox alignment=\"CENTER_LEFT\" spacing=\"10\""
                 + " styleClass=\"listing-form-actions\">"));
-        assertTrue(fxml.contains("<VBox fx:id=\"formRoot\" styleClass=\"listing-form-page\" spacing=\"12\">"));
+        assertTrue(fxml.contains("<VBox fx:id=\"formRoot\" styleClass=\"listing-form-page\" spacing=\"10\">"));
         assertTrue(theme.contains(".host-root .listing-form-action"));
         assertTrue(theme.contains("-fx-pref-height: 34px"));
     }
@@ -346,7 +386,7 @@ class HostListingsControllerTest {
         assertTrue(css.contains(".listing-form-page"));
         assertTrue(css.contains(".listing-form-card"));
         assertTrue(css.contains(".listing-form-actions"));
-        assertTrue(css.contains("-fx-padding: 20px"));
+        assertTrue(css.contains("-fx-padding: 16px"));
         assertTrue(!fxml.contains("agent-theme.css"));
         assertTrue(!css.contains("agent-theme.css"));
     }
@@ -365,6 +405,32 @@ class HostListingsControllerTest {
 
         assertTrue(exception.getCause() instanceof IllegalArgumentException);
         assertTrue(exception.getCause().getMessage().contains("Check-out"));
+    }
+
+    @Test
+    void listingFormReportsFriendlyRateAndIntegerInputErrors() throws Exception {
+        Class<?> controller = Class.forName(
+                "com.snoozeshare.ui.host.listings.HostListingFormController");
+        Method parseRate = controller.getDeclaredMethod("parseRate", String.class);
+        parseRate.setAccessible(true);
+
+        InvocationTargetException blank = assertThrows(InvocationTargetException.class, () ->
+                parseRate.invoke(null, ""));
+        assertEquals("Rate per night must be provided", blank.getCause().getMessage());
+
+        InvocationTargetException malformed = assertThrows(InvocationTargetException.class, () ->
+                parseRate.invoke(null, "abc"));
+        assertEquals("Rate per night must be a number", malformed.getCause().getMessage());
+        assertEquals(new BigDecimal("120.00"), parseRate.invoke(null, "120.00"));
+    }
+
+    @Test
+    void listingFormReadsFieldsInSectionOrder() throws Exception {
+        String source = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/listings/HostListingFormController.java"));
+        assertTrue(source.indexOf("requireText(titleField") < source.indexOf("parseInteger(maxGuestsField"));
+        assertTrue(source.indexOf("parseInteger(maxGuestsField") < source.indexOf("requireText(streetAddressField"));
+        assertTrue(source.indexOf("requireText(streetAddressField") < source.indexOf("selectedAmenities()"));
     }
 
     private static Object invokeInvalidTimeRange(Method validator) throws Exception {

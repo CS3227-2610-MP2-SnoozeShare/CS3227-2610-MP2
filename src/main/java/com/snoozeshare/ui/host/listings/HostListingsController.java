@@ -11,10 +11,12 @@ import com.snoozeshare.service.ListingMetrics;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 public final class HostListingsController {
@@ -117,6 +119,12 @@ public final class HostListingsController {
         ToggleButton statusToggle = new ToggleButton();
         statusToggle.setSelected(property.status() == ListingStatus.ACTIVE);
         statusToggle.getStyleClass().add("listing-status-toggle");
+        Region knob = new Region();
+        knob.getStyleClass().add("listing-status-toggle-knob");
+        statusToggle.setGraphic(knob);
+        statusToggle.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        statusToggle.setAlignment(statusToggle.isSelected()
+                ? javafx.geometry.Pos.CENTER_RIGHT : javafx.geometry.Pos.CENTER_LEFT);
         Label statusText = new Label();
         updateToggleText(statusToggle, statusText);
         statusToggle.setAccessibleText("Toggle listing status for " + property.title());
@@ -148,10 +156,14 @@ public final class HostListingsController {
                     ? ListingStatus.ACTIVE : ListingStatus.INACTIVE;
             context.listingService().updateStatus(property.propertyId(), target,
                     context.session().currentUser().orElseThrow().userId());
+            toggle.setAlignment(target == ListingStatus.ACTIVE
+                    ? javafx.geometry.Pos.CENTER_RIGHT : javafx.geometry.Pos.CENTER_LEFT);
             updateToggleText(toggle, statusText);
             reload();
         } catch (IllegalArgumentException | IllegalStateException exception) {
             toggle.setSelected(!toggle.isSelected());
+            toggle.setAlignment(toggle.isSelected()
+                    ? javafx.geometry.Pos.CENTER_RIGHT : javafx.geometry.Pos.CENTER_LEFT);
             updateToggleText(toggle, statusText);
             feedbackLabel.setText(exception.getMessage());
         }

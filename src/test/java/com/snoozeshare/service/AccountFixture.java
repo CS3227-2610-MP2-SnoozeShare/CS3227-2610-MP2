@@ -88,7 +88,7 @@ final class AccountFixture implements AutoCloseable {
 
     Property property(User host, ListingStatus status) {
         return properties.save(new Property(UUID.randomUUID(), host.userId(), status, "Loft", "Nice",
-                PropertyType.APARTMENT, "1 Street", "Singapore", "Central", "123456", 2, 1, 1.0,
+                PropertyType.APARTMENT, "1 Street", "Singapore", "Central", 123456, 2, 1, 1,
                 new BigDecimal("100.00"), LocalTime.of(14, 0), LocalTime.of(11, 0), Set.of(), NOW));
     }
 

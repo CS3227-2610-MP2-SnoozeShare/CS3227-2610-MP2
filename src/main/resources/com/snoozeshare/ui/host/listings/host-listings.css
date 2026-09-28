@@ -89,8 +89,24 @@
     -fx-pref-height: 24px;
     -fx-max-height: 24px;
     -fx-padding: 2px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-content-display: graphic-only;
+    -fx-cursor: hand;
 }
-.host-listings-page .listing-status-toggle:selected { -fx-background-color: #40680c; }
+.host-listings-page .listing-status-toggle:selected {
+    -fx-background-color: #40680c;
+    -fx-alignment: CENTER_RIGHT;
+}
+.host-listings-page .listing-status-toggle-knob {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 999px;
+    -fx-min-width: 20px;
+    -fx-pref-width: 20px;
+    -fx-max-width: 20px;
+    -fx-min-height: 20px;
+    -fx-pref-height: 20px;
+    -fx-max-height: 20px;
+}
 .host-listings-page .status-active-text,
 .host-listings-page .status-inactive-text {
     -fx-font-size: 10px;

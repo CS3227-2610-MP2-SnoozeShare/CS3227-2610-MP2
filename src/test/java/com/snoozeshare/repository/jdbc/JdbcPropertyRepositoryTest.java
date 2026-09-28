@@ -33,7 +33,7 @@ class JdbcPropertyRepositoryTest {
             User host = saveHost(users);
             Property property = new Property(UUID.randomUUID(), host.userId(), ListingStatus.ACTIVE,
                     "Full Listing", "Detailed description", PropertyType.CONDO,
-                    "45 Orchard Road", "Singapore", "Central", "238879", 5, 3, 2.5,
+                    "45 Orchard Road", "Singapore", "Central", 238879, 5, 3, 2,
                     new BigDecimal("245.50"), LocalTime.of(15, 30), LocalTime.of(10, 30),
                     Set.of(AmenityType.PARKING, AmenityType.WASHER), Instant.now());
             repo.save(property);
@@ -215,7 +215,7 @@ class JdbcPropertyRepositoryTest {
                                           ListingStatus status, int maxGuests) {
         return new Property(UUID.randomUUID(), hostId, status, title,
                 "A nice place", PropertyType.APARTMENT, "123 Street", city,
-                "Central", "123456", maxGuests, 2, 1.0,
+                "Central", 123456, maxGuests, 2, 1,
                 new BigDecimal("100.00"), LocalTime.of(14, 0), LocalTime.of(11, 0),
                 Set.of(AmenityType.WIFI, AmenityType.KITCHEN), Instant.now());
     }
