@@ -22,6 +22,9 @@ import javafx.scene.layout.HBox;
 public final class HostBookingsController {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MMM d");
+    private static final double TABLE_HEADER_HEIGHT = 34;
+    private static final double TABLE_ROW_HEIGHT = 47;
+    private static final int MAX_VISIBLE_ROWS = 4;
 
     @FXML private Label pendingCountLabel;
     @FXML private TableView<HostBookingRow> pendingTable;
@@ -46,6 +49,9 @@ public final class HostBookingsController {
 
     @FXML
     private void initialize() {
+        feedbackLabel.setManaged(false);
+        configureTable(pendingTable);
+        configureTable(pastTable);
         configureTextColumns(pendingGuestColumn, row -> row.guestDisplayName());
         configureTextColumns(pendingListingColumn, row -> row.listingTitle());
         configureTextColumns(pendingDatesColumn, HostBookingsController::dates);
@@ -77,12 +83,17 @@ public final class HostBookingsController {
             var hostId = context.session().currentUser().orElseThrow().userId();
             List<HostBookingRow> pending = context.bookingService().pendingRequestRowsFor(hostId);
             pendingTable.getItems().setAll(pending);
+            sizeTable(pendingTable);
             pendingCountLabel.setText(pending.size() + " pending");
-            pastTable.getItems().setAll(context.bookingService().historyRowsFor(hostId).stream()
-                    .filter(row -> row.booking().status() != BookingStatus.PENDING).toList());
+            List<HostBookingRow> past = context.bookingService().historyRowsFor(hostId).stream()
+                    .filter(row -> row.booking().status() != BookingStatus.PENDING).toList();
+            pastTable.getItems().setAll(past);
+            sizeTable(pastTable);
             feedbackLabel.setText("");
+            feedbackLabel.setManaged(false);
         } catch (RuntimeException exception) {
             feedbackLabel.setText("Unable to load booking requests: " + exception.getMessage());
+            feedbackLabel.setManaged(true);
             feedbackLabel.getStyleClass().setAll("error-message");
         }
     }
@@ -103,6 +114,18 @@ public final class HostBookingsController {
     private static void configureTextColumns(TableColumn<HostBookingRow, String> column,
                                              java.util.function.Function<HostBookingRow, String> value) {
         column.setCellValueFactory(cell -> new SimpleStringProperty(value.apply(cell.getValue())));
+    }
+
+    private static void configureTable(TableView<?> table) {
+        table.setFixedCellSize(TABLE_ROW_HEIGHT);
+    }
+
+    private static void sizeTable(TableView<?> table) {
+        int visibleRows = Math.min(MAX_VISIBLE_ROWS, table.getItems().size());
+        double height = TABLE_HEADER_HEIGHT + visibleRows * TABLE_ROW_HEIGHT;
+        table.setMinHeight(height);
+        table.setPrefHeight(height);
+        table.setMaxHeight(height);
     }
 
     private static String dates(HostBookingRow row) {

@@ -107,7 +107,7 @@ class HostListingsControllerTest {
                 "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
 
         assertFalse(fxml.contains("host-listings.css"));
-        assertTrue(fxml.contains("styleClass=\"host-listings-page\""));
+        assertTrue(fxml.contains("host-listings-page"));
         assertTrue(fxml.contains("styleClass=\"host-listings-header\""));
         assertTrue(css.contains(".host-listings-page"));
         assertTrue(css.contains(".listing-card"));
@@ -164,6 +164,8 @@ class HostListingsControllerTest {
         assertTrue(fxml.contains("styleClass=\"listing-form-field\""));
         assertTrue(css.contains(".amenity-option"));
         assertTrue(css.contains("-fx-padding: 7px 10px 7px 10px"));
+        assertTrue(css.contains(".listing-form-page .amenity-option {"));
+        assertTrue(css.contains("-fx-cursor: default;"));
         assertTrue(css.contains("-fx-spacing: 4px"));
         assertTrue(css.contains(".listing-form-card"));
     }
@@ -244,7 +246,10 @@ class HostListingsControllerTest {
         assertTrue(fxml.contains("styleClass=\"outline-button, listing-form-action\""));
         assertTrue(fxml.contains("<HBox alignment=\"CENTER_LEFT\" spacing=\"10\""
                 + " styleClass=\"listing-form-actions\">"));
-        assertTrue(fxml.contains("<VBox fx:id=\"formRoot\" styleClass=\"listing-form-page\" spacing=\"8\">"));
+        assertTrue(fxml.indexOf("text=\"Cancel\"") < fxml.indexOf("fx:id=\"errorLabel\""));
+        assertTrue(fxml.contains("styleClass=\"form-error\" wrapText=\"true\""));
+        assertTrue(fxml.contains("<VBox fx:id=\"formRoot\" "
+                + "styleClass=\"agent-content, listing-form-page\" spacing=\"16\">"));
         assertTrue(theme.contains(".host-root .listing-form-action"));
         assertTrue(theme.contains("-fx-pref-height: 34px"));
     }
@@ -292,10 +297,17 @@ class HostListingsControllerTest {
         assertTrue(fxml.contains("listing-detail-image-placeholder"));
         assertTrue(fxml.contains("listing-detail-stats"));
         assertTrue(fxml.contains("listing-detail-performance"));
-        assertTrue(fxml.contains("text=\"Open booking calendar\""));
+        assertTrue(fxml.contains("text=\"Open Booking Calendar\""));
+        assertTrue(fxml.contains("listing-detail-action-calendar"));
         assertTrue(fxml.contains("text=\"Edit\""));
+        assertTrue(fxml.contains("GridPane.fillHeight=\"false\""));
         assertTrue(css.contains("linear-gradient"));
         assertTrue(css.contains(".listing-detail-action-edit"));
+        assertTrue(css.contains("-fx-font-weight: bold;"));
+        assertTrue(css.contains("-fx-font-size: 13px;"));
+        assertTrue(css.contains("-fx-min-height: 36px;"));
+        assertTrue(css.contains("-fx-pref-height: 36px;"));
+        assertTrue(css.contains("-fx-padding: 8px 14px 8px 14px;"));
         assertTrue(css.contains(".listing-detail-performance"));
         assertTrue(css.contains(".host-listings-page .listing-image-placeholder {\n"
                 + "    -fx-background-color: linear-gradient(to right, #e06830, #c0a080, #a07c5c);"));
@@ -315,7 +327,7 @@ class HostListingsControllerTest {
         String css = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
 
-        assertTrue(fxml.contains("<VBox spacing=\"18\" styleClass=\"host-listing-detail-page\">"));
+        assertTrue(fxml.contains("<VBox spacing=\"16\" styleClass=\"agent-content, host-listing-detail-page\">"));
         assertTrue(fxml.contains("prefHeight=\"200\""));
         assertTrue(fxml.contains("<GridPane hgap=\"24\" styleClass=\"listing-detail-content\">"));
         assertTrue(css.contains("-fx-pref-height: 200px;"));
@@ -375,10 +387,10 @@ class HostListingsControllerTest {
                 "src/main/java/com/snoozeshare/ui/host/listings/HostListingFormController.java"));
 
         assertTrue(fxml.contains("styleClass=\"listing-form-card\""));
-        assertTrue(fxml.contains("text=\"Basic details\""));
-        assertTrue(fxml.contains("text=\"Location\""));
-        assertTrue(fxml.contains("text=\"Capacity &amp; Pricing\""));
-        assertTrue(fxml.contains("text=\"Amenities\""));
+        assertTrue(fxml.contains("text=\"BASIC DETAILS\""));
+        assertTrue(fxml.contains("text=\"LOCATION\""));
+        assertTrue(fxml.contains("text=\"CAPACITY &amp; PRICING\""));
+        assertTrue(fxml.contains("text=\"AMENITIES\""));
         assertTrue(fxml.contains("fx:id=\"statusCombo\""));
         assertTrue(fxml.contains("fx:id=\"maxGuestsField\""));
         assertTrue(fxml.contains("<?import javafx.scene.control.TextArea?>"));
@@ -401,7 +413,7 @@ class HostListingsControllerTest {
                 "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
 
         assertFalse(fxml.contains("host-listing-form.css"));
-        assertTrue(fxml.contains("styleClass=\"listing-form-page\""));
+        assertTrue(fxml.contains("listing-form-page"));
         assertTrue(fxml.contains("percentWidth=\"50\""));
         assertTrue(fxml.contains("styleClass=\"listing-form-actions\""));
         assertTrue(fxml.contains("styleClass=\"amenity-option\""));
@@ -411,6 +423,7 @@ class HostListingsControllerTest {
         assertTrue(css.contains(".listing-form-page .listing-description .content"));
         assertTrue(css.contains("-fx-padding: 0;"));
         assertTrue(css.contains(".listing-form-actions"));
+        assertTrue(css.contains(".listing-form-actions .form-error"));
         assertTrue(css.contains("-fx-padding: 20px"));
         assertTrue(!fxml.contains("agent-theme.css"));
         assertTrue(!css.contains("agent-theme.css"));

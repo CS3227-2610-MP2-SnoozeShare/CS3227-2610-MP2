@@ -16,7 +16,7 @@
         <URL value="@wallet.css"/>
     </stylesheets>
     <VBox spacing="20" styleClass="wallet-page">
-        <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+        <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
 
         <HBox spacing="24" alignment="CENTER_LEFT">
             <VBox styleClass="wallet-balance-section" spacing="5" HBox.hgrow="ALWAYS">

@@ -3,7 +3,6 @@ package com.snoozeshare.ui.host.calendar;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 
 import com.snoozeshare.app.AppContext;
@@ -13,6 +12,7 @@ import com.snoozeshare.domain.model.Property;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -44,10 +44,10 @@ public final class HostCalendarController {
     private VBox overridesContainer;
 
     @FXML
-    private TextField fromField;
+    private DatePicker fromPicker;
 
     @FXML
-    private TextField toField;
+    private DatePicker toPicker;
 
     @FXML
     private TextField reasonField;
@@ -106,23 +106,35 @@ public final class HostCalendarController {
     @FXML
     private void handleBlockDates() {
         try {
+            LocalDate start = requiredDate(fromPicker, "From");
+            LocalDate end = requiredDate(toPicker, "To");
             if (reasonField.getText() == null || reasonField.getText().isBlank()) {
                 throw new IllegalArgumentException("Reason must be provided.");
             }
-            LocalDate start = LocalDate.parse(fromField.getText(), DATE_FORMAT);
-            LocalDate end = LocalDate.parse(toField.getText(), DATE_FORMAT);
+            if (start.isAfter(end)) {
+                throw new IllegalArgumentException("From date must not be after To date.");
+            }
             context.availabilityService().createHostBlock(property.propertyId(), start, end,
                     context.session().currentUser().orElseThrow().userId(), reasonField.getText());
-            fromField.clear();
-            toField.clear();
+            fromPicker.setValue(null);
+            toPicker.setValue(null);
             reasonField.clear();
-            statusLabel.setText("Dates blocked.");
+            statusLabel.setText("");
             refresh();
-        } catch (DateTimeParseException exception) {
-            statusLabel.setText("Use YYYY-MM-DD for both dates.");
         } catch (IllegalArgumentException | IllegalStateException exception) {
             statusLabel.setText(exception.getMessage());
         }
+    }
+
+    private static LocalDate requiredDate(DatePicker picker, String fieldName) {
+        if (picker.getValue() != null) {
+            return picker.getValue();
+        }
+        String editorText = picker.getEditor().getText();
+        if (editorText == null || editorText.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " date must be provided.");
+        }
+        throw new IllegalArgumentException(fieldName + " date must be valid.");
     }
 
     private void handleRemoveOverride(AvailabilityBlock block) {

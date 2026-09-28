@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import java.net.URL?>
 
-<VBox spacing="16" styleClass="host-bookings-page" xmlns:fx="http://javafx.com/fxml/1"
+<VBox spacing="16" styleClass="agent-content, host-bookings-page" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.snoozeshare.ui.host.bookings.HostBookingsController">
     <stylesheets><URL value="@../host-theme.css"/></stylesheets>
     <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
@@ -18,8 +18,9 @@
         <Label fx:id="pendingCountLabel" text="0 pending" styleClass="host-bookings-count-pill"/>
         <Region HBox.hgrow="ALWAYS"/>
     </HBox>
-    <VBox styleClass="host-bookings-table-card">
-        <TableView fx:id="pendingTable" styleClass="host-bookings-table" prefHeight="220">
+    <VBox spacing="0" styleClass="host-bookings-current-section">
+        <VBox styleClass="host-bookings-table-card">
+        <TableView fx:id="pendingTable" styleClass="host-bookings-table">
             <columns>
                 <TableColumn fx:id="pendingGuestColumn" text="Guest" prefWidth="150"/>
                 <TableColumn fx:id="pendingListingColumn" text="Listing" prefWidth="190"/>
@@ -31,13 +32,14 @@
                 <TableColumn fx:id="pendingActionColumn" text="Action" prefWidth="190"/>
             </columns>
         </TableView>
+        </VBox>
+        <Label text="Net earning = gross - 3% platform fee. Guest rating is their average review score, or No ratings yet."
+               styleClass="host-bookings-note" wrapText="true"/>
     </VBox>
     <Label fx:id="feedbackLabel" styleClass="host-bookings-feedback"/>
-    <Label text="Net earning = gross - 3% platform fee. Guest rating is their average review score, or No ratings yet."
-           styleClass="host-bookings-note" wrapText="true"/>
     <Label text="Past requests" styleClass="host-bookings-section-title"/>
     <VBox styleClass="host-bookings-table-card">
-        <TableView fx:id="pastTable" styleClass="host-bookings-table" prefHeight="180">
+        <TableView fx:id="pastTable" styleClass="host-bookings-table">
             <columns>
                 <TableColumn fx:id="pastGuestColumn" text="Guest" prefWidth="150"/>
                 <TableColumn fx:id="pastListingColumn" text="Listing" prefWidth="190"/>

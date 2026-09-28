@@ -1164,9 +1164,9 @@
     -fx-font-weight: bold;
     -fx-text-fill: #1f1713;
 }
-.host-root .host-message-sidebar-title { -fx-padding: 0 24px 18px 24px; }
+.host-root .host-message-sidebar-title { -fx-padding: 24px 24px 18px 24px; }
 .host-root .host-message-header {
-    -fx-padding: 20px 28px;
+    -fx-padding: 24px 32px;
     -fx-border-color: #ddc3a5;
     -fx-border-width: 0 0 1px 0;
 }
@@ -1209,8 +1209,11 @@
 .host-root .host-message-thread-scroll,
 .host-root .host-message-thread-scroll > .viewport,
 .host-root .host-message-thread { -fx-background-color: #fcf8f1; }
+.host-root .host-message-thread {
+    -fx-padding: 24px 32px 24px 32px;
+}
 .host-root .host-message-composer {
-    -fx-padding: 16px 28px 22px 28px;
+    -fx-padding: 16px 32px 24px 32px;
     -fx-border-color: #ddc3a5;
     -fx-border-width: 1px 0 0 0;
 }
@@ -1305,7 +1308,7 @@
     -fx-cell-size: 47px;
     -fx-padding: 0;
 }
-.host-bookings-table .table-row-cell:filled { -fx-cursor: hand; }
+.host-bookings-table .table-row-cell:filled { -fx-cursor: default; }
 .host-bookings-table .table-row-cell:hover { -fx-background-color: rgba(240, 232, 216, 0.4); }
 .host-bookings-table .table-row-cell:selected { -fx-background-color: transparent; }
 .host-bookings-table .table-cell {
@@ -1318,10 +1321,19 @@
 }
 .host-bookings-table .table-cell:selected { -fx-text-fill: #381a10; }
 .host-bookings-table .placeholder { -fx-background-color: transparent; }
-.host-bookings-table .scroll-bar { -fx-opacity: 0; -fx-pref-width: 0; -fx-pref-height: 0; }
+.host-bookings-table .scroll-bar:vertical {
+    -fx-opacity: 1;
+    -fx-pref-width: 12px;
+}
+.host-bookings-table .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-pref-height: 0;
+}
+.host-bookings-current-section { -fx-spacing: 0; }
 .host-bookings-section-title { -fx-font-size: 16px; -fx-font-weight: bold; }
 .host-bookings-note,
 .host-bookings-feedback { -fx-font-size: 12px; -fx-text-fill: #6c4434; }
+.host-bookings-note { -fx-padding: 8px 0 0 0; }
 .host-bookings-feedback { -fx-text-fill: #980c1c; }
 .host-bookings-status-badge {
     -fx-background-radius: 999px;
@@ -1482,7 +1494,7 @@
     -fx-border-radius: 12px;
     -fx-border-width: 1px;
     -fx-padding: 20px;
-    -fx-spacing: 10px;
+    -fx-spacing: 12px;
     -fx-min-width: 340px;
     -fx-pref-width: 340px;
     -fx-max-width: 340px;
@@ -1496,6 +1508,9 @@
     -fx-font-size: 11px;
     -fx-font-weight: 600;
     -fx-text-fill: #381a10;
+}
+.calendar-input-group {
+    -fx-spacing: 4px;
 }
 .calendar-side-panel .calendar-filter-field {
     -fx-background-color: #fdf8f0;
@@ -1511,6 +1526,18 @@
     -fx-min-height: 34px;
     -fx-pref-height: 34px;
     -fx-max-height: 34px;
+}
+.calendar-side-panel .date-picker {
+    -fx-background-color: #fdf8f0;
+    -fx-min-height: 34px;
+    -fx-pref-height: 34px;
+    -fx-max-height: 34px;
+}
+.calendar-side-panel .date-picker > .text-field {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-padding: 0 0 0 12px;
 }
 .calendar-side-panel .button {
     -fx-background-color: #980c1c;
@@ -1566,6 +1593,13 @@
 .override-row .text-button {
     -fx-font-weight: normal;
 }
+.override-row .text-button:hover {
+    -fx-background-color: transparent;
+    -fx-text-fill: #980c1c;
+    -fx-font-weight: normal;
+    -fx-padding: 0;
+    -fx-underline: false;
+}
 
 /* ---- Consolidated Host Listing detail styling ---- */
 .host-listing-detail-page {
@@ -1573,8 +1607,16 @@
 }
 
 .listing-detail-actions .button {
-    -fx-min-height: 40px;
-    -fx-pref-height: 40px;
+    -fx-min-height: 36px;
+    -fx-pref-height: 36px;
+    -fx-max-height: 36px;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 14px 8px 14px;
+}
+
+.host-listing-detail-page .button.listing-detail-action-calendar {
+    -fx-font-weight: bold;
 }
 
 .host-listing-detail-page .button.listing-detail-action-edit {
@@ -1725,8 +1767,8 @@
 }
 
 .listing-form-page {
-    -fx-padding: 20px;
-    -fx-spacing: 8px;
+    -fx-padding: 24px 32px 24px 32px;
+    -fx-spacing: 16px;
 }
 
 .listing-form-page .listing-form-grid { -fx-hgap: 16px; -fx-vgap: 16px; }
@@ -1816,7 +1858,7 @@
     -fx-border-width: 1px;
     -fx-background-insets: 0;
     -fx-padding: 7px 10px 7px 10px;
-    -fx-cursor: hand;
+    -fx-cursor: default;
 }
 
 .listing-form-page .amenity-option .agent-multi-option {
@@ -1859,6 +1901,10 @@
     -fx-alignment: center-left;
     -fx-spacing: 10px;
     -fx-padding: 0;
+}
+
+.listing-form-actions .form-error {
+    -fx-alignment: center-left;
 }
 
 .listing-form-page .listing-form-action {

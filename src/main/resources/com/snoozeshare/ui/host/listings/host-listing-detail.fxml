@@ -14,19 +14,19 @@
 <?import javafx.scene.layout.VBox?>
 <?import java.net.URL?>
 
-<ScrollPane fitToWidth="true" xmlns:fx="http://javafx.com/fxml"
+<ScrollPane fitToWidth="true" styleClass="agent-scroll" xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.snoozeshare.ui.host.listings.HostListingDetailController">
     <stylesheets><URL value="@../host-theme.css"/></stylesheets>
-    <VBox spacing="18" styleClass="host-listing-detail-page">
-        <padding><Insets top="20" right="32" bottom="40" left="32"/></padding>
+    <VBox spacing="16" styleClass="agent-content, host-listing-detail-page">
+        <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
 
         <HBox alignment="CENTER_LEFT" spacing="12" styleClass="listing-detail-actions">
             <Hyperlink text="Listings" onAction="#handleBack" styleClass="host-crumb-link"/>
             <Label text="›" styleClass="host-crumb"/>
             <Label fx:id="titleCrumb" styleClass="host-crumb-current"/>
-            <VBox HBox.hgrow="ALWAYS"/>
-            <Button text="Open booking calendar" onAction="#handleOpenCalendar"
-                    styleClass="outline-button"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Open Booking Calendar" onAction="#handleOpenCalendar"
+                    styleClass="outline-button, listing-detail-action-calendar"/>
             <Button text="Edit" onAction="#handleEdit"
                     styleClass="listing-detail-action-edit"/>
         </HBox>
@@ -87,7 +87,8 @@
             </VBox>
 
             <VBox spacing="12" maxWidth="Infinity"
-                  styleClass="listing-detail-performance" GridPane.columnIndex="1">
+                  styleClass="listing-detail-performance" GridPane.columnIndex="1"
+                  GridPane.fillHeight="false" GridPane.valignment="TOP">
                 <Label text="Performance" styleClass="listing-detail-performance-title"/>
                 <HBox alignment="CENTER_LEFT">
                     <Label text="Total bookings" styleClass="listing-detail-performance-label"/>

@@ -13,13 +13,13 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import java.net.URL?>
-<ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="listing-form-scroll"
+<ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="agent-scroll, listing-form-scroll"
             fx:controller="com.snoozeshare.ui.host.listings.HostListingFormController"
             xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
     <stylesheets><URL value="@../host-theme.css"/></stylesheets>
     <content>
-        <VBox fx:id="formRoot" styleClass="listing-form-page" spacing="8">
-            <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+        <VBox fx:id="formRoot" styleClass="agent-content, listing-form-page" spacing="16">
+            <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
 
             <HBox alignment="CENTER_LEFT" spacing="16">
                 <Hyperlink text="Listings" onAction="#handleListings" styleClass="host-crumb-link"/>
@@ -40,7 +40,7 @@
 
                 <VBox styleClass="listing-form-column" spacing="16" GridPane.columnIndex="0">
                 <VBox styleClass="listing-form-card" spacing="8">
-                    <Label text="Basic details" styleClass="listing-form-card-title"/>
+                    <Label text="BASIC DETAILS" styleClass="listing-form-card-title"/>
                     <Label text="Title" styleClass="listing-form-label"/>
                     <TextField fx:id="titleField" styleClass="listing-form-field" promptText="e.g. Sunset Loft"/>
                     <Label text="Description" styleClass="listing-form-label"/>
@@ -62,7 +62,7 @@
                 </VBox>
 
                 <VBox styleClass="listing-form-card" spacing="8">
-                    <Label text="Location" styleClass="listing-form-card-title"/>
+                    <Label text="LOCATION" styleClass="listing-form-card-title"/>
                     <Label text="Street address" styleClass="listing-form-label"/>
                     <TextField fx:id="streetAddressField" styleClass="listing-form-field" promptText="e.g. 12 Rua das Flores"/>
                     <HBox spacing="10" fillHeight="true">
@@ -84,7 +84,7 @@
 
                 <VBox styleClass="listing-form-column" spacing="16" GridPane.columnIndex="1">
                 <VBox styleClass="listing-form-card" spacing="8">
-                    <Label text="Capacity &amp; Pricing" styleClass="listing-form-card-title"/>
+                    <Label text="CAPACITY &amp; PRICING" styleClass="listing-form-card-title"/>
                     <HBox spacing="10" fillHeight="true">
                         <VBox styleClass="listing-form-field" spacing="4" HBox.hgrow="ALWAYS">
                             <Label text="Max guests" styleClass="listing-form-label"/>
@@ -119,7 +119,7 @@
 
                 <VBox styleClass="listing-form-card" spacing="8">
                     <HBox alignment="CENTER_LEFT" spacing="6">
-                        <Label text="Amenities" styleClass="listing-form-card-title"/>
+                        <Label text="AMENITIES" styleClass="listing-form-card-title"/>
                         <Label text="Optional" styleClass="listing-form-card-subtitle"/>
                     </HBox>
                     <GridPane hgap="10" vgap="10">
@@ -156,12 +156,12 @@
                 </VBox>
             </GridPane>
 
-            <Label fx:id="errorLabel" styleClass="form-error" wrapText="true"/>
             <HBox alignment="CENTER_LEFT" spacing="10" styleClass="listing-form-actions">
                 <Button fx:id="saveButton" text="Create listing" onAction="#handleSave"
                         styleClass="listing-form-action"/>
                 <Button text="Cancel" onAction="#handleBack"
                         styleClass="outline-button, listing-form-action"/>
+                <Label fx:id="errorLabel" styleClass="form-error" wrapText="true"/>
             </HBox>
         </VBox>
     </content>

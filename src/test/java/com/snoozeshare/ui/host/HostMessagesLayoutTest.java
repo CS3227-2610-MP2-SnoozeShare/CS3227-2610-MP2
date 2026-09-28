@@ -30,6 +30,7 @@ class HostMessagesLayoutTest {
         assertTrue(!fxml.contains("host-navigation.css"));
         assertTrue(!fxml.contains("agent-theme.css"));
         assertTrue(css.contains(".host-root .host-message-sidebar-title {"));
+        assertTrue(!fxml.contains("top=\"18\""));
         assertTrue(css.contains(".host-root .host-message-row-title"));
         assertTrue(css.contains("-fx-font-size: 14px;"));
         assertTrue(css.contains(".host-root .host-message-row-subtitle { -fx-font-size: 13px;"));
