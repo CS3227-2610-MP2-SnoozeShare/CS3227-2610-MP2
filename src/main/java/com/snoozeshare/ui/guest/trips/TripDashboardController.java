@@ -244,11 +244,11 @@ public final class TripDashboardController {
             return false;
         }
         LocalDate today = LocalDate.now();
-        boolean stayEnded = !booking.endDate().isAfter(today);
+        boolean tripStarted = !today.isBefore(booking.startDate());
         boolean inWindow = !today.isAfter(booking.endDate().plusDays(7));
-        boolean statusOk = (booking.status() == BookingStatus.CONFIRMED && stayEnded)
+        boolean statusOk = booking.status() == BookingStatus.CONFIRMED
                 || booking.status() == BookingStatus.COMPLETED;
-        return statusOk && inWindow;
+        return statusOk && tripStarted && inWindow;
     }
 
     private boolean canReview(Booking booking) {
