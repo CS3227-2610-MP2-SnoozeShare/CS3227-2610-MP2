@@ -16,6 +16,7 @@ public record AuditRecord(
         String beforeState,
         String afterState,
         BigDecimal walletAdjustment,
+        BigDecimal balanceAfter,
         String reason,
         UUID subjectUserId,
         UUID bookingId,
@@ -32,6 +33,9 @@ public record AuditRecord(
             throw new IllegalArgumentException(
                     "An audit row records one change: a status change or a wallet adjustment, not both");
         }
+        if (balanceAfter != null && walletAdjustment == null) {
+            throw new IllegalArgumentException("balanceAfter belongs to money rows");
+        }
     }
 
     public static Builder builder(UUID actorId, AuditAction action, String entityType, UUID entityId) {
@@ -46,6 +50,7 @@ public record AuditRecord(
         private String beforeState;
         private String afterState;
         private BigDecimal walletAdjustment;
+        private BigDecimal balanceAfter;
         private String reason;
         private UUID subjectUserId;
         private UUID bookingId;
@@ -67,7 +72,12 @@ public record AuditRecord(
         }
 
         public Builder wallet(BigDecimal adjustment) {
+            return wallet(adjustment, null);
+        }
+
+        public Builder wallet(BigDecimal adjustment, BigDecimal balanceAfter) {
             this.walletAdjustment = adjustment;
+            this.balanceAfter = balanceAfter;
             return this;
         }
 
@@ -98,7 +108,7 @@ public record AuditRecord(
 
         public AuditRecord build() {
             return new AuditRecord(actorId, action, entityType, entityId, beforeState, afterState,
-                    walletAdjustment, reason, subjectUserId, bookingId, ticketId, at);
+                    walletAdjustment, balanceAfter, reason, subjectUserId, bookingId, ticketId, at);
         }
 
         private static String text(Object state) {

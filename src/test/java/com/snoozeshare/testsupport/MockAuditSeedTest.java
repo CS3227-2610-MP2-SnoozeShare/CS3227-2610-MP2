@@ -14,13 +14,14 @@ import com.snoozeshare.domain.enums.AuditAction;
 class MockAuditSeedTest {
 
     @Test
-    void everyWalletTransactionHasExactlyOneMoneyRowWithTheAppliedAmount(@TempDir Path directory) throws Exception {
+    void everySeededMoneyRowIsOneWalletTransactionWithARunningBalance(@TempDir Path directory) throws Exception {
         try (MockDbFixture db = MockDbFixture.open(directory)) {
-            assertEquals(0L, db.scalarLong("SELECT COUNT(*) FROM wallet_transactions t WHERE "
-                    + "(SELECT COUNT(*) FROM audit_log a WHERE a.entityType = 'WalletTransaction' "
-                    + "AND a.entityId = t.transactionId) <> 1"));
-            assertEquals(0L, db.scalarLong("SELECT COUNT(*) FROM wallet_transactions t JOIN audit_log a "
-                    + "ON a.entityId = t.transactionId WHERE abs(a.walletAdjustment - t.amount) > 0.005"));
+            assertEquals(37L, db.scalarLong("SELECT COUNT(*) FROM audit_log WHERE walletAdjustment IS NOT NULL"));
+            assertEquals(37L, db.scalarLong("SELECT COUNT(DISTINCT entityId) FROM audit_log "
+                    + "WHERE walletAdjustment IS NOT NULL"), "each transaction has exactly one money row");
+            assertEquals(0L, db.scalarLong("SELECT COUNT(*) FROM audit_log WHERE walletAdjustment IS NOT NULL "
+                    + "AND (entityType <> 'WalletTransaction' OR balanceAfter IS NULL OR walletAdjustment = 0)"));
+            db.assertLedgerInvariant();
         }
     }
 

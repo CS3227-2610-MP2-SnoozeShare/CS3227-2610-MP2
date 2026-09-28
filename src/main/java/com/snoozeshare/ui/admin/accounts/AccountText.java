@@ -30,6 +30,7 @@ public final class AccountText {
             case GUEST -> "Guest";
             case HOST -> "Host";
             case AGENT -> "Support Agent";
+            case SYSTEM -> "System";
         };
     }
 

@@ -19,13 +19,14 @@ import com.snoozeshare.infra.db.ConnectionFactory;
 import com.snoozeshare.infra.db.migration.MigrationRunner;
 import com.snoozeshare.repository.AuditCriteria;
 import com.snoozeshare.repository.jdbc.JdbcAuditLogRepository;
+import com.snoozeshare.repository.jdbc.JdbcLedgerRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
-import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
 import com.snoozeshare.service.impl.AuditServiceImpl;
 import com.snoozeshare.service.impl.UserServiceImpl;
 import com.snoozeshare.service.impl.WalletServiceImpl;
 import com.snoozeshare.testsupport.FailingAuditService;
+import com.snoozeshare.testsupport.LedgerTestSupport;
 
 class WalletLedgerAuditTest {
 
@@ -33,7 +34,7 @@ class WalletLedgerAuditTest {
         var audit = new AuditServiceImpl(new JdbcAuditLogRepository(connection),
                 new JdbcUserRepository(connection), Clock.systemUTC());
         return new WalletServiceImpl(connection, new JdbcWalletRepository(connection),
-                new JdbcWalletTransactionRepository(connection), null, audit);
+                LedgerTestSupport.writer(connection, audit), new JdbcLedgerRepository(connection), null);
     }
 
     private static UUID guest(Connection connection) {
@@ -64,6 +65,7 @@ class WalletLedgerAuditTest {
             AuditLogEntry top = rows.stream().filter(r -> r.actionType().equals("TOP_UP"))
                     .findFirst().orElseThrow();
             assertEquals(0, new BigDecimal("50.00").compareTo(top.walletAdjustment()));
+            assertEquals(0, new BigDecimal("50.00").compareTo(top.balanceAfter()));
             assertEquals(0, new BigDecimal("-12.50").compareTo(withdrawal.walletAdjustment()));
             assertEquals("WalletTransaction", top.entityType());
             assertEquals(topUp.transactionId(), top.entityId());
@@ -95,15 +97,15 @@ class WalletLedgerAuditTest {
             var realAudit = new AuditServiceImpl(new JdbcAuditLogRepository(connection),
                     new JdbcUserRepository(connection), Clock.systemUTC());
             WalletService service = new WalletServiceImpl(connection, new JdbcWalletRepository(connection),
-                    new JdbcWalletTransactionRepository(connection), null,
-                    new FailingAuditService(realAudit, 1));
+                    LedgerTestSupport.writer(connection, new FailingAuditService(realAudit, 1)),
+                    new JdbcLedgerRepository(connection), null);
 
             assertThrows(RuntimeException.class, () -> service.topUp(user, new BigDecimal("50.00")));
 
             assertEquals(0, BigDecimal.ZERO.compareTo(new JdbcWalletRepository(connection)
                     .findByUserId(user).orElseThrow().balance()));
-            assertEquals(0, new JdbcWalletTransactionRepository(connection)
-                    .findByWalletId(new JdbcWalletRepository(connection).findByUserId(user).orElseThrow()
+            assertEquals(0, new JdbcLedgerRepository(connection)
+                    .entriesForWallet(new JdbcWalletRepository(connection).findByUserId(user).orElseThrow()
                             .walletId()).size());
             assertEquals(0, rows(connection).size());
         }

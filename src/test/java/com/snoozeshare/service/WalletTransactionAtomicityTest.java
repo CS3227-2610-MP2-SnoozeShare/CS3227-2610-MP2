@@ -17,11 +17,11 @@ import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.infra.db.ConnectionFactory;
 import com.snoozeshare.infra.db.migration.MigrationRunner;
+import com.snoozeshare.repository.jdbc.JdbcLedgerRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
-import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
-import com.snoozeshare.service.impl.NoOpAuditService;
-import com.snoozeshare.service.impl.WalletLedgerWriter;
+import com.snoozeshare.service.impl.LedgerWriter;
+import com.snoozeshare.testsupport.LedgerTestSupport;
 
 class WalletTransactionAtomicityTest {
 
@@ -35,18 +35,15 @@ class WalletTransactionAtomicityTest {
             JdbcWalletRepository wallets = new JdbcWalletRepository(connection);
             UUID walletId = UUID.randomUUID();
             wallets.save(new Wallet(walletId, userId, BigDecimal.ZERO, "SGD", Instant.now()));
-            JdbcWalletTransactionRepository transactions = new JdbcWalletTransactionRepository(
-                    connection);
-            WalletLedgerWriter writer = new WalletLedgerWriter(connection, wallets, transactions,
-                    null, new NoOpAuditService());
+            LedgerWriter writer = LedgerTestSupport.writer(connection);
 
-            assertThrows(IllegalArgumentException.class, () -> writer.record(walletId,
-                    WalletTransactionType.WITHDRAWAL, new BigDecimal("-1.00"), BigDecimal.ZERO,
-                    null, null, userId));
+            assertThrows(IllegalArgumentException.class, () -> writer.post(walletId,
+                    WalletTransactionType.WITHDRAWAL, new BigDecimal("-1.00"), userId, null, null, null,
+                    Instant.now()));
 
             assertEquals(0, BigDecimal.ZERO.compareTo(
                     wallets.findById(walletId).orElseThrow().balance()));
-            assertEquals(0, transactions.findByWalletId(walletId).size());
+            assertEquals(0, new JdbcLedgerRepository(connection).entriesForWallet(walletId).size());
         }
     }
 }

@@ -7,6 +7,7 @@ import java.util.UUID;
 /**
  * One audited change. States hold status text only; money lives in walletAdjustment; a row is never both.
  * Name fields are snapshots taken when the row was written (null on legacy rows).
+ * balanceAfter is the owner's wallet balance after the adjustment: money rows only.
  */
 public record AuditLogEntry(
         UUID logId,
@@ -23,6 +24,7 @@ public record AuditLogEntry(
         String subjectName,
         UUID bookingId,
         UUID ticketId,
-        Instant timestamp
+        Instant timestamp,
+        BigDecimal balanceAfter
 ) {
 }

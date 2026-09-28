@@ -14,10 +14,10 @@ import com.snoozeshare.domain.model.Ticket;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.settlement.EscrowPolicy;
 import com.snoozeshare.repository.BookingRepository;
+import com.snoozeshare.repository.LedgerRepository;
 import com.snoozeshare.repository.PropertyRepository;
 import com.snoozeshare.repository.TicketRepository;
 import com.snoozeshare.repository.UserRepository;
-import com.snoozeshare.repository.WalletTransactionRepository;
 import com.snoozeshare.service.DisputeDetail;
 import com.snoozeshare.service.DisputeQueryService;
 import com.snoozeshare.service.DisputeSummary;
@@ -28,17 +28,17 @@ public final class DisputeQueryServiceImpl implements DisputeQueryService {
     private final BookingRepository bookings;
     private final PropertyRepository properties;
     private final UserRepository users;
-    private final WalletTransactionRepository transactions;
+    private final LedgerRepository ledgerEntries;
     private final Clock clock;
 
     public DisputeQueryServiceImpl(TicketRepository tickets, BookingRepository bookings,
                                    PropertyRepository properties, UserRepository users,
-                                   WalletTransactionRepository transactions, Clock clock) {
+                                   LedgerRepository ledgerEntries, Clock clock) {
         this.tickets = tickets;
         this.bookings = bookings;
         this.properties = properties;
         this.users = users;
-        this.transactions = transactions;
+        this.ledgerEntries = ledgerEntries;
         this.clock = clock;
     }
 
@@ -53,7 +53,7 @@ public final class DisputeQueryServiceImpl implements DisputeQueryService {
                 .orElseThrow(() -> new IllegalArgumentException("Ticket does not exist"));
         Booking booking = booking(ticket);
         Property property = property(booking);
-        boolean held = EscrowPolicy.isHeld(transactions.findByBookingId(booking.bookingId()));
+        boolean held = EscrowPolicy.isHeld(ledgerEntries.entriesForBooking(booking.bookingId()));
         return new DisputeDetail(ticket, label(ticketId), property.title(), booking.startDate(),
                 booking.endDate(), name(booking.guestId()), name(property.hostId()),
                 name(ticket.raisedByUserId()), agentName(ticket), booking.status(),

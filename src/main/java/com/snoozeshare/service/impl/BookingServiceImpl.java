@@ -19,7 +19,6 @@ import com.snoozeshare.domain.model.Booking;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.model.Wallet;
-import com.snoozeshare.domain.model.WalletTransaction;
 import com.snoozeshare.domain.statemachine.BookingStateMachine;
 import com.snoozeshare.domain.validation.DomainValidation;
 import com.snoozeshare.infra.db.TransactionManager;
@@ -29,12 +28,12 @@ import com.snoozeshare.infra.events.events.BookingConfirmedEvent;
 import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.repository.AvailabilityBlockRepository;
 import com.snoozeshare.repository.BookingRepository;
+import com.snoozeshare.repository.LedgerRepository;
 import com.snoozeshare.repository.PropertyRepository;
 import com.snoozeshare.repository.ReviewRepository;
 import com.snoozeshare.repository.TicketRepository;
 import com.snoozeshare.repository.UserRepository;
 import com.snoozeshare.repository.WalletRepository;
-import com.snoozeshare.repository.WalletTransactionRepository;
 import com.snoozeshare.service.BookingService;
 import com.snoozeshare.service.HostBookingRow;
 import com.snoozeshare.service.Money;
@@ -47,7 +46,8 @@ public final class BookingServiceImpl implements BookingService {
     private final PropertyRepository properties;
     private final AvailabilityBlockRepository blocks;
     private final WalletRepository wallets;
-    private final WalletTransactionRepository transactions;
+    private final LedgerWriter ledger;
+    private final LedgerRepository ledgerEntries;
     private final UserRepository users;
     private final ReviewRepository reviews;
     private final com.snoozeshare.service.TransactionService transactionService;
@@ -58,7 +58,8 @@ public final class BookingServiceImpl implements BookingService {
                                PropertyRepository properties,
                                AvailabilityBlockRepository blocks,
                                WalletRepository wallets,
-                               WalletTransactionRepository transactions,
+                               LedgerWriter ledger,
+                               LedgerRepository ledgerEntries,
                                UserRepository users,
                                ReviewRepository reviews,
                                EventBus eventBus,
@@ -69,7 +70,8 @@ public final class BookingServiceImpl implements BookingService {
         this.properties = properties;
         this.blocks = blocks;
         this.wallets = wallets;
-        this.transactions = transactions;
+        this.ledger = ledger;
+        this.ledgerEntries = ledgerEntries;
         this.users = users;
         this.reviews = reviews;
         this.eventBus = eventBus;
@@ -113,22 +115,11 @@ public final class BookingServiceImpl implements BookingService {
                 blocks.save(new AvailabilityBlock(UUID.randomUUID(), propertyId,
                         start, end, "BOOKING", bookingId, null));
 
-                // Inline wallet write — cannot use WalletLedgerWriter here because
-                // it opens its own transaction which would cause premature commit
-                // on SQLite's single shared connection.
+                // The writer joins this transaction, so the hold commits or rolls back with the booking.
                 Wallet wallet = wallets.findByUserId(guestId)
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "Guest wallet does not exist"));
-                DomainValidation.requireSgd(wallet.currency());
-                BigDecimal balanceAfter = wallet.balance().subtract(totalAmount);
-                if (balanceAfter.signum() < 0) {
-                    throw new IllegalArgumentException("Insufficient wallet funds");
-                }
-                wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter,
-                        wallet.currency(), now));
-                transactions.save(new WalletTransaction(UUID.randomUUID(), wallet.walletId(),
-                        WalletTransactionType.ESCROW_HOLD, totalAmount.negate(),
-                        BigDecimal.ZERO, balanceAfter, bookingId, null, guestId, now));
+                        .orElseThrow(() -> new IllegalArgumentException("Guest wallet does not exist"));
+                ledger.post(wallet.walletId(), WalletTransactionType.ESCROW_HOLD, totalAmount.negate(),
+                        guestId, bookingId, null, null, now);
 
                 return newBooking;
             });
@@ -143,13 +134,12 @@ public final class BookingServiceImpl implements BookingService {
         if (eventBus == null) {
             return;
         }
-        WalletTransaction transaction = transactions.findByBookingId(booking.bookingId()).stream()
+        var transaction = ledgerEntries.entriesForBooking(booking.bookingId()).stream()
                 .filter(entry -> entry.type() == WalletTransactionType.ESCROW_HOLD)
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                        "Escrow transaction was not recorded"));
-        eventBus.publish(new WalletTransactionRecordedEvent(transaction.transactionId(),
-                transaction.walletId(), transaction.createdAt()));
+                .orElseThrow(() -> new IllegalStateException("Escrow hold row is missing"));
+        eventBus.publish(new WalletTransactionRecordedEvent(
+                transaction.transactionId(), transaction.walletId(), transaction.createdAt()));
     }
 
     @Override
@@ -236,15 +226,9 @@ public final class BookingServiceImpl implements BookingService {
                     // Reject: 100% refund (decision C8) + remove block
                     blocks.deleteByBookingId(bookingId);
                     Wallet wallet = wallets.findByUserId(booking.guestId())
-                            .orElseThrow(() -> new IllegalArgumentException(
-                                    "Guest wallet does not exist"));
-                    BigDecimal balanceAfter = wallet.balance().add(booking.totalAmount());
-                    wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter,
-                            wallet.currency(), now));
-                    transactions.save(new WalletTransaction(UUID.randomUUID(),
-                            wallet.walletId(), WalletTransactionType.ESCROW_REFUND,
-                            booking.totalAmount(), BigDecimal.ZERO, balanceAfter,
-                            bookingId, null, hostId, now));
+                            .orElseThrow(() -> new IllegalArgumentException("Guest wallet does not exist"));
+                    ledger.post(wallet.walletId(), WalletTransactionType.ESCROW_REFUND, booking.totalAmount(),
+                            hostId, bookingId, null, null, now);
                 }
 
                 return updated;
@@ -288,16 +272,10 @@ public final class BookingServiceImpl implements BookingService {
 
                 blocks.deleteByBookingId(bookingId);
 
-                // Inline wallet refund
                 Wallet wallet = wallets.findByUserId(actingGuestId)
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "Guest wallet does not exist"));
-                BigDecimal balanceAfter = wallet.balance().add(refundAmount);
-                wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter,
-                        wallet.currency(), now));
-                transactions.save(new WalletTransaction(UUID.randomUUID(), wallet.walletId(),
-                        WalletTransactionType.ESCROW_REFUND, refundAmount,
-                        BigDecimal.ZERO, balanceAfter, bookingId, null, actingGuestId, now));
+                        .orElseThrow(() -> new IllegalArgumentException("Guest wallet does not exist"));
+                ledger.post(wallet.walletId(), WalletTransactionType.ESCROW_REFUND, refundAmount,
+                        actingGuestId, bookingId, null, null, now);
 
                 return updated;
             });
@@ -321,7 +299,8 @@ public final class BookingServiceImpl implements BookingService {
         if (hoursUntilCheckIn > 48) {
             return booking.totalAmount();
         }
-        return booking.totalAmount().divide(BigDecimal.valueOf(2));
+        return booking.totalAmount().divide(BigDecimal.valueOf(2))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     @Override
