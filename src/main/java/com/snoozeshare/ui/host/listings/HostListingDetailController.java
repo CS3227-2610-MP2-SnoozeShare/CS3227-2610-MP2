@@ -1,15 +1,18 @@
 package com.snoozeshare.ui.host.listings;
 
+import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Consumer;
 
 import com.snoozeshare.domain.enums.AmenityType;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.service.ListingMetrics;
+import com.snoozeshare.service.ListingReview;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.VBox;
 
 public final class HostListingDetailController {
 
@@ -29,8 +32,11 @@ public final class HostListingDetailController {
     @FXML private Label rateLabel;
     @FXML private Label statusLabel;
     @FXML private Label bookingCountLabel;
-    @FXML private Label ratingLabel;
+    @FXML private Label reviewsTitleLabel;
+    @FXML private Label occupancyLabel;
+    @FXML private Label earningsLabel;
     @FXML private FlowPane amenitiesPane;
+    @FXML private VBox reviewsList;
 
     private Runnable onBack = () -> { };
     private Consumer<Property> onEdit = property -> { };
@@ -74,8 +80,41 @@ public final class HostListingDetailController {
     }
 
     public void setMetrics(ListingMetrics metrics) {
-        bookingCountLabel.setText(metrics == null ? "—" : Integer.toString(metrics.bookingCount()));
-        ratingLabel.setText(metrics == null ? "—" : String.format("%.1f ★", metrics.averageRating()));
+        if (metrics == null) {
+            bookingCountLabel.setText("—");
+            occupancyLabel.setText("—");
+            earningsLabel.setText("—");
+            reviewsTitleLabel.setText("REVIEWS");
+            renderReviews(java.util.List.of());
+            return;
+        }
+        bookingCountLabel.setText(Integer.toString(metrics.bookingCount()));
+        occupancyLabel.setText(String.format("%.0f%%", metrics.occupancyPercentage()));
+        earningsLabel.setText("$" + metrics.earnings().setScale(2, RoundingMode.HALF_UP));
+        reviewsTitleLabel.setText(metrics.reviews().isEmpty()
+                ? "REVIEWS" : String.format("REVIEWS · %.1f ★ (%d)", metrics.averageRating(),
+                        metrics.reviews().size()));
+        renderReviews(metrics.reviews());
+    }
+
+    private void renderReviews(java.util.List<ListingReview> reviews) {
+        reviewsList.getChildren().clear();
+        if (reviews.isEmpty()) {
+            reviewsList.getChildren().add(new Label("No reviews yet."));
+            reviewsList.getChildren().get(0).getStyleClass().add("listing-detail-review");
+            return;
+        }
+        for (ListingReview review : reviews) {
+            VBox row = new VBox(4);
+            row.getStyleClass().add("listing-detail-review-row");
+            Label author = new Label(review.guestName() + " — " + "★".repeat(review.rating()));
+            author.getStyleClass().add("listing-detail-review-author");
+            Label comment = new Label(review.comment() == null || review.comment().isBlank()
+                    ? "No comment provided." : "\"" + review.comment() + "\"");
+            comment.getStyleClass().add("listing-detail-review-comment");
+            row.getChildren().addAll(author, comment);
+            reviewsList.getChildren().add(row);
+        }
     }
 
     @FXML

@@ -95,6 +95,38 @@ class HostListingsControllerTest {
     }
 
     @Test
+    void listingsPageOwnsArtifactAlignedStyles() throws Exception {
+        String fxml = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listings.fxml"));
+        String css = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listings.css"));
+
+        assertTrue(fxml.contains("@host-listings.css"));
+        assertTrue(fxml.contains("styleClass=\"host-listings-page\""));
+        assertTrue(fxml.contains("styleClass=\"host-listings-header\""));
+        assertTrue(css.contains(".host-listings-page"));
+        assertTrue(css.contains(".listing-card"));
+        assertTrue(css.contains("-fx-pref-width: 64px"));
+        assertTrue(css.contains(".listing-metric-value"));
+        assertTrue(css.contains(".listing-status-toggle"));
+        assertTrue(!fxml.contains("agent-theme.css"));
+        assertTrue(!css.contains("agent-theme.css"));
+    }
+
+    @Test
+    void listingRowsUseArtifactActionAndMetricClasses() throws Exception {
+        String source = Files.readString(Path.of(
+                "src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java"));
+
+        assertTrue(source.contains("listing-card"));
+        assertTrue(source.contains("listing-image-placeholder"));
+        assertTrue(source.contains("listing-metric-value"));
+        assertTrue(source.contains("listing-metric-caption"));
+        assertTrue(source.contains("listing-status-control"));
+        assertTrue(source.contains("listing-card-action"));
+    }
+
+    @Test
     void listingCardsExposeMetricsPlaceholderAndRightToLeftActions() throws Exception {
         String source = Files.readString(Path.of(
                 "src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java"));
@@ -161,7 +193,8 @@ class HostListingsControllerTest {
 
         assertTrue(fxml.contains("styleClass=\"listing-form-action\""));
         assertTrue(fxml.contains("styleClass=\"outline-button, listing-form-action\""));
-        assertTrue(fxml.contains("<HBox alignment=\"CENTER_LEFT\" spacing=\"10\">"));
+        assertTrue(fxml.contains("<HBox alignment=\"CENTER_LEFT\" spacing=\"10\""
+                + " styleClass=\"listing-form-actions\">"));
         assertTrue(fxml.contains("<VBox fx:id=\"formRoot\" styleClass=\"listing-form-page\" spacing=\"12\">"));
         assertTrue(theme.contains(".host-root .listing-form-action"));
         assertTrue(theme.contains("-fx-pref-height: 34px"));
@@ -219,6 +252,47 @@ class HostListingsControllerTest {
     }
 
     @Test
+    void hostListingDetailContentUsesArtifactAlignedVisualTreatment() throws Exception {
+        String fxml = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
+        String css = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.css"));
+
+        assertTrue(fxml.contains("<VBox spacing=\"18\" styleClass=\"host-listing-detail-page\">"));
+        assertTrue(fxml.contains("prefHeight=\"200\""));
+        assertTrue(fxml.contains("<GridPane hgap=\"24\" styleClass=\"listing-detail-content\">"));
+        assertTrue(css.contains("-fx-pref-height: 200px;"));
+        assertTrue(css.contains("-fx-background-color: #f0e8d8;"));
+        assertTrue(css.contains("-fx-background-color: #ffffff;"));
+        assertTrue(css.contains("-fx-border-color: #c0a080;"));
+        assertTrue(css.contains("-fx-font-size: 22px;"));
+    }
+
+    @Test
+    void hostListingDetailUsesArtifactSectionsForReviewsPerformanceAndAmenities() throws Exception {
+        String fxml = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
+        String css = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.css"));
+
+        assertTrue(fxml.contains("fx:id=\"reviewsTitleLabel\""));
+        assertTrue(fxml.contains("styleClass=\"listing-detail-reviews\""));
+        assertTrue(fxml.contains("text=\"Occupancy (30d)\""));
+        assertTrue(fxml.contains("text=\"Earnings (30d)\""));
+        assertTrue(fxml.contains("percentWidth=\"60\""));
+        assertTrue(fxml.contains("percentWidth=\"40\""));
+        assertTrue(fxml.contains("fx:id=\"reviewsList\""));
+        assertTrue(fxml.contains("fx:id=\"occupancyLabel\""));
+        assertTrue(fxml.contains("fx:id=\"earningsLabel\""));
+        assertTrue(css.contains(".listing-detail-reviews"));
+        assertTrue(css.contains(".listing-detail-review"));
+        assertTrue(css.contains(".listing-detail-review-row"));
+        assertTrue(css.contains(".listing-detail-amenities"));
+        assertTrue(css.contains("-fx-padding: 5px 12px 5px 12px;"));
+        assertTrue(css.contains("-fx-font-size: 12px;"));
+    }
+
+    @Test
     void hostListingDetailFxmlLoads() throws Exception {
         javafx.fxml.FXMLLoader.load(getClass().getResource(
                 "/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
@@ -255,6 +329,26 @@ class HostListingsControllerTest {
         assertTrue(fxml.contains("text=\"Cancel\""));
         assertTrue(fxml.contains("styleClass=\"outline-button, listing-form-action\""));
         assertTrue(!fxml.contains("fillWidth"));
+    }
+
+    @Test
+    void listingFormUsesArtifactPageOwnedStructure() throws Exception {
+        String fxml = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.fxml"));
+        String css = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.css"));
+
+        assertTrue(fxml.contains("@host-listing-form.css"));
+        assertTrue(fxml.contains("styleClass=\"listing-form-page\""));
+        assertTrue(fxml.contains("percentWidth=\"50\""));
+        assertTrue(fxml.contains("styleClass=\"listing-form-actions\""));
+        assertTrue(fxml.contains("styleClass=\"amenity-option\""));
+        assertTrue(css.contains(".listing-form-page"));
+        assertTrue(css.contains(".listing-form-card"));
+        assertTrue(css.contains(".listing-form-actions"));
+        assertTrue(css.contains("-fx-padding: 20px"));
+        assertTrue(!fxml.contains("agent-theme.css"));
+        assertTrue(!css.contains("agent-theme.css"));
     }
 
     @Test

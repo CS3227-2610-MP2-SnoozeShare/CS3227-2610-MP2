@@ -11,9 +11,13 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
+<?import java.net.URL?>
 <VBox xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.snoozeshare.ui.host.calendar.HostCalendarController"
       styleClass="host-calendar-page" spacing="12">
+    <stylesheets>
+        <URL value="@host-calendar.css"/>
+    </stylesheets>
     <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
     <HBox alignment="CENTER_LEFT" spacing="12">
         <Hyperlink text="Listings" onAction="#handleBack" styleClass="host-crumb-link"/>
@@ -23,10 +27,10 @@
         <Label text="Booking Calendar" styleClass="host-crumb-current"/>
         <VBox HBox.hgrow="ALWAYS"/>
     </HBox>
-    <BorderPane VBox.vgrow="ALWAYS">
+    <BorderPane VBox.vgrow="ALWAYS" styleClass="calendar-content">
         <center>
     <VBox styleClass="calendar-main" spacing="12">
-                <HBox alignment="CENTER_LEFT" spacing="8">
+                <HBox alignment="CENTER_LEFT" spacing="8" styleClass="calendar-month-header">
                     <Button text="‹" accessibleText="Previous month" onAction="#handlePreviousMonth"/>
                     <Label fx:id="monthLabel" text="Month Year" styleClass="calendar-month-label"/>
                     <Button text="›" accessibleText="Next month" onAction="#handleNextMonth"/>
@@ -46,15 +50,16 @@
                         <ColumnConstraints percentWidth="14.2857"/>
                     </columnConstraints>
                     <rowConstraints>
-                        <RowConstraints percentHeight="16.6667"/><RowConstraints percentHeight="16.6667"/>
-                        <RowConstraints percentHeight="16.6667"/><RowConstraints percentHeight="16.6667"/>
-                        <RowConstraints percentHeight="16.6667"/><RowConstraints percentHeight="16.6667"/>
+                        <RowConstraints percentHeight="14.2857"/><RowConstraints percentHeight="14.2857"/>
+                        <RowConstraints percentHeight="14.2857"/><RowConstraints percentHeight="14.2857"/>
+                        <RowConstraints percentHeight="14.2857"/><RowConstraints percentHeight="14.2857"/>
+                        <RowConstraints percentHeight="14.2857"/>
                     </rowConstraints>
                 </GridPane>
             </VBox>
         </center>
         <right>
-            <VBox styleClass="calendar-side-panel" spacing="10" prefWidth="300">
+            <VBox styleClass="calendar-side-panel" spacing="10" minWidth="300" prefWidth="300" maxWidth="300">
                 <BorderPane.margin><Insets left="12"/></BorderPane.margin>
                 <Label text="Block dates" styleClass="card-title"/>
                 <Label text="From" styleClass="small"/>

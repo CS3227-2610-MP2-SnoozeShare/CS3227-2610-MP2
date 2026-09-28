@@ -11,9 +11,13 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import java.net.URL?>
 <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="listing-form-scroll"
             fx:controller="com.snoozeshare.ui.host.listings.HostListingFormController"
             xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+    <stylesheets>
+        <URL value="@host-listing-form.css"/>
+    </stylesheets>
     <content>
         <VBox fx:id="formRoot" styleClass="listing-form-page" spacing="12">
             <padding><Insets top="16" right="32" bottom="16" left="32"/></padding>
@@ -144,7 +148,7 @@
             </GridPane>
 
             <Label fx:id="errorLabel" styleClass="form-error" wrapText="true"/>
-            <HBox alignment="CENTER_LEFT" spacing="10">
+            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="listing-form-actions">
                 <Button fx:id="saveButton" text="Create listing" onAction="#handleSave"
                         styleClass="listing-form-action"/>
                 <Button text="Cancel" onAction="#handleBack"

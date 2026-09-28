@@ -43,6 +43,13 @@ class HostBreadcrumbNavigationTest {
     }
 
     @Test
+    void listingFormOwnsItsPageStylesheet() throws Exception {
+        String fxml = read("src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.fxml");
+        assertTrue(fxml.contains("@host-listing-form.css"));
+        assertFalse(fxml.contains("agent-theme.css"));
+    }
+
+    @Test
     void calendarUsesListingBreadcrumbWithoutTitleOrDescription() throws Exception {
         String fxml = read("src/main/resources/com/snoozeshare/ui/host/calendar/host-calendar.fxml");
         String source = read("src/main/java/com/snoozeshare/ui/host/calendar/HostCalendarController.java");
@@ -56,6 +63,13 @@ class HostBreadcrumbNavigationTest {
         assertFalse(fxml.contains("text=\"Booking calendar\""));
         assertFalse(fxml.contains("View availability and manage manual date overrides."));
         assertFalse(fxml.contains("text=\"Back to listings\""));
+    }
+
+    @Test
+    void calendarOwnsItsPageStylesheet() throws Exception {
+        String fxml = read("src/main/resources/com/snoozeshare/ui/host/calendar/host-calendar.fxml");
+        assertTrue(fxml.contains("@host-calendar.css"));
+        assertFalse(fxml.contains("agent-theme.css"));
     }
 
     @Test

@@ -5,11 +5,15 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import java.net.URL?>
 <VBox xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.snoozeshare.ui.host.listings.HostListingsController"
-      spacing="16">
+      styleClass="host-listings-page" spacing="16">
+    <stylesheets>
+        <URL value="@host-listings.css"/>
+    </stylesheets>
     <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
-    <HBox alignment="CENTER_LEFT" spacing="12">
+    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="host-listings-header">
         <Label text="My listings" styleClass="page-title"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Button text="+ New listing" onAction="#handleCreateListing"/>

@@ -8,7 +8,7 @@ every boundary, not at the end of the session.
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `host-ui-touchup` (branched from `w9`; Host UI touch-up commits)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-27 by Codex — Compact left-aligned listing form actions
+- **Last updated:** 2026-09-28 by Codex — Completed and verified artifact-aligned Host Listings, New/Edit Listing, and Booking Calendar pages
 - **Last verified against repo:** 2026-09-27
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, W6/W7 and others on `main`, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.14 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.13 Audit trail, two diagrams and the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented.
 
@@ -65,7 +65,7 @@ three iterations).
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 | S7 | 2026-09-27 | Claude Sonnet 5 | messaging-service | W13 | Paused | Service slice built and verified; host Messages UI continued on `w9` | 2026-09-27 |
-| S8 | 2026-09-27 | Codex | host-ui-touchup | W6/W13 | Paused | Host UI touch-ups carried from w9; listing form actions left-aligned and compacted | 2026-09-27 |
+| S8 | 2026-09-27 | Codex | host-ui-touchup | W6/W7/W13 | Paused | Artifact-aligned Listings, New/Edit, and Booking Calendar pages complete; focused checks and mock-DB startup pass; full suite retains the unrelated AgentModal failure | 2026-09-28 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -86,7 +86,7 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W3 | F2 — Booking Execution & Trip Hub (incl. escrow) | Building | [booking-execution design](docs/superpowers/specs/2026-09-24-w3-booking-execution-design.md) | [booking-execution plan](docs/superpowers/plans/2026-09-24-w3-booking-execution.md) | All 9 tasks complete: TransactionServiceImpl, BookingServiceImpl (submit/cancel/decide), AppContext wiring, Trip Hub UI, Book Now button | — |
 | W4 | F3 — Guest Feedback, Disputes & Reviews | Done | [guest-feedback design](docs/superpowers/specs/2026-09-26-w4-guest-feedback-disputes-reviews-design.md) | [guest-feedback plan](docs/superpowers/plans/2026-09-26-w4-guest-feedback-disputes-reviews.md) | All 8 tasks complete: fileTicket, ReviewService, AppContext wiring, ticket filing modal, review modal, Support tab, Trip Hub buttons | Awaiting confirmation |
 | W5 | F4 — Guest Wallet Management (top-up/withdraw) | Done | [wallet-management design](docs/superpowers/specs/2026-09-25-w5-wallet-management-design.md) | [wallet-management plan](docs/superpowers/plans/2026-09-25-w5-wallet-management.md) | All 6 tasks complete: dashboard, modal, navigation, CSS, sidebar refresh | Awaiting confirmation |
-| W6 | F5 — Host Listing Management & Publishing | Done | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md) | [listing-management plan](docs/superpowers/plans/2026-09-25-w6-listing-management.md) | Complete; listing detail/create/edit flows now use agent-style breadcrumbs instead of back buttons | Documented 2026-09-27 |
+| W6 | F5 — Host Listing Management & Publishing | In review | [listing-management design](docs/superpowers/specs/2026-09-25-w6-listing-management-design.md); [detail metrics design](docs/superpowers/specs/2026-09-28-host-listing-detail-metrics-design.md); [artifact page alignment](docs/superpowers/specs/2026-09-28-host-listing-pages-artifact-design.md) | [detail metrics plan](docs/superpowers/plans/2026-09-28-host-listing-detail-metrics.md); [artifact page alignment](docs/superpowers/plans/2026-09-28-host-listing-pages-artifact.md) | Artifact alignment complete for Listings, New/Edit, and Booking Calendar; focused UI tests, Checkstyle, shell smoke, and mock-DB startup pass; full suite has one unrelated AgentModal failure | Awaiting confirmation |
 | W7 | F6 — Host Calendar & Date Overrides | Done | [host-calendar design](docs/superpowers/specs/2026-09-26-w7-host-calendar-design.md) | [host-calendar plan](docs/superpowers/plans/2026-09-26-w7-host-calendar.md) | Complete; booking calendar now uses Listings > listing > Booking Calendar breadcrumbs without standalone title/description | Documented 2026-09-27 |
 | W8 | F7 — Host Request Queue, Earnings & Disputes | Done | [host requests/earnings design](docs/superpowers/specs/2026-09-26-w8-host-requests-earnings-design.md) | [host requests/earnings plan](docs/superpowers/plans/2026-09-26-w8-host-requests-earnings.md) | PR #11 open against main; review fixes complete; broader F7.2.2 deferred to W13 | Documented 2026-09-27 |
 | W9 | F8 — Host Wallet Management | Done | [host wallet management design](docs/superpowers/specs/2026-09-27-w9-host-wallet-management-design.md) | [host wallet management plan](docs/superpowers/plans/2026-09-27-w9-host-wallet-management.md) | Complete: wallet-owned statement styling, dynamic escrow display, directional badges, and native Host Booking-style modals | Documented 2026-09-27 |
@@ -765,7 +765,7 @@ unchanged.
 The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-state/done-ledger.md)**
 — every change, big or small, newest first.
 
-- **Latest entry:** 2026-09-27
-- **Entries:** 107 (4 backfilled coarsely from git history)
+- **Latest entry:** 2026-09-28
+- **Entries:** 110 (4 backfilled coarsely from git history)
 
 Deviations stay in § Deviations above: those are read every session.

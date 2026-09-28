@@ -24,6 +24,7 @@ import javafx.scene.layout.VBox;
 
 public final class HostCalendarController {
 
+    private static final String[] WEEKDAY_LABELS = {"MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"};
     private static final DateTimeFormatter MONTH_FORMAT = DateTimeFormatter.ofPattern("MMMM yyyy");
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
 
@@ -142,6 +143,14 @@ public final class HostCalendarController {
 
     private void renderCalendar(List<AvailabilityBlock> blocks) {
         calendarGrid.getChildren().clear();
+        for (int column = 0; column < WEEKDAY_LABELS.length; column++) {
+            Label weekday = new Label(WEEKDAY_LABELS[column]);
+            weekday.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+            weekday.getStyleClass().add("calendar-weekday");
+            GridPane.setColumnIndex(weekday, column);
+            GridPane.setRowIndex(weekday, 0);
+            calendarGrid.getChildren().add(weekday);
+        }
         LocalDate first = displayedMonth.atDay(1);
         LocalDate gridStart = first.minusDays(first.getDayOfWeek().getValue() - DayOfWeek.MONDAY.getValue());
         for (int index = 0; index < 42; index++) {
@@ -159,7 +168,7 @@ public final class HostCalendarController {
             } else {
                 cell.getStyleClass().add("calendar-cell-available");
             }
-            GridPane.setRowIndex(cell, index / 7);
+            GridPane.setRowIndex(cell, index / 7 + 1);
             GridPane.setColumnIndex(cell, index % 7);
             calendarGrid.getChildren().add(cell);
         }

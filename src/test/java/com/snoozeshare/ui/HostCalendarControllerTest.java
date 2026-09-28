@@ -34,6 +34,27 @@ class HostCalendarControllerTest {
     }
 
     @Test
+    void calendarPageOwnsArtifactAlignedSplitStyles() throws Exception {
+        String fxml = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/calendar/host-calendar.fxml"));
+        String css = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/calendar/host-calendar.css"));
+
+        assertTrue(fxml.contains("@host-calendar.css"));
+        assertTrue(fxml.contains("styleClass=\"host-calendar-page\""));
+        assertTrue(fxml.contains("styleClass=\"calendar-content\""));
+        assertTrue(fxml.contains("prefWidth=\"300\""));
+        assertTrue(css.contains(".host-calendar-page"));
+        assertTrue(css.contains(".calendar-side-panel"));
+        assertTrue(css.contains("-fx-pref-width: 300px"));
+        assertTrue(css.contains(".calendar-cell-available"));
+        assertTrue(css.contains(".calendar-cell-booked"));
+        assertTrue(css.contains(".calendar-cell-blocked"));
+        assertTrue(!fxml.contains("agent-theme.css"));
+        assertTrue(!css.contains("agent-theme.css"));
+    }
+
+    @Test
     void controllerRendersListingBlocksAcrossNavigableMonths() throws Exception {
         String source = Files.readString(Path.of(
                 "src/main/java/com/snoozeshare/ui/host/calendar/HostCalendarController.java"));
@@ -45,6 +66,8 @@ class HostCalendarControllerTest {
         assertTrue(source.contains("calendar-cell-booked"));
         assertTrue(source.contains("calendar-cell-blocked"));
         assertTrue(source.contains("calendar-cell-other-month"));
+        assertTrue(source.contains("WEEKDAY_LABELS"));
+        assertTrue(source.contains("calendar-weekday"));
         assertTrue(source.contains("setOnBack"));
         assertTrue(source.contains("setProperty"));
         assertTrue(source.contains("setContext"));

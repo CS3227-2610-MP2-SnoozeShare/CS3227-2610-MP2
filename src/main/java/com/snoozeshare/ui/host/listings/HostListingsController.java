@@ -79,24 +79,29 @@ public final class HostListingsController {
         card.getStyleClass().add("listing-card");
         javafx.scene.layout.StackPane imagePlaceholder = new javafx.scene.layout.StackPane();
         imagePlaceholder.getStyleClass().add("listing-image-placeholder");
-        imagePlaceholder.setMinSize(96, 96);
-        imagePlaceholder.setPrefSize(96, 96);
-        imagePlaceholder.setMaxSize(96, 96);
+        imagePlaceholder.setMinSize(64, 64);
+        imagePlaceholder.setPrefSize(64, 64);
+        imagePlaceholder.setMaxSize(64, 64);
         card.setOnMouseClicked(event -> onViewListing.accept(property));
         Label title = new Label(property.title());
         title.getStyleClass().add("card-title");
+        title.getStyleClass().add("listing-title");
         Label details = new Label(displayPropertyType(property) + " · "
                 + property.city() + ", " + property.region());
         details.getStyleClass().add("small");
+        details.getStyleClass().add("listing-subtext");
         Label rate = new Label("$" + property.baseNightlyRate()
                 .setScale(2, RoundingMode.HALF_UP) + "/night");
         rate.getStyleClass().add("card-price");
-        VBox summary = new VBox(6, title, details, rate);
+        rate.getStyleClass().add("listing-price");
+        VBox summary = new VBox(4, title, details, rate);
+        summary.getStyleClass().add("listing-summary");
         summary.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(summary, javafx.scene.layout.Priority.ALWAYS);
 
         ListingMetrics metrics = metricsFor(property);
         VBox bookingMetric = metric(String.valueOf(metrics.bookingCount()), "BOOKINGS");
+        bookingMetric.getStyleClass().add("listing-metric");
         Label ratingValue = new Label(String.format("%.1f", metrics.averageRating()));
         ratingValue.getStyleClass().add("listing-metric-value");
         Label star = new Label("★");
@@ -107,6 +112,7 @@ public final class HostListingsController {
         ratingCaption.getStyleClass().add("listing-metric-caption");
         VBox ratingMetric = new VBox(2, ratingLine, ratingCaption);
         ratingMetric.setAlignment(javafx.geometry.Pos.CENTER);
+        ratingMetric.getStyleClass().add("listing-metric");
 
         ToggleButton statusToggle = new ToggleButton();
         statusToggle.setSelected(property.status() == ListingStatus.ACTIVE);
@@ -119,17 +125,18 @@ public final class HostListingsController {
         statusControl.setAlignment(javafx.geometry.Pos.CENTER);
         statusToggle.setOnAction(event -> handleToggle(property, statusToggle, statusText));
         Button editButton = new Button("Edit");
-        editButton.getStyleClass().add("outline-button");
+        editButton.getStyleClass().add("listing-card-action");
         editButton.setAccessibleText("Edit listing " + property.title());
         editButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> event.consume());
         editButton.setOnAction(event -> onEditListing.accept(property));
-        Button calendarButton = new Button("Open booking calendar");
-        calendarButton.getStyleClass().add("outline-button");
+        Button calendarButton = new Button("Calendar");
+        calendarButton.getStyleClass().add("listing-card-action");
         calendarButton.setAccessibleText("Open booking calendar for " + property.title());
         calendarButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> event.consume());
         calendarButton.setOnAction(event -> onOpenCalendar.accept(property));
         HBox actions = new HBox(12, bookingMetric, ratingMetric, statusControl,
                 calendarButton, editButton);
+        actions.getStyleClass().add("listing-actions");
         actions.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
         card.getChildren().addAll(imagePlaceholder, summary, actions);
         return card;
@@ -166,6 +173,7 @@ public final class HostListingsController {
         captionLabel.getStyleClass().add("listing-metric-caption");
         VBox metric = new VBox(2, valueLabel, captionLabel);
         metric.setAlignment(javafx.geometry.Pos.CENTER);
+        metric.getStyleClass().add("listing-metric");
         return metric;
     }
 
