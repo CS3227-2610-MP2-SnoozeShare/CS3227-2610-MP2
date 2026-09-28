@@ -16,12 +16,11 @@ import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.infra.db.ConnectionFactory;
 import com.snoozeshare.infra.db.migration.MigrationRunner;
+import com.snoozeshare.repository.jdbc.JdbcLedgerRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
-import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
-import com.snoozeshare.service.impl.NoOpAuditService;
-import com.snoozeshare.service.impl.WalletLedgerWriter;
 import com.snoozeshare.service.impl.WalletServiceImpl;
+import com.snoozeshare.testsupport.LedgerTestSupport;
 
 class WalletLedgerTest {
 
@@ -31,7 +30,7 @@ class WalletLedgerTest {
             UUID userId = seedUser(connection);
             WalletService service = new WalletServiceImpl(connection,
                     new JdbcWalletRepository(connection),
-                    new JdbcWalletTransactionRepository(connection), null, new NoOpAuditService());
+                    LedgerTestSupport.writer(connection), new JdbcLedgerRepository(connection), null);
 
             service.topUp(userId, new BigDecimal("50.00"));
             service.withdraw(userId, new BigDecimal("12.50"));
@@ -52,7 +51,7 @@ class WalletLedgerTest {
             UUID userId = seedUser(connection);
             WalletService service = new WalletServiceImpl(connection,
                     new JdbcWalletRepository(connection),
-                    new JdbcWalletTransactionRepository(connection), null, new NoOpAuditService());
+                    LedgerTestSupport.writer(connection), new JdbcLedgerRepository(connection), null);
 
             assertThrows(IllegalArgumentException.class, () ->
                     service.topUp(userId, BigDecimal.ZERO));
@@ -69,7 +68,7 @@ class WalletLedgerTest {
             UUID userId = seedUser(connection, Role.HOST);
             WalletService service = new WalletServiceImpl(connection,
                     new JdbcWalletRepository(connection),
-                    new JdbcWalletTransactionRepository(connection));
+                    LedgerTestSupport.writer(connection), new JdbcLedgerRepository(connection), null);
 
             service.topUp(userId, new BigDecimal("500.00"));
             service.withdraw(userId, new BigDecimal("125.00"));
@@ -90,27 +89,31 @@ class WalletLedgerTest {
         try (Connection connection = migratedConnection()) {
             UUID userId = seedUser(connection, Role.HOST);
             JdbcWalletRepository wallets = new JdbcWalletRepository(connection);
-            JdbcWalletTransactionRepository transactions = new JdbcWalletTransactionRepository(connection);
             UUID walletId = wallets.findByUserId(userId).orElseThrow().walletId();
-            WalletLedgerWriter writer = new WalletLedgerWriter(connection, wallets, transactions);
+            var ledger = LedgerTestSupport.writer(connection);
 
-            writer.record(walletId, WalletTransactionType.TOP_UP, new BigDecimal("100.00"),
-                    BigDecimal.ZERO, null, null, userId);
-            writer.record(walletId, WalletTransactionType.ESCROW_HOLD, new BigDecimal("-10.00"),
-                    BigDecimal.ZERO, null, null, userId);
-            writer.record(walletId, WalletTransactionType.ESCROW_REFUND, new BigDecimal("10.00"),
-                    BigDecimal.ZERO, null, null, userId);
-            writer.record(walletId, WalletTransactionType.BOOKING_PAYOUT, new BigDecimal("20.00"),
-                    BigDecimal.ZERO, null, null, userId);
-            writer.record(walletId, WalletTransactionType.TICKET_REMEDY, new BigDecimal("5.00"),
-                    BigDecimal.ZERO, null, null, userId);
-            writer.record(walletId, WalletTransactionType.AGENT_OVERRIDE, new BigDecimal("2.00"),
-                    BigDecimal.ZERO, null, null, userId);
-            writer.record(walletId, WalletTransactionType.WITHDRAWAL, new BigDecimal("-1.00"),
-                    BigDecimal.ZERO, null, null, userId);
+            // Every type is a plain post() here (including PLATFORM_FEE, which in production only ever
+            // lands on the System wallet via postPayout) — this is a mechanical round-trip check that the
+            // ledger can carry and read back any WalletTransactionType, not a business-rules assertion.
+            ledger.post(walletId, WalletTransactionType.TOP_UP, new BigDecimal("100.00"),
+                    userId, null, null, null, Instant.now());
+            ledger.post(walletId, WalletTransactionType.ESCROW_HOLD, new BigDecimal("-10.00"),
+                    userId, null, null, null, Instant.now());
+            ledger.post(walletId, WalletTransactionType.ESCROW_REFUND, new BigDecimal("10.00"),
+                    userId, null, null, null, Instant.now());
+            ledger.post(walletId, WalletTransactionType.BOOKING_PAYOUT, new BigDecimal("20.00"),
+                    userId, null, null, null, Instant.now());
+            ledger.post(walletId, WalletTransactionType.TICKET_REMEDY, new BigDecimal("5.00"),
+                    userId, null, null, null, Instant.now());
+            ledger.post(walletId, WalletTransactionType.AGENT_OVERRIDE, new BigDecimal("2.00"),
+                    userId, null, null, null, Instant.now());
+            ledger.post(walletId, WalletTransactionType.PLATFORM_FEE, new BigDecimal("1.50"),
+                    userId, null, null, null, Instant.now());
+            ledger.post(walletId, WalletTransactionType.WITHDRAWAL, new BigDecimal("-1.00"),
+                    userId, null, null, null, Instant.now());
 
             assertEquals(java.util.Set.of(WalletTransactionType.values()),
-                    serviceTypes(transactions.findByWalletId(walletId)));
+                    serviceTypes(new JdbcLedgerRepository(connection).entriesForWallet(walletId)));
         }
     }
 

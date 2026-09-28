@@ -47,10 +47,11 @@ public final class ListingMetricsServiceImpl implements ListingMetricsService {
                              + "JOIN users u ON u.userId = r.guestId "
                              + "WHERE b.listingId = ? ORDER BY r.createdAt DESC");
              var payoutStatement = connection.prepareStatement(
-                     "SELECT COALESCE(SUM(wt.amount), 0) FROM wallet_transactions wt "
-                             + "JOIN bookings b ON b.bookingId = wt.relatedBookingId "
-                             + "WHERE b.listingId = ? AND wt.type = 'BOOKING_PAYOUT' "
-                             + "AND wt.createdAt >= ? AND wt.createdAt <= ?")) {
+                     "SELECT COALESCE(SUM(a.walletAdjustment), 0) FROM audit_log a "
+                             + "JOIN bookings b ON b.bookingId = a.bookingId "
+                             + "WHERE b.listingId = ? AND a.actionType = 'BOOKING_PAYOUT' "
+                             + "AND a.walletAdjustment IS NOT NULL "
+                             + "AND a.timestamp >= ? AND a.timestamp <= ?")) {
             String listingId = JdbcCodecs.uuid(propertyId);
             bookingStatement.setString(1, listingId);
             int bookingCount;

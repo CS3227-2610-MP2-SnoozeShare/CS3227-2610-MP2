@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 class SchemaParityTest {
 
     private static final List<String> TABLES = List.of("users", "properties", "bookings", "wallets",
-            "wallet_transactions", "tickets", "ticket_categories", "audit_log",
+            "tickets", "ticket_categories", "audit_log",
             "messages", "message_reads", "booking_messages",
             "booking_message_reads");
 
@@ -29,6 +29,9 @@ class SchemaParityTest {
             apply(migration, "src/main/resources/db/migration/V003__suspension_reason.sql");
             apply(migration, "src/main/resources/db/migration/V004__messaging.sql");
             apply(migration, "src/main/resources/db/migration/V005__booking_messaging.sql");
+            apply(migration, "src/main/resources/db/migration/V006__system_role.sql");
+            apply(migration, "src/main/resources/db/migration/V007__unified_ledger.sql");
+            apply(migration, "src/main/resources/db/migration/V008__drop_wallet_transactions.sql");
             applySql(migration, "ALTER TABLE bookings ADD COLUMN hostDecisionMessage TEXT;");
             apply(reference, "db/schema.sql");
 

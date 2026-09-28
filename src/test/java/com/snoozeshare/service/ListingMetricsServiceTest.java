@@ -83,9 +83,9 @@ class ListingMetricsServiceTest {
             bookings.save(overlap);
             bookings.save(inside);
             insertReview(connection, overlap.bookingId(), context.guestId(), 5, "Lovely stay", "Guest");
-            insertPayout(connection, context.walletId(), overlap.bookingId(),
+            insertPayout(connection, context.guestId(), overlap.bookingId(),
                     new BigDecimal("120.00"), Instant.parse("2026-10-20T10:00:00Z"));
-            insertPayout(connection, context.walletId(), inside.bookingId(),
+            insertPayout(connection, context.guestId(), inside.bookingId(),
                     new BigDecimal("75.00"), Instant.parse("2026-09-01T10:00:00Z"));
 
             Object metrics = metricsService(connection,
@@ -172,18 +172,19 @@ class ListingMetricsServiceTest {
         }
     }
 
-    private static void insertPayout(Connection connection, UUID walletId, UUID bookingId,
+    private static void insertPayout(Connection connection, UUID actorUserId, UUID bookingId,
                                      BigDecimal amount, Instant createdAt) throws Exception {
         try (var statement = connection.prepareStatement(
-                "INSERT INTO wallet_transactions (transactionId, walletId, type, amount, "
-                        + "feeAmount, balanceAfter, relatedBookingId, createdAt) "
-                        + "VALUES (?, ?, 'BOOKING_PAYOUT', ?, 0, ?, ?, ?)")) {
+                "INSERT INTO audit_log (logId, actorUserId, actionType, entityType, entityId, "
+                        + "timestamp, walletAdjustment, bookingId, balanceAfter) "
+                        + "VALUES (?, ?, 'BOOKING_PAYOUT', 'WalletTransaction', ?, ?, ?, ?, ?)")) {
             statement.setString(1, UUID.randomUUID().toString());
-            statement.setString(2, walletId.toString());
-            statement.setBigDecimal(3, amount);
-            statement.setBigDecimal(4, amount);
-            statement.setString(5, bookingId.toString());
-            statement.setString(6, createdAt.toString());
+            statement.setString(2, actorUserId.toString());
+            statement.setString(3, UUID.randomUUID().toString());
+            statement.setString(4, createdAt.toString());
+            statement.setBigDecimal(5, amount);
+            statement.setString(6, bookingId.toString());
+            statement.setBigDecimal(7, amount);
             statement.executeUpdate();
         }
     }

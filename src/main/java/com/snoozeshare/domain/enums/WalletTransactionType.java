@@ -7,5 +7,6 @@ public enum WalletTransactionType {
     ESCROW_REFUND,
     BOOKING_PAYOUT,
     TICKET_REMEDY,
-    AGENT_OVERRIDE
+    AGENT_OVERRIDE,
+    PLATFORM_FEE
 }

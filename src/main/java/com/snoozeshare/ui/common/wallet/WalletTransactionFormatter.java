@@ -24,7 +24,7 @@ public final class WalletTransactionFormatter {
 
     public static String relatedLabel(WalletTransaction transaction) {
         return switch (transaction.type()) {
-            case TOP_UP, WITHDRAWAL -> "—";
+            case TOP_UP, WITHDRAWAL, PLATFORM_FEE -> "—";
             case ESCROW_HOLD, ESCROW_REFUND, BOOKING_PAYOUT -> referenceLabel(
                     "Booking", transaction.relatedBookingId());
             case TICKET_REMEDY -> referenceLabel("Ticket", transaction.relatedTicketId());

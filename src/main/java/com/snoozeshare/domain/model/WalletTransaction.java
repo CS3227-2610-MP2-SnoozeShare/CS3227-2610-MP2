@@ -11,7 +11,6 @@ public record WalletTransaction(
         UUID walletId,
         WalletTransactionType type,
         BigDecimal amount,
-        BigDecimal feeAmount,
         BigDecimal balanceAfter,
         UUID relatedBookingId,
         UUID relatedTicketId,

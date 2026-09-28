@@ -34,6 +34,9 @@ public final class UserServiceImpl implements UserService {
         DomainValidation.requireText(email, "email");
         User user = users.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email"));
+        if (user.role() == Role.SYSTEM) {
+            throw new IllegalArgumentException("Invalid email");
+        }
         if (user.accountStatus() != AccountStatus.ACTIVE) {
             throw new IllegalStateException("Account is not active");
         }
@@ -46,6 +49,9 @@ public final class UserServiceImpl implements UserService {
         DomainValidation.requireText(email, "email");
         if (role == null) {
             throw new IllegalArgumentException("Role must not be null");
+        }
+        if (role == Role.SYSTEM) {
+            throw new IllegalArgumentException("The system account cannot be registered");
         }
         if (users.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("Email is already registered");

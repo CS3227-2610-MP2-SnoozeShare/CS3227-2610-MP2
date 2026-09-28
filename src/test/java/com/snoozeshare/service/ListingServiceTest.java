@@ -142,7 +142,7 @@ class ListingServiceTest {
 
             IllegalArgumentException rateException = assertThrows(IllegalArgumentException.class, () ->
                     service.create(invalidRate, ctx.hostId()));
-            assertEquals("Rate per night must be non-negative", rateException.getMessage());
+            assertEquals("Rate per night must be positive", rateException.getMessage());
 
             Property invalidPostal = new Property(null, null, ListingStatus.ACTIVE, "Title", "Description",
                     PropertyType.APARTMENT, "Street", "Singapore", "Central", 0, 2, 1, 1,
@@ -289,8 +289,33 @@ class ListingServiceTest {
                         valid.propertyType(), valid.checkInTime(), valid.checkOutTime())),
                 Arguments.of(with(valid, valid.title(), valid.description(), valid.streetAddress(),
                         valid.city(), valid.region(), valid.postalCode(), valid.maxGuests(),
+                        valid.bedrooms(), valid.bathrooms(), BigDecimal.ZERO,
+                        valid.propertyType(), valid.checkInTime(), valid.checkOutTime())),
+                Arguments.of(with(valid, valid.title(), valid.description(), valid.streetAddress(),
+                        valid.city(), valid.region(), valid.postalCode(), valid.maxGuests(),
                         valid.bedrooms(), valid.bathrooms(), valid.baseNightlyRate(), null,
-                        valid.checkInTime(), valid.checkOutTime())));
+                        valid.checkInTime(), valid.checkOutTime())),
+                Arguments.of(with(valid, valid.title(), valid.description(), valid.streetAddress(),
+                        valid.city(), valid.region(), valid.postalCode(), valid.maxGuests(),
+                        valid.bedrooms(), valid.bathrooms(), new BigDecimal("0.005"),
+                        valid.propertyType(), valid.checkInTime(), valid.checkOutTime())));
+    }
+
+    @Test
+    void smallPositiveNightlyRateIsAccepted() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            ListingService service = createService(connection);
+
+            Property draft = with(validDraft(), validDraft().title(), validDraft().description(),
+                    validDraft().streetAddress(), validDraft().city(), validDraft().region(),
+                    validDraft().postalCode(), validDraft().maxGuests(), validDraft().bedrooms(),
+                    validDraft().bathrooms(), new BigDecimal("0.01"), validDraft().propertyType(),
+                    validDraft().checkInTime(), validDraft().checkOutTime());
+            Property created = service.create(draft, ctx.hostId());
+
+            assertEquals(0, new BigDecimal("0.01").compareTo(created.baseNightlyRate()));
+        }
     }
 
     @Test

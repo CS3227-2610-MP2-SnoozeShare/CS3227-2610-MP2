@@ -4,12 +4,12 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -39,10 +39,10 @@ public final class AuditLogController {
     private static final double ROW_HEIGHT = 47;
     private static final double HEADER_HEIGHT = 34;
     private static final double MIN_ROWS = 3;
-    private static final double TOTAL_SHARE = 9.4;
+    private static final double TOTAL_SHARE = 10.0;
     /** Room kept at the right of the columns for the vertical scroll bar. */
     private static final double SCROLL_BAR_ALLOWANCE = 14;
-    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("MMM d, h:mm a", Locale.ENGLISH);
+    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.ENGLISH);
 
     @FXML private TextField searchField;
     @FXML private MultiSelectMenu actionSelect;
@@ -73,12 +73,12 @@ public final class AuditLogController {
         table.minHeightProperty().bind(Bindings.min(table.prefHeightProperty(),
                 MIN_ROWS * ROW_HEIGHT + HEADER_HEIGHT));
         table.maxHeightProperty().bind(table.prefHeightProperty());
-        table.getColumns().add(textColumn("TIMESTAMP", 1.1,
-                entry -> TIME.format(entry.timestamp().atZone(ZoneId.systemDefault())), null));
+        table.getColumns().add(textColumn("TIMESTAMP", 1.2,
+                entry -> timeText(entry, ZoneId.systemDefault()), null));
         table.getColumns().add(textColumn("ACTOR", 1.0,
                 entry -> entry.actorName() == null ? "Unknown user" : entry.actorName(), "cell-strong"));
         table.getColumns().add(actionColumn());
-        table.getColumns().add(textColumn("REF", 1.0, AuditLogController::refText, "cell-id"));
+        table.getColumns().add(textColumn("TARGET", 1.5, AuditLogController::targetText, "cell-strong"));
         table.getColumns().add(textColumn("STATUS", 1.5, AuditLogController::statusText, null));
         table.getColumns().add(textColumn("REASON", 2.4,
                 entry -> entry.reason() == null ? DASH : entry.reason(), null));
@@ -200,6 +200,10 @@ public final class AuditLogController {
         return column;
     }
 
+    static String timeText(AuditLogEntry entry, ZoneId zone) {
+        return TIME.format(entry.timestamp().atZone(zone));
+    }
+
     static String statusText(AuditLogEntry entry) {
         String before = label(entry.beforeState());
         String after = label(entry.afterState());
@@ -221,20 +225,29 @@ public final class AuditLogController {
                 + amount.abs().setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
-    static String refText(AuditLogEntry entry) {
-        List<String> parts = new ArrayList<>();
-        if (entry.bookingId() != null) {
-            parts.add("Booking #" + lastFour(entry.bookingId().toString()));
+    /**
+     * The one thing the action was done to: the entity itself, or for a wallet movement the user whose wallet
+     * moved. Related records (the booking behind a ticket resolution) are deliberately left out.
+     */
+    static String targetText(AuditLogEntry entry) {
+        String type = entry.entityType();
+        if ("WalletTransaction".equals(type) || "User".equals(type)) {
+            if (entry.subjectName() != null) {
+                return entry.subjectName();
+            }
+            UUID userId = "User".equals(type) ? entry.entityId() : entry.subjectUserId();
+            return userId == null ? DASH : "User #" + lastFour(userId.toString());
         }
-        if (entry.ticketId() != null) {
-            parts.add("Ticket #" + lastFour(entry.ticketId().toString()));
+        if (type == null || entry.entityId() == null) {
+            return DASH;
         }
-        return parts.isEmpty() ? DASH : String.join(" \u00b7 ", parts);
+        String noun = "TicketCategory".equals(type) ? "Category" : type;
+        return noun + " #" + lastFour(entry.entityId().toString());
     }
 
     static String pillClass(String actionType) {
         return switch (actionType) {
-            case "BOOKING_PAYOUT", "ESCROW_REFUND", "TICKET_REMEDY", "TOP_UP", "BOOKING_COMPLETED" ->
+            case "BOOKING_PAYOUT", "PLATFORM_FEE", "ESCROW_REFUND", "TICKET_REMEDY", "TOP_UP", "BOOKING_COMPLETED" ->
                 "agent-pill-success";
             case "AGENT_OVERRIDE", "TICKET_RESOLVED", "TICKET_OPENED", "TICKET_ASSIGNED", "TICKET_UNASSIGNED",
                 "TICKET_NOTE_SAVED" -> "agent-pill-accent";

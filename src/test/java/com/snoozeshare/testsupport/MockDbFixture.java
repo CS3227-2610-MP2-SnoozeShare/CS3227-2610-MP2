@@ -89,34 +89,33 @@ public final class MockDbFixture implements AutoCloseable {
     }
 
     /**
-     * Every wallet balance equals the sum of its transactions, and every row's balanceAfter equals the
-     * chronological running sum.
+     * Every wallet balance equals its owner's newest money row's balanceAfter (or 0 with no rows), and each
+     * money row's balanceAfter is the running sum of the owner's adjustments in insertion order.
      */
     public void assertLedgerInvariant() throws SQLException {
         try (Statement statement = connection.createStatement()) {
             try (ResultSet result = statement.executeQuery(
-                    "SELECT w.walletId AS walletId, w.balance AS balance, "
-                            + "COALESCE(SUM(t.amount), 0) AS total FROM wallets w "
-                            + "LEFT JOIN wallet_transactions t ON t.walletId = w.walletId "
-                            + "GROUP BY w.walletId")) {
+                    "SELECT w.walletId AS walletId, w.balance AS balance, COALESCE((SELECT a.balanceAfter "
+                            + "FROM audit_log a WHERE a.subjectUserId = w.userId AND a.walletAdjustment IS NOT NULL "
+                            + "ORDER BY a.rowid DESC LIMIT 1), 0) AS newest FROM wallets w")) {
                 while (result.next()) {
-                    assertEquals(result.getDouble("total"), result.getDouble("balance"), 0.005,
-                            "balance != sum(transactions) for wallet " + result.getString("walletId"));
+                    assertEquals(result.getDouble("newest"), result.getDouble("balance"), 0.005,
+                            "balance != newest balanceAfter for wallet " + result.getString("walletId"));
                 }
             }
             try (ResultSet result = statement.executeQuery(
-                    "SELECT walletId, transactionId, amount, balanceAfter FROM wallet_transactions "
-                            + "ORDER BY walletId, createdAt, transactionId")) {
-                String currentWallet = null;
+                    "SELECT subjectUserId, entityId, walletAdjustment, balanceAfter FROM audit_log "
+                            + "WHERE walletAdjustment IS NOT NULL ORDER BY subjectUserId, rowid")) {
+                String currentUser = null;
                 double running = 0;
                 while (result.next()) {
-                    if (!result.getString("walletId").equals(currentWallet)) {
-                        currentWallet = result.getString("walletId");
+                    if (!result.getString("subjectUserId").equals(currentUser)) {
+                        currentUser = result.getString("subjectUserId");
                         running = 0;
                     }
-                    running += result.getDouble("amount");
+                    running += result.getDouble("walletAdjustment");
                     assertEquals(running, result.getDouble("balanceAfter"), 0.005,
-                            "balanceAfter chain broken at " + result.getString("transactionId"));
+                            "balanceAfter chain broken at " + result.getString("entityId"));
                 }
             }
         }

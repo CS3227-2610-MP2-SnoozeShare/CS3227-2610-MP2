@@ -27,6 +27,19 @@ class AuditRecordTest {
     }
 
     @Test
+    void balanceAfterBelongsToMoneyRowsOnly() {
+        var builder = AuditRecord.builder(ACTOR, AuditAction.TOP_UP, "WalletTransaction", ENTITY)
+                .wallet(null, new BigDecimal("10.00"));
+
+        assertThrows(IllegalArgumentException.class, builder::build);
+        AuditRecord money = AuditRecord.builder(ACTOR, AuditAction.TOP_UP, "WalletTransaction", ENTITY)
+                .wallet(new BigDecimal("10.00"), new BigDecimal("25.00")).build();
+        assertEquals(0, new BigDecimal("25.00").compareTo(money.balanceAfter()));
+        assertNull(AuditRecord.builder(ACTOR, AuditAction.TOP_UP, "WalletTransaction", ENTITY)
+                .wallet(new BigDecimal("10.00")).build().balanceAfter());
+    }
+
+    @Test
     void statusEnumsAreStoredAsPlainNamesAndNullMeansNone() {
         AuditRecord record = AuditRecord.builder(ACTOR, AuditAction.BOOKING_REQUESTED, "Booking", ENTITY)
                 .status(null, "PENDING").build();

@@ -255,8 +255,11 @@ public final class HostListingFormController {
         }
         try {
             BigDecimal rate = new BigDecimal(value);
-            if (rate.signum() < 0) {
-                throw new IllegalArgumentException("Rate per night must be non-negative");
+            if (rate.signum() <= 0) {
+                throw new IllegalArgumentException("Rate per night must be greater than 0");
+            }
+            if (rate.stripTrailingZeros().scale() > 2) {
+                throw new IllegalArgumentException("Rate per night must have at most 2 decimal places");
             }
             return rate;
         } catch (NumberFormatException exception) {

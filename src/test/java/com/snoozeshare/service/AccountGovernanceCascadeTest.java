@@ -82,6 +82,11 @@ class AccountGovernanceCascadeTest {
             assertEquals(2, money.size());
             assertTrue(money.stream().allMatch(row -> row.subjectUserId().equals(guest.userId())
                     && row.walletAdjustment().signum() > 0));
+            assertTrue(money.stream().allMatch(row -> row.balanceAfter() != null), "money rows carry balanceAfter");
+            BigDecimal newestBalanceAfter = fixture.ledgerEntries.entriesForWallet(
+                    fixture.wallets.findByUserId(guest.userId()).orElseThrow().walletId()).getLast().balanceAfter();
+            assertEquals(0, fixture.balance(guest).compareTo(newestBalanceAfter));
+            assertTrue(audit(fixture, AuditAction.PLATFORM_FEE).isEmpty(), "a refund carries no fee row");
             assertEquals(4, events.size(), "a cancellation and a wallet event per booking");
         }
     }

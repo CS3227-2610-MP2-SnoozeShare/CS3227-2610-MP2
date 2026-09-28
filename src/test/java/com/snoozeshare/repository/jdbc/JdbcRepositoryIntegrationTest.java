@@ -18,6 +18,7 @@ import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.domain.model.WalletTransaction;
 import com.snoozeshare.infra.db.ConnectionFactory;
 import com.snoozeshare.infra.db.migration.MigrationRunner;
+import com.snoozeshare.testsupport.LedgerTestSupport;
 
 class JdbcRepositoryIntegrationTest {
 
@@ -39,13 +40,12 @@ class JdbcRepositoryIntegrationTest {
     }
 
     @Test
-    void walletAndTransactionRepositoriesRoundTripMoneyAndEnums() throws Exception {
+    void walletAndLedgerRepositoriesRoundTripMoneyAndEnums() throws Exception {
         try (var connection = ConnectionFactory.open("jdbc:sqlite::memory:")) {
             MigrationRunner.migrate(connection);
             JdbcUserRepository users = new JdbcUserRepository(connection);
             JdbcWalletRepository wallets = new JdbcWalletRepository(connection);
-            JdbcWalletTransactionRepository transactions =
-                    new JdbcWalletTransactionRepository(connection);
+            JdbcLedgerRepository ledger = new JdbcLedgerRepository(connection);
             UUID userId = UUID.randomUUID();
             UUID walletId = UUID.randomUUID();
             users.save(new User(userId, Role.HOST, "Host One", "host@example.com",
@@ -53,17 +53,21 @@ class JdbcRepositoryIntegrationTest {
             Wallet wallet = new Wallet(walletId, userId, new BigDecimal("12.34"), "SGD",
                     Instant.parse("2026-09-23T00:00:00Z"));
             wallets.save(wallet);
-            WalletTransaction transaction = new WalletTransaction(
-                    UUID.randomUUID(), walletId, WalletTransactionType.TOP_UP,
-                    new BigDecimal("12.34"), null, new BigDecimal("12.34"),
-                    null, null, userId, Instant.parse("2026-09-23T00:00:00Z"));
-
-            transactions.save(transaction);
-
             assertEquals(wallet, wallets.findByUserId(userId).orElseThrow());
-            assertEquals(transaction,
-                    transactions.findByWalletId(walletId).get(0));
-            assertTrue(transactions.findByBookingId(UUID.randomUUID()).isEmpty());
+
+            WalletTransaction transaction = LedgerTestSupport.writer(connection).post(walletId,
+                    WalletTransactionType.TOP_UP, new BigDecimal("10.00"), userId, null, null, null,
+                    Instant.parse("2026-09-24T00:00:00Z"));
+
+            assertEquals(0, new BigDecimal("22.34").compareTo(
+                    wallets.findByUserId(userId).orElseThrow().balance()));
+            WalletTransaction stored = ledger.entriesForWallet(walletId).get(0);
+            assertEquals(transaction.transactionId(), stored.transactionId());
+            assertEquals(WalletTransactionType.TOP_UP, stored.type());
+            assertEquals(0, new BigDecimal("10.00").compareTo(stored.amount()));
+            assertEquals(0, new BigDecimal("22.34").compareTo(stored.balanceAfter()));
+            assertEquals(userId, stored.initiatedBy());
+            assertTrue(ledger.entriesForBooking(UUID.randomUUID()).isEmpty());
         }
     }
 }

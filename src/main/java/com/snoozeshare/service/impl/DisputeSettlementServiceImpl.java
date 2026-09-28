@@ -1,7 +1,6 @@
 package com.snoozeshare.service.impl;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Clock;
@@ -32,20 +31,20 @@ import com.snoozeshare.infra.events.EventBus;
 import com.snoozeshare.infra.events.events.TicketResolvedEvent;
 import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
 import com.snoozeshare.repository.BookingRepository;
+import com.snoozeshare.repository.LedgerRepository;
 import com.snoozeshare.repository.PropertyRepository;
 import com.snoozeshare.repository.TicketRepository;
 import com.snoozeshare.repository.UserRepository;
 import com.snoozeshare.repository.WalletRepository;
-import com.snoozeshare.repository.WalletTransactionRepository;
 import com.snoozeshare.service.AuditRecord;
 import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.DisputeSettlementService;
 import com.snoozeshare.service.Settlement;
 
 /**
- * Settles the whole held escrow when an agent resolves a dispute (C17, C20). Everything is written in one
- * transaction; wallets are updated directly (not through WalletLedgerWriter, which opens its own
- * transaction and treats the fee as a deduction) because feeAmount is informational on payout rows.
+ * Settles the whole held escrow when an agent resolves a dispute (C17, C20). The ticket and booking status
+ * changes and every money row (guest refund, host payout, platform fee) are written in one transaction
+ * through the {@link LedgerWriter}; events are published only after it commits.
  */
 public final class DisputeSettlementServiceImpl implements DisputeSettlementService {
 
@@ -55,7 +54,8 @@ public final class DisputeSettlementServiceImpl implements DisputeSettlementServ
     private final PropertyRepository properties;
     private final UserRepository users;
     private final WalletRepository wallets;
-    private final WalletTransactionRepository transactions;
+    private final LedgerWriter ledger;
+    private final LedgerRepository ledgerEntries;
     private final AuditService audit;
     private final EventBus eventBus;
     private final Clock clock;
@@ -63,15 +63,16 @@ public final class DisputeSettlementServiceImpl implements DisputeSettlementServ
     public DisputeSettlementServiceImpl(Connection connection, TicketRepository tickets,
                                         BookingRepository bookings, PropertyRepository properties,
                                         UserRepository users, WalletRepository wallets,
-                                        WalletTransactionRepository transactions, AuditService audit,
-                                        EventBus eventBus, Clock clock) {
+                                        LedgerWriter ledger, LedgerRepository ledgerEntries,
+                                        AuditService audit, EventBus eventBus, Clock clock) {
         this.connection = connection;
         this.tickets = tickets;
         this.bookings = bookings;
         this.properties = properties;
         this.users = users;
         this.wallets = wallets;
-        this.transactions = transactions;
+        this.ledger = ledger;
+        this.ledgerEntries = ledgerEntries;
         this.audit = audit;
         this.eventBus = eventBus;
         this.clock = clock;
@@ -112,7 +113,7 @@ public final class DisputeSettlementServiceImpl implements DisputeSettlementServ
         if (booking.status() != BookingStatus.CONFIRMED) {
             throw new IllegalStateException("Booking is not confirmed");
         }
-        if (!EscrowPolicy.isHeld(transactions.findByBookingId(booking.bookingId()))) {
+        if (!EscrowPolicy.isHeld(ledgerEntries.entriesForBooking(booking.bookingId()))) {
             throw new IllegalStateException("Escrow is not held for this booking");
         }
         SettlementBreakdown split = SettlementCalculator.split(booking.totalAmount(), guestRefund);
@@ -130,19 +131,6 @@ public final class DisputeSettlementServiceImpl implements DisputeSettlementServ
         Wallet hostWallet = wallets.findByUserId(property.hostId())
                 .orElseThrow(() -> new IllegalArgumentException("Host wallet does not exist"));
 
-        WalletTransaction guestTransaction = null;
-        WalletTransaction hostTransaction = null;
-        if (split.guestRefund().signum() > 0) {
-            WalletTransactionType type = mode == ResolutionMode.MANUAL
-                    ? WalletTransactionType.AGENT_OVERRIDE : WalletTransactionType.TICKET_REMEDY;
-            guestTransaction = credit(guestWallet, type, split.guestRefund(), BigDecimal.ZERO, booking,
-                    ticket, agentId, now);
-        }
-        if (split.hostGross().signum() > 0) {
-            hostTransaction = credit(hostWallet, WalletTransactionType.BOOKING_PAYOUT, split.hostNet(),
-                    split.fee(), booking, ticket, agentId, now);
-        }
-
         Ticket updatedTicket = tickets.save(new Ticket(ticket.ticketId(), ticket.bookingId(),
                 ticket.raisedByUserId(), ticket.raisedByRole(), ticket.category(), ticket.title(),
                 ticket.description(), ticket.requestedRemedy(), ticket.supportingText(), resolved,
@@ -157,14 +145,19 @@ public final class DisputeSettlementServiceImpl implements DisputeSettlementServ
         audit.record(AuditRecord.builder(agentId, AuditAction.BOOKING_COMPLETED, "Booking", booking.bookingId())
                 .status(booking.status(), BookingStatus.COMPLETED).reason("Escrow settled by ticket resolution")
                 .subject(booking.guestId()).booking(booking.bookingId()).ticket(ticketId).at(now).build());
-        if (guestTransaction != null) {
-            audit.recordWalletTransaction(agentId, booking.guestId(), guestTransaction,
-                    split.guestRefund(), null);
+
+        // Money rows (and the host payout's PLATFORM_FEE row) are written by the ledger, in this transaction.
+        WalletTransaction guestTransaction = null;
+        WalletTransaction hostTransaction = null;
+        if (split.guestRefund().signum() > 0) {
+            WalletTransactionType type = mode == ResolutionMode.MANUAL
+                    ? WalletTransactionType.AGENT_OVERRIDE : WalletTransactionType.TICKET_REMEDY;
+            guestTransaction = ledger.post(guestWallet.walletId(), type, split.guestRefund(), agentId,
+                    booking.bookingId(), ticket.ticketId(), null, now);
         }
-        if (hostTransaction != null) {
-            audit.recordWalletTransaction(agentId, property.hostId(), hostTransaction, split.hostNet(),
-                    "Payout net of 3% platform fee ("
-                            + split.fee().setScale(2, RoundingMode.HALF_UP).toPlainString() + ")");
+        if (split.hostGross().signum() > 0) {
+            hostTransaction = ledger.postPayout(hostWallet.walletId(), split.hostNet(), split.fee(), agentId,
+                    booking.bookingId(), ticket.ticketId(), now);
         }
         return new Settlement(updatedTicket, updatedBooking, split, guestTransaction, hostTransaction);
     }
@@ -178,15 +171,6 @@ public final class DisputeSettlementServiceImpl implements DisputeSettlementServ
             throw new IllegalArgumentException(
                     "Accept needs a refund above zero unless the requested remedy is a host payout");
         }
-    }
-
-    private WalletTransaction credit(Wallet wallet, WalletTransactionType type, BigDecimal amount,
-                                     BigDecimal fee, Booking booking, Ticket ticket, UUID agentId,
-                                     Instant now) {
-        BigDecimal balanceAfter = wallet.balance().add(amount);
-        wallets.save(new Wallet(wallet.walletId(), wallet.userId(), balanceAfter, wallet.currency(), now));
-        return transactions.save(new WalletTransaction(UUID.randomUUID(), wallet.walletId(), type,
-                amount, fee, balanceAfter, booking.bookingId(), ticket.ticketId(), agentId, now));
     }
 
     private static TicketStatus statusFor(ResolutionMode mode, SettlementBreakdown split) {

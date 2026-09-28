@@ -8,6 +8,7 @@ import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.ui.common.NavShellController;
 import com.snoozeshare.ui.common.wallet.WalletDashboardController;
 import com.snoozeshare.ui.guest.listing.ListingDetailController;
+import com.snoozeshare.ui.guest.messaging.GuestMessagesController;
 import com.snoozeshare.ui.guest.search.GuestSearchController;
 import com.snoozeshare.ui.guest.tickets.TicketHistoryController;
 import com.snoozeshare.ui.guest.trips.TripDashboardController;
@@ -28,11 +29,13 @@ public final class GuestShellController extends NavShellController {
     private BorderPane shellRoot;
     @FXML private Label searchTab;
     @FXML private Label tripsTab;
+    @FXML private Label messagesTab;
     @FXML private Label walletTab;
     @FXML private Label supportTab;
 
     private GuestSearchController searchController;
     private TripDashboardController tripController;
+    private GuestMessagesController messagesController;
     private WalletDashboardController walletController;
     private TicketHistoryController ticketController;
     private Node defaultCenter;
@@ -52,6 +55,7 @@ public final class GuestShellController extends NavShellController {
     private void showExplore() {
         selectTab(searchTab);
         cleanupTripController();
+        cleanupMessagesController();
         cleanupWalletController();
         cleanupTicketController();
         try {
@@ -100,6 +104,7 @@ public final class GuestShellController extends NavShellController {
     @FXML
     private void showMyTrips() {
         selectTab(tripsTab);
+        cleanupMessagesController();
         cleanupWalletController();
         cleanupTripController();
         cleanupTicketController();
@@ -123,10 +128,37 @@ public final class GuestShellController extends NavShellController {
     }
 
     @FXML
+    private void showMessages() {
+        selectTab(messagesTab);
+        cleanupTripController();
+        cleanupWalletController();
+        cleanupTicketController();
+        cleanupMessagesController();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/snoozeshare/ui/guest/messaging/guest-messages.fxml"));
+            Node messagesView = loader.load();
+            messagesController = loader.getController();
+            messagesController.setContext(getContext());
+            shellRoot.setCenter(messagesView);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Unable to load messages view", exception);
+        }
+    }
+
+    private void cleanupMessagesController() {
+        if (messagesController != null) {
+            messagesController.cleanup();
+            messagesController = null;
+        }
+    }
+
+    @FXML
     private void showWallet() {
         selectTab(walletTab);
         cleanupWalletController();
         cleanupTripController();
+        cleanupMessagesController();
         cleanupTicketController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -151,6 +183,7 @@ public final class GuestShellController extends NavShellController {
     private void showSupport() {
         selectTab(supportTab);
         cleanupTripController();
+        cleanupMessagesController();
         cleanupWalletController();
         cleanupTicketController();
         try {
@@ -173,7 +206,7 @@ public final class GuestShellController extends NavShellController {
     }
 
     private void selectTab(Label selected) {
-        for (Label tab : new Label[] {searchTab, tripsTab, walletTab, supportTab}) {
+        for (Label tab : new Label[] {searchTab, tripsTab, messagesTab, walletTab, supportTab}) {
             tab.getStyleClass().remove(ACTIVE_TAB);
         }
         selected.getStyleClass().add(ACTIVE_TAB);

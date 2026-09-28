@@ -198,7 +198,10 @@ public final class ListingServiceImpl implements ListingService {
         if (draft.bathrooms() < 0) {
             throw new IllegalArgumentException("Bathrooms must be non-negative");
         }
-        DomainValidation.requireNonNegative(draft.baseNightlyRate(), "Rate per night");
+        DomainValidation.requirePositive(draft.baseNightlyRate(), "Rate per night");
+        if (draft.baseNightlyRate().stripTrailingZeros().scale() > 2) {
+            throw new IllegalArgumentException("Rate per night must have at most 2 decimal places");
+        }
         if (draft.checkInTime() == null) {
             throw new IllegalArgumentException("Check-in Time must be provided");
         }
