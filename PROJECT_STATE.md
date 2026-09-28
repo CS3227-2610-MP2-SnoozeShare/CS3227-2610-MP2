@@ -8,7 +8,7 @@ every boundary, not at the end of the session.
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `host-ui-touchup` (branched from `w9`; Host UI touch-up commits)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-29 by Codex — Made create/edit listing amenity tile containers non-clickable while preserving checkbox interaction; restarted the mock-DB app
+- **Last updated:** 2026-09-29 by Codex — Converted Developer Guide links to GitHub `blob/main` file URLs, fixed the Product Backlog route, and ignored the local Jekyll cache
 - **Last verified against repo:** 2026-09-27
 - **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, W6/W7 and others on `main`, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.13/4.14 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.9/4.13 Audit trail, two diagrams, the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented; W9/W13/W14 not yet in the guide.
 
@@ -65,7 +65,7 @@ three iterations).
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
 | S7 | 2026-09-27 | Claude Sonnet 5 | messaging-service | W13 | Paused | Service slice built and verified; host Messages UI continued on `w9` | 2026-09-27 |
-| S8 | 2026-09-27 | Codex | host-ui-touchup | W6/W7/W13 | Active | Amenity tile container cursor corrected and verified; app running against `build/runtime-mock.db` | 2026-09-29 |
+| S8 | 2026-09-27 | Codex | host-ui-touchup | W6/W7/W13 + GitHub Pages docs | Active | Docs links now target repository files on GitHub; docs-source Jekyll build passes; Host UI touch-up branch remains active | 2026-09-29 |
 | S14 | 2026-09-26 | Codex | w8 | W8 — Host Request Queue, Earnings & Disputes | Paused | PR #11 open against main; W8 implementation, review fixes, and Developer Guide handoff complete | 2026-09-27 |
 | S16 | 2026-09-27 | Claude Sonnet 5 (subagent-driven) | unified-ledger | W14 | Paused | Plan execution complete: all 12 tasks done and reviewed. Merged `main` into `unified-ledger` (bringing in W9/W13 host-UI work that had landed on `main` via `w9`/`messaging-service`, both now fully merged and their session rows retired), resolved the wallet-code and decision-ID conflicts (C43/C44), and opened PR #16. Awaiting operator review/merge | 2026-09-27 |
 

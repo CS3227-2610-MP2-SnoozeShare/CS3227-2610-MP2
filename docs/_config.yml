@@ -1,0 +1,10 @@
+title: SnoozeShare
+description: CS3227 Mini Project 2
+
+theme: jekyll-theme-cayman
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
