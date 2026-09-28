@@ -24,7 +24,7 @@ class DatabaseBootstrapTest {
             assertTrue(foreignKeysAreEnabled(connection));
             assertEquals(Set.of(
                     "users", "properties", "availability_blocks", "bookings", "wallets",
-                    "wallet_transactions", "ticket_categories", "tickets", "reviews",
+                    "ticket_categories", "tickets", "reviews",
                     "audit_log", "messages", "message_reads", "booking_messages",
                     "booking_message_reads"), tableNames(connection));
         }
@@ -36,7 +36,7 @@ class DatabaseBootstrapTest {
             MigrationRunner.migrate(connection);
             MigrationRunner.migrate(connection);
 
-            assertEquals(5, migrationCount(connection));
+            assertEquals(8, migrationCount(connection));
         }
     }
 

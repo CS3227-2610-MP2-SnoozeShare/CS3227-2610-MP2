@@ -4,13 +4,13 @@
 anything, then run `git log --oneline -20` to confirm it still matches reality. Update it at
 every boundary, not at the end of the session.
 
-- **Phase:** W13 Host Messages UI implemented; awaiting operator acceptance before the Developer Guide checkpoint
+- **Phase:** W14 Unified Ledger — all 12 tasks done and independently reviewed on `unified-ledger`, PR open against `main`, awaiting operator acceptance; W13 Messaging (service + host Messages UI) done and merged to `main`; W9 Host Wallet Management done and merged; W12 Platform Audit Trail done (merged); W11 Account Governance implemented, awaiting operator acceptance
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
-- **Branch:** `w9` (W13 — Messaging; host Messages UI slice)
+- **Branch:** `unified-ledger` (W14; opened as PR #16 against `main`), merged up to date with `main` (which now carries W9's and W13's host-UI work, previously tracked separately on `w9`/`messaging-service`)
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-27 by Codex — Host ticket creation reversal implemented
+- **Last updated:** 2026-09-27 by Claude Sonnet 5 — merged `main` into `unified-ledger` to open PR #16 (resolved conflicts in `WalletServiceImpl`/`WalletLedgerTest`/two W9 UI files against the ledger rewrite; renumbered a W9 decision-ID collision, see C43/C44)
 - **Last verified against repo:** 2026-09-27
-- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, W6/W7 and others on `main`, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.14 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.13 Audit trail, two diagrams and the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented.
+- **Developer guide:** `docs/DeveloperGuide.md` seeded and extended with W10 and W12 on 2026-09-26, W6/W7 and others on `main`, then W11 on 2026-09-27 (operator-approved checkpoints; W11 added § 4.13/4.14 Account governance, a sequence diagram and the Accounts screen in § 4.8; W12 added § 4.9/4.13 Audit trail, two diagrams, the Audit Log screen in § 4.8); W1/W2/W5/W6/W7 are `Awaiting confirmation` and not yet documented; W9/W13/W14 not yet in the guide.
 
 Sections are ordered by how often they are needed: **1–3 say where we are, 4–5 say what the
 system is, 6–7 say what not to touch and what is stuck, 8–10 are the record.** Cite sections by
@@ -44,7 +44,7 @@ three iterations).
 | `logs/` | Per-agent-session interaction logs named `YYYY-MM-DD_HH-mm-ss_<branch>.md` in SGT |
 | `src/main/java/com/snoozeshare/` | Application source — package skeleton only, see § Architecture |
 | `config/checkstyle/` | Checkstyle rules enforced on build |
-| `db/schema.sql`, `db/seed-mock-data.sql`, `db/snoozeshare-mock.db` | Shared team-reference SQLite DB — draft SQL + the built `.db` file, committed so everyone queries the same data. **Rebuild the `.db` from the two SQL files after any seed edit** (`sqlite3 x.db < schema.sql; sqlite3 x.db < seed-mock-data.sql`); corrected 2026-09-25 to follow C17/C20 (see D6). **Seed timestamps are UTC ISO-8601 ending in `Z`** (as the app writes them via `Instant.toString()`; `JdbcCodecs.instant` rejects zone-less values) — keep that format in any seed edit. **Seed IDs must be valid hex UUIDs** (mock prefixes: users `a`/`b`/`c`, tickets `d`, listings `1`, bookings `2`, wallets `3`, transactions `4`, availability `5`, audit `6`, categories `7`, reviews `8`); non-hex prefixes make `UUID.fromString` throw. **The committed `.db` ships already migrated** (schema_history v1+v2, System user; `db/schema.sql` includes `CREATE TABLE IF NOT EXISTS schema_history`) and `CommittedMockDbTest` guards that. Dev/reference artifact, not wired into app startup (see § 4.5) |
+| `db/schema.sql`, `db/seed-mock-data.sql`, `db/snoozeshare-mock.db` | Shared team-reference SQLite DB — draft SQL + the built `.db` file, committed so everyone queries the same data. **Rebuild the `.db` from the two SQL files after any seed edit** (`sqlite3 x.db < schema.sql; sqlite3 x.db < seed-mock-data.sql`); corrected 2026-09-25 to follow C17/C20 (see D6). **Seed timestamps are UTC ISO-8601 ending in `Z`** (as the app writes them via `Instant.toString()`; `JdbcCodecs.instant` rejects zone-less values) — keep that format in any seed edit. **Seed IDs must be valid hex UUIDs** (mock prefixes: users `a`/`b`/`c`, tickets `d`, listings `1`, bookings `2`, wallets `3`, transactions `4`, availability `5`, audit `6`, categories `7`, reviews `8`); non-hex prefixes make `UUID.fromString` throw. **The committed `.db` ships already migrated** (schema_history v1 through v8 as of W14 — System user with role `SYSTEM` and a real wallet, `wallet_transactions` gone, its 37 money rows now literal `audit_log` rows; `db/schema.sql` includes `CREATE TABLE IF NOT EXISTS schema_history`) and `CommittedMockDbTest` guards that. Dev/reference artifact, not wired into app startup (see § 4.5) |
 
 ---
 
@@ -64,8 +64,8 @@ three iterations).
 | S2 | 2026-09-23 | Claude Sonnet 5 | ui-mockup | — | Active | Design canvas reached 31 artboards (full `docs/ProductBacklog.md` coverage) and the deferred design spec is now written: `docs/superpowers/specs/2026-09-23-ui-design-system-design.md`. Not yet committed to git (git safety default — only PROJECT_STATE.md/.gitignore edits from this session are staged-but-uncommitted too). Next: operator reviews the written spec (brainstorming skill's user-review gate), then either request changes or move to `writing-plans` for the implementation plan | 2026-09-23 |
 | S3 | 2026-09-24 | Claude Opus 4.6 | w2 | W2 | Paused | W2 complete: spec, plan, 7 tasks implemented via native inline TDD, whole-branch review done, 2 Important findings fixed (unknown amenity crash, O(n) host lookup). All 20 tests pass. Ready for merge to main | 2026-09-24 |
 | S6 | 2026-09-25 | Claude Opus 4.6 | w5 | W5 | Paused | W5 complete: spec, plan, all 6 tasks implemented. All tests pass. Ready for merge to main | 2026-09-25 |
-| S7 | 2026-09-27 | Claude Sonnet 5 | messaging-service | W13 | Paused | Service slice built and verified; host Messages UI continued on `w9` | 2026-09-27 |
-| S8 | 2026-09-27 | Codex | w9 | W13 | Paused | Host ticket creation reversal implemented; response-only flow and guest-only filing tests pass | 2026-09-27 |
+| S14 | 2026-09-26 | Codex | w8 | W8 — Host Request Queue, Earnings & Disputes | Paused | PR #11 open against main; W8 implementation, review fixes, and Developer Guide handoff complete | 2026-09-27 |
+| S16 | 2026-09-27 | Claude Sonnet 5 (subagent-driven) | unified-ledger | W14 | Paused | Plan execution complete: all 12 tasks done and reviewed. Merged `main` into `unified-ledger` (bringing in W9/W13 host-UI work that had landed on `main` via `w9`/`messaging-service`, both now fully merged and their session rows retired), resolved the wallet-code and decision-ID conflicts (C43/C44), and opened PR #16. Awaiting operator review/merge | 2026-09-27 |
 
 Status vocabulary, used verbatim: `Active` · `Paused` · `Blocked — needs human` (name the
 question ID, same as a workstream row).
@@ -93,8 +93,9 @@ its spec and plan before feature implementation, per AGENTS.md § 3.
 | W10 | F9 — Agent Dispute Resolution (F9.2.1 force actions dropped, C22) | Done | [W10 design](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md) | [W10 plan](docs/superpowers/plans/2026-09-25-w10-agent-dispute-resolution.md) | All 22 tasks done, operator confirmed 2026-09-26; W3 merge handoffs open | Documented 2026-09-26 |
 | W11 | F10 — Agent Account Governance (F10.1.1 suspend, F10.1.2 cascade; Reactivate added, C34) | Done | [W11 design](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) | [W11 plan](docs/superpowers/plans/2026-09-26-w11-account-governance.md) | 14/14 tasks; operator accepted real-app run 2026-09-27 | Documented 2026-09-27 |
 | W12 | F11 — Platform Audit Trail (Analytics half of the epic has no items, out of scope; W11 emits the account-governance rows, C32) | Done | [W12 design](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) | [W12 plan](docs/superpowers/plans/2026-09-26-w12-platform-audit-trail.md) | Done | Documented 2026-09-26 |
-| W13 | F12 — Messaging (persistent ticket chat; `MessageService` replaces the in-memory seam; Host UI slice, C37/C38) | Done | [W13 service design](docs/superpowers/specs/2026-09-27-w13-messaging-service-design.md); [Host Messages design](docs/superpowers/specs/2026-09-27-host-messages-ui-design.md) | [W13 service plan](docs/superpowers/plans/2026-09-27-w13-messaging-service.md); [Host Messages plan](docs/superpowers/plans/2026-09-27-host-messages-ui.md) | Host ticket creation removed per reversed C39; Hosts can only reply to existing agent-managed tickets; guide checkpoint awaiting confirmation | Awaiting confirmation |
-| W14 | Unified ledger — fold `wallet_transactions` into `audit_log`, `users.balance`, System account with a real wallet (C30, C31) | Not started | — | — | Not spec'd; reverses Known Gaps entry, C3, C9; runs after W12; touches W1/W3/W5/W6/W10 money paths | — |
+| W13 | F12 — Messaging (persistent ticket chat; `MessageService` replaces the in-memory seam; Host UI slice, C37/C38) | Done | [W13 service design](docs/superpowers/specs/2026-09-27-w13-messaging-service-design.md); [Host Messages design](docs/superpowers/specs/2026-09-27-host-messages-ui-design.md) | [W13 service plan](docs/superpowers/plans/2026-09-27-w13-messaging-service.md); [Host Messages plan](docs/superpowers/plans/2026-09-27-host-messages-ui.md) | Host ticket creation removed per reversed C39 (the messaging-branch one, distinct from W14's C39); Hosts can only reply to existing agent-managed tickets; guide checkpoint awaiting confirmation | Awaiting confirmation |
+| W14 | Unified ledger — fold `wallet_transactions` into `audit_log`, System account (role SYSTEM) with a real wallet; `wallets` table kept (C30, C31, C39, C40) | In review | [W14 design](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md) | [W14 plan](docs/superpowers/plans/2026-09-27-w14-unified-ledger.md) | All 12 tasks done & reviewed; C42 fixed a settlement crash; PR #16 open against `main`, awaiting operator review | — |
+| W15 | Host Listings Dashboard & Copy Refinement | Done | — | — | Live listing metrics, listing-card redesign, Requests/wallet copy, and layout updates complete; operator explicitly waived new spec/plan | — |
 
 **Handoffs into W3 (raised by W10, 2026-09-25; W3 reached `main` 2026-09-25, W10 merged `main` 2026-09-26 and the
 stubs below are still open)** — honour or reconcile these:
@@ -283,13 +284,35 @@ remains guest-only.
 `DisputeQueryServiceImpl` (queue/detail read models for the Agent UI) and a temporary
 `InMemoryMessageService` (session-only chat; replaced by W13's persistent `MessageServiceImpl`).
 
+**W14 adds (executed, all 12 tasks done and reviewed, In review):** `LedgerWriter` is now the
+single wallet-write path used by every service that moves money — `WalletServiceImpl`,
+`TransactionServiceImpl`, `BookingServiceImpl`, `DisputeSettlementServiceImpl`,
+`AccountGovernanceServiceImpl`, `DisputeQueryServiceImpl`. It never opens its own DB transaction;
+every caller wraps the call in the `TransactionManager` transaction that also carries the
+booking/ticket/account state change, so a balance change, its money row, and the triggering
+state change commit or roll back together (rollback tests cover hold, refund, settlement, dispute
+settlement and account suspension). `WalletService`/`TransactionService` stay as separate
+interfaces (C3 narrowed to storage, not removed, per C39) — they now both write through
+`LedgerWriter` instead of each hand-rolling a "read wallet, add, save, insert ledger row" block.
+On a host payout, `LedgerWriter` writes two rows in the same transaction: `BOOKING_PAYOUT` to the
+host (net of 3%) and, when the fee is nonzero, `PLATFORM_FEE` to the System user's wallet (same
+actor/booking/ticket ids). A zero fee writes no `PLATFORM_FEE` row; a guest refund never carries
+one. **Task 8 finding (C42):** once `LedgerWriter` rejected a zero-amount write, a $0-rate or
+sub-cent-rounding listing crashed booking settlement — and, because settlement also runs from
+`AppContext`'s startup completion sweep, could crash app startup. The operator chose to forbid
+degenerate listing rates (`baseNightlyRate` must be positive with at most 2 decimal places, so
+the smallest legal total is $0.01 and always nets to a positive payout) rather than build
+free-stay support through settlement/`EscrowPolicy`/disputes; fixed in commits `cb9e1d0`,
+`a93f41e`. `AuditService.recordWalletTransaction` (a default method left dead once every caller
+moved onto `LedgerWriter`) was deleted as unused (Task 10).
+
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
-| C3 | unknown | Two separate financial interfaces: `WalletService` (dumb primitive — balance, top-up, withdraw) vs. `TransactionService` (business rules — escrow, 3% fee, refund policy, dispute remedies). UI may call `WalletService` directly only for top-up/withdrawal; `BookingService`/`TicketService` are the only callers of `TransactionService` | Keeps "how do bookings pay out" and "how do I add money to my account" independently testable; centralizes every balance change behind one choke point so wallets can't drift from booking/ticket state | [architecture proposal §3](docs/SnoozeShare-Architecture-Proposal.md) |
+| C3 | unknown | Two separate financial interfaces: `WalletService` (dumb primitive — balance, top-up, withdraw) vs. `TransactionService` (business rules — escrow, 3% fee, refund policy, dispute remedies). UI may call `WalletService` directly only for top-up/withdrawal; `BookingService`/`TicketService` are the only callers of `TransactionService` (narrowed to storage by W14/C39, executed by W14, 2026-09-27: both interfaces kept, both now write through `LedgerWriter`) | Keeps "how do bookings pay out" and "how do I add money to my account" independently testable; centralizes every balance change behind one choke point so wallets can't drift from booking/ticket state | [architecture proposal §3](docs/SnoozeShare-Architecture-Proposal.md) |
 | C4 | unknown | Use Java 25 records directly as the domain model passed to JavaFX view models; no separate DTO layer | Over-engineering for MVP scale | [architecture proposal §3](docs/SnoozeShare-Architecture-Proposal.md) |
 | C7 | 2026-09-22 | **No guest-side service fee.** `bookings.totalAmount = nightlyRateSnapshot × nights`, full stop. The only platform fee anywhere is the 3% deducted from a host's `BOOKING_PAYOUT` (already specified). Corrects an earlier mock-data draft that had invented a 5% guest fee to fill the doc's undefined `serviceFeeAmount` column — that column is now removed | Operator confirmed while reviewing generated mock data | Operator conversation, 2026-09-22 |
 | C8 | 2026-09-22 | `REJECTED` and `CANCELLED_BY_HOST` bookings both trigger a 100% `ESCROW_REFUND`, same as a guest cancelling >48h out. (Note: `BookingService` in the proposal has no explicit host-initiated-cancel method distinct from `decide(...,approve=false)` — flagged as a spec gap for whoever builds F6.1.2/host cancellation, not resolved by this decision.) | Operator confirmed "good assumption" while reviewing generated mock data | Operator conversation, 2026-09-22 |
-| C9 | 2026-09-22 | *(Superseded for agent ticket resolutions by C20, 2026-09-25 — those are now two-sided: guest refund row + host payout row.)* `TICKET_REMEDY` and `AGENT_OVERRIDE` wallet rows are single-sided — only the wallet actually credited/debited gets a row, no matching entry on the other side. There is no double-entry anywhere in `wallet_transactions`, extending the doc's existing "fees aren't a real platform-wallet transfer" note to these two types as well | Operator confirmed while reviewing generated mock data | Operator conversation, 2026-09-22 |
+| C9 | 2026-09-22 | *(Superseded for agent ticket resolutions by C20, 2026-09-25 — those are now two-sided: guest refund row + host payout row.)* `TICKET_REMEDY` and `AGENT_OVERRIDE` wallet rows are single-sided — only the wallet actually credited/debited gets a row, no matching entry on the other side. There is no double-entry anywhere in `wallet_transactions`, extending the doc's existing "fees aren't a real platform-wallet transfer" note to these two types as well. (Executed by W14, 2026-09-27: `wallet_transactions` itself is gone; ticket remedies and overrides stay single-sided money rows in `audit_log`, only host payouts gained a second, System-side `PLATFORM_FEE` row.) | Operator confirmed while reviewing generated mock data | Operator conversation, 2026-09-22 |
 | C10 | 2026-09-22 | `wallets.currency` is `"SGD"` for real, not just the doc's illustrative example | Operator confirmed while reviewing generated mock data | Operator conversation, 2026-09-22 |
 
 ### 4.4 Domain
@@ -313,7 +336,13 @@ through (guest cancel, host approve/reject, agent force-override all call the sa
 ### 4.5 Repository & persistence
 
 **Now:** Repository interfaces exist for all aggregates. W1 implements SQLite migrations and core
-`User`, `Wallet`, `WalletTransaction`, and `AuditLog` JDBC adapters. W2 adds
+`User`, `Wallet`, and `AuditLog` JDBC adapters. **W14 replaced the `WalletTransaction`/
+`wallet_transactions` adapter with `LedgerRepository`/`JdbcLedgerRepository`, which reads money
+rows straight out of `audit_log`** (a money row = any `audit_log` row with `walletAdjustment IS
+NOT NULL` and a `balanceAfter`); `wallet_transactions` no longer exists (dropped in V008) and
+`WalletTransactionRepository`/`JdbcWalletTransactionRepository` were deleted. `WalletTransaction`
+itself survives as a pure read-model record built from those rows (no `feeAmount` field — the fee
+is its own `PLATFORM_FEE` row to the System wallet, not a column on the payout row). W2 adds
 `JdbcPropertyRepository` (dynamic WHERE clause building for search, UPSERT for save),
 `JdbcAvailabilityBlockRepository` (overlap detection: `startDate < ? AND endDate > ?`), and
 `JdbcBookingRepository` (overlap detection filtering PENDING+CONFIRMED only, host/history and
@@ -325,16 +354,32 @@ repository interface per aggregate (`UserRepository`,
 `PropertyRepository`, `BookingRepository`, `AvailabilityBlockRepository`, `TicketRepository`,
 `WalletRepository`, `WalletTransactionRepository`, `ReviewRepository`, `AuditLogRepository`),
 each returning/consuming domain records — only `repository.jdbc.*` may import `java.sql.*`.
-Schema is specified table-by-table in
+Schema was originally specified table-by-table in
 [architecture proposal §4](docs/SnoozeShare-Architecture-Proposal.md) (users, properties,
 availability_blocks, bookings (including nullable `hostDecisionMessage`), wallets, wallet_transactions — an append-only ledger, tickets,
-ticket_categories, reviews, audit_log). No migrations exist yet (`infra.db.migration` is still
-unbuilt). A hand-written (non-Flyway) copy of this schema plus a full mock dataset has been built
+ticket_categories, reviews, audit_log); **`wallet_transactions` in that list is now historical —
+W14's V008 dropped the table, and `audit_log` is the only ledger.** A hand-written (non-Flyway)
+copy of this schema plus a full mock dataset has been built
 into a **shared, committed reference DB** — `db/schema.sql` / `db/seed-mock-data.sql` /
 `db/snoozeshare-mock.db` — for the team to query together; it is a dev/reference artifact only,
 not loaded by the application at startup. See § Record.
 
 **W11 adds:** nullable `users.suspensionReason` (migration `V003__suspension_reason.sql`, applied or adopted by `MigrationRunner`; mock DB rebuilt with v3 history and seeded reasons), `UserRepository.findAll()`, `BookingRepository.findByListing(UUID)`, and a `suspensionReason` component on `User` (7-arg constructor kept).
+
+**W14 adds:** three migrations. `V006__system_role.sql` rebuilds `users` (SQLite cannot alter a
+CHECK constraint) so `role` allows `SYSTEM` alongside `GUEST`/`HOST`/`AGENT`; the System user
+(`AuditService.SYSTEM_ACTOR_ID`) keeps its id and becomes role `SYSTEM`, status `ACTIVE` (no
+longer `AGENT`+`SUSPENDED`), and gets a real wallet — provisioned by the migration/seed, not by
+`WalletProvisioningService`, which still skips it. `MigrationRunner` runs V006 with foreign keys
+off (the rebuild touches every table with a `users` FK) and checks `PRAGMA foreign_key_check`
+before committing. `V007__unified_ledger.sql` adds `audit_log.balanceAfter`, backfills a money row
+for every legacy `wallet_transactions` row that had none, backfills a `PLATFORM_FEE` row for every
+legacy `BOOKING_PAYOUT` with a nonzero `feeAmount`, and creates the System wallet if missing.
+`V008__drop_wallet_transactions.sql` drops the table once every caller had moved onto
+`LedgerWriter`/`LedgerRepository` (split out from V007 as a deviation — see § Deviations — so the
+strangler migration could land safely one caller at a time). The mock DB ships already migrated
+through `schema_history` v8 with its 37 money rows verified byte-identical to the pre-drop
+derivation.
 
 **W10 adds:** `JdbcTicketRepository` and `JdbcTicketCategoryRepository`, and `MigrationRunner` now
 adopts a pre-provisioned database (one with tables but no `schema_history`, such as the mock DB) by
@@ -385,11 +430,31 @@ session.
 
 ### 4.8 Audit trail
 
-**Now:** `audit_log` is one row per change (C28). Migration `V002__audit_trail.sql` adds 7 columns to the V001 table: `actorName`, `walletAdjustment` (signed, wallet rows only), `reason`, `ticketId`, `bookingId`, `subjectUserId`, `subjectName`, plus indexes on timestamp/actor/subject/booking/ticket and a seeded non-loginable **System user** (`AuditService.SYSTEM_ACTOR_ID`, role `AGENT`, `SUSPENDED`; C29, C32). `beforeState`/`afterState` hold status text only. Rows are written through `AuditRecord.builder(...)` and `AuditService.record(...)` **on the caller's connection**, so a state change and its money rows commit or roll back together (rollback tests exist). A ticket resolution writes 4 rows: ticket status, booking status, guest wallet adjustment, host wallet adjustment (net of fee; zero-amount sides skipped). `AuditService.search(AuditFilter, limit, offset)` returns newest first; a name in the search text is resolved to user ids first and the log queried by id. The Audit Log screen is described in § 4.2. **Dual-write until W14:** wallet movements still write `wallet_transactions` (the ledger) AND an `audit_log` money row in one transaction; W14 folds them together (C31).
+**Now:** `audit_log` is one row per change (C28) and, as of W14, **the single record of money
+movement** — `wallet_transactions` no longer exists. A money row is any `audit_log` row with
+`walletAdjustment IS NOT NULL` and a `balanceAfter`. Migration `V002__audit_trail.sql` adds 7
+columns to the V001 table: `actorName`, `walletAdjustment` (signed, wallet rows only), `reason`,
+`ticketId`, `bookingId`, `subjectUserId`, `subjectName`, plus indexes on timestamp/actor/subject/
+booking/ticket; W14's `V007__unified_ledger.sql` adds `balanceAfter`. The seeded non-loginable
+**System user** (`AuditService.SYSTEM_ACTOR_ID`) is role **`SYSTEM`**, status `ACTIVE`, with a
+real wallet that receives a `PLATFORM_FEE` row on every host payout that carries a nonzero fee
+(reverses C29/C32's `AGENT`+`SUSPENDED` choice; see C40, C42). `beforeState`/`afterState` hold
+status text only. Rows are written through `AuditRecord.builder(...)` and `AuditService.record(...)`
+**on the caller's connection**, so a state change and its money rows commit or roll back together
+(rollback tests exist). A ticket resolution writes 4 rows: ticket status, booking status, guest
+wallet adjustment, host wallet adjustment (net of fee; zero-amount sides skipped), plus a
+`PLATFORM_FEE` row when the fee side is nonzero. `AuditService.search(AuditFilter, limit, offset)`
+returns newest first; a name in the search text is resolved to user ids first and the log queried
+by id. The Audit Log screen is described in § 4.2 (`PLATFORM_FEE` is one more action type in its
+multi-select). **Single-ledger rule (replaces the former "dual-write until W14" note):** every
+wallet balance change is one `LedgerWriter` call that inserts exactly one `audit_log` money row
+(two for a host payout with a fee) in the same transaction as the balance update — there is no
+second ledger table to keep in sync.
 
 | ID | Date | Decision | Why / who asked | Source |
 |---|---|---|---|---|
 | C28–C32 | 2026-09-26 | Audit structure, filters, System user, platform fee as reason text only, W14 split, account-governance rows reserved for W11 — recorded in full in § Decisions | Operator | [W12 spec](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) |
+| C39–C42 | 2026-09-27 | W14 executed: System user becomes role `SYSTEM` with a real wallet, `wallet_transactions` folded into `audit_log`, one `LedgerWriter` — recorded in full in § Decisions | Operator | [W14 spec](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md) |
 
 ---
 
@@ -410,9 +475,12 @@ Durable rules, harvested from the architecture proposal. Enforcement is partial:
 - All state transitions (booking, ticket) go through the shared `*StateMachine`, never
   re-implemented per role/UI.
 - One audit row per change: a state change and its money movements are separate rows written in the same DB transaction, via `AuditRecord.builder`. Audit rows are only ever written by services, on the caller's connection.
-- `wallets.balance` is a denormalized cache of "sum of this wallet's transactions" — it is only
-  ever written in the same DB transaction as the triggering `wallet_transactions` row insert,
-  never independently.
+- `wallets.balance` is a denormalized cache of the owner's newest money row's `balanceAfter` in
+  `audit_log` — it is only ever written in the same DB transaction as the triggering money row
+  insert, never independently.
+- Only `LedgerWriter` changes a wallet balance; it never opens a transaction — every caller wraps
+  the call in `TransactionManager` so the balance, the money row, and any related state change
+  commit or roll back together.
 - **ID namespaces:** `W` = workstream, `C` = decision, `D` = deviation, `Q` = needs a human,
   `S` = session. Numbers are unique across the whole file and never reused, wherever the entry
   sits.
@@ -439,10 +507,6 @@ and the stated assumptions/constraints. **These are decisions, not a TODO list �
   change if concurrent booking volume ever mattered.
 - **Top-up/withdraw are fully mocked** — `WalletService` just credits/debits balance, no real
   payment gateway. A real integration would slot in behind the same interface.
-- **Platform fees are informational only** (`feeAmount` column on `BOOKING_PAYOUT` rows) — no
-  system-owned platform `Wallet`, no true double-entry transfer. Revisit only if the platform
-  ever needs its own reportable balance.
-  *(Operator intends to reverse this in W14 — see C31. Do not implement a platform wallet in W12.)*
 - **Auth is fully mocked** — no real credential validation anywhere; role separation is enforced
   in service/domain code, not by real authentication. This is a stated project constraint, not
   an oversight.
@@ -489,8 +553,8 @@ architecture area remain recorded in that area's table.
 | C28 | 2026-09-26 | **Audit log structure (W12).** One row = one change. `beforeState`/`afterState` hold status text only; new typed columns `walletAdjustment` (signed, wallet rows only), `reason`, `ticketId`, `bookingId`, `subjectUserId`, plus name snapshots `actorName`/`subjectName`. A ticket resolution writes 4 rows: ticket status, booking status, guest wallet adjustment, host wallet adjustment (net of fee; zero-amount sides skipped). Supersedes D2 point 2 (no JSON-projection layer). | Operator: the single `afterState` blob was inappropriate. Operator confirmed the 4-row set (reading "host and guest side" as the two wallets, since a booking is one entity), real columns over JSON, and the extra id columns. Rejected: two per-side Booking rows; keeping JSON with fixed keys; keeping `entityId`-only lookups. | Operator conversation, 2026-09-26; [W12 spec § 3](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) |
 | C29 | 2026-09-26 | Audit Log screen filters are ONE search box + action-type filter (a single combo here; superseded by the multi-select in C33) + From/To date range (replaces the board's User ID and Booking ID inputs). Name text is resolved to user ids first and the log queried by id, so history survives renames (names are also snapshotted on each row). System-initiated rows are attributed to a seeded non-loginable System user (actorUserId stays NOT NULL). | Operator | Operator conversation, 2026-09-26; W12 spec § 5–6 |
 | C30 | 2026-09-26 | Platform fee stays **reason-text only** in W12; the § Known Gaps entry "no platform wallet" is KEPT for W12. Operator wants the fee eventually as a logged entry on a System account wallet, delivered by W14. | Operator; asked to keep-or-reverse the Known Gap per AGENTS.md § 4, chose to defer the reversal to W14 | Operator conversation, 2026-09-26 |
-| C31 | 2026-09-26 | **Planned reversal (W14, not yet executed):** fold `wallet_transactions` into `audit_log` (it already functions as a log), add a balance to `users`, and create a System account with a real wallet. Reverses the Known Gaps entry, C3 (WalletService/TransactionService split), C9 (single-sided rows) and the `wallets.balance` cache convention when W14 runs. Until then W12 dual-writes wallet rows (ledger + audit) in one transaction. Split from W12 because it touches 36 main / 18 test files and the open W3 merge handoffs. | Operator; recommended split accepted over doing it inside W12 | Operator conversation, 2026-09-26; W12 spec § 2, § 8 |
-| C32 | 2026-09-26 | W12 spec approved with its § 10 defaults: `REF` column added to the Audit Log table; System user is role `AGENT` + `SUSPENDED`; Status cell shows `Before → After`; W7 blocks not audited. **Account-governance actions must also be audit-logged: the W12 schema/`AuditAction` accommodate them (spec § 4a), implementation is reserved for W11.** The suspension reason is stored as `reason` on the `ACCOUNT_SUSPENDED` row, which resolves D2 point 1 without a `users.suspensionReason` column. | Operator | Operator conversation, 2026-09-26; W12 spec § 4a, § 10 |
+| C31 | 2026-09-26 | **Reversal, executed by W14, 2026-09-27** (originally recorded as planned/not-yet-executed): fold `wallet_transactions` into `audit_log` (it already functions as a log) and create a System account with a real wallet. Reverses the Known Gaps entry, C3 (WalletService/TransactionService split, narrowed not removed — see C39), C9 (single-sided rows, partially — see C9's own note) and the `wallets.balance` cache convention. **Not executed as originally written:** no balance was added to `users` — `wallets` stays as its own table (C40 reversed that part first). Until W14 ran, W12 dual-write wallet rows (ledger + audit) in one transaction; that dual-write is gone. Split from W12 because it touches 36 main / 18 test files and the open W3 merge handoffs. | Operator; recommended split accepted over doing it inside W12 | Operator conversation, 2026-09-26; W12 spec § 2, § 8 |
+| C32 | 2026-09-26 | W12 spec approved with its § 10 defaults: `REF` column added to the Audit Log table; System user is role `AGENT` + `SUSPENDED`; Status cell shows `Before → After`; W7 blocks not audited. **Account-governance actions must also be audit-logged: the W12 schema/`AuditAction` accommodate them (spec § 4a), implementation is reserved for W11.** The suspension reason is stored as `reason` on the `ACCOUNT_SUSPENDED` row, which resolves D2 point 1 without a `users.suspensionReason` column. **The `AGENT`+`SUSPENDED` System-user choice was reversed by W14/C40 (executed by W14, 2026-09-27): the System user is now role `SYSTEM`, status `ACTIVE`.** | Operator | Operator conversation, 2026-09-26; W12 spec § 4a, § 10 |
 | C33 | 2026-09-26 | **Operator UI amendments to the W12 Audit Log (supersede C29's single action combo and parts of the spec § 5-6):** (1) the action type is a MULTI-select (`MultiSelectMenu`, empty = all actions) with the same 34px height as the other filter controls, so `AuditFilter.actions` / `AuditCriteria.actionTypes` are sets and the repository binds an `IN` clause; (2) From and To stay two separate date pickers (no range), one border each, popup styled after the board's *Date picker* component (artifact `PWBCxbfv9e9FGVvY6RKUwd`, `Main.dc.html` Date picker), no Clear/Apply inside the picker, click selects; (3) the master Clear is a real red-outline button (`agent-button-danger`); the **Apply filters button is kept** (the spec does not remove it, selecting does not auto-apply); (4) **fixed table headers apply to ALL agent tables**: only the rows scroll, scroll bar starts below the header; (5) audit rows get the ticket queue's grey hover with no hand cursor (rows are not clickable). | Operator, reviewing the built Audit Log screen. Rejected: an auto-applying filter; removing Apply; a range picker. | Operator conversation, 2026-09-26; [W12 spec § 5–6](docs/superpowers/specs/2026-09-26-w12-platform-audit-trail-design.md) |
 | C34 | 2026-09-26 | W11 scope: (a) **Reactivate** is built although F10.1.1 says only suspend (new capability, like C26 delete); (b) the F10.1.2 cascade (pending bookings force-cancelled with 100% refund, host's active listings set inactive; CONFIRMED stays untouched) is in W11; (c) Agent accounts are listed with no action, and agents cannot be suspended or self-suspend; (d) suspension reason lives in a nullable `users.suspensionReason` column (migration V003), **reversing the no-column part of C32**; operator: "logs are not meant to be data storage"; the reason is also written to the audit row | Operator answers while scoping W11. Rejected: a `suspensions` table (overkill), deriving from `audit_log` (slow, coupled to W12), suspend-only, cascade deferred, hiding or suspending agent rows | Operator conversation, 2026-09-26; [W11 spec](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) |
 | C36 | 2026-09-26 | W11 cascade scope widened: suspension force-cancels `PENDING` **and not-yet-started `CONFIRMED`** bookings (100% refund), matching W12 § 4a and seed booking 12; started/ended `CONFIRMED` stays are untouched (W10). Reason column kept (C34(d) reverses part of C32). Accounts search matches display name, email, role, joined, status (placeholder `Search...`). Spec follows W12 audit shapes and fixed-header table pattern (C33) | Operator answers to Q3 | Operator conversation, 2026-09-26; [W11 spec](docs/superpowers/specs/2026-09-26-w11-account-governance-design.md) |
@@ -503,12 +567,24 @@ architecture area remain recorded in that area's table.
 | C29 | 2026-09-26 | Defer F7.2.2 structured host dispute response notes/evidence from W8 to W13 Messaging | Operator chose to defer the formal host response path to W13; W8 will not add ticket response fields or conflate the flow with chat | Operator conversation, 2026-09-26 |
 | C30 | 2026-09-27 | Host booking approve/reject actions require confirmation modals matching the supplied mockups | Operator requested centered AgentModal-style dialogs with scrim, booking summary cards, explanatory notices, and modal-specific confirm/cancel actions | Operator conversation, 2026-09-27 |
 | C31 | 2026-09-27 | W8 persists the optional host rejection message on the booking and exposes it to guest booking/trip views; broader F7.2.2 response notes/evidence remains deferred to W13 | Operator confirmed the proposed nullable `hostDecisionMessage` behavior | Operator conversation, 2026-09-27 |
-| C32 | 2026-09-27 | W9 host wallet statements show every wallet transaction type (`TOP_UP`, `WITHDRAWAL`, escrow rows, payouts, ticket remedies, and agent overrides); payout creation remains W8/W10-owned | Operator confirmed “Yes, all types” when choosing the W9 statement scope | Operator conversation, 2026-09-27 |
-| C33 | 2026-09-27 | W9 uses one common Guest/Host wallet page and action-dialog flow matching the supplied mockups; top-up presets populate the amount field and withdrawal's full-balance link populates the current balance | Operator approved the common-wallet direction and supplied the UI interaction requirements | Operator conversation, 2026-09-27; [W9 design](docs/superpowers/specs/2026-09-27-w9-host-wallet-management-design.md) |
+| C39 | 2026-09-27 | W14 specified. Follows C31, with two refinements: `WalletService`/`TransactionService` are kept (C3 narrowed to storage, not removed) and escrow stays implicit (no escrow account). Reversal of the § Known Gaps platform-fee entry, C9 and the `wallets.balance` convention takes effect when the plan runs, on operator approval of the spec. Defaults in spec § 10 are open until confirmed. (Executed by W14, 2026-09-27 — all 12 tasks done and reviewed; awaiting operator acceptance.) | Operator asked to spec W14; agent flagged that it is medium-sized (about 18 main / 13 test files, one migration, seed rewrite), not small, and that the UI needs no change | Operator conversation; [W14 spec](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md) |
+| C40 | 2026-09-27 | W14 refinements: (a) the `wallets` table stays, so **no `users.balance`** (reverses that part of C31); only `wallet_transactions` is folded into `audit_log`. (b) The System user gets a real **`SYSTEM` role** by rebuilding `users` (new CHECK; migration V006, which `MigrationRunner` must run with foreign keys off), reversing C32's `AGENT` + `SUSPENDED`; the ledger fold is V007. Spec § 8 and § 10 updated. (Executed by W14, 2026-09-27.) | Operator: "for security and maybe less changes, lets keep the dedicated wallets table"; the SYSTEM role "should be a small addition". Rejected: `users.balance`; keeping the System user as a suspended agent | Operator conversation; [W14 spec](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md) |
+| C41 | 2026-09-27 | W14 spec § 10 defaults accepted as written: keep `WalletService` and `TransactionService`; balance stays a stored cache on `wallets`; no escrow account; legacy payouts get backfilled `PLATFORM_FEE` rows. Ledger fold is split into V006 (SYSTEM role), V007 (add and backfill) and V008 (drop table) so code can leave `wallet_transactions` before it is dropped. The Known Gaps platform-fee entry, C9 and C3-storage reversals are approved and take effect as the plan executes. (Executed by W14, 2026-09-27; the V007/V008 split happened exactly as anticipated here, see § Deviations.) | Operator: "Accept defaults. Write plan" | Operator conversation; [W14 spec](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md), [W14 plan](docs/superpowers/plans/2026-09-27-w14-unified-ledger.md) |
+| C42 | 2026-09-27 | W14 Task 8 review found $0/sub-cent listing rates crashed booking settlement (and app startup, via the startup completion sweep) once `LedgerWriter` rejects a zero-amount payout. Operator chose to **forbid degenerate listing rates** rather than support free/sub-cent stays end-to-end: `ListingServiceImpl`/the host form now require `baseNightlyRate` to be positive and have at most 2 decimal places (smallest legal total is $0.01, which always settles to a positive net). Reverses nothing recorded; this is new validation, not a reversal. (Executed by W14, 2026-09-27; verified accurate on final review — no further changes needed.) | Operator, asked to choose between forbidding $0 listings or building out free-stay support in escrow/settlement/disputes; chose to forbid | Operator conversation; [W14 plan](docs/superpowers/plans/2026-09-27-w14-unified-ledger.md) Task 8, commits cb9e1d0, a93f41e |
+| C43 | 2026-09-27 | **Renumbered from a colliding `C32` on the `w9`/`main` side while merging `unified-ledger` into `main` (merging-across-branches: append-only, renumber, don't drop).** W9 host wallet statements show every wallet transaction type (`TOP_UP`, `WITHDRAWAL`, escrow rows, payouts, ticket remedies, and agent overrides); payout creation remains W8/W10-owned | Operator confirmed “Yes, all types” when choosing the W9 statement scope | Operator conversation, 2026-09-27 |
+| C44 | 2026-09-27 | **Renumbered from a colliding `C33` on the `w9`/`main` side, same merge as C43.** W9 uses one common Guest/Host wallet page and action-dialog flow matching the supplied mockups; top-up presets populate the amount field and withdrawal's full-balance link populates the current balance | Operator approved the common-wallet direction and supplied the UI interaction requirements | Operator conversation, 2026-09-27; [W9 design](docs/superpowers/specs/2026-09-27-w9-host-wallet-management-design.md) |
 
 ---
 
 ## 9. Deviations & Discoveries
+
+### W14 deviations (2026-09-27) — full detail in the [W14 plan](docs/superpowers/plans/2026-09-27-w14-unified-ledger.md) and the [W14 spec § 3](docs/superpowers/specs/2026-09-27-w14-unified-ledger-design.md)
+
+- **V007/V008 migration split (executed, Tasks 4 and 10; anticipated by C41, recorded in full in the plan and spec § 3):** the spec's original single "add + backfill + drop" V007 was split into `V007__unified_ledger.sql` (add `balanceAfter`, backfill legacy money and fee rows, create the System wallet) and `V008__drop_wallet_transactions.sql` (drop the table), so every caller (`WalletService`, `TransactionService`, `BookingService`, dispute settlement, account governance) could move onto `LedgerWriter`/`LedgerRepository` one at a time across Tasks 6-9 while `wallet_transactions` still existed as a fallback, then drop it once nothing referenced it.
+- **C42 — settlement crash from degenerate listing rates (see § Decisions):** Task 8's review found that once `LedgerWriter` rejects a zero-amount write, a $0 or sub-cent-rounding listing rate crashed booking settlement — and, since settlement also runs from `AppContext`'s startup sweep, could crash app startup. Fixed by forbidding `baseNightlyRate <= 0` or more than 2 decimal places, not by building free-stay support through settlement/`EscrowPolicy`/disputes.
+- **`BookingServiceImpl.calculateRefundAmount` rounding fixed (2026-09-27, commit `821d25d`):** the 50%-refund divide was unrounded and could post a 3-decimal-place wallet transaction on an odd-cent total — a pre-existing precision bug, unrelated to W14's own scope, spotted while reviewing the money-movement code and originally spun off as a background task. Operator asked for it directly; fixed with `.setScale(2, RoundingMode.HALF_UP)`, matching the pattern already used elsewhere in the class and in `SettlementCalculator`, with a regression test (`cancelWithin48hOnAnOddCentTotalRoundsTheRefundToTwoDecimalPlaces`) that fails without the fix.
+- **`AuditService.recordWalletTransaction` removed (Task 10):** a default method that had become dead code once every caller moved onto `LedgerWriter` was deleted rather than left unused.
+- Full verification (Task 12): `.\gradlew build` completed with 448 tests run, 2 failed — both pre-existing and unrelated to W14 (D21: `FileTicketTest.successfullyFilesTicketAndPublishesEvent`, `ShellLayoutTest.hostWalletPageUsesTheSamePageInsetAsListingsAndBookings`). The real-app GUI run (`.\gradlew run`, exercising top-up/withdraw/booking/Audit Log) was **not performed** — no GUI-driving tool was available to this session (same precedent as D14/D20); the conservation-invariant tests (Task 11) passed against the rebuilt mock DB on the first try, with no seed fix needed.
 
 ### W10 deviations (OPEN 2026-09-25) — full detail in the [W10 spec § 6](docs/superpowers/specs/2026-09-25-w10-agent-dispute-resolution-design.md)
 
@@ -675,6 +751,6 @@ The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-st
 — every change, big or small, newest first.
 
 - **Latest entry:** 2026-09-27
-- **Entries:** 107 (4 backfilled coarsely from git history)
+- **Entries:** 107 + this branch's W14 rows (4 backfilled coarsely from git history; drifted from the ledger's actual row count more than once now — not re-audited, flagged for a future reconciliation pass)
 
 Deviations stay in § Deviations above: those are read every session.

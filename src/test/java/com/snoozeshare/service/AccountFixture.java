@@ -21,19 +21,20 @@ import com.snoozeshare.domain.model.Booking;
 import com.snoozeshare.domain.model.Property;
 import com.snoozeshare.domain.model.User;
 import com.snoozeshare.domain.model.Wallet;
-import com.snoozeshare.domain.model.WalletTransaction;
 import com.snoozeshare.infra.db.ConnectionFactory;
 import com.snoozeshare.infra.db.migration.MigrationRunner;
 import com.snoozeshare.infra.events.InProcessEventBus;
 import com.snoozeshare.repository.jdbc.JdbcAuditLogRepository;
 import com.snoozeshare.repository.jdbc.JdbcAvailabilityBlockRepository;
 import com.snoozeshare.repository.jdbc.JdbcBookingRepository;
+import com.snoozeshare.repository.jdbc.JdbcLedgerRepository;
 import com.snoozeshare.repository.jdbc.JdbcPropertyRepository;
 import com.snoozeshare.repository.jdbc.JdbcUserRepository;
 import com.snoozeshare.repository.jdbc.JdbcWalletRepository;
-import com.snoozeshare.repository.jdbc.JdbcWalletTransactionRepository;
 import com.snoozeshare.service.impl.AccountGovernanceServiceImpl;
 import com.snoozeshare.service.impl.AuditServiceImpl;
+import com.snoozeshare.service.impl.LedgerWriter;
+import com.snoozeshare.testsupport.LedgerTestSupport;
 
 /** An in-memory migrated database with one agent, guests, hosts, listings and bookings at a fixed "today". */
 final class AccountFixture implements AutoCloseable {
@@ -49,9 +50,10 @@ final class AccountFixture implements AutoCloseable {
     final JdbcBookingRepository bookings;
     final JdbcAvailabilityBlockRepository blocks;
     final JdbcWalletRepository wallets;
-    final JdbcWalletTransactionRepository transactions;
+    final JdbcLedgerRepository ledgerEntries;
     final InProcessEventBus bus = new InProcessEventBus();
     final AuditService audit;
+    final LedgerWriter ledger;
     final User agent;
 
     AccountFixture() throws Exception {
@@ -62,8 +64,9 @@ final class AccountFixture implements AutoCloseable {
         bookings = new JdbcBookingRepository(connection);
         blocks = new JdbcAvailabilityBlockRepository(connection);
         wallets = new JdbcWalletRepository(connection);
-        transactions = new JdbcWalletTransactionRepository(connection);
+        ledgerEntries = new JdbcLedgerRepository(connection);
         audit = new AuditServiceImpl(new JdbcAuditLogRepository(connection), users, CLOCK);
+        ledger = LedgerTestSupport.writer(connection, audit);
         agent = user(Role.AGENT, "Amy Tanaka", "amy@test.com", "2026-01-10T09:00:00Z");
     }
 
@@ -71,17 +74,21 @@ final class AccountFixture implements AutoCloseable {
         return service(audit);
     }
 
+    /** The service's money rows go through {@code auditService} too, so an injected failure covers them. */
     AccountGovernanceServiceImpl service(AuditService auditService) {
+        LedgerWriter writer = auditService == audit ? ledger : LedgerTestSupport.writer(connection, auditService);
         return new AccountGovernanceServiceImpl(connection, users, bookings, properties, blocks, wallets,
-                transactions, bus, auditService, CLOCK);
+                writer, bus, auditService, CLOCK);
     }
 
-    /** Creates a user; guests and hosts get a wallet holding {@link #START_BALANCE}. */
+    /** Creates a user; guests and hosts get a wallet funded with {@link #START_BALANCE} through the ledger. */
     User user(Role role, String name, String email, String createdAt) {
         User user = users.save(new User(UUID.randomUUID(), role, name, email, AccountStatus.ACTIVE,
                 role == Role.GUEST ? null : "CODE", Instant.parse(createdAt)));
         if (role != Role.AGENT) {
-            wallets.save(new Wallet(UUID.randomUUID(), user.userId(), START_BALANCE, "SGD", NOW));
+            Wallet wallet = wallets.save(new Wallet(UUID.randomUUID(), user.userId(), BigDecimal.ZERO, "SGD", NOW));
+            ledger.post(wallet.walletId(), WalletTransactionType.TOP_UP, START_BALANCE, user.userId(), null, null,
+                    null, NOW.minusSeconds(172_800));
         }
         return user;
     }
@@ -102,11 +109,8 @@ final class AccountFixture implements AutoCloseable {
         Booking booking = bookings.save(new Booking(UUID.randomUUID(), property.propertyId(), guest.userId(), start,
                 end, status, property.baseNightlyRate(), total, NOW.minusSeconds(86_400), null, null));
         Wallet wallet = wallets.findByUserId(guest.userId()).orElseThrow();
-        BigDecimal after = wallet.balance().subtract(total);
-        wallets.save(new Wallet(wallet.walletId(), guest.userId(), after, "SGD", NOW));
-        transactions.save(new WalletTransaction(UUID.randomUUID(), wallet.walletId(),
-                WalletTransactionType.ESCROW_HOLD, total.negate(), BigDecimal.ZERO, after, booking.bookingId(),
-                null, guest.userId(), NOW.minusSeconds(86_400)));
+        ledger.post(wallet.walletId(), WalletTransactionType.ESCROW_HOLD, total.negate(), guest.userId(),
+                booking.bookingId(), null, null, NOW.minusSeconds(86_400));
         if (status == BookingStatus.PENDING || status == BookingStatus.CONFIRMED) {
             blocks.save(new AvailabilityBlock(UUID.randomUUID(), property.propertyId(), start, end, "BOOKING",
                     booking.bookingId(), null));

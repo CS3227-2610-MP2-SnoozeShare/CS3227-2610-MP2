@@ -2,6 +2,8 @@ package com.snoozeshare.service.impl;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -9,34 +11,28 @@ import com.snoozeshare.domain.enums.WalletTransactionType;
 import com.snoozeshare.domain.model.Wallet;
 import com.snoozeshare.domain.model.WalletTransaction;
 import com.snoozeshare.domain.validation.DomainValidation;
+import com.snoozeshare.infra.db.TransactionManager;
 import com.snoozeshare.infra.events.EventBus;
+import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
+import com.snoozeshare.repository.LedgerRepository;
 import com.snoozeshare.repository.WalletRepository;
-import com.snoozeshare.repository.WalletTransactionRepository;
-import com.snoozeshare.service.AuditService;
 import com.snoozeshare.service.WalletService;
 
 public final class WalletServiceImpl implements WalletService {
 
+    private final Connection connection;
     private final WalletRepository wallets;
-    private final WalletTransactionRepository transactions;
-    private final WalletLedgerWriter ledger;
+    private final LedgerWriter ledger;
+    private final LedgerRepository ledgerEntries;
+    private final EventBus eventBus;
 
-    public WalletServiceImpl(Connection connection, WalletRepository wallets,
-                             WalletTransactionRepository transactions) {
-        this(connection, wallets, transactions, null, new NoOpAuditService());
-    }
-
-    public WalletServiceImpl(Connection connection, WalletRepository wallets,
-                             WalletTransactionRepository transactions, EventBus eventBus) {
-        this(connection, wallets, transactions, eventBus, new NoOpAuditService());
-    }
-
-    public WalletServiceImpl(Connection connection, WalletRepository wallets,
-                             WalletTransactionRepository transactions, EventBus eventBus,
-                             AuditService audit) {
+    public WalletServiceImpl(Connection connection, WalletRepository wallets, LedgerWriter ledger,
+                             LedgerRepository ledgerEntries, EventBus eventBus) {
+        this.connection = connection;
         this.wallets = wallets;
-        this.transactions = transactions;
-        this.ledger = new WalletLedgerWriter(connection, wallets, transactions, eventBus, audit);
+        this.ledger = ledger;
+        this.ledgerEntries = ledgerEntries;
+        this.eventBus = eventBus;
     }
 
     @Override
@@ -53,21 +49,32 @@ public final class WalletServiceImpl implements WalletService {
     @Override
     public WalletTransaction topUp(UUID userId, BigDecimal amount) {
         DomainValidation.requirePositive(amount, "amount");
-        Wallet wallet = getWallet(userId);
-        return ledger.record(wallet.walletId(), WalletTransactionType.TOP_UP, amount,
-                BigDecimal.ZERO, null, null, userId);
+        return move(userId, WalletTransactionType.TOP_UP, amount);
     }
 
     @Override
     public WalletTransaction withdraw(UUID userId, BigDecimal amount) {
         DomainValidation.requirePositive(amount, "amount");
-        Wallet wallet = getWallet(userId);
-        return ledger.record(wallet.walletId(), WalletTransactionType.WITHDRAWAL, amount.negate(),
-                BigDecimal.ZERO, null, null, userId);
+        return move(userId, WalletTransactionType.WITHDRAWAL, amount.negate());
     }
 
     @Override
     public List<WalletTransaction> statementFor(UUID userId) {
-        return transactions.findByWalletId(getWallet(userId).walletId());
+        return ledgerEntries.entriesForWallet(getWallet(userId).walletId());
+    }
+
+    private WalletTransaction move(UUID userId, WalletTransactionType type, BigDecimal amount) {
+        Wallet wallet = getWallet(userId);
+        try {
+            WalletTransaction transaction = new TransactionManager(connection).inTransaction(current ->
+                    ledger.post(wallet.walletId(), type, amount, userId, null, null, null, Instant.now()));
+            if (eventBus != null) {
+                eventBus.publish(new WalletTransactionRecordedEvent(transaction.transactionId(),
+                        transaction.walletId(), transaction.createdAt()));
+            }
+            return transaction;
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Unable to write wallet ledger", exception);
+        }
     }
 }

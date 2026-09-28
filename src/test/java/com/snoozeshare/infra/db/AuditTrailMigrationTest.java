@@ -57,10 +57,10 @@ class AuditTrailMigrationTest {
             var system = users.findById(AuditService.SYSTEM_ACTOR_ID).orElseThrow();
 
             assertEquals("SnoozeShare System", system.displayName());
-            assertEquals(Role.AGENT, system.role());
-            assertEquals(AccountStatus.SUSPENDED, system.accountStatus());
+            assertEquals(Role.SYSTEM, system.role());
+            assertEquals(AccountStatus.ACTIVE, system.accountStatus());
             var userService = new UserServiceImpl(connection, users, new JdbcWalletRepository(connection));
-            assertThrows(IllegalStateException.class, () -> userService.authenticate(system.email()));
+            assertThrows(IllegalArgumentException.class, () -> userService.authenticate(system.email()));
         }
     }
 }

@@ -14,12 +14,20 @@ public final class MigrationRunner {
     private static final int SUSPENSION_REASON_VERSION = 3;
     private static final int MESSAGING_VERSION = 4;
     private static final int BOOKING_MESSAGING_VERSION = 5;
+    private static final int SYSTEM_ROLE_VERSION = 6;
+    private static final int UNIFIED_LEDGER_VERSION = 7;
+    private static final int DROP_LEDGER_TABLE_VERSION = 8;
 
     private MigrationRunner() {
     }
 
     public static void migrate(Connection connection) throws SQLException {
         boolean originalAutoCommit = connection.getAutoCommit();
+        // The pragma is a no-op inside a transaction, so it must be switched before setAutoCommit(false).
+        boolean restoreForeignKeys = originalAutoCommit && foreignKeysEnabled(connection);
+        if (restoreForeignKeys) {
+            setForeignKeys(connection, false);
+        }
         connection.setAutoCommit(false);
         try {
             createHistoryTable(connection);
@@ -63,12 +71,73 @@ public final class MigrationRunner {
                 // else: a reference database rebuilt from db/schema.sql already has the tables.
                 recordMigration(connection, BOOKING_MESSAGING_VERSION);
             }
+            boolean rebuilt = false;
+            if (!migrationApplied(connection, SYSTEM_ROLE_VERSION)) {
+                if (!usersAllowSystemRole(connection)) {
+                    applySqlMigration(connection, "/db/migration/V006__system_role.sql");
+                    rebuilt = true;
+                }
+                // else: a reference database rebuilt from db/schema.sql already allows SYSTEM.
+                recordMigration(connection, SYSTEM_ROLE_VERSION);
+            }
+            if (rebuilt) {
+                requireForeignKeysIntact(connection);
+            }
+            if (!migrationApplied(connection, UNIFIED_LEDGER_VERSION)) {
+                if (!columnExists(connection, "audit_log", "balanceAfter")) {
+                    applySqlMigration(connection, "/db/migration/V007__unified_ledger.sql");
+                }
+                // else: a reference database rebuilt from db/schema.sql already has the column.
+                recordMigration(connection, UNIFIED_LEDGER_VERSION);
+            }
+            if (!migrationApplied(connection, DROP_LEDGER_TABLE_VERSION)) {
+                if (tableExists(connection, "wallet_transactions")) {
+                    applySqlMigration(connection, "/db/migration/V008__drop_wallet_transactions.sql");
+                }
+                // else: a reference database rebuilt from db/schema.sql never had the table.
+                recordMigration(connection, DROP_LEDGER_TABLE_VERSION);
+            }
             connection.commit();
         } catch (SQLException | RuntimeException exception) {
             connection.rollback();
             throw exception;
         } finally {
             connection.setAutoCommit(originalAutoCommit);
+            if (restoreForeignKeys) {
+                setForeignKeys(connection, true);
+            }
+        }
+    }
+
+    private static boolean foreignKeysEnabled(Connection connection) throws SQLException {
+        try (Statement statement = connection.createStatement();
+             var result = statement.executeQuery("PRAGMA foreign_keys")) {
+            return result.next() && result.getInt(1) == 1;
+        }
+    }
+
+    private static void setForeignKeys(Connection connection, boolean on) throws SQLException {
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("PRAGMA foreign_keys = " + (on ? "ON" : "OFF"));
+        }
+    }
+
+    /** Fails the migration if any row now points at a missing parent. */
+    private static void requireForeignKeysIntact(Connection connection) throws SQLException {
+        try (Statement statement = connection.createStatement();
+             var result = statement.executeQuery("PRAGMA foreign_key_check")) {
+            if (result.next()) {
+                throw new SQLException("Foreign key violation after migration in table "
+                        + result.getString("table") + " (row " + result.getLong("rowid") + ")");
+            }
+        }
+    }
+
+    private static boolean usersAllowSystemRole(Connection connection) throws SQLException {
+        try (var statement = connection.prepareStatement(
+                "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'");
+             var result = statement.executeQuery()) {
+            return result.next() && result.getString(1).contains("'SYSTEM'");
         }
     }
 
