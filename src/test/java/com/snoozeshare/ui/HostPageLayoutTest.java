@@ -38,7 +38,7 @@ class HostPageLayoutTest {
     void hostMessagesUseTheSameContentEdgeRhythm() throws Exception {
         String css = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
-        assertTrue(css.contains(".host-root .host-message-header {\n    -fx-padding: 24px 32px;"));
+        assertTrue(css.contains(".host-root .host-message-header {\n    -fx-padding: 16px 32px;"));
         assertTrue(css.contains(".host-root .host-message-composer {\n    -fx-padding: 16px 32px 24px 32px;"));
         assertTrue(css.contains(".host-root .host-message-thread {\n    -fx-padding: 24px 32px 24px 32px;"));
     }

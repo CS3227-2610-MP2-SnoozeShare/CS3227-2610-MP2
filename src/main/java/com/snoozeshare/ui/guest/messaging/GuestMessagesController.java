@@ -17,6 +17,7 @@ import com.snoozeshare.infra.events.events.TicketOpenedEvent;
 import com.snoozeshare.service.BookingConversationSummary;
 import com.snoozeshare.service.ConversationSummary;
 import com.snoozeshare.ui.common.messaging.ChatBubbles;
+import com.snoozeshare.ui.common.messaging.ConversationStatusPill;
 import com.snoozeshare.ui.guest.tickets.TicketFilingController;
 
 import javafx.application.Platform;
@@ -30,6 +31,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -80,6 +82,15 @@ public final class GuestMessagesController {
         subscriptions.add(context.eventBus().subscribe(TicketOpenedEvent.class,
                 event -> runOnFx(this::refreshInbox)));
         refreshInbox();
+    }
+
+    /** Selects the direct-message conversation of a booking, if the guest has one. */
+    public void select(UUID bookingId) {
+        int index = findRow(conversationList.getItems(), bookingId);
+        if (index >= 0) {
+            conversationList.getSelectionModel().select(index);
+            conversationList.scrollTo(index);
+        }
     }
 
     @FXML
@@ -152,17 +163,7 @@ public final class GuestMessagesController {
         boolean isTicket = selected.kind() == GuestConversationRow.Kind.TICKET;
         newTicketButton.setVisible(isBooking);
         newTicketButton.setManaged(isBooking);
-        if (isTicket) {
-            String label = selected.open() ? "OPEN" : "RESOLVED";
-            String styleClass = selected.open() ? "host-message-status-open" : "host-message-status-resolved";
-            headerStatusLabel.setText(label);
-            headerStatusLabel.getStyleClass().setAll("host-message-status", styleClass);
-            headerStatusLabel.setVisible(true);
-            headerStatusLabel.setManaged(true);
-        } else {
-            headerStatusLabel.setVisible(false);
-            headerStatusLabel.setManaged(false);
-        }
+        ConversationStatusPill.show(headerStatusLabel, isTicket, selected.open());
         if (isBooking) {
             headerSubtitle.setText("Direct message with " + selected.counterpartName()
                     + " (Host) \u00b7 Booking #" + shortId(selected.sourceId()));
@@ -219,8 +220,7 @@ public final class GuestMessagesController {
         selected = null;
         headerTitle.setText("Messages");
         headerSubtitle.setText("");
-        headerStatusLabel.setVisible(false);
-        headerStatusLabel.setManaged(false);
+        ConversationStatusPill.show(headerStatusLabel, false, false);
         thread.getChildren().clear();
         replyField.setDisable(true);
         sendButton.setDisable(true);
@@ -275,13 +275,21 @@ public final class GuestMessagesController {
             subtitle.setMinWidth(0);
             subtitle.setMaxWidth(Double.MAX_VALUE);
             subtitle.setTextOverrun(OverrunStyle.ELLIPSIS);
-            VBox copy = new VBox(4, title, subtitle);
+            BorderPane titleLine = new BorderPane();
+            titleLine.setMaxWidth(Double.MAX_VALUE);
+            titleLine.setCenter(title);
+            if (row.statusLabel() != null) {
+                Label status = new Label();
+                ConversationStatusPill.show(status, true, row.open());
+                titleLine.setRight(status);
+            }
+            VBox copy = new VBox(4, titleLine, subtitle);
             copy.setMinWidth(0);
             copy.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(copy, Priority.ALWAYS);
             HBox content = new HBox(copy);
             content.setMaxWidth(Double.MAX_VALUE);
-            content.prefWidthProperty().bind(widthProperty().subtract(24));
+            content.prefWidthProperty().bind(widthProperty().subtract(42));
             content.getStyleClass().add("host-message-row");
             setGraphic(content);
         }

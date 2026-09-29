@@ -2,59 +2,111 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<ScrollPane fitToWidth="true" maxWidth="700" maxHeight="600"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.snoozeshare.ui.guest.listing.ListingDetailController">
-    <VBox spacing="16" styleClass="detail-modal">
-        <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+<VBox fx:id="modalRoot" minWidth="640" prefWidth="960" maxWidth="960" maxHeight="840"
+      styleClass="guest-modal, guest-detail-modal"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.snoozeshare.ui.guest.listing.ListingDetailController">
 
-        <HBox alignment="CENTER_LEFT">
-            <Label fx:id="titleLabel" styleClass="page-title"/>
-        </HBox>
+    <HBox styleClass="guest-detail-crumbs" alignment="CENTER_LEFT" spacing="10">
+        <Label text="Search" styleClass="guest-crumb"/>
+        <Label text="&#8250;" styleClass="guest-crumb"/>
+        <Label fx:id="crumbTitleLabel" styleClass="guest-crumb-current"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="&#10005;" onAction="#handleClose" styleClass="guest-close-button"/>
+    </HBox>
 
-        <Label fx:id="typeLabel" styleClass="small"/>
-        <Label fx:id="addressLabel"/>
-        <Label fx:id="descriptionLabel" wrapText="true"/>
+    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="guest-scroll" VBox.vgrow="ALWAYS">
+        <VBox>
+            <Region fx:id="banner" styleClass="guest-detail-banner" minHeight="200" prefHeight="200"/>
 
-        <HBox spacing="24">
-            <Label fx:id="capacityLabel"/>
-            <Label fx:id="bedroomsLabel"/>
-            <Label fx:id="bathroomsLabel"/>
-        </HBox>
+            <HBox spacing="24" styleClass="guest-detail-body">
+                <padding><Insets top="20" right="28" bottom="24" left="28"/></padding>
 
-        <HBox spacing="24">
-            <Label fx:id="checkInLabel"/>
-            <Label fx:id="checkOutLabel"/>
-        </HBox>
+                <VBox spacing="18" HBox.hgrow="ALWAYS" minWidth="0">
+                    <VBox spacing="4">
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label fx:id="titleLabel" styleClass="guest-detail-title"/>
+                            <Label fx:id="typeLabel" styleClass="guest-type-pill"/>
+                        </HBox>
+                        <Label fx:id="addressLabel" styleClass="guest-detail-address"/>
+                    </VBox>
 
-        <Label text="Amenities" styleClass="card-title"/>
-        <FlowPane fx:id="amenitiesPane" hgap="8" vgap="8"/>
+                    <HBox spacing="20" styleClass="guest-facts">
+                        <VBox><Label fx:id="capacityLabel" styleClass="guest-fact-value"/>
+                            <Label text="MAX GUESTS" styleClass="guest-fact-caption"/></VBox>
+                        <VBox><Label fx:id="bedroomsLabel" styleClass="guest-fact-value"/>
+                            <Label text="BEDROOMS" styleClass="guest-fact-caption"/></VBox>
+                        <VBox><Label fx:id="bathroomsLabel" styleClass="guest-fact-value"/>
+                            <Label text="BATHROOMS" styleClass="guest-fact-caption"/></VBox>
+                        <VBox><Label fx:id="checkInLabel" styleClass="guest-fact-value"/>
+                            <Label text="CHECK-IN" styleClass="guest-fact-caption"/></VBox>
+                        <VBox><Label fx:id="checkOutLabel" styleClass="guest-fact-value"/>
+                            <Label text="CHECK-OUT" styleClass="guest-fact-caption"/></VBox>
+                    </HBox>
 
-        <Label text="Host" styleClass="card-title"/>
-        <Label fx:id="hostLabel"/>
+                    <Label fx:id="descriptionLabel" wrapText="true" styleClass="guest-detail-description"/>
 
-        <VBox fx:id="priceBox" spacing="8" styleClass="price-panel">
-            <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
-            <Label fx:id="nightlyRateLabel"/>
-            <Label fx:id="nightsLabel"/>
-            <Label fx:id="totalLabel" styleClass="card-price"/>
+                    <HBox spacing="12" alignment="CENTER_LEFT" styleClass="guest-host-card">
+                        <Label fx:id="hostAvatar" styleClass="guest-host-avatar"/>
+                        <VBox spacing="2" alignment="CENTER_LEFT">
+                            <Label fx:id="hostLabel" styleClass="guest-host-name"/>
+                            <Label fx:id="hostMetaLabel" styleClass="guest-host-meta"/>
+                        </VBox>
+                    </HBox>
+
+                    <VBox spacing="8">
+                        <Label text="AMENITIES" styleClass="guest-detail-section"/>
+                        <FlowPane fx:id="amenitiesPane" hgap="8" vgap="8"/>
+                    </VBox>
+
+                    <VBox spacing="8">
+                        <Label fx:id="reviewsTitleLabel" text="REVIEWS" styleClass="guest-detail-section"/>
+                        <VBox fx:id="reviewsBox" spacing="10"/>
+                        <Label fx:id="reviewsToggle" styleClass="guest-link" visible="false" managed="false"/>
+                    </VBox>
+                </VBox>
+
+                <VBox spacing="12" prefWidth="300" minWidth="300" maxWidth="300" maxHeight="-Infinity" styleClass="guest-price-card"
+                      alignment="TOP_LEFT">
+                    <HBox spacing="4" alignment="BASELINE_LEFT">
+                        <Label fx:id="nightlyRateLabel" styleClass="guest-price-headline"/>
+                        <Label text="/ night" styleClass="guest-price-unit"/>
+                    </HBox>
+                    <HBox spacing="8">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS" minWidth="0">
+                            <Label text="Check-in" styleClass="guest-field-label"/>
+                            <DatePicker fx:id="checkInPicker" maxWidth="Infinity"/>
+                        </VBox>
+                        <VBox spacing="4" HBox.hgrow="ALWAYS" minWidth="0">
+                            <Label text="Check-out" styleClass="guest-field-label"/>
+                            <DatePicker fx:id="checkOutPicker" maxWidth="Infinity"/>
+                        </VBox>
+                    </HBox>
+                    <HBox>
+                        <Label fx:id="nightsLabel" styleClass="guest-price-line"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="subtotalLabel" styleClass="guest-price-line"/>
+                    </HBox>
+                    <HBox styleClass="guest-price-total">
+                        <Label text="Total" styleClass="guest-price-total-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="totalLabel" styleClass="guest-price-total-label"/>
+                    </HBox>
+                    <Button fx:id="bookButton" text="Book now" onAction="#handleBook" disable="true"
+                            maxWidth="Infinity" styleClass="button, guest-full-button"/>
+                    <Label fx:id="bookingStatusLabel" wrapText="true" visible="false" managed="false"/>
+                    <Label text="Payment is held in escrow. Full refund if you cancel more than 48h before check-in."
+                           wrapText="true" styleClass="guest-price-note"/>
+                </VBox>
+            </HBox>
         </VBox>
-
-        <Label text="Reviews" styleClass="card-title"/>
-        <Label text="Reviews coming soon." styleClass="small"/>
-
-        <Label fx:id="bookingStatusLabel" styleClass="small" visible="false" managed="false"/>
-
-        <HBox spacing="12" alignment="CENTER_RIGHT">
-            <Button fx:id="bookButton" text="Book Now" onAction="#handleBook"
-                    disable="true" styleClass="button"/>
-            <Button text="Close" onAction="#handleClose" styleClass="outline-button"/>
-        </HBox>
-    </VBox>
-</ScrollPane>
+    </ScrollPane>
+</VBox>

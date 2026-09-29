@@ -28,5 +28,4 @@
     <VBox styleClass="agent-card">
         <TableView fx:id="table"/>
     </VBox>
-    <Label fx:id="emptyLabel" styleClass="small"/>
 </VBox>

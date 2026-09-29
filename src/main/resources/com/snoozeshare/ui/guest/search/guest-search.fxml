@@ -7,29 +7,49 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="16" xmlns:fx="http://javafx.com/fxml"
+<VBox spacing="18" styleClass="guest-page" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.snoozeshare.ui.guest.search.GuestSearchController">
-    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+    <padding><Insets top="20" right="32" bottom="20" left="32"/></padding>
 
-    <Label text="Search Properties" styleClass="page-title"/>
-
-    <HBox spacing="12" alignment="CENTER_LEFT">
-        <TextField fx:id="cityField" promptText="City or location" prefWidth="160" prefHeight="36"/>
-        <DatePicker fx:id="checkInPicker" promptText="Check-in" prefWidth="160" prefHeight="36"/>
-        <DatePicker fx:id="checkOutPicker" promptText="Check-out" prefWidth="160" prefHeight="36"/>
-        <ComboBox fx:id="guestsCombo" promptText="Guests" prefWidth="160" prefHeight="36"/>
-        <Button text="Search" onAction="#handleSearch" styleClass="button"/>
+    <HBox styleClass="guest-search-bar" alignment="CENTER_LEFT" maxWidth="-Infinity">
+        <VBox styleClass="guest-search-segment" prefWidth="180" minWidth="180">
+            <Label text="LOCATION" styleClass="guest-search-caption"/>
+            <TextField fx:id="cityField" promptText="Where to?" styleClass="guest-search-input"/>
+        </VBox>
+        <Region styleClass="guest-search-divider"/>
+        <VBox styleClass="guest-search-segment" prefWidth="150" minWidth="150">
+            <Label text="CHECK-IN" styleClass="guest-search-caption"/>
+            <DatePicker fx:id="checkInPicker" promptText="Add date" styleClass="guest-search-input"/>
+        </VBox>
+        <Region styleClass="guest-search-divider"/>
+        <VBox styleClass="guest-search-segment" prefWidth="150" minWidth="150">
+            <Label text="CHECK-OUT" styleClass="guest-search-caption"/>
+            <DatePicker fx:id="checkOutPicker" promptText="Add date" styleClass="guest-search-input"/>
+        </VBox>
+        <Region styleClass="guest-search-divider"/>
+        <VBox styleClass="guest-search-segment" prefWidth="170" minWidth="170">
+            <Label text="GUESTS" styleClass="guest-search-caption"/>
+            <ComboBox fx:id="guestsCombo" promptText="Add guests" maxWidth="Infinity"
+                      styleClass="guest-search-input"/>
+        </VBox>
+        <Region styleClass="guest-search-divider"/>
+        <VBox styleClass="guest-search-segment" prefWidth="200" minWidth="200">
+            <Label text="MAX NIGHTLY BUDGET" styleClass="guest-search-caption"/>
+            <TextField fx:id="budgetField" promptText="Any" styleClass="guest-search-input"/>
+        </VBox>
+        <Button text="Search" onAction="#handleSearch" styleClass="button, guest-search-button"/>
     </HBox>
 
     <Label fx:id="statusLabel" text="" styleClass="small"/>
 
-    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
-        <FlowPane fx:id="resultsPane" hgap="16" vgap="16">
-            <padding><Insets top="8" right="8" bottom="8" left="8"/></padding>
-        </FlowPane>
+    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="guest-scroll" VBox.vgrow="ALWAYS">
+        <GridPane fx:id="resultsPane" hgap="20" vgap="20" styleClass="guest-results">
+            <padding><Insets top="4" right="4" bottom="12" left="4"/></padding>
+        </GridPane>
     </ScrollPane>
 </VBox>

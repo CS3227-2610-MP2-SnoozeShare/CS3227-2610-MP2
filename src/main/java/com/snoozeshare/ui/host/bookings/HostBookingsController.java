@@ -8,6 +8,7 @@ import java.util.Locale;
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.enums.BookingStatus;
 import com.snoozeshare.service.HostBookingRow;
+import com.snoozeshare.ui.common.EmptyTableRow;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
@@ -52,6 +53,8 @@ public final class HostBookingsController {
         feedbackLabel.setManaged(false);
         configureTable(pendingTable);
         configureTable(pastTable);
+        EmptyTableRow.install(pendingTable, "No pending requests.");
+        EmptyTableRow.install(pastTable, "No past requests.");
         configureTextColumns(pendingGuestColumn, row -> row.guestDisplayName());
         configureTextColumns(pendingListingColumn, row -> row.listingTitle());
         configureTextColumns(pendingDatesColumn, HostBookingsController::dates);
@@ -121,7 +124,8 @@ public final class HostBookingsController {
     }
 
     private static void sizeTable(TableView<?> table) {
-        int visibleRows = Math.min(MAX_VISIBLE_ROWS, table.getItems().size());
+        // An empty table still gets one row of height for its "no requests" message.
+        int visibleRows = Math.max(1, Math.min(MAX_VISIBLE_ROWS, table.getItems().size()));
         double height = TABLE_HEADER_HEIGHT + visibleRows * TABLE_ROW_HEIGHT;
         table.setMinHeight(height);
         table.setPrefHeight(height);

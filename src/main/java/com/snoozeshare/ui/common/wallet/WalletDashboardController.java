@@ -11,6 +11,7 @@ import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.WalletTransaction;
 import com.snoozeshare.infra.events.Subscription;
 import com.snoozeshare.infra.events.events.WalletTransactionRecordedEvent;
+import com.snoozeshare.ui.common.EmptyTableRow;
 
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -60,6 +61,7 @@ public final class WalletDashboardController {
         typeColumn.setCellFactory(column -> styledBadgeCell());
         amountColumn.setCellFactory(column -> styledAmountCell());
         transactionTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        EmptyTableRow.install(transactionTable, "No transactions yet.");
     }
 
     public void setContext(AppContext context) {

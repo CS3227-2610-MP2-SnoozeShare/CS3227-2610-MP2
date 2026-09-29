@@ -6,27 +6,27 @@
 .wallet-balance-section {
     -fx-background-color: #f0e8d8;
     -fx-background-radius: 12px;
-    -fx-border-color: #c0a080;
-    -fx-border-radius: 12px;
+    -fx-border-width: 0;
 }
-.wallet-balance-caption {
+.wallet-page .label.wallet-balance-caption {
     -fx-font-size: 12px;
     -fx-font-weight: bold;
-    -fx-letter-spacing: 1px;
-    -fx-text-fill: #6c4434;
+    -fx-text-fill: #381a10;
 }
-.wallet-balance-amount {
+.wallet-page .label.wallet-balance-amount {
     -fx-font-size: 32px;
     -fx-font-weight: bold;
-    -fx-text-fill: #100604;
+    -fx-text-fill: #381a10;
 }
-.wallet-balance-currency {
-    -fx-font-size: 16px;
-    -fx-text-fill: #80766f;
-}
-.wallet-balance-hint {
+.wallet-page .label.wallet-balance-currency {
     -fx-font-size: 13px;
-    -fx-text-fill: #6c4434;
+    -fx-text-fill: #381a10;
+    -fx-opacity: 0.8;
+}
+.wallet-page .label.wallet-balance-hint {
+    -fx-font-size: 11px;
+    -fx-text-fill: #381a10;
+    -fx-opacity: 0.8;
 }
 .wallet-page .button.wallet-top-up-button {
     -fx-background-color: #40680c;
@@ -252,4 +252,17 @@
 }
 .wallet-action-modal .button.wallet-modal-confirm:hover {
     -fx-background-color: #315208;
+}
+
+/* ---- Empty table: the message is one row inside the table ---- */
+.wallet-transaction-table .table-empty-row {
+    -fx-min-height: 47px;
+    -fx-pref-height: 47px;
+    -fx-max-height: 47px;
+    -fx-padding: 0 0 0 18px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-font-size: 13px;
+    -fx-text-fill: #6c4434;
+    -fx-border-color: #d8c4a8 transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
 }

@@ -35,6 +35,7 @@ import com.snoozeshare.repository.TicketRepository;
 import com.snoozeshare.repository.UserRepository;
 import com.snoozeshare.repository.WalletRepository;
 import com.snoozeshare.service.BookingService;
+import com.snoozeshare.service.CancellationRefund;
 import com.snoozeshare.service.HostBookingRow;
 import com.snoozeshare.service.Money;
 import com.snoozeshare.service.TripFilter;
@@ -287,6 +288,15 @@ public final class BookingServiceImpl implements BookingService {
         } catch (SQLException exception) {
             throw new IllegalStateException("Unable to cancel booking", exception);
         }
+    }
+
+    @Override
+    public CancellationRefund previewCancellationRefund(UUID bookingId) {
+        Booking booking = bookings.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking does not exist"));
+        BigDecimal amount = calculateRefundAmount(booking);
+        int percent = amount.compareTo(booking.totalAmount()) == 0 ? 100 : 50;
+        return new CancellationRefund(amount, percent);
     }
 
     static BigDecimal calculateRefundAmount(Booking booking) {

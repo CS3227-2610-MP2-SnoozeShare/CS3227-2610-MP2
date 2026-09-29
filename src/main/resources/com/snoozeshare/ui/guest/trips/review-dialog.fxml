@@ -5,27 +5,42 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="16" maxWidth="400" styleClass="detail-modal"
+<VBox spacing="16" minWidth="480" prefWidth="480" maxWidth="480" maxHeight="-Infinity"
+      styleClass="guest-modal"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.snoozeshare.ui.guest.trips.ReviewDialogController">
-    <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+    <padding><Insets top="28" right="28" bottom="28" left="28"/></padding>
 
-    <Label text="Leave a Review" styleClass="page-title"/>
-    <Label text="Share your experience with this stay." styleClass="small"/>
+    <HBox alignment="CENTER_LEFT">
+        <Label text="Leave a review" styleClass="guest-modal-title"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="&#10005;" styleClass="guest-close-button" onAction="#handleCancel"/>
+    </HBox>
 
-    <Label text="Rating" styleClass="card-title"/>
-    <HBox fx:id="starBar" spacing="8"/>
+    <HBox spacing="12" alignment="CENTER_LEFT" styleClass="guest-stay-strip">
+        <Region fx:id="stayThumb" styleClass="guest-thumb-small"/>
+        <VBox spacing="2">
+            <Label fx:id="stayTitle" styleClass="guest-trip-title"/>
+            <Label fx:id="stayMeta" styleClass="guest-trip-subtitle"/>
+        </VBox>
+    </HBox>
 
-    <Label text="Comment (optional)" styleClass="card-title"/>
-    <TextArea fx:id="commentArea" promptText="Tell us about your stay"
-              prefRowCount="3" wrapText="true"/>
+    <VBox spacing="8">
+        <Label text="Rating" styleClass="guest-field-label"/>
+        <HBox fx:id="starBar" spacing="6"/>
+    </VBox>
+
+    <VBox spacing="4">
+        <Label text="Comment (optional)" styleClass="guest-field-label"/>
+        <TextArea fx:id="commentArea" promptText="How was your stay?"
+                  prefRowCount="3" wrapText="true"/>
+    </VBox>
 
     <Label fx:id="statusLabel" styleClass="error-message" visible="false" managed="false"/>
 
-    <HBox spacing="12">
-        <Button text="Submit Review" styleClass="button" onAction="#handleSubmit"/>
-        <Button text="Cancel" styleClass="outline-button" onAction="#handleCancel"/>
-    </HBox>
+    <Button text="Submit review" maxWidth="Infinity" styleClass="button, guest-full-button"
+            onAction="#handleSubmit"/>
 </VBox>

@@ -181,6 +181,28 @@ class JdbcPropertyRepositoryTest {
     }
 
     @Test
+    void findBySearchCriteriaFiltersByMaxNightlyRate() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var users = new JdbcUserRepository(connection);
+            var repo = new JdbcPropertyRepository(connection);
+            User host = saveHost(users);
+            repo.save(makeProperty(host.userId(), "Cheap Room", "Singapore",
+                    ListingStatus.ACTIVE, 2, new BigDecimal("80.00")));
+            repo.save(makeProperty(host.userId(), "Exact Flat", "Singapore",
+                    ListingStatus.ACTIVE, 2, new BigDecimal("120.00")));
+            repo.save(makeProperty(host.userId(), "Pricey Villa", "Singapore",
+                    ListingStatus.ACTIVE, 2, new BigDecimal("300.00")));
+
+            var results = repo.findBySearchCriteria(
+                    new SearchCriteria(null, null, null, null, new BigDecimal("120")));
+
+            assertEquals(2, results.size());
+            assertEquals(java.util.Set.of("Cheap Room", "Exact Flat"),
+                    results.stream().map(Property::title).collect(java.util.stream.Collectors.toSet()));
+        }
+    }
+
+    @Test
     void unknownAmenityInDatabaseIsIgnoredGracefully() throws Exception {
         try (Connection connection = migratedConnection()) {
             var users = new JdbcUserRepository(connection);
@@ -213,10 +235,15 @@ class JdbcPropertyRepositoryTest {
 
     private static Property makeProperty(UUID hostId, String title, String city,
                                           ListingStatus status, int maxGuests) {
+        return makeProperty(hostId, title, city, status, maxGuests, new BigDecimal("100.00"));
+    }
+
+    private static Property makeProperty(UUID hostId, String title, String city,
+                                          ListingStatus status, int maxGuests, BigDecimal rate) {
         return new Property(UUID.randomUUID(), hostId, status, title,
                 "A nice place", PropertyType.APARTMENT, "123 Street", city,
                 "Central", 123456, maxGuests, 2, 1,
-                new BigDecimal("100.00"), LocalTime.of(14, 0), LocalTime.of(11, 0),
+                rate, LocalTime.of(14, 0), LocalTime.of(11, 0),
                 Set.of(AmenityType.WIFI, AmenityType.KITCHEN), Instant.now());
     }
 

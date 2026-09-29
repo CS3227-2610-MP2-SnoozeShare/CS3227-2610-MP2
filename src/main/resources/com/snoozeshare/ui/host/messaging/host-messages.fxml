@@ -32,6 +32,7 @@
                         <Label fx:id="headerSubtitle" styleClass="host-message-header-subtitle"/>
                     </VBox>
                     <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="headerStatusLabel" visible="false" managed="false"/>
                 </HBox>
             </top>
             <center>
