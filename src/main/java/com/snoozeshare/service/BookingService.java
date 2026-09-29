@@ -24,6 +24,9 @@ public interface BookingService {
 
     Booking cancel(UUID bookingId, UUID actingGuestId);
 
+    /** What a guest cancellation would refund right now, without cancelling. */
+    CancellationRefund previewCancellationRefund(UUID bookingId);
+
     Booking complete(UUID bookingId);
 
     int completeEligibleBookings();

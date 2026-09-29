@@ -65,6 +65,10 @@ public final class JdbcPropertyRepository implements PropertyRepository {
             sql.append(" AND maxGuests >= ?");
             values.add(String.valueOf(criteria.guests()));
         }
+        if (criteria.maxNightlyRate() != null) {
+            sql.append(" AND baseNightlyRate <= ?");
+            values.add(criteria.maxNightlyRate().toPlainString());
+        }
         try (var statement = connection.prepareStatement(sql.toString())) {
             for (int index = 0; index < values.size(); index++) {
                 statement.setString(index + 1, values.get(index));

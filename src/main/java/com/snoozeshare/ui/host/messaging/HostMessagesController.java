@@ -15,6 +15,7 @@ import com.snoozeshare.infra.events.events.MessagePostedEvent;
 import com.snoozeshare.service.BookingConversationSummary;
 import com.snoozeshare.service.ConversationSummary;
 import com.snoozeshare.ui.common.messaging.ChatBubbles;
+import com.snoozeshare.ui.common.messaging.ConversationStatusPill;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -34,6 +35,7 @@ public final class HostMessagesController {
     @FXML private ListView<HostConversationRow> conversationList;
     @FXML private Label headerTitle;
     @FXML private Label headerSubtitle;
+    @FXML private Label headerStatusLabel;
     @FXML private Label statusLabel;
     @FXML private Label emptyLabel;
     @FXML private VBox thread;
@@ -153,6 +155,8 @@ public final class HostMessagesController {
                         + shortId(selected.sourceId())
                 : selected.subtitle());
         statusLabel.setVisible(false);
+        ConversationStatusPill.show(headerStatusLabel,
+                selected.kind() == HostConversationRow.Kind.TICKET, selected.open());
         if (selected.kind() == HostConversationRow.Kind.BOOKING) {
             List<BookingMessage> messages = context.bookingConversationService()
                     .thread(selected.sourceId(), hostId, Role.HOST);
@@ -174,6 +178,7 @@ public final class HostMessagesController {
         selected = null;
         headerTitle.setText("Messages");
         headerSubtitle.setText("");
+        ConversationStatusPill.show(headerStatusLabel, false, false);
         thread.getChildren().clear();
         replyField.setDisable(true);
         sendButton.setDisable(true);

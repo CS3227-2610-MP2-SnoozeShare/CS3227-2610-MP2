@@ -8,6 +8,7 @@ import java.util.List;
 import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.model.AvailabilityBlock;
 import com.snoozeshare.domain.model.Property;
+import com.snoozeshare.ui.guest.GuestVisuals;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -60,6 +61,12 @@ public final class HostCalendarController {
     private YearMonth displayedMonth = YearMonth.now();
     private Runnable onBack = () -> { };
     private Runnable onListingDetail = () -> { };
+
+    @FXML
+    private void initialize() {
+        GuestVisuals.blockPastDates(fromPicker);
+        GuestVisuals.blockPastDates(toPicker);
+    }
 
     public void setContext(AppContext appContext) {
         context = appContext;

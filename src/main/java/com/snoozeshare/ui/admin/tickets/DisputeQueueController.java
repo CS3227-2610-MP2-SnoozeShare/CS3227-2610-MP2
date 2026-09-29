@@ -11,6 +11,7 @@ import com.snoozeshare.domain.enums.TicketStatus;
 import com.snoozeshare.infra.events.Subscription;
 import com.snoozeshare.infra.events.events.TicketResolvedEvent;
 import com.snoozeshare.service.DisputeSummary;
+import com.snoozeshare.ui.common.EmptyTableRow;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -52,7 +53,7 @@ public final class DisputeQueueController {
     @FXML private ToggleButton mineChip;
     @FXML private ComboBox<String> statusCombo;
     @FXML private Label unassignedBadge;
-    @FXML private Label emptyLabel;
+    private Label emptyRow;
 
     private AppContext context;
     private Consumer<UUID> onOpen = id -> { };
@@ -85,7 +86,7 @@ public final class DisputeQueueController {
 
         table.getStyleClass().add("agent-table");
         table.setFixedCellSize(ROW_HEIGHT);
-        table.setPlaceholder(new Label());
+        emptyRow = EmptyTableRow.install(table, "");
         table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         table.prefHeightProperty().bind(Bindings.max(1, Bindings.size(table.getItems()))
                 .multiply(ROW_HEIGHT).add(HEADER_HEIGHT));
@@ -166,7 +167,7 @@ public final class DisputeQueueController {
         int selected = Math.max(0, statusCombo.getSelectionModel().getSelectedIndex());
         var rows = context.disputeQueryService().queue(STATUS_VALUES[selected], filter, agentId);
         table.getItems().setAll(rows);
-        emptyLabel.setText(rows.isEmpty() ? "No disputes match these filters." : "");
+        emptyRow.setText("No disputes match these filters.");
         int unassigned = context.disputeQueryService()
                 .queue(TicketStatus.OPEN, AssigneeFilter.UNASSIGNED, agentId).size();
         unassignedBadge.setText(unassigned + " unassigned");

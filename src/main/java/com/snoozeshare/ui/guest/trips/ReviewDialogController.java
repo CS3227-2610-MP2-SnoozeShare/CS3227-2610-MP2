@@ -3,15 +3,25 @@ package com.snoozeshare.ui.guest.trips;
 import java.util.UUID;
 
 import com.snoozeshare.app.AppContext;
+import com.snoozeshare.ui.guest.GuestVisuals;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 
 public final class ReviewDialogController {
 
+    /** What the dialog shows about the stay being reviewed. */
+    public record StaySummary(UUID listingId, String title, String dates, String hostName) {
+    }
+
+    private static final int STAR_COUNT = 5;
+
+    @FXML private Region stayThumb;
+    @FXML private Label stayTitle;
+    @FXML private Label stayMeta;
     @FXML private HBox starBar;
     @FXML private TextArea commentArea;
     @FXML private Label statusLabel;
@@ -21,22 +31,28 @@ public final class ReviewDialogController {
     private Runnable onClose;
     private int selectedRating;
 
-    public void configure(AppContext context, UUID bookingId, Runnable onClose) {
+    public void configure(AppContext context, UUID bookingId, StaySummary stay, Runnable onClose) {
         this.context = context;
         this.bookingId = bookingId;
         this.onClose = onClose;
         this.selectedRating = 0;
-        buildStarButtons();
+        stayThumb.getStyleClass().add(GuestVisuals.gradientClass(stay.listingId()));
+        stayTitle.setText(stay.title());
+        stayMeta.setText(stay.dates() + " · Host: " + stay.hostName());
+        buildStars();
     }
 
-    private void buildStarButtons() {
+    int selectedRating() {
+        return selectedRating;
+    }
+
+    private void buildStars() {
         starBar.getChildren().clear();
-        for (int i = 1; i <= 5; i++) {
-            Button star = new Button("\u2605");
-            star.getStyleClass().add("outline-button");
-            star.setStyle("-fx-font-size: 20px; -fx-min-width: 40px;");
+        for (int i = 1; i <= STAR_COUNT; i++) {
+            Label star = new Label("★");
+            star.getStyleClass().add("guest-star");
             final int rating = i;
-            star.setOnAction(event -> selectRating(rating));
+            star.setOnMouseClicked(event -> selectRating(rating));
             starBar.getChildren().add(star);
         }
     }
@@ -44,11 +60,10 @@ public final class ReviewDialogController {
     private void selectRating(int rating) {
         this.selectedRating = rating;
         for (int i = 0; i < starBar.getChildren().size(); i++) {
-            Button star = (Button) starBar.getChildren().get(i);
+            var styles = starBar.getChildren().get(i).getStyleClass();
+            styles.remove("guest-star-on");
             if (i < rating) {
-                star.setStyle("-fx-font-size: 20px; -fx-min-width: 40px; -fx-text-fill: #d4a017;");
-            } else {
-                star.setStyle("-fx-font-size: 20px; -fx-min-width: 40px;");
+                styles.add("guest-star-on");
             }
         }
     }

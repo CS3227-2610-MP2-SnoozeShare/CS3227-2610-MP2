@@ -41,7 +41,6 @@
     <VBox styleClass="agent-card">
         <TableView fx:id="table"/>
     </VBox>
-    <Label fx:id="emptyLabel" styleClass="small"/>
     <Button fx:id="loadMoreButton" text="Load more" styleClass="outline-button"
             onAction="#handleLoadMore" visible="false" managed="false"/>
 </VBox>

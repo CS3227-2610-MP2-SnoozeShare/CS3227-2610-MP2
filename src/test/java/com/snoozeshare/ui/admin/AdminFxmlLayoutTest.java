@@ -97,7 +97,7 @@ class AdminFxmlLayoutTest {
         String audit = read("audit/audit-log.fxml");
 
         String[] ids = {"searchField", "actionSelect", "fromPicker", "toPicker", "applyButton", "clearButton",
-            "table", "loadMoreButton", "errorLabel", "emptyLabel"};
+            "table", "loadMoreButton", "errorLabel"};
         for (String id : ids) {
             assertTrue(audit.contains("fx:id=\"" + id + "\""), id);
         }

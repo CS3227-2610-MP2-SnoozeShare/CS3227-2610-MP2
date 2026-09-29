@@ -17,6 +17,7 @@ import com.snoozeshare.app.AppContext;
 import com.snoozeshare.domain.enums.AuditAction;
 import com.snoozeshare.domain.model.AuditLogEntry;
 import com.snoozeshare.service.AuditFilter;
+import com.snoozeshare.ui.common.EmptyTableRow;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
@@ -49,7 +50,7 @@ public final class AuditLogController {
     @FXML private DatePicker fromPicker;
     @FXML private DatePicker toPicker;
     @FXML private TableView<AuditLogEntry> table;
-    @FXML private Label emptyLabel;
+    private Label emptyRow;
     @FXML private Label errorLabel;
     @FXML private Button loadMoreButton;
 
@@ -61,11 +62,10 @@ public final class AuditLogController {
         actionSelect.setOptions(Arrays.stream(AuditAction.values()).map(Enum::name).toList());
         searchField.setOnAction(event -> handleApply());
         errorLabel.managedProperty().bind(errorLabel.textProperty().isNotEmpty());
-        emptyLabel.managedProperty().bind(emptyLabel.textProperty().isNotEmpty());
 
         table.getStyleClass().addAll("agent-table", "agent-audit-table");
         table.setFixedCellSize(ROW_HEIGHT);
-        table.setPlaceholder(new Label());
+        emptyRow = EmptyTableRow.install(table, "");
         table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         table.prefHeightProperty().bind(Bindings.max(1, Bindings.size(table.getItems()))
                 .multiply(ROW_HEIGHT).add(HEADER_HEIGHT));
@@ -131,7 +131,7 @@ public final class AuditLogController {
             boolean more = page.size() == PAGE_SIZE;
             loadMoreButton.setVisible(more);
             loadMoreButton.setManaged(more);
-            emptyLabel.setText(table.getItems().isEmpty() ? "No audit entries match these filters." : "");
+            emptyRow.setText("No audit entries match these filters.");
             errorLabel.setText("");
         } catch (RuntimeException failure) {
             errorLabel.setText("Unable to load the audit log: " + failure.getMessage());

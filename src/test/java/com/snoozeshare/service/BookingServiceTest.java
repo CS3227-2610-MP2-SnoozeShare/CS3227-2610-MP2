@@ -298,6 +298,33 @@ class BookingServiceTest {
     }
 
     @Test
+    void previewCancellationRefundMatchesThePolicyWithoutCancelling() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            var ctx = seedContext(connection, new BigDecimal("2000.00"), new BigDecimal("100.00"));
+            BookingService service = createService(connection);
+            var repository = new JdbcBookingRepository(connection);
+
+            Booking far = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(12));
+            var pending = service.previewCancellationRefund(far.bookingId());
+            assertEquals(100, pending.percent());
+            assertEquals(0, new BigDecimal("200.00").compareTo(pending.amount()));
+
+            Booking near = service.submitRequest(ctx.guestId, ctx.propertyId,
+                    LocalDate.now().plusDays(1), LocalDate.now().plusDays(3));
+            repository.save(new Booking(near.bookingId(), near.listingId(), near.guestId(),
+                    near.startDate(), near.endDate(), BookingStatus.CONFIRMED,
+                    near.nightlyRateSnapshot(), near.totalAmount(), near.createdAt(), Instant.now(), null));
+            var late = service.previewCancellationRefund(near.bookingId());
+            assertEquals(50, late.percent());
+            assertEquals(0, new BigDecimal("100.00").compareTo(late.amount()));
+
+            assertEquals(BookingStatus.PENDING, repository.findById(far.bookingId()).orElseThrow().status(),
+                    "previewing must not cancel");
+        }
+    }
+
+    @Test
     void cancelFailsForCompletedBooking() throws Exception {
         try (Connection connection = migratedConnection()) {
             var ctx = seedContext(connection, new BigDecimal("500.00"));

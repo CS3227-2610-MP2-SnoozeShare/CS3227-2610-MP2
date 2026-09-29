@@ -17,6 +17,14 @@ class SearchCriteriaTest {
         assertNull(criteria.guests());
         assertNull(criteria.startDate());
         assertNull(criteria.endDate());
+        assertNull(criteria.maxNightlyRate());
+    }
+
+    @Test
+    void maxNightlyRateIsPreserved() {
+        var criteria = new SearchCriteria(null, null, null, null, new java.math.BigDecimal("150"));
+
+        assertEquals(new java.math.BigDecimal("150"), criteria.maxNightlyRate());
     }
 
     @Test
