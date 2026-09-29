@@ -185,6 +185,29 @@ Agents are naturally inclined towards action and they want to start writing code
 
 The other insight is that agents excel at structured, logic-heavy tasks but struggle with anything that requires visual judgement. Knowing this boundary helps you allocate work more effectively. Let the agent handle the service layer, the data access, the business rules, and the tests, but expect to do more hands-on work for anything the user actually sees.
 
+
+### Supporting Evidence from Project Artifacts
+
+The following project files illustrate the points made above.
+
+**Brainstorming and planning before code:**
+- `docs/superpowers/specs/2026-09-24-w2-listing-search-design.md` — the W2 spec header reads "Approved via brainstorming session, 2026-09-24", showing design was validated before implementation began. Decision W2-D2 in the same file records a requirement I revised during spec review ("guests should still see unavailable listings for awareness, but available ones take priority"), demonstrating how brainstorming caught design issues before any code was written.
+
+**TDD-first workflow:**
+- `docs/superpowers/plans/2026-09-24-w2-listing-search.md` — Task 1 explicitly follows a red-green-refactor cycle: "Step 1: Write tests for SearchCriteria", then "Step 2: Run test to verify it fails" with the expected compilation failure documented upfront.
+- `docs/superpowers/plans/2026-09-26-w4-guest-feedback-disputes-reviews.md` — Task 1, Step 4 reads "Write the failing tests for `fileTicket()`" before any implementation code, with 8 validation rules specified in the design spec (`docs/superpowers/specs/2026-09-26-w4-guest-feedback-disputes-reviews-design.md`, § 3.1) and all 8 implemented exactly as spec'd.
+
+**UI/UX struggles and screenshot-driven corrections:**
+- `logs/2026-09-26_22-10-00_w8.md` — I had to attach screenshots of the wallet page and booking modals to get padding and layout consistent, because the agent could not see the rendered output itself.
+- `logs/2026-09-27_01-57-00_w9.md` — wallet UI required mockup screenshots for top-up and withdrawal modals; the agent implemented the layout but the CSS was overridden by shell-level styles that only became visible after I ran the app and verified.
+- `logs/2026-09-27_12-32-00_host-ui-touchup.md` and `logs/2026-09-29_00-58-00_host-ui-touchup.md` — multiple rounds of UI touch-up sessions were needed to correct visual issues the agent could not detect on its own.
+
+**PROJECT_STATE.md as cross-session source of truth:**
+- `PROJECT_STATE.md`, § How to Resume — the sessions table tracked 8+ concurrent sessions across different agents (Claude Opus, Claude Sonnet, Codex) on different branches, ensuring no context was lost when switching between sessions or models.
+
+**Planning reducing rework:**
+- `docs/project-state/done-ledger.md` — W2 through W5 each have clean single entries in the done ledger ("All 4/9/8/6 tasks complete") with no follow-up rework entries, compared to later workstreams like W6 which required multiple refinement rounds. This suggests the upfront spec and plan investment paid off in fewer surprises during implementation.
+
 ## Trevor's Reflections
 Here are some sample questions that you can use to guide your reflections.
 
