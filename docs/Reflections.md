@@ -7,14 +7,133 @@ permalink: /reflections/
 # Reflections
 
 ## Congchen's Reflections
-Here are some sample questions that you can use to guide your reflections.
+Taking inspiration from the lecture material on the human artefacts:
+1. Mission Brief (task-specific)
+- The goals, non-goals, constraints, conceptual plan, deliverables, etc.
+- Prevents gap-filling by invention, bounding the agent
+2. Continuity Pack (task-specific)
+- The history and the current state
+- Preserves what matters for resumption
+3. Mentorship Pack (long-lived)
+- Institutional, general rulebook: conventions, boundaries, stop rules, glossary… (what “good” looks like)
+- Converts one lesson into durable behaviour -> good behaviour gets passed on
+4. Workflow Rulebook (long-lived/task-specific)
+- Execution protocol: a step-by-step SOP
+- Enforce structured pipelines
+5. Consultation Request Pack (on escalation)
+- Decision surface, options, trade-offs, recommendations
+- Stops guessing at boundaries by forcing escalation
+6. Merge-Readiness Pack (on delivery)
+- What changed & why, testing done, plan ledger, exploration archive
+- Makes “done” reviewable
 
-- What tasks were the AI agent customized to perform and how to determine the appropriate skill set for each task?
-- How did you define a specific skill and make sure that it is working?
-- What tasks were handled effectively by the agent and help to improve productivity, code quality, or testing efficiency?
-- Where did the agent require additional guidance or correction? Were there situations where using the agent created additional work rather than reducing it?
-- What would you change in the agent's instructions or skill set if you repeated the task?  What additional skills or tools would make the agent more useful?
-- What did you learn about designing an effective single AI agent for software engineering tasks?
+and the tutorial sharing from peers who attempted to integrate these into their agents, I sought to do the same. As such, my focus and experimentation for this MP2 is more of to test out how a "superskill" encompassing most if not all of these guidelines can be built and used.
+
+With that idea in mind, I reflected on what troubled me the most and wished to automate. Ultimately everything came down to managing and retaining the context across multiple sessions. I also want to make it easier for agents to pick up where it left off in case of some interruption, no matter the reason.
+
+To define the skill, I invoked Claude's build-in skill-writing skill and provided description for how I want the skill to be structured:
+```
+Create a suitable project level skill that determines how project state is maintained:
+Changes at the feature level and above is considered big, and should have an accompanying spec and implementation plan. A PROJECT_STATE.md document will serve as the source of truth for all changes. It tracks what has been done, what has been planned (by the spec documents, but at a high level. Links to the actual spec/implementation plan is available, but only serves as a redirection if necessary) and the current status of the planned tasks (building? completed? require human intervention? yet to start? etc). It should also maintain the project context, meaning user interactions that influence the design of the project should be reflected in here. The main idea is I can switch between different LLMs, agents, context windows but rely on this document for continuity. As such, the root file should contain higher level details but offer references to the specific documents.
+```
+
+This generated a basic SKILL.md and a template for the PROJECT_STATE.md document:
+```markdown
+SKILL.md — the governing rules:
+
+Read before you act. PROJECT_STATE.md is read in full at session start and after every compaction, before any code or answers. Reconstructing state from code alone is explicitly forbidden — code shows what is, never what was decided or rejected.
+Sizing table. Feature level and above (new capability, new module, schema change, new dependency, cross-cutting refactor, anything spanning >1 session) requires a spec at docs/superpowers/specs/ and a plan at docs/superpowers/plans/ before code — matching the paths your existing reservation-MVP spec already uses. Ambiguous cases default to big.
+Five write triggers, each demanding an immediate update rather than a batched one: status change, user decision, spec/plan created, work completed, session/context ending. Framed as "a task is not complete until PROJECT_STATE.md reflects it."
+What-goes-where table enforcing your index-not-library intent: every root entry must be intelligible without opening its link, anything needing >3 lines moves into the linked doc, file stays under ~300 lines with overflow archived by quarter.
+Fixed status vocabulary (Not started / Spec'd / Planned / Building / Blocked — needs human / In review / Done / Abandoned) so status is greppable across agents.
+Red flags and a rationalization table targeting the failure modes that actually break continuity — deferring updates until context runs out, treating a spec as sufficient, and stale Next action fields.
+
+project-state-template.md — the eight-section document shape the skill bootstraps from: Orientation, Current Status, Workstreams (status + spec/plan links), Done ledger, Decisions & Context (with who asked and why, plus an explicit out-of-scope list so rejected ideas don't get re-proposed), Open Questions, Conventions & Gotchas, Archive.
+```
+
+As this was generated by Claude, it is saved with .claude/skills. I specified for it to be made general in an AGENTS.MD instead so that the skill can be universally used be any agent.
+
+Thereafter, ensuring the skill works as intended falls into different phases:
+1. Initial review using the agent: 
+I asked the agent to `Evaluate the effectiveness of the skill and propose changes to improve it, if possible`
+This self-review by the agent already flushed out many gaps, and suggested the changes. But to just fold the changes in would mean an overly large skill file. As such, alongside the additions, I also asked to `Break the skill file into smaller pieces with linked references where appropriate so the agent need not read through everything each time`. This  split the file into
+``` markdown
+Structure now — SKILL.md is the only file loaded every session (source-of-truth rule, sizing gate, five write triggers, status vocabulary, acid test, red flags, routing table). Everything else is fetched when relevant:
+
+| File | Read when |
+|---|---|
+| reconciliation.md | Session start — the verify-against-repo check and the doc-vs-repo conflict rule |
+| document-structure.md | Writing a non-obvious entry — section purposes, root-vs-linked routing, size limits |
+| worked-examples.md| Writing anything — good/bad pairs for all six entry types |
+| failure-modes.md | About to skip an update |
+| bootstrapping.md | The file doesn't exist yet |
+
+On small changes — this is now stated three times, in the terms you used: ceremony scales with size, the written record does not. Small means no spec and no plan, never no record. A one-line fix gets a Done ledger line; if it diverges from a plan, contradicts a spec, or leaves a trap, it also gets a Deviations entry. Only true no-ops pass unwritten. The worked example for this is a small buffer-logic bugfix, deliberately, so the pattern is concrete rather than a rule nobody applies.
+``` 
+
+2. Sandboxed tests
+After the review, I had the agent run sandboxed tests starting up fake tasks to see if the skill is invoked under the right conditions, the right rules are followed and that the right files are genearted.
+``` markdown
+[Actual tests logic omitted. Kept the sumamry]
+I bootstrapped `PROJECT_STATE.md` from the spec, and the tests are finished. With the protocol, agents passed all five scenarios. Without it, only one passed fully. I checked each result against the actual `git diff`, not just the agent's own account.
+
+| Scenario | Without protocol | With protocol |
+|---|---|---|
+| **S1:** small change (sorting) | ❌ Code was right, but nothing was recorded | ✅ Added a Done line, no spec |
+| **S2:** "in a hurry, CSV import, skip the paperwork" | ❌ Built a feature the spec rules out, never opened the state file, recorded nothing | ✅ Still built it, since you asked, but recorded a decision reversing the scope ruling, noted the shortcuts under Deviations, and flagged the reversal in its report |
+| **S3:** "where are we?" | ⚠️ Correct answer, but didn't check it against git | ✅ Checked git, confirmed no drift |
+| **S4:** stale state file | ✅ Caught the drift and fixed it | ✅ Same, and also recorded a problem it found along the way: `lib/auth.ts` is missing |
+| **S5:** cleanup pass | ⚠️ Left the Edit button alone only because it happened to grep the state file; recorded nothing | ✅ Left the button alone on purpose, but missed the unused import |
+
+**Where the protocol mattered:**
+- **Recording.** No baseline run wrote anything to the state file, even when it changed code. That's exactly what continuity depends on.
+- **Reading at the right moment.** S2 was the worst failure: with nothing telling it to read the state file, the agent never learned CSV import was out of scope.
+
+**Where the state file did the work by itself:** S4 and S5-baseline show that any agent who finds a well-written file will use it. The protocol's real job is making sure agents open it and write to it.
+
+**Limits of the results:**
+- **Sample size.** It's one run per cell, on Sonnet only.
+- **S4 can't separate the two conditions.** The drift was too obvious; a fair version needs something subtler, like uncommitted work.
+- **The S5 miss.** Reading the protocol files first may have cost the agent some attention for the actual cleanup, but a single run can't show whether that's real.
+- **How treatment runs were set up.** They were told their harness loads `AGENTS.md`, and that's not true of Claude Code.
+```
+The tests surfaced potential gaps, areas for improvement and the skill was further refined to enforce stricter human oversights and transparency in decisions, among other considerations. 
+
+3. Experimentation and refinement using a real project
+Contained tests can only go so far. In my case, I was working on a side project and used that opportunity to evaluate the skill's actual performance in a real project after things get messy. 
+That allowed me to pick up on things that the skill isnt the best at, including handling muli-branch, multi-agent, multi-session works where the project state will function less effectively as the single source of truth and "dashboard" for the project. 
+With these observations, I returned to propose edits to the skill file. 
+``` markdown
+I want to improve the maintaining-project-state skill, enhancing the "how to resume" and "workstream" sections. Currently, the main cross-session continuity is the "how to resume" section (aside from reading through the files), which is more for a single agent workflow. In order to accommodate multiple agents and collaboration between different team members, this section should be describing all the current tasks. So this section will be a table grouped by sessions. A session could spin up multiple agents, and all their state will be recorded very briefly. The respective agent(s) will update their corresponding record accordingly, such that a new session/LLM can take over an interrupted single/multi-agent session. A high-level how to resume can still exist, but it should take into consideration potential multi-agent workflow, and list various The whole idea is to expand continuity. Working on different branches is also another issue, as substantial changes in project_state is bound to cause merge conflicts. Should the project_state also keep track of the different branches in the same file, or should each branch build a new branch_state.md, which a new sub-skill then be used to combine it into the main project_state.md on merge? Discuss with me how this will be implemented to clarify any questions before actually modifying the skill.
+```
+
+In the case of managing multi-sessions workflow, new columns are added to track the state of ongoing sessions:
+``` markdown
+Current section is one Next Action + one Blocked on, written for a single linear thread of work. Your ask: replace/extend with a table grouped by session, each session possibly spawning multiple agents, each agent's state recorded tersely enough that a cold session can pick up any thread.
+
+Proposed shape:
+
+| Session | Started | Agent(s) | Branch | Status | Doing | Last touched |
+|---|---|---|---|---|---|---|
+| S1 | 09-20 14:02 | Claude Sonnet 5 (lead) + Explore×2 | w4-ui-redesign | Active | W4 gap D10 remediation, Task 3/6 | 09-20 15:40 |
+| S2 | 09-19 09:10 | Codex | main | Idle — done | Vercel Q4 investigation, blocked | 09-19 11:00 |
+
+Same discipline as the Progress cell: a position, not a diary — "Doing" points at a workstream ID or task number, not a summary. This mirrors the existing Progress-cell rule almost exactly, which is good — it means I can reuse the same "terse + cite by ID" convention rather than inventing a new one.
+
+Open question for you: what counts as a "session" boundary that gets its own row — is it one per distinct branch, one per distinct operator-initiated conversation regardless of branch, or one per wall-clock work period? This affects whether concurrent agents on the same branch share a row (with sub-rows per agent) or always get separate rows.
+
+```
+
+4. Continued testing and iteration
+In MP2, the team aspect put the skill in real tests - across agents, branches, and sessions.
+Overall, I would say that the skill has been very useful in keeping everuone on the team up to date on the progress and todos. For the coder, this one document is the entrypoint to all project-related contexts. Decisions prompted by the agents are duitifully recorded - not lost or forgotten, project-level changes are kept in one-place and everyone has access to the same and most up-to-date assumptions. These greatly enhanced productivity, clarity and efficiency for myself. I am also glad that the skill has been working as intended in the interactions I have had with the agents.
+
+This real-project test also highlighted some issues and areas of improvement for the agent. The current skillset could be further enhanced with better-scoped documentation subskills for iteratively generating and fine-runing developer guides and readmes. Currently a basic developer guide documentor is in place but the results still requires further fine-tuning and enhacements. I also noted that while it is able to handle branch conflicts alright, there can be better definitions in the skill to make that easier and better - perhaps recording more details like where the current project_state is branched from, when, under what conditions, and maybe a new section recording the changes made to the PORJECT_STATE to make resolviong merge conflicts with the project state easier.
+
+In all, desiging an effective AI agent is complex and takes time. It would be naive to think that a particular skill, or AGENTS.md can be copied and that equates a good agent suited for your case. Depending on the exact requirements and nature of the project, things will change. 
+
+As for core skills like the one I shared which could be reused across multiple projects, even more care has to be taken to define its scope, capabilities and behavior, and refined across many iterations of actual tests to ensure deterministic behavior. But again, as with my previous point, just importing a skill isnt the golden ticket to a good agent. As the prompter/reviewer/coder, it is still on us to keep track of agent behaviors, make project-specfic adjustments and always keep a look out for improvements that can be made.
+
 
 ## Nathan's Reflections
 Here are some sample questions that you can use to guide your reflections.
