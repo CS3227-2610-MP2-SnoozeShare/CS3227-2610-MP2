@@ -184,7 +184,8 @@ flowchart TB
     Tickets["TicketServiceImpl"]
     Settle["DisputeSettlementServiceImpl"]
     Query["DisputeQueryServiceImpl"]
-    Chat["InMemoryMessageService"]
+    Chat["MessageServiceImpl"]
+    BookingChat["BookingConversationServiceImpl"]
     Audit["AuditServiceImpl"]
   end
   subgraph Domain["domain"]
@@ -200,6 +201,7 @@ flowchart TB
   Detail --> Tickets
   Detail --> Query
   Detail --> Chat
+  Shell --> BookingChat
   Tickets --> Settle
   Settle --> Calc
   Settle --> SM
@@ -209,6 +211,10 @@ flowchart TB
   Tickets --> Repos
   Query --> Repos
   Settle --> Repos
+  Chat --> Repos
+  BookingChat --> Repos
+  Chat --> Bus
+  BookingChat --> Bus
   Repos --> DB
 ```
 
@@ -216,6 +222,10 @@ Left out for clarity: `AppContext` wiring, `SessionContext`, the other repositor
 property, user, wallet, wallet transaction), and the queue and category screens, which call the
 same services. Every service that changes data (booking, ticket, listing, wallet ledger and category
 services as well as settlement) also calls `AuditService`; the Audit Log screen calls its `search`.
+`ui.host.messaging.HostMessagesController` (not shown, see [4.4b](#44b-host-messages-ui-uihostmessaging))
+is the only built UI caller of `BookingConversationServiceImpl` and also calls `MessageServiceImpl`
+for a host's ticket threads; `DisputeDetailController` is shown here as the Agent-side caller of
+`MessageServiceImpl`. The Guest Messages screen is not built yet (C37, C38).
 
 **Audit rows are written inside the change's own transaction.** A service calls
 `AuditService.record(...)` while its `TransactionManager.inTransaction` block is open. The audit
@@ -400,25 +410,63 @@ erDiagram
 
 **Deviations:** D8 (label text, so a rename does not rewrite existing tickets); D10 (`MigrationRunner` adoption); D12 (a) (ordering by `createdAt` text means sub-second ties can mis-order) and (b) (adoption only checks for a `users` table). The repository method names above are what the code has; the design spec used slightly different names, and the code wins.
 
-### 4.4 Messaging seam
+### 4.4 Ticket messaging (`MessageService`)
 
-**Purpose:** let the dispute screens show and post ticket chat before a persistent messaging feature exists.
+**Purpose:** persistent chat on a dispute ticket, one thread per side.
 
 **API**
 
-- [`MessageService`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/MessageService.java): `thread(ticketId, ThreadChannel)` and `post(ticketId, channel, authorId, authorRole, body)`. The contract belongs to the Messaging workstream (W13).
-- [`InMemoryMessageService`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/impl/InMemoryMessageService.java): a temporary, session-only implementation wired in `AppContext`.
-- [`Message`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/model/Message.java) and [`ThreadChannel`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/enums/ThreadChannel.java) (`GUEST`, `HOST`).
+- [`MessageService`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/MessageService.java): `thread(ticketId, channel, viewerId, viewerRole)`, `post(ticketId, channel, authorId, authorRole, body)`, `conversationsFor(userId, role)`, `unreadCount(userId, role)`, `markRead(ticketId, channel, userId, role)`.
+- [`MessageServiceImpl`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/impl/MessageServiceImpl.java) and [`JdbcMessageRepository`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/repository/jdbc/JdbcMessageRepository.java), over the `messages` and `message_reads` tables.
+- [`Message`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/model/Message.java), [`ThreadChannel`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/enums/ThreadChannel.java) (`GUEST`, `HOST`), [`ConversationSummary`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/ConversationSummary.java), [`MessagePostedEvent`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/infra/events/events/MessagePostedEvent.java), published after the insert commits.
 
-**Depends on:** a `Clock`, `DomainValidation`.
+**Depends on:** `TicketRepository`, `BookingRepository`, `PropertyRepository`, `UserRepository`, `EventBus`, a `Clock`, `DomainValidation`.
 
 **Invariants**
 
-- A non-blank body is required; it is trimmed.
-- A guest can post only in the `GUEST` thread and a host only in the `HOST` thread; the agent can post in both.
-- Messages live in memory and are lost when the app closes. The interface is the only thing the UI depends on, so a persistent replacement needs no UI change.
+- A non-blank body is required; it is trimmed. Messages are ordered by `rowid` (insertion order), not the `sentAt` text, since `Instant.toString()`'s variable-length fraction can misorder rows within a second.
+- A guest may read and post only the `GUEST` thread of a ticket on their own booking; a host only the `HOST` thread of a ticket on their own property; an agent both. A caller who is not a party, or names the wrong role for themselves, gets `IllegalArgumentException`.
+- Once a ticket is resolved its threads become read-only: `post` throws `IllegalStateException`; `thread` still returns the history.
 
-**Deviations:** C21 (chat ownership). `TicketService.addHostResponse` is deprecated and throws `UnsupportedOperationException`.
+**Deviations:** C21 (chat ownership), C37 (replaces the session-only `InMemoryMessageService`), D22 (`thread` gained the viewer arguments; the old two-argument form and `InMemoryMessageService` are gone).
+
+### 4.4a Booking messaging (`BookingConversationService`)
+
+**Purpose:** a private chat between a booking's guest and host, separate from ticket chat and with no agent access.
+
+**API**
+
+- [`BookingConversationService`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/BookingConversationService.java): `thread(bookingId, viewerId, viewerRole)`, `post(bookingId, authorId, authorRole, body)`, `conversationsFor(userId, role)`, `unreadCount(userId, role)`, `markRead(bookingId, userId, role)`.
+- [`BookingConversationServiceImpl`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/impl/BookingConversationServiceImpl.java) and [`JdbcBookingMessageRepository`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/repository/jdbc/JdbcBookingMessageRepository.java), over the `booking_messages` and `booking_message_reads` tables.
+- [`BookingMessage`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/model/BookingMessage.java), [`BookingConversationSummary`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/BookingConversationSummary.java), [`BookingMessagePostedEvent`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/infra/events/events/BookingMessagePostedEvent.java).
+
+**Depends on:** `BookingRepository`, `PropertyRepository`, `UserRepository`, `EventBus`, a `Clock`, `DomainValidation`.
+
+**Invariants**
+
+- Only the booking's guest and its property's host may read or post; an agent gets `IllegalArgumentException` (they may not read this chat at all, even as dispute evidence).
+- Writable while the booking is `CONFIRMED` and today is on or before check-out + 7 days (the dispute window, same rule as escrow); otherwise `post` throws `IllegalStateException` and `thread` stays readable.
+- Text only: no attachments, no edit or delete, no typing indicator.
+
+**Deviations:** C38 (reverses the original W13 scope, which excluded chat outside tickets).
+
+### 4.4b Host Messages UI (`ui.host.messaging`)
+
+**Purpose:** the Host's single inbox for both kinds of chat.
+
+**API**
+
+- [`HostMessagesController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/host/messaging/HostMessagesController.java) and [`HostConversationRow`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/host/messaging/HostConversationRow.java), the merged-inbox row model (kind `BOOKING` or `TICKET`, display metadata, latest message, unread count, writable flag).
+- Shared rendering: [`ChatBubbles`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/common/messaging/ChatBubbles.java), used by the Agent dispute page too.
+
+**Depends on:** `MessageService`, `BookingConversationService`, `SessionContext`, `EventBus` (subscribes to `MessagePostedEvent` and `BookingMessagePostedEvent`, disposed when the page is replaced).
+
+**Invariants**
+
+- Rows from both services are merged into one newest-activity-first list; selecting a row marks it read.
+- Hosts cannot create tickets. The composer is disabled once the underlying thread is read-only (a resolved ticket or a closed booking chat window).
+
+**Deviations:** C40 (reverses an earlier draft that let hosts file tickets; hosts may only reply to existing agent-managed threads), D23 (verification baseline), D24 (fixed-width sidebar with ellipsis overrun). The Guest Messages screen is not built (C37, C38).
 
 ### 4.5 `DisputeSettlementService`
 
@@ -980,7 +1028,7 @@ sequenceDiagram
 
 Numbering follows [`ProductBacklog.md`](/product-backlog/).
 
-- **F9.1.1** The system shows an active dispute ticket queue sorted oldest first, with guest and host evidence and their chat threads. Filters: All / Unassigned / Mine, and by status. Chat threads are session-only for now (see Known Limitations).
+- **F9.1.1** The system shows an active dispute ticket queue sorted oldest first, with guest and host evidence and their chat threads. Filters: All / Unassigned / Mine, and by status. Chat threads persist (4.4).
 - **F9.1.2** Agents can accept (assign to themselves) ticket requests, unassign, and record internal notes on a ticket.
 - **F9.2.1** *Dropped.* Force Cancel / Force Complete was removed as redundant with ticket accept and reject (C22).
 - **F9.2.2** Agents resolve a dispute by settling the booking's full held escrow: accept the requested remedy, reject the ticket (host paid in full net of the 3% fee), or apply a manual adjustment (Full refund, Full payout, or a custom split). Guest refunds carry no fee. Resolution completes the booking (`CONFIRMED → COMPLETED`).
@@ -990,8 +1038,8 @@ Numbering follows [`ProductBacklog.md`](/product-backlog/).
 - **F11.1.1** The system provides an audit logging service and table and logs every booking state transition. Built as one typed row per change (4.13). Booking cancellation by a host is not written yet (see Known Limitations).
 - **F11.1.2** Audit logging covers wallet transactions (hold, refund, payout, remedy, override, top-up, withdrawal, and the platform fee) and ticket resolutions.
 - **F11.1.3** Agents filter the audit log with one search (user name, or user / booking / ticket id), a set of action types, and a From and To date (4.8, 4.13).
-- **F12.1.1** A `MessageService` gives each dispute ticket a guest-to-agent and a host-to-agent thread. *(planned)*
-- **F12.1.2** Messages persist, each party reads only its own thread, and the agent reads both. *(planned)*
+- **F12.1.1** A `MessageService` gives each dispute ticket a guest-to-agent and a host-to-agent thread.
+- **F12.1.2** Messages persist, each party reads only its own thread, and the agent reads both.
 
 ### Non-Functional Requirements
 
@@ -1006,8 +1054,8 @@ Numbering follows [`ProductBacklog.md`](/product-backlog/).
 
 ### Known Limitations
 
-- **Chat is not persisted** — dispute chat uses `InMemoryMessageService` until the Messaging workstream supplies a persistent `MessageService` (C21).
-- **Host ticket-filing screens** — guests can file tickets through the delivered guest flow; a dedicated host response screen remains outside the current scope.
+- **Guest Messages UI is not built** — `MessageService` and `BookingConversationService` support it, but only the Agent (4.4) and Host (4.4b) screens exist (C37, C38).
+- **Agents cannot read the private booking chat** — by decision, not as a gap (C38); it is not available as dispute evidence.
 - **Category renames do not update existing tickets** — `tickets.category` stores label text (D8).
 - **Suspension refund is not checked against an escrow hold** — the cascade credits the booking's `totalAmount` without reading an `ESCROW_HOLD` row, as `BookingServiceImpl` does (D20).
 - **A stay checking in today counts as started** — a CONFIRMED booking with today's check-in is not cancelled by a suspension (C36). A suspended guest's in-progress stay is paid out by the normal settlement (`BookingService.completeEligibleBookings()`, run at startup, skipping bookings with an open ticket) or by an agent through a dispute ticket.
@@ -1033,8 +1081,10 @@ Numbering follows [`ProductBacklog.md`](/product-backlog/).
 - **AGENT_OVERRIDE:** wallet transaction type written on the guest's wallet for a manual adjustment that refunds the guest.
 - **Action type:** the kind of change an audit row records, one `AuditAction` constant (for example `TICKET_RESOLVED`, `ESCROW_HOLD`). The Audit Log filters by a set of them.
 - **Audit row / audit log:** the `audit_log` table. One row is one change, either a status change (`beforeState` / `afterState`) or a wallet adjustment, never both.
+- **Booking chat:** the private, agent-free `BookingConversationService` thread between a booking's guest and host, open from confirmation to check-out + 7 days.
 - **BOOKING_PAYOUT:** wallet transaction type for money released to the host. Its `amount` is already net of the 3% fee; when the fee is positive, `LedgerWriter.postPayout` also writes a `PLATFORM_FEE` row crediting the System wallet (W14).
 - **Cascade (suspension):** the bookings and listings changed in the same transaction as a suspension: force-cancelled bookings with refunds and a Host's deactivated listings.
+- **Conversation row:** one entry in a Messages inbox (`ConversationSummary` or `BookingConversationSummary`): counterpart, last message, unread count, and whether it is still writable.
 - **Dispute window:** the 7 days after checkout during which escrow stays held and a ticket can be opened (C17).
 - **Dual-write (historical):** until W14, a wallet movement wrote both a `wallet_transactions` row and an `audit_log` money row in one transaction (D13). W14 folded them into the one `audit_log` row and dropped `wallet_transactions` ([4.15](#415-unified-ledger-ledgerwriter)).
 - **Escrow:** the booking's `totalAmount`, held out of the guest's wallet from booking until it is refunded or paid out. It is "held" while a booking has an `ESCROW_HOLD` row and no releasing row.
@@ -1059,6 +1109,7 @@ Numbering follows [`ProductBacklog.md`](/product-backlog/).
 - **TARGET:** the Audit Log column naming the row's one direct entity — a user's name, or `Property/Booking/Ticket/Category #last4` — dropping any related record (a ticket resolution names only the ticket, not its booking). Replaced the last-four-character `REF` column (W14 follow-up).
 - **Ticket:** a dispute filed against a booking by its guest or host. It moves `OPEN → IN_REVIEW → RESOLVED_APPROVED` or `RESOLVED_REJECTED`.
 - **Ticket category:** an admin-managed label (`ticket_categories`) offered to guests when they file a ticket. A ticket stores the label text.
+- **Ticket chat window:** a ticket's `GUEST`/`HOST` `MessageService` threads are writable while it is `OPEN` or `IN_REVIEW`, and read-only once resolved.
 - **TICKET_REMEDY:** wallet transaction type written on the guest's wallet when an agent accepts a ticket and refunds the guest.
 - **W14 (unified ledger):** folded `wallet_transactions` into `audit_log` (a money row now carries `balanceAfter`) and gave the System user a real role and wallet that receives a `PLATFORM_FEE` row per payout. Built and operator-confirmed 2026-09-29 (C31, C39–C45; [4.15](#415-unified-ledger-ledgerwriter)).
 - **Wallet:** a user's balance holder (`wallets`, one per user, `balance` a cache); each change is one `audit_log` money row, written by `LedgerWriter` (W14).
@@ -1083,7 +1134,8 @@ measured for this guide.
 |---|---|
 | Foundation and architecture: `W1FoundationIntegrationTest`, `DatabaseBootstrapTest`, `LayerDependencyTest`, `UiDependencyTest` | SQLite bootstrap/migrations, repository and service wiring, wallet provisioning, role routing and the enforced package boundaries. |
 | Unit: `SettlementCalculatorTest`, `EscrowPolicyTest`, `StateMachineTest`, `AgentCompletionTest`, `ResolutionPreviewTest`, `HeightGripTest` | Split maths and fee rounding, the escrow-held rule, every legal and illegal transition per role, live preview text, drag-height bounds. |
-| Service, fakes: `TicketServiceTest`, `TicketServiceCategoryTest`, `InMemoryMessageServiceTest` | Queue order and filters, assign / unassign / notes rules, category rules including delete-when-used, chat posting rules. |
+| Service, fakes: `TicketServiceTest`, `TicketServiceCategoryTest` | Queue order and filters, assign / unassign / notes rules, category rules including delete-when-used. |
+| Messaging, mock-DB: `MessageServiceTest`, `BookingConversationServiceTest`, `MessagingMigrationTest` | Ticket and booking chat party checks, resolved/closed-window rejection, ordering, unread counts and `markRead`, `MessagePostedEvent`/`BookingMessagePostedEvent` published once per post; the `messages`/`message_reads`/`booking_messages`/`booking_message_reads` migrations against a fresh and an adopted database. |
 | Mock-DB integration: `DisputeSettlementServiceTest`, `TicketServiceIntegrationTest`, `DisputeQueryServiceTest`, `JdbcTicketRepositoryTest`, `JdbcTicketCategoryRepositoryTest` | Exact ledger rows, wallet balances, ticket and booking end states, audit content, precondition rejections that leave the database unchanged, repository round trips, read models. Built on [`MockDbFixture`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/test/java/com/snoozeshare/testsupport/MockDbFixture.java) with `MockIds` and `SettlementFixtures`. |
 | Audit trail, unit and service: `AuditActionTest`, `AuditRecordTest`, `AuditServiceTest`, `WalletLedgerAuditTest`, `AuditLogFormattingTest` | The enum and wallet-type mapping, the one-row-one-change rule and builder, status-only rows with name snapshots, search by name (surviving a rename), id fragment, action set, inclusive dates and ordering, top-up and withdrawal money rows and rollback when the audit write fails, and the screen's status, amount and TARGET text. |
 | Audit trail, database: `JdbcAuditLogRepositoryTest`, `AuditTrailMigrationTest`, `MockAuditSeedTest`, `CommittedMockDbTest` | Repository round trips and search clauses; V002 adds the columns and the System user and is idempotent; the seeded audit rows (one money row per ledger row, the four rows of ticket `#0004`, governance rows in the shape W11 will write). `CommittedMockDbTest` opens the committed `db/snoozeshare-mock.db` **directly and read-only** (not a copy, and without `MigrationRunner`) and checks it already has the audit columns, the System user and a migration version of at least 2 (now v8 after W14 — see the next row), so a stale committed file cannot hide behind a migrated copy (D15). |
@@ -1097,6 +1149,7 @@ measured for this guide.
 | Architecture: `LayerDependencyTest`, `UiDependencyTest` | `domain` has no JavaFX or `java.sql` imports; `ui` has no `com.snoozeshare.repository` or `java.sql` imports. |
 | Layout: `AdminFxmlLayoutTest`, `AdminShellInitialsTest`, `ShellLayoutTest`, `AuthLayoutTest` | FXML and CSS content checks; these need no display. |
 | FX smoke and flow: `AdminUiSmokeTest`, `AgentModalTest`, `ResolutionDialogFlowTest`, `CategoryDialogFlowTest` | Real JavaFX toolkit: screens render, dialogs validate and return results, the scrim is added and removed. They skip (`assumeTrue`) when the toolkit cannot start, for example on a headless machine. |
+| Host Messages (FX toolkit): `ChatBubblesTest`, `HostMessagesControllerTest`, `HostMessagesLayoutTest` | Shared bubble rendering for both message types; the merged inbox orders rows, loads and sends on the correct service by row kind, disables the composer on a read-only thread, and refreshes on `MessagePostedEvent`/`BookingMessagePostedEvent`; sidebar width and ellipsis-overrun layout. Skip when the toolkit cannot start. |
 | Snapshots: `AdminUiSnapshotTest`, `AdminDetailSnapshotTest`, `AdminModalSnapshotTest` | Render the agent screens at 1280x800 and write PNGs to `build/ui-snapshots/`. They never assert on pixels and skip when the toolkit cannot start. Open the images to review layout by eye. |
 
 **Mock DB conventions to follow when writing tests or editing the seed**
@@ -1120,6 +1173,16 @@ measured for this guide.
   6. Open the Accounts tab and type part of a name, email, role or status: the list filters live, and a short result list shows in full with no scroll bar. Suspend a Guest with upcoming bookings (a reason is required): the banner shows the display name, email and role, the row turns SUSPENDED with its reason, and Audit Log shows `ACCOUNT_SUSPENDED` with the cancellation and refund rows. Reactivate the account: the status returns to ACTIVE and no booking or listing is restored. Agent rows show a dash.
   7. Open the Categories tab: add, rename and deactivate a category, try a duplicate label, and delete one that no ticket uses.
 - **Expected:** the agent screens use the canvas tab strip and "Fall Light" palette; every modal dims the window behind it with a light-grey scrim; the resolved ticket shows escrow as "Settled" and its actions are disabled; a duplicate category label shows an error; a category used by a ticket cannot be deleted; the Accounts modals show a red (Suspend) or green (Reactivate) banner and refuse an empty reason.
+
+**Host Messages check.**
+
+- **Prerequisites:** as above.
+- **Steps:**
+  1. Log in as `diego.fernandez@snoozeshare.test` and open the Messages tab.
+  2. Confirm the inbox lists both a ticket conversation (booking #0003) and booking conversations, newest activity first, with unread rows marked.
+  3. Open the ticket row, send a reply, and confirm it appears in the thread and on the Agent's dispute page for the same ticket without a reload.
+  4. Open a booking row inside its chat window (bookings 4 or 14) and send a reply; open one past its window (booking 11) and confirm the composer is disabled.
+- **Expected:** rows merge from both services into one list; sending updates unread state and persists across a restart; a closed booking chat and a resolved ticket both show history with no way to send; there is no control to create a new ticket.
 
 **Audit Log real-app check (D14).** Not yet performed; the FX smoke and snapshot tests cover the flows but nobody has driven the real app.
 
