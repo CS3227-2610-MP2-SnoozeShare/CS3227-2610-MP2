@@ -5,6 +5,10 @@ why, with a commit, plan or artifact as the reference. Not a copy of `git log`.
 
 | Date | What changed | Workstream | Ref |
 |---|---|---|---|
+| 2026-09-29 | Added concise italic captions below every screenshot in the User Guide so each role and screen remains identifiable beneath its image | Documentation | `docs/UserGuide.md` |
+| 2026-09-29 | Replaced every User Guide screenshot placeholder with the matching role and screen image from `docs/images`, including login/registration, Guest, Host and Support Agent flows | Documentation | `docs/UserGuide.md`, `docs/images/` |
+| 2026-09-29 | Removed Product Backlog references from the User Guide and added a detailed Support Agent Categories-page walkthrough with add, edit, delete and active-toggle steps plus a screenshot placeholder | Documentation | `docs/UserGuide.md` |
+| 2026-09-29 | Replaced the User Guide stub with Product Backlog-mapped F0–F12 walkthroughs for Guest, Host and Support Agent roles, including task steps, role/feature quick reference, current limitations and text screenshot placeholders for later asset replacement | Documentation | `docs/UserGuide.md` |
 | 2026-09-29 | Closed all W1–W14 workstreams as Done and marked every workstream's Developer Guide coverage as documented; retained residual implementation limitations in the state record rather than leaving stale Building, In review or Awaiting confirmation statuses | Project state | `PROJECT_STATE.md` § Workstreams |
 | 2026-09-29 | Completed a full Developer Guide consistency sweep against current Java/FXML, tests and PROJECT_STATE: corrected current Guest messaging, Host calendar reason boundaries, ledger terminology, audit TARGET references, service-role invariants, audit wording and stale cross-links; reconciled the project-state architecture notes | Documentation | `docs/DeveloperGuide.md`, `PROJECT_STATE.md` |
 | 2026-09-29 | Reorganized Guest and Host documentation into UI-first role portals: each now introduces its shell/navigation and API surface before feature behavior, while preserving the existing feature sections and links | Documentation | `docs/DeveloperGuide.md` §§ 4.8–4.12; `PROJECT_STATE.md` C47 |
