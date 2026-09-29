@@ -8,6 +8,9 @@
 .page-title { -fx-font-size: 20px; -fx-font-weight: bold; }
 .error-message { -fx-text-fill: #b42318; }
 .success-message { -fx-text-fill: #067647; }
+.text-input { -fx-padding: 8px 10px; }
+.text-area { -fx-padding: 0; }
+.text-area .content { -fx-padding: 8px 10px; }
 .button {
     -fx-background-color: #263a5b;
     -fx-background-radius: 6px;
@@ -21,6 +24,7 @@
 .outline-button {
     -fx-background-color: transparent;
     -fx-border-color: #263a5b;
+    -fx-border-width: 1px;
     -fx-border-radius: 6px;
     -fx-text-fill: #263a5b;
 }

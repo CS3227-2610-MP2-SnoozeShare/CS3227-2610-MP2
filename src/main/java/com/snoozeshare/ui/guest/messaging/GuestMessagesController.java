@@ -42,6 +42,7 @@ public final class GuestMessagesController {
     @FXML private Label headerTitle;
     @FXML private Label headerSubtitle;
     @FXML private Label statusLabel;
+    @FXML private Label headerStatusLabel;
     @FXML private Label emptyLabel;
     @FXML private VBox thread;
     @FXML private TextField replyField;
@@ -148,8 +149,20 @@ public final class GuestMessagesController {
         headerTitle.setText(selected.title());
         statusLabel.setVisible(false);
         boolean isBooking = selected.kind() == GuestConversationRow.Kind.BOOKING;
+        boolean isTicket = selected.kind() == GuestConversationRow.Kind.TICKET;
         newTicketButton.setVisible(isBooking);
         newTicketButton.setManaged(isBooking);
+        if (isTicket) {
+            String label = selected.open() ? "OPEN" : "RESOLVED";
+            String styleClass = selected.open() ? "host-message-status-open" : "host-message-status-resolved";
+            headerStatusLabel.setText(label);
+            headerStatusLabel.getStyleClass().setAll("host-message-status", styleClass);
+            headerStatusLabel.setVisible(true);
+            headerStatusLabel.setManaged(true);
+        } else {
+            headerStatusLabel.setVisible(false);
+            headerStatusLabel.setManaged(false);
+        }
         if (isBooking) {
             headerSubtitle.setText("Direct message with " + selected.counterpartName()
                     + " (Host) \u00b7 Booking #" + shortId(selected.sourceId()));
@@ -206,6 +219,8 @@ public final class GuestMessagesController {
         selected = null;
         headerTitle.setText("Messages");
         headerSubtitle.setText("");
+        headerStatusLabel.setVisible(false);
+        headerStatusLabel.setManaged(false);
         thread.getChildren().clear();
         replyField.setDisable(true);
         sendButton.setDisable(true);
@@ -268,12 +283,6 @@ public final class GuestMessagesController {
             content.setMaxWidth(Double.MAX_VALUE);
             content.prefWidthProperty().bind(widthProperty().subtract(24));
             content.getStyleClass().add("host-message-row");
-            if (row.statusLabel() != null) {
-                Label status = new Label(row.statusLabel());
-                status.getStyleClass().addAll("host-message-status", row.open()
-                        ? "host-message-status-open" : "host-message-status-resolved");
-                content.getChildren().add(status);
-            }
             setGraphic(content);
         }
     }

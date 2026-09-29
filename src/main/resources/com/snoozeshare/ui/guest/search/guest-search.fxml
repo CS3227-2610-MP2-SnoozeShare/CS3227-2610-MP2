@@ -18,10 +18,10 @@
     <Label text="Search Properties" styleClass="page-title"/>
 
     <HBox spacing="12" alignment="CENTER_LEFT">
-        <TextField fx:id="cityField" promptText="City or location" prefWidth="200"/>
-        <DatePicker fx:id="checkInPicker" promptText="Check-in" prefWidth="140"/>
-        <DatePicker fx:id="checkOutPicker" promptText="Check-out" prefWidth="140"/>
-        <ComboBox fx:id="guestsCombo" promptText="Guests" prefWidth="100"/>
+        <TextField fx:id="cityField" promptText="City or location" prefWidth="160" prefHeight="36"/>
+        <DatePicker fx:id="checkInPicker" promptText="Check-in" prefWidth="160" prefHeight="36"/>
+        <DatePicker fx:id="checkOutPicker" promptText="Check-out" prefWidth="160" prefHeight="36"/>
+        <ComboBox fx:id="guestsCombo" promptText="Guests" prefWidth="160" prefHeight="36"/>
         <Button text="Search" onAction="#handleSearch" styleClass="button"/>
     </HBox>
 
