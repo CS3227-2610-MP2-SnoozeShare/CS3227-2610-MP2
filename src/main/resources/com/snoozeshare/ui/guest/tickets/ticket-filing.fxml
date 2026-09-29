@@ -38,6 +38,7 @@
 
     <HBox spacing="12">
         <Button text="Submit" styleClass="button" onAction="#handleSubmit"/>
-        <Button text="Cancel" styleClass="outline-button" onAction="#handleCancel"/>
+        <Button text="Cancel" styleClass="button" onAction="#handleCancel"
+                style="-fx-background-color: #263a5b, white; -fx-background-insets: 0, 1; -fx-background-radius: 6px, 5px; -fx-text-fill: #263a5b;"/>
     </HBox>
 </VBox>

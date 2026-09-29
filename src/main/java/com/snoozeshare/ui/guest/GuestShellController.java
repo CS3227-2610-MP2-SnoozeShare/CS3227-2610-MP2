@@ -10,7 +10,6 @@ import com.snoozeshare.ui.common.wallet.WalletDashboardController;
 import com.snoozeshare.ui.guest.listing.ListingDetailController;
 import com.snoozeshare.ui.guest.messaging.GuestMessagesController;
 import com.snoozeshare.ui.guest.search.GuestSearchController;
-import com.snoozeshare.ui.guest.tickets.TicketHistoryController;
 import com.snoozeshare.ui.guest.trips.TripDashboardController;
 
 import javafx.fxml.FXML;
@@ -31,13 +30,11 @@ public final class GuestShellController extends NavShellController {
     @FXML private Label tripsTab;
     @FXML private Label messagesTab;
     @FXML private Label walletTab;
-    @FXML private Label supportTab;
 
     private GuestSearchController searchController;
     private TripDashboardController tripController;
     private GuestMessagesController messagesController;
     private WalletDashboardController walletController;
-    private TicketHistoryController ticketController;
     private Node defaultCenter;
 
     @FXML
@@ -57,7 +54,6 @@ public final class GuestShellController extends NavShellController {
         cleanupTripController();
         cleanupMessagesController();
         cleanupWalletController();
-        cleanupTicketController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/guest/search/guest-search.fxml"));
@@ -107,7 +103,6 @@ public final class GuestShellController extends NavShellController {
         cleanupMessagesController();
         cleanupWalletController();
         cleanupTripController();
-        cleanupTicketController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/guest/trips/trip-dashboard.fxml"));
@@ -132,7 +127,6 @@ public final class GuestShellController extends NavShellController {
         selectTab(messagesTab);
         cleanupTripController();
         cleanupWalletController();
-        cleanupTicketController();
         cleanupMessagesController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -159,7 +153,6 @@ public final class GuestShellController extends NavShellController {
         cleanupWalletController();
         cleanupTripController();
         cleanupMessagesController();
-        cleanupTicketController();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
@@ -179,34 +172,8 @@ public final class GuestShellController extends NavShellController {
         }
     }
 
-    @FXML
-    private void showSupport() {
-        selectTab(supportTab);
-        cleanupTripController();
-        cleanupMessagesController();
-        cleanupWalletController();
-        cleanupTicketController();
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                    "/com/snoozeshare/ui/guest/tickets/ticket-history.fxml"));
-            Node supportView = loader.load();
-            ticketController = loader.getController();
-            ticketController.setContext(getContext());
-            shellRoot.setCenter(supportView);
-        } catch (IOException exception) {
-            throw new IllegalStateException("Unable to load ticket history", exception);
-        }
-    }
-
-    private void cleanupTicketController() {
-        if (ticketController != null) {
-            ticketController.cleanup();
-            ticketController = null;
-        }
-    }
-
     private void selectTab(Label selected) {
-        for (Label tab : new Label[] {searchTab, tripsTab, messagesTab, walletTab, supportTab}) {
+        for (Label tab : new Label[] {searchTab, tripsTab, messagesTab, walletTab}) {
             tab.getStyleClass().remove(ACTIVE_TAB);
         }
         selected.getStyleClass().add(ACTIVE_TAB);
