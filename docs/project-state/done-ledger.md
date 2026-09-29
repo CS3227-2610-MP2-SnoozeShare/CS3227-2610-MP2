@@ -5,6 +5,7 @@ why, with a commit, plan or artifact as the reference. Not a copy of `git log`.
 
 | Date | What changed | Workstream | Ref |
 |---|---|---|---|
+| 2026-09-29 | Added responsive documentation image styling so User Guide screenshots scale to the GitHub Pages content column without horizontal overflow | Documentation | `docs/assets/css/style.scss` |
 | 2026-09-29 | Added concise italic captions below every screenshot in the User Guide so each role and screen remains identifiable beneath its image | Documentation | `docs/UserGuide.md` |
 | 2026-09-29 | Replaced every User Guide screenshot placeholder with the matching role and screen image from `docs/images`, including login/registration, Guest, Host and Support Agent flows | Documentation | `docs/UserGuide.md`, `docs/images/` |
 | 2026-09-29 | Removed Product Backlog references from the User Guide and added a detailed Support Agent Categories-page walkthrough with add, edit, delete and active-toggle steps plus a screenshot placeholder | Documentation | `docs/UserGuide.md` |

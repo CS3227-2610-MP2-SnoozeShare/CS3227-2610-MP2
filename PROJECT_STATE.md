@@ -8,7 +8,7 @@ every boundary, not at the end of the session.
 - **Stack:** Java 25, JavaFX 25 (javafx.controls, javafx.fxml), Gradle (application + shadow + checkstyle plugins), SQLite (embedded, file-based, `org.xerial:sqlite-jdbc`) via plain JDBC, JUnit 5 + TestFX for tests
 - **Branch:** `main`
 - **Method:** Native inline execution with TDD-first vertical slices, fresh-context whole-branch review at end
-- **Last updated:** 2026-09-29 by Codex — Added concise captions below every User Guide screenshot
+- **Last updated:** 2026-09-29 by Codex — Constrained documentation screenshots to the GitHub Pages content width
 - **Last verified against repo:** 2026-09-29
 - **Developer guide:** `docs/DeveloperGuide.md` documents all confirmed workstreams W1–W14. W1–W14 are now marked `Done` with guide coverage recorded as `Documented 2026-09-29`; residual limitations and deferred sub-features remain explicitly recorded in the guide's Known Limitations and the state file's § Known Gaps / § Deviations.
 - **User guide:** `docs/UserGuide.md` provides role-based Guest, Host and Support Agent walkthroughs, with screenshots linked from `docs/images`; the Support Agent walkthrough includes the Categories page.
@@ -850,6 +850,6 @@ The Done ledger lives in **[`docs/project-state/done-ledger.md`](docs/project-st
 — every change, big or small, newest first.
 
 - **Latest entry:** 2026-09-29
-- **Entries:** 158 (4 backfilled coarsely from git history)
+- **Entries:** 159 (4 backfilled coarsely from git history)
 
 Deviations stay in § Deviations above: those are read every session.
