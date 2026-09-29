@@ -114,10 +114,10 @@ public final class JdbcPropertyRepository implements PropertyRepository {
             statement.setString(7, property.streetAddress());
             statement.setString(8, property.city());
             statement.setString(9, property.region());
-            statement.setString(10, property.postalCode());
+            statement.setInt(10, property.postalCode());
             statement.setInt(11, property.maxGuests());
             statement.setInt(12, property.bedrooms());
-            statement.setDouble(13, property.bathrooms());
+            statement.setInt(13, property.bathrooms());
             statement.setString(14, JdbcCodecs.decimal(property.baseNightlyRate()));
             statement.setString(15, JdbcCodecs.localTime(property.checkInTime()));
             statement.setString(16, JdbcCodecs.localTime(property.checkOutTime()));

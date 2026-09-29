@@ -69,7 +69,7 @@ public final class ListingDetailController {
         titleLabel.setText(property.title());
         typeLabel.setText(property.propertyType().name().replace('_', ' '));
         addressLabel.setText(String.join(", ", property.streetAddress(),
-                property.city(), property.region(), property.postalCode()));
+                property.city(), property.region(), Integer.toString(property.postalCode())));
         descriptionLabel.setText(property.description());
         capacityLabel.setText(property.maxGuests() + " guests");
         bedroomsLabel.setText(property.bedrooms() + " bedrooms");

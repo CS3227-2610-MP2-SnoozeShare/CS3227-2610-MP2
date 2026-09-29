@@ -669,8 +669,8 @@ class BookingServiceTest {
 
         Property property = new Property(UUID.randomUUID(), host.userId(), ListingStatus.ACTIVE,
                 "Test Property", "A nice place", PropertyType.APARTMENT,
-                "123 Street", "Singapore", "Central", "123456",
-                4, 2, 1.0, nightlyRate,
+                "123 Street", "Singapore", "Central", 123456,
+                4, 2, 1, nightlyRate,
                 LocalTime.of(14, 0), LocalTime.of(11, 0), Set.of(), now);
         properties.save(property);
 

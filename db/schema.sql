@@ -30,10 +30,10 @@ CREATE TABLE properties (
     streetAddress       TEXT NOT NULL,
     city                TEXT NOT NULL,
     region              TEXT NOT NULL,
-    postalCode          TEXT NOT NULL,
+    postalCode          INTEGER NOT NULL,
     maxGuests           INTEGER NOT NULL CHECK (maxGuests > 0),
     bedrooms            INTEGER NOT NULL CHECK (bedrooms >= 0),
-    bathrooms           REAL NOT NULL CHECK (bathrooms >= 0),
+    bathrooms           INTEGER NOT NULL CHECK (bathrooms >= 0),
     baseNightlyRate     REAL NOT NULL CHECK (baseNightlyRate >= 0),
     checkInTime         TEXT NOT NULL,   -- LocalTime as "HH:MM:SS"
     checkOutTime        TEXT NOT NULL,   -- LocalTime as "HH:MM:SS"

@@ -3,6 +3,7 @@ package com.snoozeshare.ui.admin;
 import java.util.Objects;
 
 import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -16,6 +17,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.Window;
+import javafx.stage.WindowEvent;
 
 /**
  * Shared shell for the agent modals (resolution dialogs, category dialogs): a transparent, undecorated, application
@@ -29,14 +31,17 @@ public final class AgentModal {
 
     private final Stage stage;
     private final Window owner;
+    private final EventHandler<WindowEvent> ownerHiddenHandler;
     private Region scrim;
 
     private AgentModal(Parent card, String title) {
         owner = ownerWindow();
         stage = new Stage(StageStyle.TRANSPARENT);
         stage.initModality(Modality.APPLICATION_MODAL);
+        ownerHiddenHandler = event -> stage.close();
         if (owner != null) {
             stage.initOwner(owner);
+            owner.addEventHandler(WindowEvent.WINDOW_HIDDEN, ownerHiddenHandler);
         }
         stage.setTitle(title);
         Scene scene = new Scene(card);
@@ -52,7 +57,12 @@ public final class AgentModal {
         stage.sizeToScene();
         stage.setOnShowing(event -> addScrim());
         stage.setOnShown(event -> center());
-        stage.setOnHidden(event -> removeScrim());
+        stage.setOnHidden(event -> {
+            removeScrim();
+            if (owner != null) {
+                owner.removeEventHandler(WindowEvent.WINDOW_HIDDEN, ownerHiddenHandler);
+            }
+        });
     }
 
     /** Builds the modal (not yet shown) around {@code card}, owned by the focused or first showing window. */

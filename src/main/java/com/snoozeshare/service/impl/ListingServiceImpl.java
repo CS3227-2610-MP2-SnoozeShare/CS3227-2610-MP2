@@ -181,28 +181,38 @@ public final class ListingServiceImpl implements ListingService {
         if (draft == null) {
             throw new IllegalArgumentException("Property must not be null");
         }
-        DomainValidation.requireText(draft.title(), "title");
-        DomainValidation.requireText(draft.description(), "description");
-        DomainValidation.requireText(draft.streetAddress(), "streetAddress");
-        DomainValidation.requireText(draft.city(), "city");
-        DomainValidation.requireText(draft.region(), "region");
-        DomainValidation.requireText(draft.postalCode(), "postalCode");
-        if (draft.propertyType() == null || draft.checkInTime() == null
-                || draft.checkOutTime() == null) {
-            throw new IllegalArgumentException("Property type and check-in/out times are required");
+        DomainValidation.requireText(draft.title(), "Title");
+        DomainValidation.requireText(draft.description(), "Description");
+        if (draft.propertyType() == null) {
+            throw new IllegalArgumentException("Property Type must be selected");
+        }
+        if (draft.status() == null) {
+            throw new IllegalArgumentException("Status must be selected");
         }
         if (draft.maxGuests() <= 0) {
-            throw new IllegalArgumentException("Max guests must be positive");
+            throw new IllegalArgumentException("Max Guests must be positive");
         }
         if (draft.bedrooms() < 0) {
             throw new IllegalArgumentException("Bedrooms must be non-negative");
         }
-        if (!Double.isFinite(draft.bathrooms()) || draft.bathrooms() < 0) {
+        if (draft.bathrooms() < 0) {
             throw new IllegalArgumentException("Bathrooms must be non-negative");
         }
-        DomainValidation.requirePositive(draft.baseNightlyRate(), "baseNightlyRate");
+        DomainValidation.requirePositive(draft.baseNightlyRate(), "Rate per night");
         if (draft.baseNightlyRate().stripTrailingZeros().scale() > 2) {
-            throw new IllegalArgumentException("baseNightlyRate must have at most 2 decimal places");
+            throw new IllegalArgumentException("Rate per night must have at most 2 decimal places");
+        }
+        if (draft.checkInTime() == null) {
+            throw new IllegalArgumentException("Check-in Time must be provided");
+        }
+        if (draft.checkOutTime() == null) {
+            throw new IllegalArgumentException("Check-out Time must be provided");
+        }
+        DomainValidation.requireText(draft.streetAddress(), "Street Address");
+        DomainValidation.requireText(draft.city(), "City");
+        DomainValidation.requireText(draft.region(), "Region");
+        if (draft.postalCode() <= 0) {
+            throw new IllegalArgumentException("Postal Code must be a positive whole number");
         }
     }
 }

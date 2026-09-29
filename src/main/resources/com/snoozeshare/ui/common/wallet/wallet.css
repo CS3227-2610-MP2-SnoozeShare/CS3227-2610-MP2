@@ -152,9 +152,12 @@
     -fx-font-weight: bold;
     -fx-text-fill: #980c1c;
 }
-.wallet-transaction-table .scroll-bar {
+.wallet-transaction-table .scroll-bar:vertical {
+    -fx-opacity: 1;
+    -fx-pref-width: 12px;
+}
+.wallet-transaction-table .scroll-bar:horizontal {
     -fx-opacity: 0;
-    -fx-pref-width: 0;
     -fx-pref-height: 0;
 }
 

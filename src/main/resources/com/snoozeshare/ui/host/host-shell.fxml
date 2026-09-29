@@ -7,10 +7,10 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.geometry.Insets?>
-<BorderPane fx:id="shellRoot" styleClass="agent-root" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+<BorderPane fx:id="shellRoot" styleClass="host-root" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.snoozeshare.ui.host.HostShellController" minWidth="1280" minHeight="800">
     <stylesheets>
-        <URL value="@../admin/agent-theme.css"/>
+        <URL value="@host-theme.css"/>
     </stylesheets>
     <top>
         <VBox>
@@ -19,7 +19,7 @@
                 <Label fx:id="roleLabel" text="Host Portal" styleClass="agent-workspace-pill"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Label fx:id="walletAmount" text="SGD 0.00" styleClass="wallet-amount"/>
-                <Button text="Log out" styleClass="outline-button" onAction="#logout"/>
+                <Button fx:id="logoutButton" text="Log out" styleClass="outline-button" onAction="#logout"/>
                 <Label fx:id="avatarLabel" text="H" styleClass="agent-avatar"/>
             </HBox>
             <HBox styleClass="agent-tabstrip" spacing="4" alignment="CENTER_LEFT">

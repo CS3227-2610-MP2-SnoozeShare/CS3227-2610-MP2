@@ -60,6 +60,9 @@ class WalletUiStructureTest {
         assertTrue(walletCss.contains(".wallet-transaction-table"));
         assertTrue(walletCss.contains("-fx-cell-size: 47px"));
         assertTrue(walletCss.contains(".table-cell .transaction-type"));
+        assertTrue(walletCss.contains(".wallet-transaction-table .scroll-bar:vertical"));
+        assertTrue(walletCss.contains("-fx-pref-width: 12px;"));
+        assertTrue(walletCss.contains(".wallet-transaction-table .scroll-bar:horizontal"));
         assertTrue(controller.contains("ContentDisplay.GRAPHIC_ONLY"));
         assertTrue(controller.contains("transaction-type-positive"));
         assertTrue(controller.contains("transaction-type-negative"));

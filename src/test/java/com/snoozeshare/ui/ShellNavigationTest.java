@@ -124,19 +124,23 @@ class ShellNavigationTest {
     }
 
     @Test
-    void hostPagesCarryTheirOwnPageTitlesLikeGuestPages() throws Exception {
+    void hostPagesUseBreadcrumbsForNestedListingNavigation() throws Exception {
         String listings = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/listings/host-listings.fxml"));
         String form = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-form.fxml"));
         String detail = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/host/listings/host-listing-detail.fxml"));
+        String calendar = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/calendar/host-calendar.fxml"));
         String wallet = Files.readString(Path.of(
                 "src/main/resources/com/snoozeshare/ui/common/wallet/wallet-dashboard.fxml"));
 
         assertTrue(listings.contains("styleClass=\"page-title\""));
-        assertTrue(form.contains("styleClass=\"page-title\""));
         assertTrue(detail.contains("styleClass=\"page-title\""));
+        assertTrue(form.contains("styleClass=\"host-crumb-current\""));
+        assertTrue(calendar.contains("text=\"Booking Calendar\""));
+        assertTrue(!calendar.contains("styleClass=\"page-title\""));
         assertTrue(wallet.contains("AVAILABLE BALANCE"));
     }
 
