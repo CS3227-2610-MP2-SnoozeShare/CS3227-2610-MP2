@@ -9,7 +9,7 @@ permalink: /user-guide/
 ## Introduction
 
 SnoozeShare is a desktop app for short-term property rentals, supporting three
-roles: Guest, Host, and Support Agent. See the [Product Backlog](/product-backlog/)
+roles: Guest, Host, and Support Agent. See the [Product Backlog](/CS3227-2610-MP2/product-backlog/)
 for the full feature list.
 
 _This guide will be filled in as features are implemented._
