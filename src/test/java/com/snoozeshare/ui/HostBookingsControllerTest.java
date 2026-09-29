@@ -1,5 +1,6 @@
 package com.snoozeshare.ui;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,7 +25,11 @@ class HostBookingsControllerTest {
         assertTrue(fxml.contains("Past requests"));
         assertTrue(fxml.contains("host-bookings-table"));
         assertTrue(fxml.contains("host-bookings-table-card"));
-        assertTrue(fxml.contains("@host-bookings.css"));
+        assertTrue(fxml.contains("host-bookings-current-section"));
+        assertTrue(fxml.contains("spacing=\"0\""));
+        assertFalse(fxml.contains("prefHeight=\"220\""));
+        assertFalse(fxml.contains("prefHeight=\"180\""));
+        assertFalse(fxml.contains("host-bookings.css"));
         assertTrue(!fxml.contains("agent-theme.css"));
         assertTrue(!fxml.contains("agent-table"));
         assertTrue(!fxml.contains("agent-card"));
@@ -40,6 +45,15 @@ class HostBookingsControllerTest {
         assertTrue(controller.contains("pastStatusColumn.setCellFactory"));
         assertTrue(controller.contains("host-bookings-status-confirmed"));
         assertTrue(controller.contains("host-bookings-status-rejected"));
+        assertTrue(controller.contains("MAX_VISIBLE_ROWS"));
+        assertTrue(controller.contains("setFixedCellSize"));
+        assertTrue(controller.contains("setMaxHeight"));
+        assertTrue(controller.contains("feedbackLabel.setManaged(false)"));
+        assertTrue(controller.contains("feedbackLabel.setManaged(true)"));
+        String css = Files.readString(Path.of(
+                "src/main/resources/com/snoozeshare/ui/host/host-theme.css"));
+        assertTrue(css.contains(".host-bookings-table .table-row-cell:filled { -fx-cursor: default; }"));
+        assertTrue(css.contains("-fx-padding: 8px 0 0 0;"));
     }
 
     @Test

@@ -11,10 +11,12 @@ import com.snoozeshare.service.ListingMetrics;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 public final class HostListingsController {
@@ -79,24 +81,29 @@ public final class HostListingsController {
         card.getStyleClass().add("listing-card");
         javafx.scene.layout.StackPane imagePlaceholder = new javafx.scene.layout.StackPane();
         imagePlaceholder.getStyleClass().add("listing-image-placeholder");
-        imagePlaceholder.setMinSize(96, 96);
-        imagePlaceholder.setPrefSize(96, 96);
-        imagePlaceholder.setMaxSize(96, 96);
+        imagePlaceholder.setMinSize(64, 64);
+        imagePlaceholder.setPrefSize(64, 64);
+        imagePlaceholder.setMaxSize(64, 64);
         card.setOnMouseClicked(event -> onViewListing.accept(property));
         Label title = new Label(property.title());
         title.getStyleClass().add("card-title");
+        title.getStyleClass().add("listing-title");
         Label details = new Label(displayPropertyType(property) + " · "
                 + property.city() + ", " + property.region());
         details.getStyleClass().add("small");
+        details.getStyleClass().add("listing-subtext");
         Label rate = new Label("$" + property.baseNightlyRate()
                 .setScale(2, RoundingMode.HALF_UP) + "/night");
         rate.getStyleClass().add("card-price");
-        VBox summary = new VBox(6, title, details, rate);
+        rate.getStyleClass().add("listing-price");
+        VBox summary = new VBox(4, title, details, rate);
+        summary.getStyleClass().add("listing-summary");
         summary.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(summary, javafx.scene.layout.Priority.ALWAYS);
 
         ListingMetrics metrics = metricsFor(property);
         VBox bookingMetric = metric(String.valueOf(metrics.bookingCount()), "BOOKINGS");
+        bookingMetric.getStyleClass().add("listing-metric");
         Label ratingValue = new Label(String.format("%.1f", metrics.averageRating()));
         ratingValue.getStyleClass().add("listing-metric-value");
         Label star = new Label("★");
@@ -107,10 +114,17 @@ public final class HostListingsController {
         ratingCaption.getStyleClass().add("listing-metric-caption");
         VBox ratingMetric = new VBox(2, ratingLine, ratingCaption);
         ratingMetric.setAlignment(javafx.geometry.Pos.CENTER);
+        ratingMetric.getStyleClass().add("listing-metric");
 
         ToggleButton statusToggle = new ToggleButton();
         statusToggle.setSelected(property.status() == ListingStatus.ACTIVE);
         statusToggle.getStyleClass().add("listing-status-toggle");
+        Region knob = new Region();
+        knob.getStyleClass().add("listing-status-toggle-knob");
+        statusToggle.setGraphic(knob);
+        statusToggle.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        statusToggle.setAlignment(statusToggle.isSelected()
+                ? javafx.geometry.Pos.CENTER_RIGHT : javafx.geometry.Pos.CENTER_LEFT);
         Label statusText = new Label();
         updateToggleText(statusToggle, statusText);
         statusToggle.setAccessibleText("Toggle listing status for " + property.title());
@@ -119,17 +133,18 @@ public final class HostListingsController {
         statusControl.setAlignment(javafx.geometry.Pos.CENTER);
         statusToggle.setOnAction(event -> handleToggle(property, statusToggle, statusText));
         Button editButton = new Button("Edit");
-        editButton.getStyleClass().add("outline-button");
+        editButton.getStyleClass().add("listing-card-action");
         editButton.setAccessibleText("Edit listing " + property.title());
         editButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> event.consume());
         editButton.setOnAction(event -> onEditListing.accept(property));
-        Button calendarButton = new Button("Open booking calendar");
-        calendarButton.getStyleClass().add("outline-button");
+        Button calendarButton = new Button("Open Booking Calendar");
+        calendarButton.getStyleClass().add("listing-card-action");
         calendarButton.setAccessibleText("Open booking calendar for " + property.title());
         calendarButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> event.consume());
         calendarButton.setOnAction(event -> onOpenCalendar.accept(property));
         HBox actions = new HBox(12, bookingMetric, ratingMetric, statusControl,
                 calendarButton, editButton);
+        actions.getStyleClass().add("listing-actions");
         actions.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
         card.getChildren().addAll(imagePlaceholder, summary, actions);
         return card;
@@ -141,12 +156,16 @@ public final class HostListingsController {
                     ? ListingStatus.ACTIVE : ListingStatus.INACTIVE;
             context.listingService().updateStatus(property.propertyId(), target,
                     context.session().currentUser().orElseThrow().userId());
+            toggle.setAlignment(target == ListingStatus.ACTIVE
+                    ? javafx.geometry.Pos.CENTER_RIGHT : javafx.geometry.Pos.CENTER_LEFT);
             updateToggleText(toggle, statusText);
             reload();
         } catch (IllegalArgumentException | IllegalStateException exception) {
             toggle.setSelected(!toggle.isSelected());
+            toggle.setAlignment(toggle.isSelected()
+                    ? javafx.geometry.Pos.CENTER_RIGHT : javafx.geometry.Pos.CENTER_LEFT);
             updateToggleText(toggle, statusText);
-            feedbackLabel.setText(exception.getMessage());
+            showFeedback(exception.getMessage());
         }
     }
 
@@ -154,9 +173,15 @@ public final class HostListingsController {
         try {
             return context.listingMetricsService().metricsFor(property.propertyId());
         } catch (IllegalArgumentException | IllegalStateException exception) {
-            feedbackLabel.setText(exception.getMessage());
+            showFeedback(exception.getMessage());
             return new ListingMetrics(0, 0.0);
         }
+    }
+
+    private void showFeedback(String message) {
+        feedbackLabel.setText(message);
+        feedbackLabel.setVisible(true);
+        feedbackLabel.setManaged(true);
     }
 
     private static VBox metric(String value, String caption) {
@@ -166,6 +191,7 @@ public final class HostListingsController {
         captionLabel.getStyleClass().add("listing-metric-caption");
         VBox metric = new VBox(2, valueLabel, captionLabel);
         metric.setAlignment(javafx.geometry.Pos.CENTER);
+        metric.getStyleClass().add("listing-metric");
         return metric;
     }
 

@@ -53,18 +53,20 @@ class WalletDashboardControllerTest {
 
     @Test
     void formatterRendersRelatedBookingTicketAndAgentReferences() {
-        WalletTransaction booking = transaction(WalletTransactionType.ESCROW_HOLD,
-                BOOKING_ID, null, null);
-        WalletTransaction ticket = transaction(WalletTransactionType.TICKET_REMEDY,
-                null, TICKET_ID, null);
-        WalletTransaction agent = transaction(WalletTransactionType.AGENT_OVERRIDE,
-                null, null, AGENT_ID);
-
-        assertEquals("Booking #20000000", WalletTransactionFormatter.relatedLabel(booking));
-        assertEquals("Ticket #d0000000", WalletTransactionFormatter.relatedLabel(ticket));
-        assertEquals("Agent #c0000000", WalletTransactionFormatter.relatedLabel(agent));
         assertEquals("—", WalletTransactionFormatter.relatedLabel(
-                transaction(WalletTransactionType.TOP_UP, null, null, null)));
+                transaction(WalletTransactionType.TOP_UP, null, null, AGENT_ID)));
+        assertEquals("—", WalletTransactionFormatter.relatedLabel(
+                transaction(WalletTransactionType.WITHDRAWAL, null, null, AGENT_ID)));
+        assertEquals("Booking #20000000", WalletTransactionFormatter.relatedLabel(
+                transaction(WalletTransactionType.ESCROW_HOLD, BOOKING_ID, null, null)));
+        assertEquals("Booking #20000000", WalletTransactionFormatter.relatedLabel(
+                transaction(WalletTransactionType.ESCROW_REFUND, BOOKING_ID, null, null)));
+        assertEquals("Booking #20000000", WalletTransactionFormatter.relatedLabel(
+                transaction(WalletTransactionType.BOOKING_PAYOUT, BOOKING_ID, TICKET_ID, AGENT_ID)));
+        assertEquals("Ticket #d0000000", WalletTransactionFormatter.relatedLabel(
+                transaction(WalletTransactionType.TICKET_REMEDY, BOOKING_ID, TICKET_ID, AGENT_ID)));
+        assertEquals("Agent #c0000000", WalletTransactionFormatter.relatedLabel(
+                transaction(WalletTransactionType.AGENT_OVERRIDE, BOOKING_ID, TICKET_ID, AGENT_ID)));
     }
 
     @Test

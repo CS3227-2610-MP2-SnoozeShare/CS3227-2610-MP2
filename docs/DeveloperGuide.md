@@ -1,12 +1,18 @@
+---
+layout: default
+title: Developer Guide
+permalink: /developer-guide/
+---
+
 # Developer Guide — SnoozeShare
 
 Handover brief for developers taking over this project. It describes **confirmed** work only and
 is updated at checkpoints, so it can lag behind the code. For current status, work in flight, and
-what to build next, read [`PROJECT_STATE.md`](../PROJECT_STATE.md) — that is the source of truth.
+what to build next, read [`PROJECT_STATE.md`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/PROJECT_STATE.md) — that is the source of truth.
 
-**Last updated:** 2026-09-27 — covers W1 (Shared Foundation), W6–W9 (Host Listings, Calendar,
-Booking Requests, and Host Wallet), W10 (Agent Dispute Resolution), and W12 (Platform Audit Trail),
-plus the scope, setup, requirements and glossary they rely on
+**Last updated:** 2026-09-29 — covers W1 (Shared Foundation), W6–W9 (Host Listings, Calendar,
+Booking Requests, and Host Wallet), W10 (Agent Dispute Resolution), W12 (Platform Audit Trail), and
+W14 (Unified Ledger), plus the scope, setup, requirements and glossary they rely on
 
 ## Contents
 
@@ -43,6 +49,7 @@ platform audit trail that records every change to bookings, tickets, listings an
 | F8 (W9) | Host wallet management: shared wallet page, transaction statement, escrow summary, top-up and withdrawal modals | [4.12](#412-host-wallet-management-uihostwallet) |
 | F9 (W10) | Agent dispute resolution: ticket queue, assign / unassign / notes, settlement of held escrow, ticket categories | [4.1](#41-settlement-domain)–[4.8](#48-agent-ui-uiadmin) |
 | F11 (W12) | **Platform Audit Trail:** every change is logged as one typed row, and agents search the log on the Audit Log screen | [4.13](#413-audit-trail) |
+| — (W14) | **Unified Ledger:** every wallet movement is a single `audit_log` money row (with the wallet's running balance); the System user gets a real role and wallet and receives the platform's 3% fee | [4.15](#415-unified-ledger-ledgerwriter) |
 
 **Value proposition:** a support agent can take a dispute ticket, read both parties' evidence and
 chat, and settle the booking's held escrow between guest and host in one atomic, audited action.
@@ -73,8 +80,6 @@ Every payout follows one uniform fee rule, so the ledger always adds up.
 - **Suspending Agent accounts, and undoing a suspension's side effects** — agents are listed but cannot be
   suspended (including by themselves), and reactivating an account changes only its status and reason:
   cancelled bookings are not reinstated and deactivated listings stay inactive (C34, C36).
-- **Platform wallet and the unified ledger** — folding `wallet_transactions` into `audit_log` and giving
-  the platform a real wallet is a later workstream (W14, C31).
 - **The auto-complete scheduler** — a booking with an open ticket must be skipped by whatever
   completes bookings after the dispute window (C17), but that scheduler is a separate feature.
 - **Clawing money back from a host wallet** — agents only ever settle *held* escrow (C17).
@@ -126,10 +131,10 @@ The first start records the schema baseline in `schema_history` (D10); the copy 
 preparation.
 
 **Mock logins.** Authentication is mocked (`UserService.authenticate(email)`): the login screen takes
-an email and checks no credential. The mock agents seeded in [`db/seed-mock-data.sql`](../db/seed-mock-data.sql) are
+an email and checks no credential. The mock agents seeded in [`db/seed-mock-data.sql`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/db/seed-mock-data.sql) are
 `amy.tanaka@snoozeshare.test`, `ben.alvarez@snoozeshare.test` and `chen.wu@snoozeshare.test`. Registering
 a Host or Agent through the app needs a registration code; those are mock constants in
-[`RegistrationCodes`](../src/main/java/com/snoozeshare/config/RegistrationCodes.java).
+[`RegistrationCodes`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/config/RegistrationCodes.java).
 
 **Rebuilding the mock database** (only after editing the seed):
 `sqlite3 x.db < db/schema.sql` then `sqlite3 x.db < db/seed-mock-data.sql`, and replace
@@ -157,9 +162,10 @@ W1 establishes the application boundaries used by every later workstream:
   and do not access JDBC directly.
 - `ConnectionFactory`, `MigrationRunner` and `TransactionManager` define the embedded SQLite
   persistence boundary. Repository interfaces isolate domain/service code from `repository.jdbc`.
-- `WalletService` and the append-only `wallet_transactions` ledger provide atomic top-up, withdrawal,
-  balance and statement operations. Wallet balances are updated in the same transaction as their
-  ledger rows; later workstreams add escrow, payout and audit integrations.
+- `WalletService` provides atomic top-up, withdrawal, balance and statement operations.
+  Every wallet-moving service writes through `LedgerWriter` ([4.15](#415-unified-ledger-ledgerwriter)),
+  which updates a wallet's `balance` and writes its `audit_log` money row (with the new
+  `balanceAfter`) in the same transaction; there is a single ledger, not a separate one.
 - `EventBus`/`InProcessEventBus` publish committed domain events after successful transactions, and
   the shared audit contracts provide typed audit records for mutating services.
 
@@ -178,7 +184,8 @@ flowchart TB
     Tickets["TicketServiceImpl"]
     Settle["DisputeSettlementServiceImpl"]
     Query["DisputeQueryServiceImpl"]
-    Chat["InMemoryMessageService"]
+    Chat["MessageServiceImpl"]
+    BookingChat["BookingConversationServiceImpl"]
     Audit["AuditServiceImpl"]
   end
   subgraph Domain["domain"]
@@ -194,6 +201,7 @@ flowchart TB
   Detail --> Tickets
   Detail --> Query
   Detail --> Chat
+  Shell --> BookingChat
   Tickets --> Settle
   Settle --> Calc
   Settle --> SM
@@ -203,6 +211,10 @@ flowchart TB
   Tickets --> Repos
   Query --> Repos
   Settle --> Repos
+  Chat --> Repos
+  BookingChat --> Repos
+  Chat --> Bus
+  BookingChat --> Bus
   Repos --> DB
 ```
 
@@ -210,6 +222,10 @@ Left out for clarity: `AppContext` wiring, `SessionContext`, the other repositor
 property, user, wallet, wallet transaction), and the queue and category screens, which call the
 same services. Every service that changes data (booking, ticket, listing, wallet ledger and category
 services as well as settlement) also calls `AuditService`; the Audit Log screen calls its `search`.
+`ui.host.messaging.HostMessagesController` (not shown, see [4.4b](#44b-host-messages-ui-uihostmessaging))
+is the only built UI caller of `BookingConversationServiceImpl` and also calls `MessageServiceImpl`
+for a host's ticket threads; `DisputeDetailController` is shown here as the Agent-side caller of
+`MessageServiceImpl`. The Guest Messages screen is not built yet (C37, C38).
 
 **Audit rows are written inside the change's own transaction.** A service calls
 `AuditService.record(...)` while its `TransactionManager.inTransaction` block is open. The audit
@@ -272,8 +288,8 @@ change back. See [4.13](#413-audit-trail).
 | Agents can delete a category, but not while any ticket uses its label; deactivate it instead. Modals get a 50% light-grey scrim, and chat and notes boxes are user-resizable. | Delete is a new capability beyond backlog F9.3.1; protecting used labels keeps ticket history intelligible. | | C26 |
 | `UNDER_REVIEW` was renamed `IN_REVIEW` in code, schema, seed data and UI text. | One term across code and UI. | A UI-only rename | C27 |
 | The audit log is one row per change: status text in `beforeState` / `afterState`, money in a typed `walletAdjustment` column, plus typed reason and id columns. | The old single `afterState` blob was unreadable and unsearchable. | Two per-side booking rows; keeping JSON in `afterState`; `entityId`-only lookups | C28 |
-| Wallet movements write both a `wallet_transactions` row and an `audit_log` money row in one transaction, until W14 folds the two together. | The ledger cannot be removed without touching W1/W3/W5/W6/W10 money paths. | Doing the unification inside W12 | C31, D13 |
-| The platform fee is recorded only as text in the host payout row's reason; there is no platform wallet. | Keeps W12 small; the operator wants the fee as a real System-account entry in W14. | A platform wallet in W12 | C30 |
+| **W14 (executed 2026-09-27, confirmed 2026-09-29):** every wallet movement is one `audit_log` money row carrying its wallet's `balanceAfter`, written through `LedgerWriter`. Until then, a movement wrote both a `wallet_transactions` row and an `audit_log` money row in one transaction (historical: D13). | The dual ledger could not be removed without touching W1/W3/W5/W6/W10 money paths, so it was scheduled as its own workstream instead of folded into W12. | Doing the unification inside W12 | C31, C39–C42, D13 |
+| **Reversed by W14:** the System user is role `SYSTEM`, status `ACTIVE`, and owns a real wallet that receives a `PLATFORM_FEE` row (via `LedgerWriter.postPayout`) whenever a payout's fee is positive. Until W14, the fee was recorded only as text in the host payout row's reason, with no platform wallet. | Keeps W12 small first; the operator wanted the fee as a real System-account entry, delivered by W14. | A platform wallet in W12 | C30, C39–C42 |
 | Reactivate is built although backlog F10.1.1 says only suspend. Agent accounts are listed with no action and cannot be suspended. | The operator wanted suspension to be reversible; agents governing agents was out of scope. | Suspend-only | C34 |
 | The suspension reason lives in a nullable `users.suspensionReason` column (migration V003) and is also written to the audit row. | Looking a reason up should not mean reading the audit log, which is not a data store. | A `suspensions` table; deriving the reason from `audit_log` | C34 (reverses the no-column part of C32) |
 | Suspending a Guest or Host force-cancels their PENDING and not-yet-started CONFIRMED bookings (check-in after today) with a 100% refund; a Host's ACTIVE listings become INACTIVE. Started and ended stays are untouched, and reactivation restores nothing. | Upcoming stays cannot be honoured by a suspended party; a stay in progress settles through the normal path (W8 auto-completion, or W10 dispute resolution). | Cancelling PENDING only; reinstating on reactivation | C36 |
@@ -290,9 +306,9 @@ Dependencies come first. Money is `BigDecimal` at scale 2 with `HALF_UP` through
 
 **API**
 
-- [`SettlementCalculator.split(escrow, guestRefund)`](../src/main/java/com/snoozeshare/domain/settlement/SettlementCalculator.java) returns a `SettlementBreakdown`.
-- [`SettlementBreakdown`](../src/main/java/com/snoozeshare/domain/settlement/SettlementBreakdown.java) is a record of `escrow`, `guestRefund`, `hostGross`, `fee`, `hostNet`.
-- [`EscrowPolicy.isHeld(bookingTransactions)`](../src/main/java/com/snoozeshare/domain/settlement/EscrowPolicy.java) is true when the list has an `ESCROW_HOLD` row and no `ESCROW_REFUND`, `BOOKING_PAYOUT`, `TICKET_REMEDY` or `AGENT_OVERRIDE` row.
+- [`SettlementCalculator.split(escrow, guestRefund)`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/settlement/SettlementCalculator.java) returns a `SettlementBreakdown`.
+- [`SettlementBreakdown`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/settlement/SettlementBreakdown.java) is a record of `escrow`, `guestRefund`, `hostGross`, `fee`, `hostNet`.
+- [`EscrowPolicy.isHeld(bookingTransactions)`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/settlement/EscrowPolicy.java) is true when the list has an `ESCROW_HOLD` row and no `ESCROW_REFUND`, `BOOKING_PAYOUT`, `TICKET_REMEDY` or `AGENT_OVERRIDE` row.
 
 **Depends on:** `domain.enums`, `domain.model.WalletTransaction`, `DomainValidation`. No JavaFX or JDBC.
 
@@ -309,7 +325,7 @@ Dependencies come first. Money is `BigDecimal` at scale 2 with `HALF_UP` through
 
 **Purpose:** the single legality check for booking and ticket transitions.
 
-**API:** [`BookingStateMachine.canTransition(from, to, role)`](../src/main/java/com/snoozeshare/domain/statemachine/BookingStateMachine.java) and [`TicketStateMachine.canTransition(from, to, role)`](../src/main/java/com/snoozeshare/domain/statemachine/TicketStateMachine.java).
+**API:** [`BookingStateMachine.canTransition(from, to, role)`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/statemachine/BookingStateMachine.java) and [`TicketStateMachine.canTransition(from, to, role)`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/statemachine/TicketStateMachine.java).
 
 **Depends on:** `domain.enums` only.
 
@@ -334,9 +350,9 @@ booking machine but nothing in the agent UI uses them (C22).
 
 **API**
 
-- [`TicketRepository`](../src/main/java/com/snoozeshare/repository/TicketRepository.java) and its adapter [`JdbcTicketRepository`](../src/main/java/com/snoozeshare/repository/jdbc/JdbcTicketRepository.java): `findById`, `findByStatus`, `findQueue(status, assignee, agentId)`, `existsByCategory(label)`, `save` (upsert).
-- [`TicketCategoryRepository`](../src/main/java/com/snoozeshare/repository/TicketCategoryRepository.java) and [`JdbcTicketCategoryRepository`](../src/main/java/com/snoozeshare/repository/jdbc/JdbcTicketCategoryRepository.java): `findActive`, `findAll`, `findById`, `labelInUse(label, excludeCategoryId)`, `save`, `deleteById`.
-- [`MigrationRunner.migrate`](../src/main/java/com/snoozeshare/infra/db/migration/MigrationRunner.java) applies `V001__foundation.sql`, or adopts a database that already has a `users` table (such as the mock DB) by recording the baseline.
+- [`TicketRepository`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/repository/TicketRepository.java) and its adapter [`JdbcTicketRepository`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/repository/jdbc/JdbcTicketRepository.java): `findById`, `findByStatus`, `findQueue(status, assignee, agentId)`, `existsByCategory(label)`, `save` (upsert).
+- [`TicketCategoryRepository`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/repository/TicketCategoryRepository.java) and [`JdbcTicketCategoryRepository`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/repository/jdbc/JdbcTicketCategoryRepository.java): `findActive`, `findAll`, `findById`, `labelInUse(label, excludeCategoryId)`, `save`, `deleteById`.
+- [`MigrationRunner.migrate`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/infra/db/migration/MigrationRunner.java) applies `V001__foundation.sql`, or adopts a database that already has a `users` table (such as the mock DB) by recording the baseline.
 
 ```mermaid
 erDiagram
@@ -380,7 +396,7 @@ erDiagram
 
 `raisedByRole` is limited to `GUEST` or `HOST`; `requestedRemedy` to `FULL_REFUND`, `PARTIAL_REFUND`,
 `HOST_PAYOUT`, `OTHER`; `status` to `OPEN`, `IN_REVIEW`, `RESOLVED_APPROVED`, `RESOLVED_REJECTED`
-(all `CHECK` constraints in [`db/schema.sql`](../db/schema.sql)).
+(all `CHECK` constraints in [`db/schema.sql`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/db/schema.sql)).
 
 **Depends on:** `infra.db.ConnectionFactory`, `JdbcCodecs` and `RowMappers` (`repository.jdbc.support`), `java.sql` (only here).
 
@@ -394,31 +410,69 @@ erDiagram
 
 **Deviations:** D8 (label text, so a rename does not rewrite existing tickets); D10 (`MigrationRunner` adoption); D12 (a) (ordering by `createdAt` text means sub-second ties can mis-order) and (b) (adoption only checks for a `users` table). The repository method names above are what the code has; the design spec used slightly different names, and the code wins.
 
-### 4.4 Messaging seam
+### 4.4 Ticket messaging (`MessageService`)
 
-**Purpose:** let the dispute screens show and post ticket chat before a persistent messaging feature exists.
+**Purpose:** persistent chat on a dispute ticket, one thread per side.
 
 **API**
 
-- [`MessageService`](../src/main/java/com/snoozeshare/service/MessageService.java): `thread(ticketId, ThreadChannel)` and `post(ticketId, channel, authorId, authorRole, body)`. The contract belongs to the Messaging workstream (W13).
-- [`InMemoryMessageService`](../src/main/java/com/snoozeshare/service/impl/InMemoryMessageService.java): a temporary, session-only implementation wired in `AppContext`.
-- [`Message`](../src/main/java/com/snoozeshare/domain/model/Message.java) and [`ThreadChannel`](../src/main/java/com/snoozeshare/domain/enums/ThreadChannel.java) (`GUEST`, `HOST`).
+- [`MessageService`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/MessageService.java): `thread(ticketId, channel, viewerId, viewerRole)`, `post(ticketId, channel, authorId, authorRole, body)`, `conversationsFor(userId, role)`, `unreadCount(userId, role)`, `markRead(ticketId, channel, userId, role)`.
+- [`MessageServiceImpl`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/impl/MessageServiceImpl.java) and [`JdbcMessageRepository`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/repository/jdbc/JdbcMessageRepository.java), over the `messages` and `message_reads` tables.
+- [`Message`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/model/Message.java), [`ThreadChannel`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/enums/ThreadChannel.java) (`GUEST`, `HOST`), [`ConversationSummary`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/ConversationSummary.java), [`MessagePostedEvent`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/infra/events/events/MessagePostedEvent.java), published after the insert commits.
 
-**Depends on:** a `Clock`, `DomainValidation`.
+**Depends on:** `TicketRepository`, `BookingRepository`, `PropertyRepository`, `UserRepository`, `EventBus`, a `Clock`, `DomainValidation`.
 
 **Invariants**
 
-- A non-blank body is required; it is trimmed.
-- A guest can post only in the `GUEST` thread and a host only in the `HOST` thread; the agent can post in both.
-- Messages live in memory and are lost when the app closes. The interface is the only thing the UI depends on, so a persistent replacement needs no UI change.
+- A non-blank body is required; it is trimmed. Messages are ordered by `rowid` (insertion order), not the `sentAt` text, since `Instant.toString()`'s variable-length fraction can misorder rows within a second.
+- A guest may read and post only the `GUEST` thread of a ticket on their own booking; a host only the `HOST` thread of a ticket on their own property; an agent both. A caller who is not a party, or names the wrong role for themselves, gets `IllegalArgumentException`.
+- Once a ticket is resolved its threads become read-only: `post` throws `IllegalStateException`; `thread` still returns the history.
 
-**Deviations:** C21 (chat ownership). `TicketService.addHostResponse` is deprecated and throws `UnsupportedOperationException`.
+**Deviations:** C21 (chat ownership), C37 (replaces the session-only `InMemoryMessageService`), D22 (`thread` gained the viewer arguments; the old two-argument form and `InMemoryMessageService` are gone).
+
+### 4.4a Booking messaging (`BookingConversationService`)
+
+**Purpose:** a private chat between a booking's guest and host, separate from ticket chat and with no agent access.
+
+**API**
+
+- [`BookingConversationService`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/BookingConversationService.java): `thread(bookingId, viewerId, viewerRole)`, `post(bookingId, authorId, authorRole, body)`, `conversationsFor(userId, role)`, `unreadCount(userId, role)`, `markRead(bookingId, userId, role)`.
+- [`BookingConversationServiceImpl`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/impl/BookingConversationServiceImpl.java) and [`JdbcBookingMessageRepository`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/repository/jdbc/JdbcBookingMessageRepository.java), over the `booking_messages` and `booking_message_reads` tables.
+- [`BookingMessage`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/model/BookingMessage.java), [`BookingConversationSummary`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/BookingConversationSummary.java), [`BookingMessagePostedEvent`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/infra/events/events/BookingMessagePostedEvent.java).
+
+**Depends on:** `BookingRepository`, `PropertyRepository`, `UserRepository`, `EventBus`, a `Clock`, `DomainValidation`.
+
+**Invariants**
+
+- Only the booking's guest and its property's host may read or post; an agent gets `IllegalArgumentException` (they may not read this chat at all, even as dispute evidence).
+- Writable while the booking is `CONFIRMED` and today is on or before check-out + 7 days (the dispute window, same rule as escrow); otherwise `post` throws `IllegalStateException` and `thread` stays readable.
+- Text only: no attachments, no edit or delete, no typing indicator.
+
+**Deviations:** C38 (reverses the original W13 scope, which excluded chat outside tickets).
+
+### 4.4b Host Messages UI (`ui.host.messaging`)
+
+**Purpose:** the Host's single inbox for both kinds of chat.
+
+**API**
+
+- [`HostMessagesController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/host/messaging/HostMessagesController.java) and [`HostConversationRow`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/host/messaging/HostConversationRow.java), the merged-inbox row model (kind `BOOKING` or `TICKET`, display metadata, latest message, unread count, writable flag).
+- Shared rendering: [`ChatBubbles`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/common/messaging/ChatBubbles.java), used by the Agent dispute page too.
+
+**Depends on:** `MessageService`, `BookingConversationService`, `SessionContext`, `EventBus` (subscribes to `MessagePostedEvent` and `BookingMessagePostedEvent`, disposed when the page is replaced).
+
+**Invariants**
+
+- Rows from both services are merged into one newest-activity-first list; selecting a row marks it read.
+- Hosts cannot create tickets. The composer is disabled once the underlying thread is read-only (a resolved ticket or a closed booking chat window).
+
+**Deviations:** C40 (reverses an earlier draft that let hosts file tickets; hosts may only reply to existing agent-managed threads), D23 (verification baseline), D24 (fixed-width sidebar with ellipsis overrun). The Guest Messages screen is not built (C37, C38).
 
 ### 4.5 `DisputeSettlementService`
 
 **Purpose:** the only class that moves money when an agent resolves a dispute.
 
-**API:** [`DisputeSettlementService.settle(ticketId, mode, guestRefund, agentId, reason)`](../src/main/java/com/snoozeshare/service/DisputeSettlementService.java), implemented by [`DisputeSettlementServiceImpl`](../src/main/java/com/snoozeshare/service/impl/DisputeSettlementServiceImpl.java). It returns a [`Settlement`](../src/main/java/com/snoozeshare/service/Settlement.java) (ticket, booking, `SettlementBreakdown`, and the guest and host `WalletTransaction`, either of which is `null` when its amount was zero). [`ResolutionMode`](../src/main/java/com/snoozeshare/domain/enums/ResolutionMode.java) is `ACCEPT`, `REJECT` or `MANUAL`.
+**API:** [`DisputeSettlementService.settle(ticketId, mode, guestRefund, agentId, reason)`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/DisputeSettlementService.java), implemented by [`DisputeSettlementServiceImpl`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/impl/DisputeSettlementServiceImpl.java). It returns a [`Settlement`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/Settlement.java) (ticket, booking, `SettlementBreakdown`, and the guest and host `WalletTransaction`, either of which is `null` when its amount was zero). [`ResolutionMode`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/enums/ResolutionMode.java) is `ACCEPT`, `REJECT` or `MANUAL`.
 
 **Outcome by mode**
 
@@ -428,9 +482,11 @@ erDiagram
 | `REJECT` (refund must be 0) | none | `BOOKING_PAYOUT` for the whole escrow, net of fee | `RESOLVED_REJECTED` |
 | `MANUAL` | `AGENT_OVERRIDE` when the refund is above zero | `BOOKING_PAYOUT` when the host share is above zero | `RESOLVED_APPROVED` if the refund is above zero, else `RESOLVED_REJECTED` |
 
-The host row has `amount = hostGross − fee` and `feeAmount = fee`. Every row carries
-`relatedBookingId`, `relatedTicketId` and `initiatedBy = agentId`. `ACCEPT` with a zero refund is
-allowed only when the ticket's requested remedy is `HOST_PAYOUT`.
+The host row's `amount` is already `hostGross − fee`; when `fee` is positive, `LedgerWriter.postPayout`
+also writes a second `PLATFORM_FEE` row crediting the System wallet, in the same transaction
+([4.15](#415-unified-ledger-ledgerwriter)). Every row carries `bookingId`, `ticketId` and
+`actorUserId = agentId`. `ACCEPT` with a zero refund is allowed only when the ticket's requested
+remedy is `HOST_PAYOUT`.
 
 ```mermaid
 sequenceDiagram
@@ -460,14 +516,14 @@ sequenceDiagram
 6. Commit makes everything visible at once; any exception rolls back all of it.
 7. Only after commit are events published, then the `Settlement` is returned.
 
-**Depends on:** `TicketRepository`, `BookingRepository`, `PropertyRepository`, `UserRepository`, `WalletRepository`, `WalletTransactionRepository`, `AuditService`, `EventBus`, `TransactionManager`, the settlement domain (4.1) and state machines (4.2).
+**Depends on:** `TicketRepository`, `BookingRepository`, `PropertyRepository`, `UserRepository`, `WalletRepository`, `LedgerWriter`, `LedgerRepository`, `AuditService`, `EventBus`, `TransactionManager`, the settlement domain (4.1) and state machines (4.2).
 
 **Invariants**
 
-- Preconditions are checked inside the transaction: caller is an agent; ticket is `IN_REVIEW` and assigned to the caller; booking is `CONFIRMED`; escrow is held; `0 ≤ refund ≤ escrow`; reason non-blank. Any failure writes nothing.
-- One transaction covers both wallet balances, both ledger inserts, the ticket, the booking (`COMPLETED`, `completedAt`) and its audit rows. Events are published only after commit.
-- Wallets are updated directly, not through `WalletLedgerWriter`, because `feeAmount` on `BOOKING_PAYOUT` rows is informational and `amount` is already net.
-- A wallet's `balance` changes only in the same transaction as the ledger row that explains it.
+- Preconditions are checked inside the transaction: caller is an agent; ticket is `IN_REVIEW` and assigned to the caller; booking is `CONFIRMED`; escrow is held (`LedgerRepository.entriesForBooking` plus `EscrowPolicy`); `0 ≤ refund ≤ escrow`; reason non-blank. Any failure writes nothing.
+- One transaction covers both wallet balances, their money (and platform-fee) rows, the ticket, the booking (`COMPLETED`, `completedAt`) and its status audit rows. Events are published only after commit.
+- Every wallet write goes through `LedgerWriter.post` / `postPayout` ([4.15](#415-unified-ledger-ledgerwriter)); the service never touches `WalletRepository.save` itself.
+- A wallet's `balance` changes only in the same transaction as the money row that explains it, and that row carries the wallet's new `balanceAfter`.
 
 **Deviations:** D5 (a dedicated service instead of `TransactionService.applyTicketRemedy` / `manualOverride`); D12 (c) (guest and host wallets are read once, so a self-booking where guest and host are the same user would lose an update), (d) (resolved by W12: `AuditServiceImpl` now stamps the record's own time, or the injected clock), (e) (the escrow amount comes from `booking.totalAmount()`, not the `ESCROW_HOLD` row).
 
@@ -475,7 +531,7 @@ sequenceDiagram
 
 **Purpose:** the ticket lifecycle for agents (queue, assign, unassign, notes, resolve) and category administration.
 
-**API:** [`TicketService`](../src/main/java/com/snoozeshare/service/TicketService.java), implemented by [`TicketServiceImpl`](../src/main/java/com/snoozeshare/service/impl/TicketServiceImpl.java).
+**API:** [`TicketService`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/TicketService.java), implemented by [`TicketServiceImpl`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/impl/TicketServiceImpl.java).
 
 | Method | Behaviour |
 |---|---|
@@ -507,12 +563,12 @@ sequenceDiagram
 
 **Purpose:** read models for the agent screens, so controllers never touch repositories.
 
-**API:** [`DisputeQueryService`](../src/main/java/com/snoozeshare/service/DisputeQueryService.java) with `queue(status, assignee, agentId)` returning [`DisputeSummary`](../src/main/java/com/snoozeshare/service/DisputeSummary.java) rows and `detail(ticketId)` returning a [`DisputeDetail`](../src/main/java/com/snoozeshare/service/DisputeDetail.java), implemented by [`DisputeQueryServiceImpl`](../src/main/java/com/snoozeshare/service/impl/DisputeQueryServiceImpl.java).
+**API:** [`DisputeQueryService`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/DisputeQueryService.java) with `queue(status, assignee, agentId)` returning [`DisputeSummary`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/DisputeSummary.java) rows and `detail(ticketId)` returning a [`DisputeDetail`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/DisputeDetail.java), implemented by [`DisputeQueryServiceImpl`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/impl/DisputeQueryServiceImpl.java).
 
 - `DisputeSummary`: ticket id and label, title, category, listing title, guest, host and assignee names, status, `createdAt`.
 - `DisputeDetail`: the ticket, listing and dates, party names, booking status, `escrowAmount`, `escrowHeld` and `phaseLabel`.
 
-**Depends on:** `TicketRepository`, `BookingRepository`, `PropertyRepository`, `UserRepository`, `WalletTransactionRepository`, `EscrowPolicy`, a `Clock`.
+**Depends on:** `TicketRepository`, `BookingRepository`, `PropertyRepository`, `UserRepository`, `LedgerRepository`, `EscrowPolicy`, a `Clock`.
 
 **Invariants**
 
@@ -530,26 +586,27 @@ sequenceDiagram
 
 | File | Role |
 |---|---|
-| [`AdminShellController`](../src/main/java/com/snoozeshare/ui/admin/AdminShellController.java) + [`admin-shell.fxml`](../src/main/resources/com/snoozeshare/ui/admin/admin-shell.fxml) | Top bar and tab strip (Disputes, Accounts, Audit Log, Categories); swaps the centre view and disposes the live views (queue, accounts) when it does. |
-| [`DisputeQueueController`](../src/main/java/com/snoozeshare/ui/admin/tickets/DisputeQueueController.java) + `dispute-queue.fxml` | Oldest-first table, All / Unassigned / Mine chips, status filter (All statuses, Open, In review, Approved, Rejected), "N unassigned" badge; refreshes on `TicketResolvedEvent`. |
-| [`DisputeDetailController`](../src/main/java/com/snoozeshare/ui/admin/tickets/DisputeDetailController.java) + `dispute-detail.fxml` | Booking summary, guest and host chat panes, one notes field, Assign to me / Unassign, Accept, Reject dispute, Manual adjustment. The Accept label follows the ticket raiser ("remedy guest" or "remedy host"). |
-| [`ResolutionDialogController`](../src/main/java/com/snoozeshare/ui/admin/tickets/ResolutionDialogController.java) + `resolution-dialog.fxml` | One dialog for the three modes; reason required; live preview. |
-| [`ResolutionPreview`](../src/main/java/com/snoozeshare/ui/admin/tickets/ResolutionPreview.java) | Pure logic that turns a refund text into a preview or an error message, using `SettlementCalculator`. |
-| [`CategoryAdminController`](../src/main/java/com/snoozeshare/ui/admin/categories/CategoryAdminController.java), [`CategoryDialogController`](../src/main/java/com/snoozeshare/ui/admin/categories/CategoryDialogController.java) | Category table with active toggle, Add and Edit modals; Edit has Delete. |
-| [`AuditLogController`](../src/main/java/com/snoozeshare/ui/admin/audit/AuditLogController.java) + [`audit-log.fxml`](../src/main/resources/com/snoozeshare/ui/admin/audit/audit-log.fxml) | The read-only Audit Log screen (below). |
-| [`AccountGovernanceController`](../src/main/java/com/snoozeshare/ui/admin/accounts/AccountGovernanceController.java) + [`account-governance.fxml`](../src/main/resources/com/snoozeshare/ui/admin/accounts/account-governance.fxml) | The Accounts screen (below). Refreshes on `AccountStatusChangedEvent`. |
-| [`SuspensionDialogController`](../src/main/java/com/snoozeshare/ui/admin/accounts/SuspensionDialogController.java) + `suspension-dialog.fxml` | The Suspend and Reactivate modal (one card, two modes). |
-| [`AccountText`](../src/main/java/com/snoozeshare/ui/admin/accounts/AccountText.java), [`AccountSearch`](../src/main/java/com/snoozeshare/ui/admin/accounts/AccountSearch.java) | Pure helpers: role and status labels, `DD MMM YYYY` dates, and the live-search match. |
-| [`MultiSelectMenu`](../src/main/java/com/snoozeshare/ui/admin/audit/MultiSelectMenu.java) | The action-type dropdown with a check per option; an empty selection means every action. |
-| [`AgentModal`](../src/main/java/com/snoozeshare/ui/admin/AgentModal.java) | Shared modal shell: transparent undecorated stage plus a light-grey scrim over the owner window. |
-| [`HeightGrip`](../src/main/java/com/snoozeshare/ui/admin/HeightGrip.java) | Drag handle that resizes chat panes together and the notes box, within min and max heights. |
-| [`agent-theme.css`](../src/main/resources/com/snoozeshare/ui/admin/agent-theme.css) | The "Fall Light" palette, loaded on the agent scene root only. |
+| [`AdminShellController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/AdminShellController.java) + [`admin-shell.fxml`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/resources/com/snoozeshare/ui/admin/admin-shell.fxml) | Top bar and tab strip (Disputes, Accounts, Audit Log, Categories); swaps the centre view and disposes the live views (queue, accounts) when it does. |
+| [`DisputeQueueController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/tickets/DisputeQueueController.java) + `dispute-queue.fxml` | Oldest-first table, All / Unassigned / Mine chips, status filter (All statuses, Open, In review, Approved, Rejected), "N unassigned" badge; refreshes on `TicketResolvedEvent`. |
+| [`DisputeDetailController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/tickets/DisputeDetailController.java) + `dispute-detail.fxml` | Booking summary, guest and host chat panes, one notes field, Assign to me / Unassign, Accept, Reject dispute, Manual adjustment. The Accept label follows the ticket raiser ("remedy guest" or "remedy host"). |
+| [`ResolutionDialogController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/tickets/ResolutionDialogController.java) + `resolution-dialog.fxml` | One dialog for the three modes; reason required; live preview. |
+| [`ResolutionPreview`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/tickets/ResolutionPreview.java) | Pure logic that turns a refund text into a preview or an error message, using `SettlementCalculator`. |
+| [`CategoryAdminController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/categories/CategoryAdminController.java), [`CategoryDialogController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/categories/CategoryDialogController.java) | Category table with active toggle, Add and Edit modals; Edit has Delete. |
+| [`AuditLogController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/audit/AuditLogController.java) + [`audit-log.fxml`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/resources/com/snoozeshare/ui/admin/audit/audit-log.fxml) | The read-only Audit Log screen (below). |
+| [`AccountGovernanceController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/accounts/AccountGovernanceController.java) + [`account-governance.fxml`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/resources/com/snoozeshare/ui/admin/accounts/account-governance.fxml) | The Accounts screen (below). Refreshes on `AccountStatusChangedEvent`. |
+| [`SuspensionDialogController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/accounts/SuspensionDialogController.java) + `suspension-dialog.fxml` | The Suspend and Reactivate modal (one card, two modes). |
+| [`AccountText`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/accounts/AccountText.java), [`AccountSearch`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/accounts/AccountSearch.java) | Pure helpers: role and status labels, `DD MMM YYYY` dates, and the live-search match. |
+| [`MultiSelectMenu`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/audit/MultiSelectMenu.java) | The action-type dropdown with a check per option; an empty selection means every action. |
+| [`AgentModal`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/AgentModal.java) | Shared modal shell: transparent undecorated stage plus a light-grey scrim over the owner window. |
+| [`HeightGrip`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/admin/HeightGrip.java) | Drag handle that resizes chat panes together and the notes box, within min and max heights. |
+| [`agent-theme.css`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/resources/com/snoozeshare/ui/admin/agent-theme.css) | The "Fall Light" palette, loaded on the agent scene root only. |
 
 **Audit Log screen (W12).** A read-only table over `AuditService.search` ([4.13](#413-audit-trail)).
 
 - **Filters:** one **Search** box (user name, or booking / ticket / user id; Enter applies it), an **Action type** multi-select (empty means all actions), separate **From** and **To** date pickers, an **Apply filters** button and a red-outline **Clear** button. Filters take effect only on Apply (selecting does not auto-apply); Apply refuses a From date after the To date. The date pickers and the multi-select popup are styled after the design board's Date picker component in `agent-theme.css` (C33).
-- **Table:** TIMESTAMP, ACTOR, ACTION TYPE (a coloured pill), REF (`Booking #0009 · Ticket #0004`, the last four characters of each id), STATUS (`Before → After`, or one status, or a dash), REASON and AMOUNT (signed, for example `+SGD 175.00`), 200 rows at a time with a Load more button. Rows are not clickable: they get the queue's grey hover but keep the default cursor.
-**Accounts screen (W11).** Every Guest, Host and Agent account except the System user, in a fixed-header table.
+- **Table:** TIMESTAMP (`dd/MM/yyyy HH:mm`), ACTOR (a user, can be the System user), ACTION TYPE (a coloured pill), TARGET (the row's one direct entity — a user's name, or `Property/Booking/Ticket/Category #last4`; a wallet movement targets the wallet owner, so a `PLATFORM_FEE` row shows `SnoozeShare System`; a ticket resolution names only the ticket, not its booking — replaced the last-four-character `REF` column, W14 follow-up), STATUS (`Before → After`, or one status, or a dash), REASON and AMOUNT (signed, for example `+SGD 175.00`), 200 rows at a time with a Load more button. Rows are not clickable: they get the queue's grey hover but keep the default cursor.
+
+**Accounts screen (W11).** Every Guest, Host and Agent account except the System user, in a fixed-header table. The System user is hidden here (it cannot be governed) but does appear as an actor or target on the Audit Log screen above.
 
 - **Columns:** DISPLAY NAME, EMAIL, ROLE, JOINED (`DD MMM YYYY`), STATUS (an ACTIVE or SUSPENDED pill, with `Reason: …` under a suspended one) and ACTION. Guests and Hosts get a red-outline **Suspend** or a **Reactivate** button of the same size; Agent rows show a dash and no action.
 - **Search:** one live box (no Apply button) that matches the displayed display name, email, role, joined text and status. It does not search the reason.
@@ -567,7 +624,7 @@ sequenceDiagram
 - There is no Force Cancel / Force Complete control anywhere (C22).
 - Subscriptions are released in `DisputeQueueController.dispose()` and `AccountGovernanceController.dispose()` when the shell navigates away.
 
-**Deviations:** D18 (the JavaFX date-picker popup cannot be restyled to match the board exactly: it keeps two month/year spinners and mixed-case weekday names, has no unavailable-day state, and the categories header columns sit about 5px left of the rows while the scroll bar shows); the design board's Audit Log artboard is older than the built screen (it has User ID / Booking ID inputs and no REF column) and C29 supersedes it. D7 (the design canvas shows Force actions, a newest-first queue, an "Adjust wallet" dropdown and no Accept amount field; the built screens follow C22, oldest-first per F9.1.1, and the refund-amount field of C20); D11 (a sidebar shell) was superseded by C24, so the built shell is the tab strip; D12 (f) (`DisputeDetailController.load()` still calls `render()` outside the error handler). The dispute screens use the `SGD` currency label (C10).
+**Deviations:** D18 (the JavaFX date-picker popup cannot be restyled to match the board exactly: it keeps two month/year spinners and mixed-case weekday names, has no unavailable-day state, and the categories header columns sit about 5px left of the rows while the scroll bar shows); the design board's Audit Log artboard is older than the built screen (it has User ID / Booking ID inputs and no REF/TARGET column) and C29 supersedes it. D7 (the design canvas shows Force actions, a newest-first queue, an "Adjust wallet" dropdown and no Accept amount field; the built screens follow C22, oldest-first per F9.1.1, and the refund-amount field of C20); D11 (a sidebar shell) was superseded by C24, so the built shell is the tab strip; D12 (f) (`DisputeDetailController.load()` still calls `render()` outside the error handler). The dispute screens use the `SGD` currency label (C10).
 
 ### 4.9 Host listing management (`ui.host.listings`)
 
@@ -575,11 +632,11 @@ sequenceDiagram
 
 | File | Role |
 |---|---|
-| [`HostListingsController`](../src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java) + `host-listings.fxml` | Host-scoped listing dashboard with listing cards, booking/rating metrics, Active/Inactive control, Edit and calendar entry. |
-| [`HostListingFormController`](../src/main/java/com/snoozeshare/ui/host/listings/HostListingFormController.java) + `host-listing-form.fxml` | Shared create/edit form for details, location, capacity, pricing and amenities; validates checkout after check-in. |
-| [`HostListingDetailController`](../src/main/java/com/snoozeshare/ui/host/listings/HostListingDetailController.java) + `host-listing-detail.fxml` | Host-facing detail page with Back, Edit and booking-calendar actions. |
-| [`ListingServiceImpl`](../src/main/java/com/snoozeshare/service/impl/ListingServiceImpl.java) | Enforces host ownership, validates listing data, persists changes and emits audit records. |
-| [`ListingMetricsService`](../src/main/java/com/snoozeshare/service/ListingMetricsService.java) | Supplies booking, occupancy and earnings metrics with zero-value fallbacks. |
+| [`HostListingsController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/host/listings/HostListingsController.java) + `host-listings.fxml` | Host-scoped listing dashboard with listing cards, booking/rating metrics, Active/Inactive control, Edit and calendar entry. |
+| [`HostListingFormController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/host/listings/HostListingFormController.java) + `host-listing-form.fxml` | Shared create/edit form for details, location, capacity, pricing and amenities; validates checkout after check-in. |
+| [`HostListingDetailController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/host/listings/HostListingDetailController.java) + `host-listing-detail.fxml` | Host-facing detail page with Back, Edit and booking-calendar actions. |
+| [`ListingServiceImpl`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/impl/ListingServiceImpl.java) | Enforces host ownership, validates listing data, persists changes and emits audit records. |
+| [`ListingMetricsService`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/ListingMetricsService.java) | Supplies booking, occupancy and earnings metrics with zero-value fallbacks. |
 
 Listings are host-owned and mutations are enforced in the service layer. New listings are active by
 default; status and property values remain enum/database values even when the UI renders readable labels.
@@ -588,7 +645,7 @@ default; status and property values remain enum/database values even when the UI
 
 **Purpose:** hosts inspect one listing's monthly availability and create or remove manual blocks.
 
-[`HostCalendarController`](../src/main/java/com/snoozeshare/ui/host/calendar/HostCalendarController.java)
+[`HostCalendarController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/host/calendar/HostCalendarController.java)
 uses `AvailabilityService` to load the selected month, navigate months, add inclusive single-date or
 range blocks, and remove existing manual blocks. Booking blocks and manual blocks are shown with separate
 visual treatments. Validation rejects an end date before the start date and overlapping unavailable dates.
@@ -598,7 +655,7 @@ The calendar is listing-scoped and does not bypass booking availability checks.
 
 **Purpose:** hosts review pending requests, decide them, inspect earnings and see request history.
 
-[`HostBookingsController`](../src/main/java/com/snoozeshare/ui/host/bookings/HostBookingsController.java)
+[`HostBookingsController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/host/bookings/HostBookingsController.java)
 uses `BookingService.pendingRequestRowsFor` and `historyRowsFor` for host-scoped projections. The request
 table includes guest, dates, nights, amount, estimated net earnings and guest rating. Approve and reject
 decisions use the shared host modal style; rejection may include the persisted `hostDecisionMessage`.
@@ -616,7 +673,7 @@ settlement of held escrow.
 **Purpose:** provide hosts with the same native wallet capability and visual language as the guest wallet,
 while keeping the presentation owned by the common wallet module.
 
-The shared [`WalletDashboardController`](../src/main/java/com/snoozeshare/ui/common/wallet/WalletDashboardController.java)
+The shared [`WalletDashboardController`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/ui/common/wallet/WalletDashboardController.java)
 and `wallet-dashboard.fxml` are loaded by both Guest and Host shells. The page includes the available
 balance, the amount currently held in escrow for pending bookings, top-up and withdrawal actions, and a
 five-column transaction statement. The statement uses compact type badges, aligned date/related/amount/
@@ -630,8 +687,9 @@ agent styling.
 
 **Escrow display.** The balance hint is computed from wallet transactions: escrow holds are grouped by
 booking and reduced by releasing transactions, so the displayed amount reflects currently held escrow
-rather than a fixed placeholder. The wallet ledger remains the source of balance truth; W14 is still the
-planned unified-ledger workstream.
+rather than a fixed placeholder. The `audit_log` money rows are the source of balance truth (the unified
+ledger, [4.15](#415-unified-ledger-ledgerwriter)); `wallets.balance` is a cache of the owner's newest
+`balanceAfter`.
 
 **Tests:** `WalletDashboardControllerTest`, `WalletUiStructureTest`, `WalletLedgerTest` and the wallet
 modal tests cover the statement layout, dynamic escrow copy, all wallet transaction types, preset/full-
@@ -643,10 +701,10 @@ balance actions, and FXML/CSS wiring.
 
 **API**
 
-- [`AuditService`](../src/main/java/com/snoozeshare/service/AuditService.java), implemented by [`AuditServiceImpl`](../src/main/java/com/snoozeshare/service/impl/AuditServiceImpl.java): `record(AuditRecord)`, the default helper `recordWalletTransaction(actorId, ownerUserId, transaction, applied, reason)`, and `search(AuditFilter, limit, offset)`. `AuditService.SYSTEM_ACTOR_ID` is the seeded System user.
-- [`AuditRecord`](../src/main/java/com/snoozeshare/service/AuditRecord.java) is what a service asks to write; [`AuditLogEntry`](../src/main/java/com/snoozeshare/domain/model/AuditLogEntry.java) is what a search returns; [`AuditAction`](../src/main/java/com/snoozeshare/domain/enums/AuditAction.java) is the enum of action types (the column stores the constant's name).
-- [`AuditFilter`](../src/main/java/com/snoozeshare/service/AuditFilter.java) (`text`, a set of `actions`, inclusive `from` / `to` dates) is the screen's filter; [`AuditCriteria`](../src/main/java/com/snoozeshare/repository/AuditCriteria.java) is its repository form. [`AuditLogRepository`](../src/main/java/com/snoozeshare/repository/AuditLogRepository.java) and [`JdbcAuditLogRepository`](../src/main/java/com/snoozeshare/repository/jdbc/JdbcAuditLogRepository.java) store and query rows.
-- The schema change is [`V002__audit_trail.sql`](../src/main/resources/db/migration/V002__audit_trail.sql), which is also reflected in [`db/schema.sql`](../db/schema.sql).
+- [`AuditService`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/AuditService.java), implemented by [`AuditServiceImpl`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/impl/AuditServiceImpl.java): `record(AuditRecord)` and `search(AuditFilter, limit, offset)`. `AuditService.SYSTEM_ACTOR_ID` is the seeded System user. (W14 removed the `recordWalletTransaction` helper: every money row now goes through `LedgerWriter`, [4.15](#415-unified-ledger-ledgerwriter).)
+- [`AuditRecord`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/AuditRecord.java) is what a service asks to write; [`AuditLogEntry`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/model/AuditLogEntry.java) is what a search returns; [`AuditAction`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/enums/AuditAction.java) is the enum of action types (the column stores the constant's name).
+- [`AuditFilter`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/AuditFilter.java) (`text`, a set of `actions`, inclusive `from` / `to` dates) is the screen's filter; [`AuditCriteria`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/repository/AuditCriteria.java) is its repository form. [`AuditLogRepository`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/repository/AuditLogRepository.java) and [`JdbcAuditLogRepository`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/repository/jdbc/JdbcAuditLogRepository.java) store and query rows.
+- The schema change is [`V002__audit_trail.sql`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/resources/db/migration/V002__audit_trail.sql), which is also reflected in [`db/schema.sql`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/db/schema.sql).
 
 **Column layout.** One row is one change. Migration V002 added seven columns to the V001 `audit_log` table:
 
@@ -659,14 +717,17 @@ balance actions, and FXML/CSS wiring.
 | `ticketId`, `bookingId` | The ticket and booking the row concerns, so a search by either id finds every related row. |
 | `subjectUserId` | The user the change happened to (the guest whose wallet moved, the ticket raiser), as opposed to the actor. |
 | `actorName`, `subjectName` | Snapshots of the display names taken when the row was written. They are null on rows written before V002. |
+| `balanceAfter` | The wallet's balance immediately after this row's `walletAdjustment`. Set on money rows only; added by V007 (W14). |
 
 **`AuditRecord` and its builder.** `AuditRecord`'s constructor rejects a record that carries both a wallet adjustment and a status, so a
-row is never both. Services build records with `AuditRecord.builder(actorId, action, entityType,
-entityId)` and chain `.status(before, after)` (enums are stored by name), `.wallet(amount)`,
-`.reason(text)` (blank becomes null), `.subject(userId)`, `.booking(id)`, `.ticket(id)` and `.at(instant)`;
-`build()` returns the record. Money rows reuse the wallet transaction type's name
-(`AuditAction.forWallet`), so `TOP_UP`, `ESCROW_HOLD`, `BOOKING_PAYOUT` and the like appear in both the ledger
-and the audit log.
+row is never both, and a `balanceAfter` is rejected unless `walletAdjustment` is also set. Services build
+records with `AuditRecord.builder(actorId, action, entityType, entityId)` and chain
+`.status(before, after)` (enums are stored by name), `.wallet(amount, balanceAfter)`, `.reason(text)`
+(blank becomes null), `.subject(userId)`, `.booking(id)`, `.ticket(id)` and `.at(instant)`; `build()`
+returns the record. Money rows reuse the wallet transaction type's name (`AuditAction.forWallet`), so
+`TOP_UP`, `ESCROW_HOLD`, `BOOKING_PAYOUT`, `PLATFORM_FEE` and the like name the row's `actionType`. Since
+W14 the `audit_log` row **is** the ledger row — there is no separate ledger table to also appear in
+([4.15](#415-unified-ledger-ledgerwriter)).
 
 **Writing rows.** `AuditServiceImpl.record` fills `actorName` and `subjectName` from the user table
 ("Unknown user" if the id has no user) and stamps the row with the record's `at`, or the injected `Clock` when none is set. The
@@ -679,19 +740,21 @@ rolls back with the change.
 | `DisputeSettlementServiceImpl` | `TICKET_RESOLVED`, `BOOKING_COMPLETED`, and the guest and host money rows (see the sequence diagram below) |
 | `TicketServiceImpl` | `TICKET_ASSIGNED`, `TICKET_UNASSIGNED`, `TICKET_NOTE_SAVED`, `TICKET_CATEGORY_CREATED`, `TICKET_CATEGORY_RENAMED`, `TICKET_CATEGORY_TOGGLED`, `TICKET_CATEGORY_DELETED` |
 | `ListingServiceImpl` | `LISTING_CREATED`, `LISTING_UPDATED`, `LISTING_STATUS_CHANGED` |
-| `AccountGovernanceServiceImpl` | `ACCOUNT_SUSPENDED` or `ACCOUNT_REACTIVATED`; on a suspension also `LISTING_STATUS_CASCADE`, `BOOKING_FORCE_CANCELLED` and an `ESCROW_REFUND` money row per affected booking ([4.14](#414-account-governance)) |
-| `WalletLedgerWriter` (used by `WalletServiceImpl` and `TransactionServiceImpl`) | One money row per ledger row it writes: `TOP_UP`, `WITHDRAWAL` and the other wallet transaction types |
+| `AccountGovernanceServiceImpl` | `ACCOUNT_SUSPENDED` or `ACCOUNT_REACTIVATED`; on a suspension also `LISTING_STATUS_CASCADE`, `BOOKING_FORCE_CANCELLED` and an `ESCROW_REFUND` money row per affected booking, all through `LedgerWriter` ([4.14](#414-account-governance)) |
+| `LedgerWriter` (used by `WalletServiceImpl`, `TransactionServiceImpl`, `BookingServiceImpl`, `DisputeSettlementServiceImpl` and `AccountGovernanceServiceImpl`) | Every money row: `TOP_UP`, `WITHDRAWAL`, `ESCROW_HOLD`, `ESCROW_REFUND`, `BOOKING_PAYOUT`, `TICKET_REMEDY`, `AGENT_OVERRIDE`, and `PLATFORM_FEE` (the System wallet's cut of a payout, written by `postPayout` only when the fee is positive) — see [4.15](#415-unified-ledger-ledgerwriter) |
 
 The `AuditAction` values `BOOKING_CANCELLED_BY_HOST` and `TICKET_OPENED` exist, but no service writes them yet (see
 [Known Limitations](#known-limitations)).
 
-The System user (`SnoozeShare System`, role `AGENT`, status `SUSPENDED`, so it can never sign in) is
-seeded by V002 so system-initiated rows can keep `actorUserId` non-null. No service writes a row as the
-System user yet.
+The System user (`SnoozeShare System`, role `SYSTEM`, status `ACTIVE` since W14) is seeded so
+system-initiated rows can keep `actorUserId` non-null, and since W14 also owns a real wallet that
+receives a `PLATFORM_FEE` row on every payout whose fee is positive. It is hidden from the Accounts
+screen, and cannot sign in, be suspended, or be governed ([4.15](#415-unified-ledger-ledgerwriter)).
 
-**Dual-write until W14.** A wallet movement still inserts its `wallet_transactions` row **and** an
-`audit_log` money row in one transaction (D13, C31). The ledger remains the source of the wallet
-balance; W14 is planned to fold the two together.
+**Single ledger (W14).** A wallet movement writes exactly one `audit_log` money row — the row itself
+carries the wallet's new `balanceAfter` — through `LedgerWriter`. Before W14, a movement wrote both a
+`wallet_transactions` row and this `audit_log` row in one transaction (D13); `wallet_transactions` was
+dropped once the fold shipped ([4.15](#415-unified-ledger-ledgerwriter)).
 
 **Searching.** `AuditServiceImpl.search(filter, limit, offset)` returns rows newest first. Filters combine with AND.
 
@@ -710,37 +773,38 @@ sequenceDiagram
   participant TM as TransactionManager
   participant R as Jdbc repositories
   participant AU as AuditServiceImpl
+  participant LW as LedgerWriter
   participant AL as JdbcAuditLogRepository
   DS->>TM: inTransaction(apply)
-  TM->>R: save wallets and wallet_transactions rows
   TM->>R: save ticket (resolved), save booking (COMPLETED)
   TM->>AU: record TICKET_RESOLVED (status IN_REVIEW to resolved, reason)
   AU->>AL: save row 1
   TM->>AU: record BOOKING_COMPLETED (status CONFIRMED to COMPLETED)
   AU->>AL: save row 2
-  TM->>AU: recordWalletTransaction (guest refund, if above zero)
-  AU->>AL: save row 3 (walletAdjustment = refund)
-  TM->>AU: recordWalletTransaction (host payout net of fee, if above zero)
-  AU->>AL: save row 4 (walletAdjustment = net, reason names the fee)
+  TM->>LW: post(guest wallet, TICKET_REMEDY/AGENT_OVERRIDE, refund) [if above zero]
+  LW->>AL: save row 3 (walletAdjustment = refund, balanceAfter)
+  TM->>LW: postPayout(host wallet, net, fee) [if host share above zero]
+  LW->>AL: save row 4 (walletAdjustment = net, balanceAfter, reason names the fee)
+  LW->>AL: save row 5 (PLATFORM_FEE to the System wallet) [if fee above zero]
   TM-->>DS: commit (any failure rolls back all rows)
 ```
 
-1. `settle` opens one transaction and updates both wallets and inserts their `wallet_transactions` rows.
-2. It saves the resolved ticket and the `COMPLETED` booking.
-3. Row 1 is the ticket status change (`beforeState` is `IN_REVIEW`, `afterState` the resolved status) with the agent's reason.
-4. Row 2 is the booking status change to `COMPLETED`, with the reason "Escrow settled by ticket resolution".
-5. Row 3 is the guest wallet: `walletAdjustment` is the refund, and the row is skipped when the refund is zero.
-6. Row 4 is the host wallet: `walletAdjustment` is the payout **net** of the 3% fee, and `reason` reads "Payout net of 3% platform fee (...)"; it is skipped when the host share is zero. The fee appears only in this text (no platform wallet; C30).
-7. Rows 1 and 2 record status only; rows 3 and 4 record money only. All carry the ticket and booking ids.
+1. `settle` opens one transaction and saves the resolved ticket and the `COMPLETED` booking.
+2. Row 1 is the ticket status change (`beforeState` is `IN_REVIEW`, `afterState` the resolved status) with the agent's reason.
+3. Row 2 is the booking status change to `COMPLETED`, with the reason "Escrow settled by ticket resolution".
+4. Row 3 is the guest wallet: `LedgerWriter.post` writes `walletAdjustment` as the refund (with the wallet's new `balanceAfter`); skipped when the refund is zero.
+5. Row 4 is the host wallet: `LedgerWriter.postPayout` writes `walletAdjustment` as the payout **net** of the 3% fee, `reason` reads "Payout net of 3% platform fee (...)"; skipped when the host share is zero.
+6. Row 5 is the System wallet's `PLATFORM_FEE` row, written by the same `postPayout` call, only when the fee is positive ([4.15](#415-unified-ledger-ledgerwriter)).
+7. Rows 1 and 2 record status only; rows 3–5 record money only, each with its own `balanceAfter`. All carry the ticket and booking ids.
 8. If anything throws, the transaction rolls back and no audit row survives.
 
-**Data model: the whole schema.** Every table in [`db/schema.sql`](../db/schema.sql). To stay readable, each table other than `audit_log` lists only its keys and the columns that matter here; the full column lists are in the schema file, and [4.3](#43-persistence-tickets-and-ticket-categories) has the full `tickets` and `ticket_categories`. `audit_log` shows all its columns, with the V002 additions marked.
+**Data model: the whole schema.** Every table in [`db/schema.sql`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/db/schema.sql). To stay readable, each table other than `audit_log` lists only its keys and the columns that matter here; the full column lists are in the schema file, and [4.3](#43-persistence-tickets-and-ticket-categories) has the full `tickets` and `ticket_categories`. `audit_log` shows all its columns, with the V002 and V007 additions marked. `wallet_transactions` no longer exists — W14's V008 dropped it ([4.15](#415-unified-ledger-ledgerwriter)).
 
 ```mermaid
 erDiagram
   users {
     TEXT userId PK
-    TEXT role
+    TEXT role "GUEST/HOST/AGENT/SYSTEM, V006"
     TEXT displayName
     TEXT email
     TEXT accountStatus
@@ -771,19 +835,8 @@ erDiagram
   wallets {
     TEXT walletId PK
     TEXT userId FK
-    REAL balance
+    REAL balance "cache of newest audit_log.balanceAfter"
     TEXT currency
-  }
-  wallet_transactions {
-    TEXT transactionId PK
-    TEXT walletId FK
-    TEXT type
-    REAL amount
-    REAL feeAmount
-    REAL balanceAfter
-    TEXT relatedBookingId FK
-    TEXT relatedTicketId FK
-    TEXT initiatedBy FK
   }
   ticket_categories {
     TEXT categoryId PK
@@ -820,6 +873,7 @@ erDiagram
     TEXT subjectName "V002"
     TEXT bookingId FK "V002"
     TEXT ticketId FK "V002"
+    REAL balanceAfter "V007, W14"
   }
   schema_history {
     INTEGER version PK
@@ -831,10 +885,6 @@ erDiagram
   properties ||--o{ availability_blocks : "propertyId"
   bookings |o--o{ availability_blocks : "bookingId"
   users ||--o| wallets : "userId"
-  wallets ||--o{ wallet_transactions : "walletId"
-  bookings |o--o{ wallet_transactions : "relatedBookingId"
-  tickets |o--o{ wallet_transactions : "relatedTicketId"
-  users |o--o{ wallet_transactions : "initiatedBy"
   bookings ||--o{ tickets : "bookingId"
   users ||--o{ tickets : "raisedByUserId"
   users |o--o{ tickets : "assignedAgentId"
@@ -847,11 +897,10 @@ erDiagram
   tickets |o--o{ audit_log : "ticketId"
 ```
 
-1. `users` is the hub: it owns properties (as host), bookings (as guest), one wallet, tickets (as raiser and as assigned agent), reviews and audit rows.
-2. `wallets` and `wallet_transactions` are the money ledger; a transaction can point at the booking and ticket it belongs to, and at the user who initiated it.
-3. `audit_log` is a second, typed log of the same money movements (dual-write, D13) plus status and listing changes. Only `actorUserId` is required among its foreign keys. `entityId` is not a foreign key because it can name a wallet transaction, property, category, booking or ticket.
-4. `ticket_categories` has no foreign key: a ticket stores the category's label text (D8).
-5. `schema_history` is migration bookkeeping and has no relationships. Left out for size: each table's remaining columns, the `CHECK` constraints and the indexes.
+1. `users` is the hub: it owns properties (as host), bookings (as guest), one wallet, tickets (as raiser and as assigned agent), reviews and audit rows. Since W14 one seeded row (the System user) has role `SYSTEM` and its own wallet.
+2. `wallets` holds one cached `balance` per user; `audit_log` is the single money ledger (a row with a `walletAdjustment` and a `balanceAfter`), through which every top-up, withdrawal, escrow hold/refund, payout, ticket remedy, override and platform fee is written (W14, [4.15](#415-unified-ledger-ledgerwriter)). Only `actorUserId` is required among `audit_log`'s foreign keys; `entityId` is not a foreign key because it can name a money row, property, category, booking or ticket.
+3. `ticket_categories` has no foreign key: a ticket stores the category's label text (D8).
+4. `schema_history` is migration bookkeeping and has no relationships. Left out for size: each table's remaining columns, the `CHECK` constraints and the indexes.
 
 **Depends on:** `UserRepository` (names), `AuditLogRepository`, a `Clock`, and the caller's `TransactionManager` transaction.
 
@@ -861,9 +910,9 @@ erDiagram
 - One row is one change: a row has a status change or a wallet adjustment, never both (`AuditRecord`).
 - A ticket resolution writes the rows in the sequence diagram above; the guest and host wallet rows are skipped when their amount is zero.
 - Names are snapshotted onto each row when written, and text searches go by user id, so renames do not hide history.
-- Wallet rows and `wallet_transactions` rows are written together until W14 (D13).
+- A money row's `balanceAfter` is written in the same `LedgerWriter` call as its `walletAdjustment`; `wallets.balance` is a cache of the owner's newest `balanceAfter`, checked by `LedgerConservationTest` ([4.15](#415-unified-ledger-ledgerwriter)).
 
-**Deviations:** D13 (dual-write); D15 (the committed mock DB ships already migrated: `schema_history` records V001 and V002, the System user exists, and `db/schema.sql` creates `schema_history`); D16 (seed `availability_blocks` ids were remapped to valid hex); D17 (the spec's `AuditService.query` became `search`, `CATEGORY_DELETED` became `TICKET_CATEGORY_DELETED`, and the search was corrected to a contains-match with a 4-character minimum for id fragments).
+**Deviations:** D13 (dual-write until W14 — historical, see [4.15](#415-unified-ledger-ledgerwriter)); D15 (the committed mock DB ships already migrated — now at `schema_history` v8 after W14, see 4.15; the System user has existed since V002, and `db/schema.sql` creates `schema_history`); D16 (seed `availability_blocks` ids were remapped to valid hex); D17 (the spec's `AuditService.query` became `search`, `CATEGORY_DELETED` became `TICKET_CATEGORY_DELETED`, and the search was corrected to a contains-match with a 4-character minimum for id fragments; the Audit Log's `REF` column was later replaced by `TARGET`, W14 follow-up).
 
 ### 4.14 Account governance
 
@@ -871,9 +920,9 @@ erDiagram
 
 **API**
 
-- [`AccountGovernanceService`](../src/main/java/com/snoozeshare/service/AccountGovernanceService.java), implemented by [`AccountGovernanceServiceImpl`](../src/main/java/com/snoozeshare/service/impl/AccountGovernanceServiceImpl.java): `listAccounts()` (every account except the System user, as [`AccountSummary`](../src/main/java/com/snoozeshare/service/AccountSummary.java) read models), `suspend(userId, agentId, reason)` and `reactivate(userId, agentId, reason)`.
-- `AccountStatusChangedEvent` ([`infra/events/events`](../src/main/java/com/snoozeshare/infra/events/events/AccountStatusChangedEvent.java)) is published after commit; the Accounts screen refreshes on it.
-- Supporting changes: `User.suspensionReason`, `UserRepository.findAll`, `BookingRepository.findByListing`, migration [`V003__suspension_reason.sql`](../src/main/resources/db/migration/V003__suspension_reason.sql), and a guard in `BookingServiceImpl.submitRequest` that refuses a guest whose account is not ACTIVE. The old `UserService.suspend` stub was removed (D19).
+- [`AccountGovernanceService`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/AccountGovernanceService.java), implemented by [`AccountGovernanceServiceImpl`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/impl/AccountGovernanceServiceImpl.java): `listAccounts()` (every account except the System user, as [`AccountSummary`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/AccountSummary.java) read models), `suspend(userId, agentId, reason)` and `reactivate(userId, agentId, reason)`.
+- `AccountStatusChangedEvent` ([`infra/events/events`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/infra/events/events/AccountStatusChangedEvent.java)) is published after commit; the Accounts screen refreshes on it.
+- Supporting changes: `User.suspensionReason`, `UserRepository.findAll`, `BookingRepository.findByListing`, migration [`V003__suspension_reason.sql`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/resources/db/migration/V003__suspension_reason.sql), and a guard in `BookingServiceImpl.submitRequest` that refuses a guest whose account is not ACTIVE. The old `UserService.suspend` stub was removed (D19).
 
 **Depends on:** the user, booking, property, wallet, transaction and availability repositories, `TransactionManager`, `AuditService`, the event bus and `BookingStateMachine`.
 
@@ -916,10 +965,60 @@ sequenceDiagram
 
 - Affected bookings are PENDING, or CONFIRMED with a check-in date after today (the injected clock's zone). A stay that has started, including one checking in today, or ended is untouched (C36).
 - Reactivation only sets the status to ACTIVE, clears the reason and writes `ACCOUNT_REACTIVATED`. Nothing is restored (C34).
-- Wallet writes are inline in the transaction; `WalletLedgerWriter` is not used because it opens its own transaction (as in `BookingServiceImpl`).
+- Wallet writes go through `LedgerWriter.post`, on the same transaction as the suspension (W14); `LedgerWriter` never opens its own transaction, so this and every other caller wrap it in theirs ([4.15](#415-unified-ledger-ledgerwriter)).
 - Money is `BigDecimal`; tests compare it with `compareTo` because SQLite returns `REAL`.
 
 **Deviations:** D19 (`UserService.suspend` removed); D20 (the System user is hidden from the list; `BookingServiceImpl` gained a `UserRepository` parameter; the cascade refunds `totalAmount` without checking for an `ESCROW_HOLD` row).
+
+### 4.15 Unified ledger (`LedgerWriter`)
+
+**Purpose:** one place that changes a wallet balance, so every money-moving service writes the same
+shape of row and a balance can never drift from the rows that explain it.
+
+**API**
+
+- [`LedgerWriter`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/service/impl/LedgerWriter.java): `post(walletId, type, amount, actorId, bookingId, ticketId, reason, at)` moves a signed `amount` in one wallet and writes its `audit_log` money row; `postPayout(hostWalletId, net, fee, actorId, bookingId, ticketId, at)` writes the host's `BOOKING_PAYOUT` row (`net`) and, only when `fee` is positive, a second `PLATFORM_FEE` row crediting the System wallet. Neither method opens a transaction — the caller wraps the call (and the state change it belongs with) in its own `TransactionManager.inTransaction` block.
+- [`LedgerRepository`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/repository/LedgerRepository.java), implemented by [`JdbcLedgerRepository`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/repository/jdbc/JdbcLedgerRepository.java): `entriesForWallet(walletId)` and `entriesForBooking(bookingId)`, both newest-row-order reads of the money rows in `audit_log` (joined to `wallets` on `subjectUserId`). `EscrowPolicy` and the wallet statement/escrow-hint screens read through this instead of a dedicated ledger table.
+- [`WalletTransactionType`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/main/java/com/snoozeshare/domain/enums/WalletTransactionType.java) gained `PLATFORM_FEE` alongside `TOP_UP`, `WITHDRAWAL`, `ESCROW_HOLD`, `ESCROW_REFUND`, `BOOKING_PAYOUT`, `TICKET_REMEDY` and `AGENT_OVERRIDE`.
+- Callers: `WalletServiceImpl`, `TransactionServiceImpl`, `BookingServiceImpl`, `DisputeSettlementServiceImpl` ([4.5](#45-disputesettlementservice)) and `AccountGovernanceServiceImpl` ([4.14](#414-account-governance)). `WalletService` and `TransactionService` stay separate interfaces (C3, narrowed rather than removed by C39) — both now write through `LedgerWriter` instead of each hand-rolling "read wallet, add, save, insert ledger row".
+
+**Migrations:** three, run in order by `MigrationRunner`.
+
+| Migration | Does |
+|---|---|
+| `V006__system_role.sql` | Rebuilds `users` (SQLite cannot `ALTER` a `CHECK` constraint) so `role` allows `SYSTEM`; sets the seeded System user's row to `role = 'SYSTEM'`, `accountStatus = 'ACTIVE'`. Run with foreign keys off, restored after (a SQLite requirement for rebuilding a referenced table). |
+| `V007__unified_ledger.sql` | Adds `audit_log.balanceAfter`; backfills it on existing money rows from `wallet_transactions`; inserts any legacy `wallet_transactions` row that was never audited; creates the System wallet; backfills one legacy `PLATFORM_FEE` row per historical payout that had a fee, with a running System balance; adds `idx_audit_money` on `(subjectUserId, walletAdjustment)`. |
+| `V008__drop_wallet_transactions.sql` | Drops `wallet_transactions` now that V007 copied everything into `audit_log`. |
+
+**Sequence diagram: a host payout with a fee.**
+
+```mermaid
+sequenceDiagram
+  participant Svc as a money-moving service
+  participant TM as TransactionManager
+  participant LW as LedgerWriter
+  participant WR as WalletRepository
+  participant AU as AuditServiceImpl
+  Svc->>TM: inTransaction(...)
+  TM->>LW: postPayout(hostWalletId, net, fee, actorId, bookingId, ticketId, at)
+  LW->>WR: find, then save host wallet at balance + net
+  LW->>AU: record BOOKING_PAYOUT (walletAdjustment=net, balanceAfter)
+  alt fee > 0
+    LW->>WR: find, then save System wallet at balance + fee
+    LW->>AU: record PLATFORM_FEE (walletAdjustment=fee, balanceAfter)
+  end
+  LW-->>TM: the host's WalletTransaction
+  TM-->>Svc: commit (or rollback and rethrow)
+```
+
+**Invariants**
+
+- `LedgerWriter` never opens a transaction; every caller wraps it in the `TransactionManager` transaction that also carries the booking/ticket/account state change, so a balance change, its money row and the triggering state change commit or roll back together.
+- A wallet's `balance` always equals its newest `audit_log` row's `balanceAfter` for that wallet, and each row's `balanceAfter` equals the previous balance plus that row's `walletAdjustment` — the conservation invariant `LedgerConservationTest` checks against the mock DB and against a real settlement.
+- `postPayout` writes the `PLATFORM_FEE` row only when `fee` is positive, so a zero-fee payout (for example a $0.01 listing) never posts a zero-amount row — `LedgerWriter.post` rejects a zero amount outright.
+- Listing rates must be positive with at most 2 decimal places (`ListingServiceImpl`, `HostListingFormController`), so a booking's settlement always nets to a positive host payout or an explicit zero handled by the caller (C42; a $0 listing is forbidden, not supported end to end).
+
+**Deviations:** the spec's single ledger-fold migration was split into V006/V007/V008 so code could stop writing `wallet_transactions` (V006, V007) before it was dropped (V008), which the plan anticipated. C42: Task 8's review found a $0 or sub-cent listing rate crashed settlement once `LedgerWriter` rejected its zero-amount payout; the operator chose to forbid degenerate rates rather than build free-stay support end to end.
 
 ---
 
@@ -927,9 +1026,9 @@ sequenceDiagram
 
 ### Functional Requirements
 
-Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
+Numbering follows [`ProductBacklog.md`](/product-backlog/).
 
-- **F9.1.1** The system shows an active dispute ticket queue sorted oldest first, with guest and host evidence and their chat threads. Filters: All / Unassigned / Mine, and by status. Chat threads are session-only for now (see Known Limitations).
+- **F9.1.1** The system shows an active dispute ticket queue sorted oldest first, with guest and host evidence and their chat threads. Filters: All / Unassigned / Mine, and by status. Chat threads persist (4.4).
 - **F9.1.2** Agents can accept (assign to themselves) ticket requests, unassign, and record internal notes on a ticket.
 - **F9.2.1** *Dropped.* Force Cancel / Force Complete was removed as redundant with ticket accept and reject (C22).
 - **F9.2.2** Agents resolve a dispute by settling the booking's full held escrow: accept the requested remedy, reject the ticket (host paid in full net of the 3% fee), or apply a manual adjustment (Full refund, Full payout, or a custom split). Guest refunds carry no fee. Resolution completes the booking (`CONFIRMED → COMPLETED`).
@@ -937,10 +1036,10 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 - **F10.1.1** Agents suspend a Guest or Host account with a required reason; the reason is stored on the user and in the audit log. **Reactivate** is built beyond the backlog wording (C34). Agent accounts are listed but cannot be suspended.
 - **F10.1.2** Suspending an account force-cancels its PENDING and not-yet-started CONFIRMED bookings with a 100% refund and deactivates a Host's ACTIVE listings, atomically (C36). A suspended guest cannot submit a booking request.
 - **F11.1.1** The system provides an audit logging service and table and logs every booking state transition. Built as one typed row per change (4.13). Booking cancellation by a host is not written yet (see Known Limitations).
-- **F11.1.2** Audit logging covers wallet transactions (hold, refund, payout, remedy, override, top-up, withdrawal) and ticket resolutions.
+- **F11.1.2** Audit logging covers wallet transactions (hold, refund, payout, remedy, override, top-up, withdrawal, and the platform fee) and ticket resolutions.
 - **F11.1.3** Agents filter the audit log with one search (user name, or user / booking / ticket id), a set of action types, and a From and To date (4.8, 4.13).
-- **F12.1.1** A `MessageService` gives each dispute ticket a guest-to-agent and a host-to-agent thread. *(planned)*
-- **F12.1.2** Messages persist, each party reads only its own thread, and the agent reads both. *(planned)*
+- **F12.1.1** A `MessageService` gives each dispute ticket a guest-to-agent and a host-to-agent thread.
+- **F12.1.2** Messages persist, each party reads only its own thread, and the agent reads both.
 
 ### Non-Functional Requirements
 
@@ -949,18 +1048,17 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 - **NFR3** Every mutating agent action makes an audit record; each change is one row, so a ticket resolution writes several (4.13).
 - **NFR4** Layering: `ui.*` imports no `repository.*` and no `java.sql`; only `repository.jdbc.*` imports `java.sql`; `domain` imports no JavaFX or `java.sql`.
 - **NFR5** Ticket and booking status changes go through `TicketStateMachine` and `BookingStateMachine`; a resolved ticket cannot be settled again.
-- **NFR6** Ledger integrity: for each wallet, `balance` equals the sum of its transactions, and each row's `balanceAfter` equals the running sum in time order.
+- **NFR6** Ledger integrity: for each wallet, `balance` equals its newest `audit_log` money row's `balanceAfter`, and each row's `balanceAfter` equals the previous balance plus that row's `walletAdjustment` ([4.15](#415-unified-ledger-ledgerwriter)).
 - **NFR7** Role checks run in the service layer, not only in the UI.
 - **NFR8** Domain events are published only after the database transaction commits.
 
 ### Known Limitations
 
-- **Chat is not persisted** — dispute chat uses `InMemoryMessageService` until the Messaging workstream supplies a persistent `MessageService` (C21).
-- **Host ticket-filing screens** — guests can file tickets through the delivered guest flow; a dedicated host response screen remains outside the current scope.
+- **Guest Messages UI is not built** — `MessageService` and `BookingConversationService` support it, but only the Agent (4.4) and Host (4.4b) screens exist (C37, C38).
+- **Agents cannot read the private booking chat** — by decision, not as a gap (C38); it is not available as dispute evidence.
 - **Category renames do not update existing tickets** — `tickets.category` stores label text (D8).
 - **Suspension refund is not checked against an escrow hold** — the cascade credits the booking's `totalAmount` without reading an `ESCROW_HOLD` row, as `BookingServiceImpl` does (D20).
 - **A stay checking in today counts as started** — a CONFIRMED booking with today's check-in is not cancelled by a suspension (C36). A suspended guest's in-progress stay is paid out by the normal settlement (`BookingService.completeEligibleBookings()`, run at startup, skipping bookings with an open ticket) or by an agent through a dispute ticket.
-- **Platform fees are informational** — `feeAmount` on `BOOKING_PAYOUT` rows records the fee, but there is no platform wallet and no double-entry transfer. Revisit only if the platform needs its own reportable balance (`PROJECT_STATE.md` § Known Gaps).
 - **Ticket categories are a lookup table, not a rules engine** — revisit only if workflow branching is needed (`PROJECT_STATE.md` § Known Gaps).
 - **Authentication is mocked** — login takes an email and checks no credential; role separation is enforced in service code (`PROJECT_STATE.md` § Known Gaps).
 - **Single-process only** — no multi-instance or distributed deployment support (`PROJECT_STATE.md` § Known Gaps).
@@ -970,10 +1068,8 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 - **Escrow amount is `booking.totalAmount()`** — settlement does not read it from the `ESCROW_HOLD` row (D12 (e)).
 - **A load error can escape the detail screen's handler** — `DisputeDetailController.load()` calls `render()` outside the error handler (D12 (f)).
 - **Audit rows within one second can misorder** — timestamps are `Instant.toString()` text with a variable fractional part, so rows in the same second can sort out of order under `ORDER BY timestamp DESC, rowid DESC` (`PROJECT_STATE.md` § Known Gaps).
-- **The platform fee is only reason text** — the host payout audit row's `reason` names the 3% fee; there is no platform wallet and no fee row until W14 (C30, C31).
 - **Some audit rows are not emitted yet** — no service writes `BOOKING_CANCELLED_BY_HOST` or `TICKET_OPENED`, and W7 host calendar blocks are not audited.
-- **Audit Log calendar differs from the board** — the date-picker popup keeps two month/year spinners and mixed-case weekday names, and the categories header sits about 5px left of its rows while the scroll bar shows (D18). The `REF` column truncates when a row has both a booking and a ticket.
-- **Wallet movements are written twice** — the ledger and the audit log both record them until W14 (D13).
+- **Audit Log calendar differs from the board** — the date-picker popup keeps two month/year spinners and mixed-case weekday names, and the categories header sits about 5px left of its rows while the scroll bar shows (D18).
 - **The Audit Log screen has not been run in the real app** — plan Task 10 Step 3 was not performed; FX smoke and snapshot tests cover the flows, and the manual check below remains (D14).
 - **Auto-complete must skip open tickets** — W10 does not implement the scheduler; whatever completes bookings after the dispute window must leave a booking alone while its ticket is `OPEN` or `IN_REVIEW` (C17).
 
@@ -985,33 +1081,38 @@ Numbering follows [`docs/ProductBacklog.md`](ProductBacklog.md).
 - **AGENT_OVERRIDE:** wallet transaction type written on the guest's wallet for a manual adjustment that refunds the guest.
 - **Action type:** the kind of change an audit row records, one `AuditAction` constant (for example `TICKET_RESOLVED`, `ESCROW_HOLD`). The Audit Log filters by a set of them.
 - **Audit row / audit log:** the `audit_log` table. One row is one change, either a status change (`beforeState` / `afterState`) or a wallet adjustment, never both.
-- **BOOKING_PAYOUT:** wallet transaction type for money released to the host. On dispute settlement its `amount` is already net of the 3% fee and `feeAmount` records the fee.
+- **Booking chat:** the private, agent-free `BookingConversationService` thread between a booking's guest and host, open from confirmation to check-out + 7 days.
+- **BOOKING_PAYOUT:** wallet transaction type for money released to the host. Its `amount` is already net of the 3% fee; when the fee is positive, `LedgerWriter.postPayout` also writes a `PLATFORM_FEE` row crediting the System wallet (W14).
 - **Cascade (suspension):** the bookings and listings changed in the same transaction as a suspension: force-cancelled bookings with refunds and a Host's deactivated listings.
+- **Conversation row:** one entry in a Messages inbox (`ConversationSummary` or `BookingConversationSummary`): counterpart, last message, unread count, and whether it is still writable.
 - **Dispute window:** the 7 days after checkout during which escrow stays held and a ticket can be opened (C17).
+- **Dual-write (historical):** until W14, a wallet movement wrote both a `wallet_transactions` row and an `audit_log` money row in one transaction (D13). W14 folded them into the one `audit_log` row and dropped `wallet_transactions` ([4.15](#415-unified-ledger-ledgerwriter)).
 - **Escrow:** the booking's `totalAmount`, held out of the guest's wallet from booking until it is refunded or paid out. It is "held" while a booking has an `ESCROW_HOLD` row and no releasing row.
 - **ESCROW_HOLD:** wallet transaction type that records the escrow being taken from the guest.
-- **Dual-write:** writing a wallet movement to both `wallet_transactions` and `audit_log` in one transaction, until W14 unifies them (D13).
 - **FORCE_CANCELLED:** booking status set by an agent-role transition; today only the suspension cascade produces it.
 - **Guest refund (`R`):** the part of the escrow returned to the guest; never charged a fee.
 - **Host share:** `escrow − R`, the gross amount owed to the host before the 3% fee.
 - **Id fragment:** four or more hex characters (and dashes) typed in the audit search, matched anywhere in an entity, booking, ticket, actor or subject id.
 - **IN_REVIEW:** ticket status after an agent has taken it (renamed from `UNDER_REVIEW`, C27). An agent can return it to `OPEN` by unassigning.
-- **Ledger:** the append-only `wallet_transactions` table; each wallet's `balance` is a cached sum of its rows.
+- **Ledger:** the money rows of `audit_log` — a row with a `walletAdjustment` and a `balanceAfter` — written through `LedgerWriter` (W14, [4.15](#415-unified-ledger-ledgerwriter)). Each wallet's `balance` is a cache of its owner's newest `balanceAfter`; before W14 the ledger was a separate `wallet_transactions` table (see Dual-write).
+- **LedgerWriter:** the single class that changes a wallet balance; every money-moving service calls `post` or `postPayout` on it, inside its own transaction ([4.15](#415-unified-ledger-ledgerwriter)).
 - **Manual adjustment:** an agent-chosen split of the held escrow (Full refund, Full payout or Custom), independent of the remedy the ticket asked for.
 - **Mock DB:** the committed reference database `db/snoozeshare-mock.db`, built from `db/schema.sql` and `db/seed-mock-data.sql`.
-- **REF:** the Audit Log column naming the booking and ticket a row concerns, by the last four characters of each id.
+- **PLATFORM_FEE:** wallet transaction type crediting the System wallet with the platform's 3% cut of a host payout; written by `LedgerWriter.postPayout` only when the fee is positive (W14).
 - **Reactivation:** returning a SUSPENDED Guest or Host to ACTIVE and clearing the reason. It restores no bookings or listings.
 - **Remedy:** what the ticket raiser asks for: `FULL_REFUND`, `PARTIAL_REFUND`, `HOST_PAYOUT` or `OTHER`.
 - **Scrim:** the light-grey 50% overlay laid over the agent window while a modal dialog is open (C26).
 - **Settlement:** dividing a booking's whole held escrow between guest and host in one atomic transaction when an agent resolves a ticket.
 - **Subject user:** the user an audited change happened to (for example the guest whose wallet moved), as opposed to the actor who caused it.
 - **Suspension reason:** the required text an agent enters when suspending or reactivating; stored in `users.suspensionReason` while suspended and in the audit row.
-- **System user:** the seeded, suspended, non-loginable account (`AuditService.SYSTEM_ACTOR_ID`) that owns system-initiated audit rows.
+- **System user:** the seeded, non-loginable account (`AuditService.SYSTEM_ACTOR_ID`), role `SYSTEM` and status `ACTIVE` since W14, that owns system-initiated audit rows and a real wallet receiving the platform's `PLATFORM_FEE` cut. Hidden from the Accounts screen; cannot sign in, be suspended, or be governed.
+- **TARGET:** the Audit Log column naming the row's one direct entity — a user's name, or `Property/Booking/Ticket/Category #last4` — dropping any related record (a ticket resolution names only the ticket, not its booking). Replaced the last-four-character `REF` column (W14 follow-up).
 - **Ticket:** a dispute filed against a booking by its guest or host. It moves `OPEN → IN_REVIEW → RESOLVED_APPROVED` or `RESOLVED_REJECTED`.
 - **Ticket category:** an admin-managed label (`ticket_categories`) offered to guests when they file a ticket. A ticket stores the label text.
+- **Ticket chat window:** a ticket's `GUEST`/`HOST` `MessageService` threads are writable while it is `OPEN` or `IN_REVIEW`, and read-only once resolved.
 - **TICKET_REMEDY:** wallet transaction type written on the guest's wallet when an agent accepts a ticket and refunds the guest.
-- **W14 (unified ledger):** the planned workstream that folds `wallet_transactions` into `audit_log` and gives the platform a real wallet (C31). Not built.
-- **Wallet:** a user's balance holder; `WalletTransaction` rows record every change.
+- **W14 (unified ledger):** folded `wallet_transactions` into `audit_log` (a money row now carries `balanceAfter`) and gave the System user a real role and wallet that receives a `PLATFORM_FEE` row per payout. Built and operator-confirmed 2026-09-29 (C31, C39–C45; [4.15](#415-unified-ledger-ledgerwriter)).
+- **Wallet:** a user's balance holder (`wallets`, one per user, `balance` a cache); each change is one `audit_log` money row, written by `LedgerWriter` (W14).
 
 ---
 
@@ -1033,10 +1134,12 @@ measured for this guide.
 |---|---|
 | Foundation and architecture: `W1FoundationIntegrationTest`, `DatabaseBootstrapTest`, `LayerDependencyTest`, `UiDependencyTest` | SQLite bootstrap/migrations, repository and service wiring, wallet provisioning, role routing and the enforced package boundaries. |
 | Unit: `SettlementCalculatorTest`, `EscrowPolicyTest`, `StateMachineTest`, `AgentCompletionTest`, `ResolutionPreviewTest`, `HeightGripTest` | Split maths and fee rounding, the escrow-held rule, every legal and illegal transition per role, live preview text, drag-height bounds. |
-| Service, fakes: `TicketServiceTest`, `TicketServiceCategoryTest`, `InMemoryMessageServiceTest` | Queue order and filters, assign / unassign / notes rules, category rules including delete-when-used, chat posting rules. |
-| Mock-DB integration: `DisputeSettlementServiceTest`, `TicketServiceIntegrationTest`, `DisputeQueryServiceTest`, `JdbcTicketRepositoryTest`, `JdbcTicketCategoryRepositoryTest` | Exact ledger rows, wallet balances, ticket and booking end states, audit content, precondition rejections that leave the database unchanged, repository round trips, read models. Built on [`MockDbFixture`](../src/test/java/com/snoozeshare/testsupport/MockDbFixture.java) with `MockIds` and `SettlementFixtures`. |
-| Audit trail, unit and service: `AuditActionTest`, `AuditRecordTest`, `AuditServiceTest`, `WalletLedgerAuditTest`, `AuditLogFormattingTest` | The enum and wallet-type mapping, the one-row-one-change rule and builder, status-only rows with name snapshots, search by name (surviving a rename), id fragment, action set, inclusive dates and ordering, top-up and withdrawal money rows and rollback when the audit write fails, and the screen's status, amount and REF text. |
-| Audit trail, database: `JdbcAuditLogRepositoryTest`, `AuditTrailMigrationTest`, `MockAuditSeedTest`, `CommittedMockDbTest` | Repository round trips and search clauses; V002 adds the columns and the System user and is idempotent; the seeded audit rows (one money row per ledger row, the four rows of ticket `#0004`, governance rows in the shape W11 will write). `CommittedMockDbTest` opens the committed `db/snoozeshare-mock.db` **directly and read-only** (not a copy, and without `MigrationRunner`) and checks it already has the audit columns, the System user and migration version 2, so a stale committed file cannot hide behind a migrated copy (D15). |
+| Service, fakes: `TicketServiceTest`, `TicketServiceCategoryTest` | Queue order and filters, assign / unassign / notes rules, category rules including delete-when-used. |
+| Messaging, mock-DB: `MessageServiceTest`, `BookingConversationServiceTest`, `MessagingMigrationTest` | Ticket and booking chat party checks, resolved/closed-window rejection, ordering, unread counts and `markRead`, `MessagePostedEvent`/`BookingMessagePostedEvent` published once per post; the `messages`/`message_reads`/`booking_messages`/`booking_message_reads` migrations against a fresh and an adopted database. |
+| Mock-DB integration: `DisputeSettlementServiceTest`, `TicketServiceIntegrationTest`, `DisputeQueryServiceTest`, `JdbcTicketRepositoryTest`, `JdbcTicketCategoryRepositoryTest` | Exact ledger rows, wallet balances, ticket and booking end states, audit content, precondition rejections that leave the database unchanged, repository round trips, read models. Built on [`MockDbFixture`](https://github.com/CS3227-2610-MP2-SnoozeShare/CS3227-2610-MP2/blob/main/src/test/java/com/snoozeshare/testsupport/MockDbFixture.java) with `MockIds` and `SettlementFixtures`. |
+| Audit trail, unit and service: `AuditActionTest`, `AuditRecordTest`, `AuditServiceTest`, `WalletLedgerAuditTest`, `AuditLogFormattingTest` | The enum and wallet-type mapping, the one-row-one-change rule and builder, status-only rows with name snapshots, search by name (surviving a rename), id fragment, action set, inclusive dates and ordering, top-up and withdrawal money rows and rollback when the audit write fails, and the screen's status, amount and TARGET text. |
+| Audit trail, database: `JdbcAuditLogRepositoryTest`, `AuditTrailMigrationTest`, `MockAuditSeedTest`, `CommittedMockDbTest` | Repository round trips and search clauses; V002 adds the columns and the System user and is idempotent; the seeded audit rows (one money row per ledger row, the four rows of ticket `#0004`, governance rows in the shape W11 will write). `CommittedMockDbTest` opens the committed `db/snoozeshare-mock.db` **directly and read-only** (not a copy, and without `MigrationRunner`) and checks it already has the audit columns, the System user and a migration version of at least 2 (now v8 after W14 — see the next row), so a stale committed file cannot hide behind a migrated copy (D15). |
+| Unified ledger (W14): `LedgerWriterTest`, `JdbcLedgerRepositoryTest`, `LedgerConservationTest`, `MigrationForeignKeyTest`, `SystemRoleMigrationTest`, `SystemUserGuardTest`, `UnifiedLedgerMigrationTest`, `DropWalletTransactionsMigrationTest` | `LedgerWriter.post`/`postPayout` money rows, balances and the System `PLATFORM_FEE` credit; `LedgerRepository` queries; the conservation invariant (a wallet's `balance` equals its newest row, and a refund + host net + fee nets to the original escrow) against the mock DB and a real settlement; V006 rebuilding `users` with foreign keys off and restoring them; the System role and wallet; the System user guard (cannot authenticate, be suspended, or appear governable); V007's `balanceAfter` backfill and legacy `PLATFORM_FEE` rows; V008 dropping `wallet_transactions` ([4.15](#415-unified-ledger-ledgerwriter)). |
 | Audit screen layout (FX toolkit): `MultiSelectMenuTest`, `AdminTableLayoutTest` | The multi-select control's behaviour; fixed table headers, shared control heights, hover without a hand cursor and the date-picker styling on the agent tables. They skip when the toolkit cannot start. |
 | Account governance: `AccountGovernanceServiceTest`, `AccountGovernanceCascadeTest`, `AccountGovernanceAtomicityTest`, `SuspensionReasonMigrationTest`, `BookingServiceTest` | Validation, audit rows and events; the cascade scope (PENDING and not-yet-started CONFIRMED), refunds and listing deactivation; rollback on failure; V003; the suspended-guest booking guard |
 | Accounts UI: `AccountTextTest`, `AccountSearchTest`, `SuspensionDialogFlowTest`, `AccountGovernanceUiTest` | Labels and dates, live-search matching, the modal's required reason, the screen's rows, actions and refresh |
@@ -1046,6 +1149,7 @@ measured for this guide.
 | Architecture: `LayerDependencyTest`, `UiDependencyTest` | `domain` has no JavaFX or `java.sql` imports; `ui` has no `com.snoozeshare.repository` or `java.sql` imports. |
 | Layout: `AdminFxmlLayoutTest`, `AdminShellInitialsTest`, `ShellLayoutTest`, `AuthLayoutTest` | FXML and CSS content checks; these need no display. |
 | FX smoke and flow: `AdminUiSmokeTest`, `AgentModalTest`, `ResolutionDialogFlowTest`, `CategoryDialogFlowTest` | Real JavaFX toolkit: screens render, dialogs validate and return results, the scrim is added and removed. They skip (`assumeTrue`) when the toolkit cannot start, for example on a headless machine. |
+| Host Messages (FX toolkit): `ChatBubblesTest`, `HostMessagesControllerTest`, `HostMessagesLayoutTest` | Shared bubble rendering for both message types; the merged inbox orders rows, loads and sends on the correct service by row kind, disables the composer on a read-only thread, and refreshes on `MessagePostedEvent`/`BookingMessagePostedEvent`; sidebar width and ellipsis-overrun layout. Skip when the toolkit cannot start. |
 | Snapshots: `AdminUiSnapshotTest`, `AdminDetailSnapshotTest`, `AdminModalSnapshotTest` | Render the agent screens at 1280x800 and write PNGs to `build/ui-snapshots/`. They never assert on pixels and skip when the toolkit cannot start. Open the images to review layout by eye. |
 
 **Mock DB conventions to follow when writing tests or editing the seed**
@@ -1069,6 +1173,16 @@ measured for this guide.
   6. Open the Accounts tab and type part of a name, email, role or status: the list filters live, and a short result list shows in full with no scroll bar. Suspend a Guest with upcoming bookings (a reason is required): the banner shows the display name, email and role, the row turns SUSPENDED with its reason, and Audit Log shows `ACCOUNT_SUSPENDED` with the cancellation and refund rows. Reactivate the account: the status returns to ACTIVE and no booking or listing is restored. Agent rows show a dash.
   7. Open the Categories tab: add, rename and deactivate a category, try a duplicate label, and delete one that no ticket uses.
 - **Expected:** the agent screens use the canvas tab strip and "Fall Light" palette; every modal dims the window behind it with a light-grey scrim; the resolved ticket shows escrow as "Settled" and its actions are disabled; a duplicate category label shows an error; a category used by a ticket cannot be deleted; the Accounts modals show a red (Suspend) or green (Reactivate) banner and refuse an empty reason.
+
+**Host Messages check.**
+
+- **Prerequisites:** as above.
+- **Steps:**
+  1. Log in as `diego.fernandez@snoozeshare.test` and open the Messages tab.
+  2. Confirm the inbox lists both a ticket conversation (booking #0003) and booking conversations, newest activity first, with unread rows marked.
+  3. Open the ticket row, send a reply, and confirm it appears in the thread and on the Agent's dispute page for the same ticket without a reload.
+  4. Open a booking row inside its chat window (bookings 4 or 14) and send a reply; open one past its window (booking 11) and confirm the composer is disabled.
+- **Expected:** rows merge from both services into one list; sending updates unread state and persists across a restart; a closed booking chat and a resolved ticket both show history with no way to send; there is no control to create a new ticket.
 
 **Audit Log real-app check (D14).** Not yet performed; the FX smoke and snapshot tests cover the flows but nobody has driven the real app.
 

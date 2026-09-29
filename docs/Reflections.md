@@ -1,3 +1,9 @@
+---
+layout: default
+title: Reflections
+permalink: /reflections/
+---
+
 # Reflections
 
 _To be completed at the end of the project, reflecting on the agentic

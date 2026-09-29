@@ -19,14 +19,16 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.util.StringConverter;
 
 public final class HostListingFormController {
 
     @FXML private TextField titleField;
-    @FXML private TextField descriptionField;
+    @FXML private TextArea descriptionField;
     @FXML private TextField streetAddressField;
     @FXML private TextField cityField;
     @FXML private TextField regionField;
@@ -46,12 +48,17 @@ public final class HostListingFormController {
     @FXML private CheckBox washerBox;
     @FXML private CheckBox workDeskBox;
     @FXML private Label errorLabel;
+    @FXML private Hyperlink listingCrumb;
+    @FXML private Label editSeparator;
+    @FXML private Label formBreadcrumb;
     @FXML private Label formTitle;
     @FXML private Button saveButton;
 
     private AppContext context;
     private Property property;
     private Runnable onBack = () -> { };
+    private Runnable onListings = () -> { };
+    private Runnable onListingDetail = () -> { };
     private Runnable onSaved = () -> { };
 
     @FXML
@@ -71,9 +78,20 @@ public final class HostListingFormController {
     public void setProperty(Property listing) {
         property = listing;
         if (listing == null) {
+            listingCrumb.setVisible(false);
+            listingCrumb.setManaged(false);
+            editSeparator.setVisible(false);
+            editSeparator.setManaged(false);
+            formBreadcrumb.setText("Create");
             formTitle.setText("Create listing");
             saveButton.setText("Create listing");
         } else {
+            listingCrumb.setText(listing.title());
+            listingCrumb.setVisible(true);
+            listingCrumb.setManaged(true);
+            editSeparator.setVisible(true);
+            editSeparator.setManaged(true);
+            formBreadcrumb.setText("Edit");
             formTitle.setText("Edit listing");
             saveButton.setText("Save listing");
             populate(listing);
@@ -84,6 +102,14 @@ public final class HostListingFormController {
         onBack = callback == null ? () -> { } : callback;
     }
 
+    public void setOnListings(Runnable callback) {
+        onListings = callback == null ? () -> { } : callback;
+    }
+
+    public void setOnListingDetail(Runnable callback) {
+        onListingDetail = callback == null ? () -> { } : callback;
+    }
+
     public void setOnSaved(Runnable callback) {
         onSaved = callback == null ? () -> { } : callback;
     }
@@ -91,6 +117,16 @@ public final class HostListingFormController {
     @FXML
     private void handleBack() {
         onBack.run();
+    }
+
+    @FXML
+    private void handleListings() {
+        onListings.run();
+    }
+
+    @FXML
+    private void handleListingDetail() {
+        onListingDetail.run();
     }
 
     @FXML
@@ -122,16 +158,24 @@ public final class HostListingFormController {
     }
 
     private Property readForm() {
-        LocalTime checkIn = parseTime(checkInField.getText());
-        LocalTime checkOut = parseTime(checkOutField.getText());
+        String title = requireText(titleField.getText(), "Title");
+        String description = requireText(descriptionField.getText(), "Description");
+        PropertyType propertyType = requireSelected(propertyTypeCombo.getValue(), "Property Type");
+        ListingStatus status = requireSelected(statusCombo.getValue(), "Status");
+        int maxGuests = parseInteger(maxGuestsField.getText(), "Max Guests", 1);
+        int bedrooms = parseInteger(bedroomsField.getText(), "Bedrooms", 0);
+        int bathrooms = parseInteger(bathroomsField.getText(), "Bathrooms", 0);
+        BigDecimal rate = parseRate(rateField.getText());
+        LocalTime checkIn = parseTime(checkInField.getText(), "Check-in Time");
+        LocalTime checkOut = parseTime(checkOutField.getText(), "Check-out Time");
         validateTimeRange(checkIn, checkOut);
+        String streetAddress = requireText(streetAddressField.getText(), "Street Address");
+        String city = requireText(cityField.getText(), "City");
+        String region = requireText(regionField.getText(), "Region");
+        int postalCode = parseInteger(postalCodeField.getText(), "Postal Code", 1);
         return new Property(property == null ? null : property.propertyId(), null,
-                statusCombo.getValue(), titleField.getText(),
-                descriptionField.getText(), propertyTypeCombo.getValue(), streetAddressField.getText(),
-                cityField.getText(), regionField.getText(), postalCodeField.getText(),
-                parseInteger(maxGuestsField.getText(), "Max guests", 1),
-                parseInteger(bedroomsField.getText(), "Bedrooms", 0),
-                Double.parseDouble(bathroomsField.getText()), parseRate(rateField.getText()),
+                status, title, description, propertyType, streetAddress,
+                city, region, postalCode, maxGuests, bedrooms, bathrooms, rate,
                 checkIn, checkOut,
                 selectedAmenities(), property == null ? Instant.now() : property.createdAt());
     }
@@ -142,7 +186,7 @@ public final class HostListingFormController {
         streetAddressField.setText(listing.streetAddress());
         cityField.setText(listing.city());
         regionField.setText(listing.region());
-        postalCodeField.setText(listing.postalCode());
+        postalCodeField.setText(Integer.toString(listing.postalCode()));
         propertyTypeCombo.getSelectionModel().select(listing.propertyType());
         statusCombo.getSelectionModel().select(listing.status());
         maxGuestsField.setText(String.valueOf(listing.maxGuests()));
@@ -182,11 +226,14 @@ public final class HostListingFormController {
         return Set.copyOf(amenities);
     }
 
-    private static LocalTime parseTime(String value) {
+    private static LocalTime parseTime(String value, String fieldName) {
         try {
+            if (value == null || value.isBlank()) {
+                throw new DateTimeParseException("blank", value, 0);
+            }
             return LocalTime.parse(value, DateTimeFormatter.ofPattern("HH:mm"));
         } catch (DateTimeParseException exception) {
-            throw new IllegalArgumentException("Time must use HH:mm format");
+            throw new IllegalArgumentException(fieldName + " must use HH:mm format");
         }
     }
 
@@ -203,18 +250,35 @@ public final class HostListingFormController {
     }
 
     private static BigDecimal parseRate(String value) {
-        try {
-            BigDecimal parsed = new BigDecimal(value);
-            if (parsed.signum() <= 0) {
-                throw new IllegalArgumentException("Nightly rate must be greater than 0");
-            }
-            if (parsed.stripTrailingZeros().scale() > 2) {
-                throw new IllegalArgumentException("Nightly rate must have at most 2 decimal places");
-            }
-            return parsed;
-        } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException("Nightly rate must be a number");
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Rate per night must be provided");
         }
+        try {
+            BigDecimal rate = new BigDecimal(value);
+            if (rate.signum() <= 0) {
+                throw new IllegalArgumentException("Rate per night must be greater than 0");
+            }
+            if (rate.stripTrailingZeros().scale() > 2) {
+                throw new IllegalArgumentException("Rate per night must have at most 2 decimal places");
+            }
+            return rate;
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("Rate per night must be a number");
+        }
+    }
+
+    private static String requireText(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " must not be blank");
+        }
+        return value;
+    }
+
+    private static <E> E requireSelected(E value, String fieldName) {
+        if (value == null) {
+            throw new IllegalArgumentException(fieldName + " must be selected");
+        }
+        return value;
     }
 
     private static void validateTimeRange(LocalTime checkIn, LocalTime checkOut) {

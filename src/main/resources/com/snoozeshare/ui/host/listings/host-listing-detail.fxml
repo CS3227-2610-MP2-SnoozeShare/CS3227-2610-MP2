@@ -1,37 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import java.net.URL?>
 
-<ScrollPane fitToWidth="true" xmlns:fx="http://javafx.com/fxml"
+<ScrollPane fitToWidth="true" styleClass="agent-scroll" xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.snoozeshare.ui.host.listings.HostListingDetailController">
-    <stylesheets>
-        <URL value="@host-listing-detail.css"/>
-    </stylesheets>
-    <VBox spacing="20" styleClass="host-listing-detail-page">
-        <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+    <stylesheets><URL value="@../host-theme.css"/></stylesheets>
+    <VBox spacing="16" styleClass="agent-content, host-listing-detail-page">
+        <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
 
         <HBox alignment="CENTER_LEFT" spacing="12" styleClass="listing-detail-actions">
-            <Button text="Back" onAction="#handleBack" styleClass="outline-button"/>
-            <VBox HBox.hgrow="ALWAYS"/>
-            <Button text="Open booking calendar" onAction="#handleOpenCalendar"
-                    styleClass="outline-button"/>
+            <Hyperlink text="Listings" onAction="#handleBack" styleClass="host-crumb-link"/>
+            <Label text="›" styleClass="host-crumb"/>
+            <Label fx:id="titleCrumb" styleClass="host-crumb-current"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Open Booking Calendar" onAction="#handleOpenCalendar"
+                    styleClass="outline-button, listing-detail-action-calendar"/>
             <Button text="Edit" onAction="#handleEdit"
                     styleClass="listing-detail-action-edit"/>
         </HBox>
 
-        <StackPane prefHeight="300" maxWidth="Infinity"
+        <StackPane prefHeight="200" maxWidth="Infinity"
                    styleClass="listing-detail-image-placeholder"/>
 
-        <HBox spacing="36" alignment="TOP_LEFT">
-            <VBox spacing="14" HBox.hgrow="ALWAYS">
+        <GridPane hgap="24" styleClass="listing-detail-content">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="60"/>
+                <ColumnConstraints percentWidth="40"/>
+            </columnConstraints>
+            <VBox spacing="16" maxWidth="Infinity" GridPane.columnIndex="0">
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <Label fx:id="titleLabel" styleClass="page-title"/>
                     <Label fx:id="typeLabel" styleClass="listing-detail-type-badge"/>
@@ -69,11 +77,18 @@
                 <Label fx:id="descriptionLabel" wrapText="true"
                        styleClass="listing-detail-description"/>
                 <Label text="AMENITIES" styleClass="listing-detail-section-title"/>
-                <FlowPane fx:id="amenitiesPane" hgap="8" vgap="8"/>
+                <FlowPane fx:id="amenitiesPane" hgap="8" vgap="8"
+                          styleClass="listing-detail-amenities"/>
+
+                <VBox spacing="10" styleClass="listing-detail-reviews">
+                    <Label fx:id="reviewsTitleLabel" styleClass="listing-detail-section-title"/>
+                    <VBox fx:id="reviewsList" spacing="10"/>
+                </VBox>
             </VBox>
 
-            <VBox spacing="16" prefWidth="300" maxWidth="300"
-                  styleClass="listing-detail-performance">
+            <VBox spacing="12" maxWidth="Infinity"
+                  styleClass="listing-detail-performance" GridPane.columnIndex="1"
+                  GridPane.fillHeight="false" GridPane.valignment="TOP">
                 <Label text="Performance" styleClass="listing-detail-performance-title"/>
                 <HBox alignment="CENTER_LEFT">
                     <Label text="Total bookings" styleClass="listing-detail-performance-label"/>
@@ -81,11 +96,16 @@
                     <Label fx:id="bookingCountLabel" styleClass="listing-detail-performance-value"/>
                 </HBox>
                 <HBox alignment="CENTER_LEFT">
-                    <Label text="Average rating" styleClass="listing-detail-performance-label"/>
+                    <Label text="Occupancy (30d)" styleClass="listing-detail-performance-label"/>
                     <VBox HBox.hgrow="ALWAYS"/>
-                    <Label fx:id="ratingLabel" styleClass="listing-detail-performance-value"/>
+                    <Label fx:id="occupancyLabel" styleClass="listing-detail-performance-value"/>
+                </HBox>
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Earnings (30d)" styleClass="listing-detail-performance-label"/>
+                    <VBox HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="earningsLabel" styleClass="listing-detail-performance-value"/>
                 </HBox>
             </VBox>
-        </HBox>
+        </GridPane>
     </VBox>
 </ScrollPane>

@@ -1,3 +1,9 @@
+---
+layout: default
+title: Product Backlog
+permalink: /product-backlog/
+---
+
 # SnoozeShare Product Backlog & Engineering Specification
 
 This document serves as the formal Product Backlog and Software Engineering Specification for **SnoozeShare**, a production-level Java 25 desktop application designed for short-term property rentals. 

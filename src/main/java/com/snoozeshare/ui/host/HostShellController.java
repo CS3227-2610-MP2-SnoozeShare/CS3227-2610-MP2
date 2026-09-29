@@ -93,7 +93,9 @@ public final class HostShellController extends NavShellController {
             HostListingFormController controller = loader.getController();
             controller.setContext(getContext());
             controller.setProperty(property);
-            controller.setOnBack(this::showListings);
+            controller.setOnBack(property == null ? this::showListings : () -> showListingDetail(property));
+            controller.setOnListings(this::showListings);
+            controller.setOnListingDetail(() -> showListingDetail(property));
             controller.setOnSaved(this::showListings);
             shellRoot.setCenter(formView);
         } catch (IOException exception) {
@@ -110,6 +112,7 @@ public final class HostShellController extends NavShellController {
             controller.setContext(getContext());
             controller.setProperty(property);
             controller.setOnBack(this::showListings);
+            controller.setOnListingDetail(() -> showListingDetail(property));
             shellRoot.setCenter(calendarView);
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to load host booking calendar", exception);

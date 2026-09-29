@@ -68,10 +68,10 @@ class ShellLayoutTest {
                 "src/main/resources/com/snoozeshare/ui/host/bookings/host-bookings.fxml"));
 
         assertTrue(listings.contains(
-                "<Insets top=\"20\" right=\"20\" bottom=\"20\" left=\"20\"/>"));
+                "<Insets top=\"24\" right=\"32\" bottom=\"24\" left=\"32\"/>"));
         assertTrue(bookings.contains(
                 "<Insets top=\"24\" right=\"32\" bottom=\"24\" left=\"32\"/>"));
         assertTrue(wallet.contains(
-                "<Insets top=\"24\" right=\"24\" bottom=\"24\" left=\"24\"/>"));
+                "<Insets top=\"24\" right=\"32\" bottom=\"24\" left=\"32\"/>"));
     }
 }

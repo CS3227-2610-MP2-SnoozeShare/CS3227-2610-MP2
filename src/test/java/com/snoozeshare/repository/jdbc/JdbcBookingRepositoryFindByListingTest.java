@@ -50,7 +50,7 @@ class JdbcBookingRepositoryFindByListingTest {
 
     private static Property property(User host, Instant now) {
         return new Property(UUID.randomUUID(), host.userId(), ListingStatus.ACTIVE, "T", "D",
-                PropertyType.APARTMENT, "1 St", "Singapore", "Central", "123456", 2, 1, 1.0,
+                PropertyType.APARTMENT, "1 St", "Singapore", "Central", 123456, 2, 1, 1,
                 new BigDecimal("100.00"), LocalTime.of(14, 0), LocalTime.of(11, 0), Set.of(), now);
     }
 

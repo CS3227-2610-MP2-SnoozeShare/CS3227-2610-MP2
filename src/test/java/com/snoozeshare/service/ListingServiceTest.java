@@ -116,6 +116,44 @@ class ListingServiceTest {
     }
 
     @Test
+    void validationReportsBasicDetailsBeforeCapacityAndLocation() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            ListingService service = createService(connection);
+            Property invalid = new Property(null, null, ListingStatus.ACTIVE, "", "Description",
+                    PropertyType.APARTMENT, "", "Singapore", "Central", 123456, 0, 1, -1,
+                    null, LocalTime.of(15, 0), LocalTime.of(11, 0), Set.of(), Instant.now());
+
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                    service.create(invalid, ctx.hostId()));
+
+            assertEquals("Title must not be blank", exception.getMessage());
+        }
+    }
+
+    @Test
+    void validationUsesFriendlyCapacityAndLocationFieldNames() throws Exception {
+        try (Connection connection = migratedConnection()) {
+            TestContext ctx = seedContext(connection);
+            ListingService service = createService(connection);
+            Property invalidRate = new Property(null, null, ListingStatus.ACTIVE, "Title", "Description",
+                    PropertyType.APARTMENT, "Street", "Singapore", "Central", 123456, 2, 1, 1,
+                    null, LocalTime.of(15, 0), LocalTime.of(11, 0), Set.of(), Instant.now());
+
+            IllegalArgumentException rateException = assertThrows(IllegalArgumentException.class, () ->
+                    service.create(invalidRate, ctx.hostId()));
+            assertEquals("Rate per night must be positive", rateException.getMessage());
+
+            Property invalidPostal = new Property(null, null, ListingStatus.ACTIVE, "Title", "Description",
+                    PropertyType.APARTMENT, "Street", "Singapore", "Central", 0, 2, 1, 1,
+                    new BigDecimal("100.00"), LocalTime.of(15, 0), LocalTime.of(11, 0), Set.of(), Instant.now());
+            IllegalArgumentException postalException = assertThrows(IllegalArgumentException.class, () ->
+                    service.create(invalidPostal, ctx.hostId()));
+            assertEquals("Postal Code must be a positive whole number", postalException.getMessage());
+        }
+    }
+
+    @Test
     void owningHostCanUpdateListingDetails() throws Exception {
         try (Connection connection = migratedConnection()) {
             TestContext ctx = seedContext(connection);
@@ -394,13 +432,13 @@ class ListingServiceTest {
         users.save(guest);
         Property singapore = new Property(UUID.randomUUID(), host.userId(),
                 ListingStatus.ACTIVE, "Singapore Apt", "Nice", PropertyType.APARTMENT,
-                "street", "Singapore", "Central", "123456", 2, 1, 1.0,
+                "street", "Singapore", "Central", 123456, 2, 1, 1,
                 new BigDecimal("150.00"), LocalTime.of(14, 0), LocalTime.of(11, 0),
                 Set.of(), Instant.now());
         properties.save(singapore);
         Property tokyo = new Property(UUID.randomUUID(), host.userId(),
                 ListingStatus.ACTIVE, "Tokyo House", "Great", PropertyType.HOUSE,
-                "street", "Tokyo", "Shibuya", "100000", 4, 2, 1.5,
+                "street", "Tokyo", "Shibuya", 100000, 4, 2, 1,
                 new BigDecimal("200.00"), LocalTime.of(15, 0), LocalTime.of(10, 0),
                 Set.of(), Instant.now());
         properties.save(tokyo);
@@ -409,15 +447,15 @@ class ListingServiceTest {
 
     private static Property validDraft() {
         return new Property(null, null, ListingStatus.INACTIVE, "New Listing", "A new place",
-                PropertyType.CONDO, "1 Main Street", "Singapore", "Central", "123456", 3,
-                2, 1.5, new BigDecimal("175.00"), LocalTime.of(15, 0), LocalTime.of(11, 0),
+                PropertyType.CONDO, "1 Main Street", "Singapore", "Central", 123456, 3,
+                2, 1, new BigDecimal("175.00"), LocalTime.of(15, 0), LocalTime.of(11, 0),
                 Set.of(), Instant.now());
     }
 
     private static Property with(Property source, String title, String description,
                                  String streetAddress, String city, String region,
-                                 String postalCode, int maxGuests, int bedrooms,
-                                 double bathrooms, BigDecimal rate, PropertyType propertyType,
+                                 int postalCode, int maxGuests, int bedrooms,
+                                 int bathrooms, BigDecimal rate, PropertyType propertyType,
                                  LocalTime checkIn, LocalTime checkOut) {
         return new Property(source.propertyId(), source.hostId(), source.status(), title,
                 description, propertyType, streetAddress, city, region, postalCode, maxGuests,

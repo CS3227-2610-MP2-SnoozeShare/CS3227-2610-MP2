@@ -111,7 +111,7 @@ class JdbcBookingRepositoryTest {
         users.save(guest);
         Property property = new Property(UUID.randomUUID(), host.userId(),
                 ListingStatus.ACTIVE, "Test", "desc", PropertyType.APARTMENT,
-                "street", "city", "region", "000000", 2, 1, 1.0,
+                "street", "city", "region", 0, 2, 1, 1,
                 new BigDecimal("100.00"), LocalTime.of(14, 0), LocalTime.of(11, 0),
                 Set.of(), Instant.now());
         properties.save(property);
