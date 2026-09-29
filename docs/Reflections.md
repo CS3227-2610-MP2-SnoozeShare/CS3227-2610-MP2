@@ -209,12 +209,107 @@ The following project files illustrate the points made above.
 - `docs/project-state/done-ledger.md` — W2 through W5 each have clean single entries in the done ledger ("All 4/9/8/6 tasks complete") with no follow-up rework entries, compared to later workstreams like W6 which required multiple refinement rounds. This suggests the upfront spec and plan investment paid off in fewer surprises during implementation.
 
 ## Trevor's Reflections
-Here are some sample questions that you can use to guide your reflections.
 
-- What tasks were the AI agent customized to perform and how to determine the appropriate skill set for each task?
-- How did you define a specific skill and make sure that it is working?
-- What tasks were handled effectively by the agent and help to improve productivity, code quality, or testing efficiency?
-- Where did the agent require additional guidance or correction? Were there situations where using the agent created additional work rather than reducing it?
-- What would you change in the agent's instructions or skill set if you repeated the task?  What additional skills or tools would make the agent more useful?
-- What did you learn about designing an effective single AI agent for software engineering tasks?
+### What tasks was the AI agent customized to perform, and how did I determine the appropriate skill set?
 
+For this project, I customized the agent for two closely related areas: maintaining a shared foundation that multiple developers could build on, and implementing the Host-facing parts of SnoozeShare. The shared-foundation work included architecture, SQLite setup, project-state continuity, interaction logging, common services, and the shared application shell. The Host work then built on that foundation through listing management, booking calendars and date overrides, wallet management, and repeated UI refinement.
+
+The most important customization, however, was the logging-agent-interactions skill created during the W1 interaction on 23 September. I asked:
+
+> “Generate an agent interaction logging skill. This should be part of workstream 1.”
+
+I then specified the operating context:
+
+> “Interactions should be logged by agent session, in logs/. Naming convention should include timestamp in SGT (YYYY-MM-DD_HH-mm-ss) and branch name”
+
+We clarified that branch names were more reliable than copied numeric session labels, and I later asked:
+
+> “Can this skill be manually called at the end of an agent session instead”
+
+The skill was changed accordingly. This was particularly useful for a multi-branch project because it made decisions and corrections recoverable instead of leaving them only in an individual chat window.
+
+### How did I define a specific skill and make sure that it was working?
+
+I defined the logging skill through concrete operating rules rather than a vague instruction to “keep notes.” It specifies when a session should be logged, the filename format, what counts as a material interaction, the chronological structure of entries, and the trade-off of manual invocation: a normally ended session is captured cleanly, but an unexpectedly terminated session may not be recoverable. I checked that the generated files followed the convention and that the skill’s decisions were reflected in the project state, specification, plan, and Done ledger.
+
+The wider project-state workflow was tested in the same way. I required the agent to read `PROJECT_STATE.md`, compare it with Git history and status, record decisions as they happened, and keep workstreams resumable. During the Host work, the W7 interaction exposed an invalid `BorderPane.hgrow` property that caused the calendar page to fail during FXML loading. The agent traced it to the actual JavaFX boundary, removed it, and added a regression assertion. Later, an invalid date such as `2026-02` exposed an unhandled `DateTimeParseException`; the agent added a user-facing validation message and tests. These examples gave me more confidence than a successful happy-path run alone.
+
+### What tasks were handled effectively and improved productivity, code quality, or testing efficiency?
+
+The agent was most effective when the requirements were specific and the work could be verified in small vertical slices. In the W6 Host listing interaction on 25 September, I wrote:
+
+> “Create listing should be a new page, with a back button to go back to listings”
+
+and then clarified:
+
+> “Each listing should also have an edit button, which brings them to an Edit Listing page”
+
+The agent translated those requirements into FXML, controllers, CSS, navigation, and tests while keeping the Host flow aligned with the existing application structure.
+
+The W7 Host calendar interaction was also productive. I described the required flow as follows:
+
+> “Each listing card should have an ‘Open booking calendar’ button”
+
+> “Calendar displayed, should take up most of the page. A form on the right (from, to, reason (optional)) for manual blocking.”
+
+The agent implemented the complete flow, then handled follow-up requirements such as inclusive end dates, single-day blocks, removable override rows, and visible date-format errors. This showed the value of using the agent for both initial implementation and targeted regression work.
+
+The W9 Host wallet interaction demonstrated another useful pattern. I supplied mockup-driven behaviour:
+
+> “For the top up modal, clicking the fixed dollar values below the input should fill in the input box with the value.”
+
+> “For the withdraw modal, clicking the text below the input should fill in the input box with the full balance value.”
+
+The agent moved the shared wallet pieces into common code so the Host and Guest wallet experiences could remain consistent, then styled the transaction table to match the Host booking and agent table rhythm. This improved reuse while still preserving role-specific navigation.
+
+Across these sessions, automated tests and Checkstyle made the agent’s changes easier to review. The agent could implement a slice, run focused tests, address failures, and then run the broader suite. The project-state and interaction logs also reduced repeated explanations when work moved between branches such as W6, W7, W8, and W9.
+
+### Where did the agent require additional guidance or correction?
+
+The agent still needed human direction for product boundaries and visual judgement. For example, in W7 I clarified:
+
+> “Current overrides shows all manual blocks, not restricted by the month currently displayed on the calendar.”
+
+and:
+
+> “Manual blocking should be inclusive of end date, and allow single-date blocking.”
+
+These were not implementation details that could be safely inferred from the first request. Similarly, the W9 mockup requirements were explicit because the wallet behaviour and the Host/Guest reuse boundary mattered.
+
+The Host UI touch-up sessions showed that passing automated tests did not guarantee that the page looked correct. I had to inspect the running application and report:
+
+> “Make the square swatches actually square”
+
+and later:
+
+> “Reason is still not bold.”
+
+> “Days of the week are still not bolded and centered.”
+
+The agent then corrected the CSS and layout. This created some additional work, but it was productive additional work: visual acceptance required a human because screenshots, spacing, hierarchy, and perceived consistency were part of the requirement.
+
+Another limitation was that the agent sometimes needed a reminder to separate a new feature from a neighbouring workstream. I asked:
+
+> “Check if displaying of user bookings in host portal should fall under W7”
+
+The agent reasoned that this belonged in the later Host request-management workstream. This reinforced that an effective agent should ask before silently expanding scope, especially in a multi-branch project.
+
+### What would I change in the instructions or skill set if I repeated the task?
+
+I would make the logging skill automatically suggest a session summary at likely stopping points while retaining the option to approve or edit it before writing. Manual logging gives control, but it also creates a recovery gap if a session ends unexpectedly. I would also add a compact branch-lineage field to each session log so that a future agent can see not only the branch name, but also which branch and commit it started from.
+
+For Host UI work, I would add a dedicated visual-verification checklist to the project instructions. It would cover page insets, typography, alignment, scroll behaviour, modal sizing, button hierarchy, and consistency with neighbouring Host pages. The existing tests caught structural and behavioural regressions, but a checklist would make the manual review more systematic and reduce repeated correction cycles.
+
+I would also improve the shared-foundation skill with clearer rules for distinguishing a cross-cutting change from a feature-local change. The current workflow handled this well overall, but the W7 scope question showed that workstream boundaries can be ambiguous even when the implementation itself is straightforward. A small decision template listing affected roles, services, persistence, UI pages, and branches would help the agent identify when a request needs a new spec or a handoff.
+
+### What did I learn about designing an effective single AI agent for software engineering tasks?
+
+I learned that an effective single AI agent needs more than a capable model or a detailed one-off prompt. It needs clear goals, explicit boundaries, useful context, and a reliable way to verify and resume work.
+
+The work my groupmate did on `PROJECT_STATE.md` and the Done ledger was extremely helpful in making this possible. `PROJECT_STATE.md` gave the agent a current view of the architecture, decisions, workstreams, known gaps, and how to resume. The Done ledger showed what had already been completed and prevented the agent from repeating work or treating an accepted limitation as an unfinished task. This saved substantial time when work moved across different branches and sessions, because I did not have to re-explain the project history every time.
+
+This also connects briefly to the lecture concepts. The workstream and feature records acted like a Mission Brief by making scope and constraints visible. `PROJECT_STATE.md` and the session logs acted like a Continuity Pack by preserving the history and current state. The main lesson for me was that these artefacts made the single agent more predictable, helped it make better decisions, and allowed it to spend more effort on implementation and testing instead of reconstructing context.
+
+I also learned that the human and the agent have different but complementary roles. The human should provide goals, constraints, visual judgement, and approval at important boundaries, while the agent can handle decomposition, implementation, testing, and repetitive record-keeping.
+
+Overall, the combination of good project memory and clear instructions made the single agent more useful across multiple sessions without removing the need for human review.
